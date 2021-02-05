@@ -1,0 +1,467 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>HiFi Audio API Example: Tracks</title>
+</head>
+
+<body style="width: 100%; height: 100%; margin: 0; padding: 0;">
+    <div class="console" style="z-index: 1; background-color: #efefef; padding: 10px; pointer-events: none; position: fixed; left: 0; top: 60px; width: 260px; font-family: monospace; font-size: 12px;"></div>
+    <canvas class="thecanvas" style="position:fixed; right: 0; top: 0;"></canvas>
+    <p class="example-description" style="position: fixed; left: 0; width: 100%; text-align: center;">Click the connect button to setup the audio nodes.<br>Move the nodes around to perceive spatialization</p>
+    <button class="connectDisconnectButton" style="cursor: pointer; font-size: 18px; background-color: #000000; color: white; width: 280px; top: 0; left: 0; height: 60px; margin: 0; position: fixed;"></button>
+    <script src="https://hifi-spatial-audio-api.s3-us-west-2.amazonaws.com/releases/latest/HighFidelityAudio-latest.js"></script>
+    <script src="https://hifi-spatial-audio-api.s3-us-west-2.amazonaws.com/releases/latest/HighFidelityControls-latest.js"></script>
+    <script>
+        
+        // Class definition 
+
+        const SoundNodeType = {
+            NODE: 0,
+            EMITTER: 1,
+            RECEIVER: 2
+        }
+        // Simple class to handle the node's connection, position and orientation
+        class SoundNode {
+            constructor(name, color, position, orientation, radius) {
+                this.mixerposition = new HighFidelityAudio.Point3D({ x: -position.x, y: position.z, z: -position.y });
+                this.position = { x: position.x, y: position.y, z: position.z };
+                this.orientation = new HighFidelityAudio.OrientationEuler3D({ "pitchDegrees": 0, "yawDegrees": orientation, "rollDegrees": 0 });
+                this.hifiCommunicator = null;
+                this.stream = null;
+                this.radius = radius;
+                this.name = name;
+                this.color = color;
+                this.selected = false;
+                this.hover = false;
+                this.type = SoundNodeType.NODE;
+            }
+
+            updateData(position, orientation) {
+                this.position.x = position.x;
+                this.position.y = position.y;
+                this.position.z = position.z;
+                // We need to convert the position sent the mixer
+                this.mixerposition.x = -position.x;
+                this.mixerposition.z = -position.y;
+                this.orientation.yawDegrees = orientation;
+                this.sendUpdatedData();
+            }
+
+            sendUpdatedData(name) {
+                if (this.hifiCommunicator) {
+                    // Send the converted position and orientation to the mixer
+                    let response = this.hifiCommunicator.updateUserDataAndTransmit({
+                        position: this.mixerposition,
+                        orientation: this.orientation
+                    });
+                    console.log(`Update response for: ${this.name} : ${response}`);
+                }
+            }
+                        
+            onConnectionStateChanged(newConnectionState) {
+                console.log(`New High Fidelity connection for: ${this.name} state: ${newConnectionState}`);
+            }
+
+            isPointInside(worldPoint) {
+                // Simple collision detection for node selection
+                let distVec = { x: worldPoint.x - this.position.x, y: worldPoint.y - this.position.y };
+                let distance = Math.sqrt(distVec.x * distVec.x + distVec.y * distVec.y);
+                return distance < this.radius;
+            }
+
+            static worldToCanvasCoords(canvas, coords, offset, zoom) {
+                let canvasMid = { x: 0.5 * canvas.scrollWidth, y: 0.5 * canvas.scrollHeight };
+                let relPos = { x: coords.x - offset.x, y: coords.y - offset.y };
+                let canvasPos = { x: canvasMid.x - relPos.x / zoom, y: canvasMid.y - relPos.y / zoom };
+                return canvasPos;
+            }
+
+            static canvasToWorldCoords(canvas, coords, offset, zoom) {
+                let canvasMid = { x: 0.5 * canvas.scrollWidth, y: 0.5 * canvas.scrollHeight };
+                let newLocPos = { x: (coords.x - canvasMid.x) * zoom, y: (coords.y - canvasMid.y) * zoom, z: 0.0 };
+                let npos = { x: offset.x - newLocPos.x, y: offset.y - newLocPos.y, z: offset.z - newLocPos.z };
+                return npos;
+            }
+
+            render(canvas, ctx, offset, zoom) {
+                let canvasPos = SoundEmitter.worldToCanvasCoords(canvas, this.position, offset, zoom);
+                // Let child classes implement their own method
+                this.renderNode(ctx, canvasPos, zoom);
+                if (this.hover || this.selected) {
+                    this.renderSelect(ctx, canvasPos, zoom);
+                }
+            }
+
+            renderNode(ctx, position, zoom) {
+                // Default method to render nodes
+                ctx.beginPath();
+                ctx.arc(position.x, position.y, this.radius / zoom, 0, 2.0 * Math.PI, false);
+                ctx.lineWidth = 5;
+                ctx.strokeStyle = this.color;
+                ctx.stroke();
+            }
+
+            renderSelect(ctx, position, zoom) {
+                // Render default selection effect
+                ctx.beginPath();
+                ctx.arc(position.x, position.y, (this.radius / zoom) + 4, 0, 2.0 * Math.PI, false);
+                ctx.lineWidth = 4;
+                ctx.strokeStyle = this.selected ? '#FF0000' : '#CCCCCC';
+                ctx.stroke();
+            }
+            
+            async connect() {
+                console.log(`Connecting Receiver: ` + this.name + ` to High Fidelity Audio API Servers...`);
+                if (this.prepareStream) {
+                    await this.prepareStream();
+                }
+                this.hifiCommunicator = new HighFidelityAudio.HiFiCommunicator({
+                    initialHiFiAudioAPIData: new HighFidelityAudio.HiFiAudioAPIData({
+                        position: this.mixerposition,
+                        orientationEuler: this.orientation
+                    }),
+                    onConnectionStateChanged: this.onConnectionStateChanged.bind(this),
+                });
+                if (this.stream) {
+                    await this.hifiCommunicator.setInputAudioMediaStream(this.stream, false);
+                }
+                
+                // This is the JWT associated with "Zach's Public Test Space 01".
+                const HIFI_AUDIO_JWT = "";
+                let connectResponse;
+                try {
+                    connectResponse = await this.hifiCommunicator.connectToHiFiAudioAPIServer(HIFI_AUDIO_JWT);
+                    return connectResponse;
+                } catch (e) {
+                    console.error(`Call to \`connectToHiFiAudioAPIServer()\` for: ${this.name} failed! Error:\n${e}`);
+                    return false;
+                }
+                console.log(`Call to \`connectToHiFiAudioAPIServer()\` for: ${this.name} succeeded! Response:\n${JSON.stringify(connectResponse)}`);
+            }
+
+            async disconnect() {
+                console.log(`Disconnecting Emitter: ${this.name} from High Fidelity Audio API Servers...`);
+                let disconnectStatus = await this.hifiCommunicator.disconnectFromHiFiAudioAPIServer();
+                console.log(`Disconnected status for ${this.name} : ${disconnectStatus}`);
+            }
+        }
+
+        // SoundNode without input stream.
+        class SoundReceiver extends SoundNode {
+            constructor(name, color, position, orientation, radius) {
+                super(name, color, position, orientation, radius);
+                this.type = SoundNodeType.RECEIVER;
+            }
+
+            async prepareStream() {
+                this.stream = undefined;
+            }
+
+            renderNode(ctx, position, zoom) {
+                // Render first 10 circles around the receiver every meter
+                for (let i = 1; i < 11; i++) {
+                    ctx.beginPath();
+                    let radius = i / zoom;
+                    ctx.arc(position.x, position.y, radius, 0, 2.0 * Math.PI, false);
+                    ctx.lineWidth = 1;
+                    ctx.strokeStyle = this.color + "AA";
+                    ctx.stroke();
+                    ctx.font = '15px console';
+                    ctx.fillStyle = this.color;
+                    ctx.fillText(`${i}m`, position.x + radius, position.y);
+                }
+                // Render the node as a solid circle
+                ctx.beginPath();
+                ctx.arc(position.x, position.y, this.radius / zoom, 0, 2.0 * Math.PI, false);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+            }
+
+            async connect() {
+                let connectResponse = await super.connect();
+                if (connectResponse) {
+                    let outputAudioElem = document.createElement('audio');
+                    outputAudioElem.srcObject = this.hifiCommunicator.getOutputAudioMediaStream();
+                    // We must call `play()` here because certain browsers won't autoplay this stream as we expect.
+                    outputAudioElem.play();
+                }
+                return connectResponse;
+            }
+        }
+
+        // SoundNode with input stream from an audio file
+        class SoundEmitter extends SoundNode {
+            constructor(name, color, position, orientation, radius) {
+                super(name, color, position, orientation, radius);
+                this.type = SoundNodeType.EMITTER;
+                this.volume = null;
+                this.audioElementSource = null;
+                this.onFinishedPlaying = null;
+            }
+
+            async createStreamFromAudioFile(filename) {
+                let loadAudioFile = new Promise(resolve => {
+                    let audioElem = document.createElement('audio');
+                    audioElem.setAttribute('src', filename);
+                    audioElem.addEventListener("loadeddata", (e) => {
+                        resolve(e.target);
+                    });
+                    audioElem.addEventListener('ended',function(){
+                        if (this.onFinishedPlaying) {
+                            this.onFinishedPlaying();
+                        }
+                    }.bind(this), false);
+                });
+
+                // Wait until the audio file is loaded
+                let audioElement = await loadAudioFile;
+                
+                // Create a media element from audio context
+                var ac = new AudioContext();
+                this.audioElementSource = ac.createMediaElementSource(audioElement);
+                var dest = ac.createMediaStreamDestination();
+                
+                // Setup a gain control
+                var volume = ac.createGain();
+                volume.connect(dest);
+                volume.gain.value = TRACKS_GAIN;
+                this.audioElementSource.connect(volume);
+
+                // Assing the input stream
+                this.stream = dest.stream;
+            }
+            
+            async prepareStream() {
+                // In this case create the input stream from an audio file
+                await this.createStreamFromAudioFile(`./audio/${this.name}.mp3`);
+            }
+        }
+        
+        // Example code
+        let canvas = document.querySelector('.thecanvas');
+        let consoleElem = document.querySelector(".console");
+
+        // Simple button to connect/disconnect
+        let connectDisconnectButton = document.querySelector(`.connectDisconnectButton`);
+        connectDisconnectButton.addEventListener("click", createAndConnectNodes);
+        connectDisconnectButton.innerHTML = `Click to Connect`;
+
+        let hifiCommunicator = null;
+
+        HighFidelityAudio.HiFiLogger.setHiFiLogLevel(HighFidelityAudio.HiFiLogLevel.Debug);
+
+        const TRACKS_GAIN = 0.2; // The volume for all tracks
+        const SPAWN_POINT = {x: 100, y: 100, z: 0}; // Initial position for the receiver
+
+        let soundNodes = [];
+
+        let zoomAmount = 0.01; // Define the scale for how the world is displayed on the canvas
+        let selectedNodeIdx = -1;
+        let hoveredNodeIdx = -1;
+
+        // To avoid desync on replay when we use audioElement.loop = true we need to make 
+        // sure that all tracks start playing at the same time.
+        function checkAllFinishedAndReplay() {
+            let allFinished = true;
+            soundNodes.forEach(node => {
+                if (node.type === SoundNodeType.EMITTER) {
+                    allFinished = node.audioElementSource.mediaElement.ended && allFinished;
+                }
+            });
+            if (allFinished) {
+                soundNodes.forEach(node => {
+                    if (node.type === SoundNodeType.EMITTER) {
+                        node.audioElementSource.mediaElement.play();
+                    }
+                });
+            }
+        }
+
+        async function createAndConnectNodes() {
+            // Node list. Emitters will use the assigned name to build the source for the audio file.
+            // I.e. "Vox1". src="audio/Vox1.mp3"
+            let nodeData = [
+                {name: "listener", color: "#AFAAFF", type: SoundNodeType.RECEIVER},
+                {name: "accompaniment", color: "#AFAFAF", type: SoundNodeType.EMITTER},
+                {name: "Vox1", color: "#FF00FF", type: SoundNodeType.EMITTER}, 
+                {name: "arp1", color: "#FFA0FF", type: SoundNodeType.EMITTER}, 
+                {name: "Vox2", color: "#00FFFF", type: SoundNodeType.EMITTER}, 
+                {name: "arp2", color: "#03AFFF", type: SoundNodeType.EMITTER}, 
+                {name: "Vox3", color: "#0000FF", type: SoundNodeType.EMITTER}, 
+                {name: "arp3", color: "#00A0AF", type: SoundNodeType.EMITTER}, 
+                {name: "Vox4", color: "#0F0FAF", type: SoundNodeType.EMITTER},
+                {name: "arp4", color: "#0AAFAF", type: SoundNodeType.EMITTER}
+            ];
+            
+            // Disable the connect/disconnect button
+            connectDisconnectButton.disabled = true;
+            connectDisconnectButton.innerHTML = `wait...`;
+
+            // Iterate the node list
+            for (let i = 0; i < nodeData.length; i++) {
+                // To arrange the nodes around the receiver, we calculate de current angle in radians
+                let angle = 2.0 * Math.PI * (i - 1) / (nodeData.length - 1);
+                let node; 
+                if (nodeData[i].type === SoundNodeType.EMITTER) {
+                    node = new SoundEmitter(nodeData[i].name, nodeData[i].color, {x: SPAWN_POINT.x + Math.cos(angle), y: SPAWN_POINT.y + Math.sin(angle), z: SPAWN_POINT.z}, 0.0, 0.15);
+                    node.onFinishedPlaying = checkAllFinishedAndReplay;
+                } else {
+                    node = new SoundReceiver(nodeData[i].name, nodeData[i].color, SPAWN_POINT, 0.0, 0.25);
+                }                   
+                    
+                // Connect node and wait until the audio file is loaded
+                let connectResponse = await node.connect();
+                if (connectResponse) {
+                    displayLog(`Node "${nodeData[i].name}" connected.`, i === 0);
+                    soundNodes.push(node);
+                    // Update canvas to display the added node
+                    redraw();
+                } else {
+                    displayLog(`Node "${nodeData[i].name}" error.`, i === 0);
+                }
+            }
+            // Iterate the created nodes and play media once all tracks are loaded (syncronization)
+            for (let i = 0; i < soundNodes.length; i++) {
+                if (soundNodes[i].type === SoundNodeType.EMITTER) {
+                    soundNodes[i].audioElementSource.mediaElement.play();
+                }
+            }
+            displayLog(`All emitters are playing!`);
+
+            // enable disconnect button
+            connectDisconnectButton.disabled = false;
+            connectDisconnectButton.innerHTML = `Disconnect`;
+            connectDisconnectButton.removeEventListener('click', createAndConnectNodes);
+            connectDisconnectButton.addEventListener('click', DisconnectAndRemoveNodes);
+        }
+
+        // Node creation and connection management
+        async function DisconnectAndRemoveNodes() {
+            // Disable connect/disconnect button
+            connectDisconnectButton.disabled = true;
+            connectDisconnectButton.innerHTML = `wait...`;
+
+            // Iterate all nodes in reverse order. 
+            let lastIdx = soundNodes.length - 1;
+            for (let i = lastIdx; i >= 0 ; i--) {
+                // Disconnect node
+                await soundNodes[i].disconnect();
+                displayLog(`Node "${soundNodes[i].name}" disconnected.`, i === lastIdx);
+                // Remove node from list.
+                soundNodes.pop();
+                // Redraw canvas without the removed node.
+                redraw();
+            }
+            displayLog(`All nodes have been removed!`);
+
+            // Re-enable the connection button
+            connectDisconnectButton.disabled = false;
+            connectDisconnectButton.innerHTML = `Connect`;
+            connectDisconnectButton.removeEventListener('click', DisconnectAndRemoveNodes);
+            connectDisconnectButton.addEventListener('click', createAndConnectNodes);
+        }
+
+        function displayLog(text, clear) {
+            if (clear) {
+                consoleElem.innerHTML = "";
+            }
+            let consoleLog = document.createElement("span");
+            consoleLog.style.padding = "5px"
+            consoleLog.style.border = "1px solid #EFEFEF";
+            consoleLog.style.display = "block";
+            consoleLog.style.width = "fit-content";
+            consoleLog.innerHTML = text;
+            consoleElem.appendChild(consoleLog);
+        }
+
+        function redraw() {
+            let ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // Call render method for all nodes
+            for (let i = 0; i < soundNodes.length; i++) {
+                soundNodes[i].render(canvas, ctx, SPAWN_POINT, zoomAmount);
+            }
+        }
+
+        // CONTROLS
+
+        // Setup the canvas to receive control events
+        let hifiControls = new HighFidelityControls.HiFiControls({
+            mainAppElement: canvas
+        });
+
+        function findNode(position, isSelection) {
+            // Compute world position based on the canvas point and search for a node
+            let found = false;
+            let foundIdx = -1;
+            let worldPos = SoundEmitter.canvasToWorldCoords(canvas, position, SPAWN_POINT, zoomAmount);
+            for (let i = 0; i < soundNodes.length; i++) {
+                if (!found && soundNodes[i].isPointInside(worldPos)) {
+                    // Node found. Set this node as the selected one
+                    foundIdx = i;
+                    soundNodes[i][(isSelection ? "selected" : "hover")] = true;
+                    found = true;
+                } else {
+                    soundNodes[i][(isSelection ? "selected" : "hover")] = false;
+                }
+            }
+            return foundIdx;
+        }
+        
+        
+        hifiControls.onLeftDrag = (e) => { 
+            // Compute the world position based on the control event
+            let worldPos = SoundEmitter.canvasToWorldCoords(canvas, {x: e.clientX, y: e.clientY}, SPAWN_POINT, zoomAmount);
+            if (selectedNodeIdx > -1 && selectedNodeIdx < soundNodes.length) {
+                let selectedNode = soundNodes[selectedNodeIdx];
+                // Update node base on the computed position
+                selectedNode.updateData(worldPos, selectedNode.orientation.yawDegrees);
+                // Update canvas to redraw updated node
+                redraw();
+            }
+        };
+
+        // Create hovering effect
+        hifiControls.onCanvasMove = (e) => {
+            let idx = findNode({x: e.clientX, y: e.clientY}, false);
+            if (hoveredNodeIdx != idx) {
+                // update the mouse icon if we are hovering a node
+                canvas.style.cursor = idx > -1 ? "pointer" : "default";
+                hoveredNodeIdx = idx;
+                redraw();
+            }
+        };
+
+        // Allow moving nodes around
+        hifiControls.onCanvasDown = (e) => {
+            if (selectedNodeIdx > -1) {
+                consoleElem.children[selectedNodeIdx].style.borderColor = "#EFEFEF";
+            }
+            selectedNodeIdx = findNode({x: e.clientX, y: e.clientY}, true);
+            if (selectedNodeIdx > -1) {
+                consoleElem.children[selectedNodeIdx].style.borderColor = "#FF0000"; 
+            }
+            redraw();
+        };
+        
+        // Canvas resize
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            zoomAmount = 0.005 * 1280 / canvas.height;
+            redraw();
+        }
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+        }, false);
+
+        window.addEventListener('load', () => {
+            resizeCanvas();
+        }, false);
+    </script>
+</body>
+
+</html>
