@@ -1,5 +1,5 @@
 {
-  "name": "hifi-sample-express-webapp",
+  "name": "hifi-videochat-twilio-example",
   "version": "1.0.0",
   "description": "Visit https://highfidelity.com/api/guides/nodejs/express for more information.",
   "main": "index.js",
