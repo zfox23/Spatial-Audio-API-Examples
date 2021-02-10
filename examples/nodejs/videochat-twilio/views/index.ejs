@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <title>High Fidelity - Spatial Audio with Video Chat from TokBox</title>
+    <title>High Fidelity - Spatial Audio with Video Chat from Twilio</title>
 
     <style>
         body {
@@ -45,13 +45,18 @@
         .videoContainer>div {
             position: absolute !important;
         }
+
+        .videoContainer>div>video {
+            width: 100%;
+            height: 100%;
+        }
     </style>
 </head>
 
 <body style="width: 100%; height: 100%; margin: 0; padding: 0;">
     <div id="videoContainer" class="videoContainer"></div>
     <div class="controlsContainer">
-        <p>HiFi Spatial Audio with TokBox Video Chat</p>
+        <p>HiFi Spatial Audio with Twilio Video Chat (ID: <%- providedUserID %>)</p>
         <button class="connectDisconnectButton" disabled="true">Click to Connect</button>
         <button class="toggleInputMuteButton" disabled="true">Toggle Mic Mute (currently unmuted)</button>
         <button class="toggleOutputMuteButton">Toggle Output Mute (currently unmuted)</button>
@@ -59,9 +64,8 @@
     </div>
 </body>
 
-<script src="./auth.js"></script>
 <script src="https://hifi-spatial-audio-api.s3.amazonaws.com/releases/v0.2.2/HighFidelityAudio-latest.js"></script>
-<script>    
+<script>
     let connectDisconnectButton = document.querySelector('.connectDisconnectButton');
     connectDisconnectButton.addEventListener("click", connectToHiFiAndVideoService);
     connectDisconnectButton.disabled = false;
@@ -174,10 +178,14 @@
         if (!hifiCommunicator) {
             return;
         }
-        
-        currentParticipantHashedIDs.sort();
 
-        let numParticipants = currentParticipantHashedIDs.length;
+        let numParticipants = currentParticipantProvidedUserIDs.length;
+        if (!numParticipants) {
+            return;
+        }
+
+        currentParticipantProvidedUserIDs.sort();
+
         console.log(`${numParticipants} participants.`);
 
         if (numParticipants > userConfigurations.length) {
@@ -185,8 +193,12 @@
             return;
         }
 
-        let myIndex = currentParticipantHashedIDs.indexOf(myHashedVisitID);
-        
+        let myIndex = currentParticipantProvidedUserIDs.indexOf(myProvidedUserID);
+        if (myIndex === -1) {
+            console.error(`Couldn't find \`myProvidedUserID\` ${myProvidedUserID} in \`currentParticipantProvidedUserIDs\`!`);
+            return;
+        }
+
         let positionConfiguration = userConfigurations[numParticipants - 1];
 
         let myPosition = positionConfiguration.positions[myIndex];
@@ -222,8 +234,12 @@
 
         let eachVideoStyle = userConfigurations[numParticipants - 1].eachVideoStyle;
 
-        hashedIDsToVideoElements.forEach((value, key, map) => {
-            let idx = currentParticipantHashedIDs.indexOf(key);
+        providedUserIDsToVideoElementsMap.forEach((value, key, map) => {
+            let idx = currentParticipantProvidedUserIDs.indexOf(key);
+            if (idx === -1) {
+                console.error(`Couldn't find \`providedUserID\` \`${key}\` in \`currentParticipantProvidedUserIDs\`!`);
+                return;
+            }
             let position = positionConfiguration.positions[idx];
 
             value.style.width = eachVideoStyle.width;
@@ -250,10 +266,10 @@
 
     function onNewHiFiUserDataReceived(receivedHiFiAudioAPIDataArray) {
         for (let i = 0; i < receivedHiFiAudioAPIDataArray.length; i++) {
-            let currentHashedVisitID = receivedHiFiAudioAPIDataArray[i].hashedVisitID;
-            if (currentParticipantHashedIDs.indexOf(currentHashedVisitID) === -1) {
-                console.log(`New HiFi User! Hashed Visit ID: ${currentHashedVisitID}`);
-                currentParticipantHashedIDs.push(currentHashedVisitID);
+            let currentProvidedVisitID = receivedHiFiAudioAPIDataArray[i].providedUserID;
+            if (currentParticipantProvidedUserIDs.indexOf(currentProvidedVisitID) === -1) {
+                console.log(`New HiFi User! Provided ID: ${currentProvidedVisitID}`);
+                currentParticipantProvidedUserIDs.push(currentProvidedVisitID);
                 updatePositions();
             }
         }
@@ -261,12 +277,12 @@
 
     async function connectToHiFiAndVideoService() {
         await connectToHiFi();
-        connectToVideoService();
+        await connectToVideoService();
     }
 
     let hifiCommunicator;
-    let myHashedVisitID;
-    let currentParticipantHashedIDs = [];
+    let myProvidedUserID;
+    let currentParticipantProvidedUserIDs = [];
     async function connectToHiFi() {
         // Disable the Connect button after the user clicks it so we don't double-connect.
         connectDisconnectButton.disabled = true;
@@ -296,12 +312,15 @@
         });
         await hifiCommunicator.setInputAudioMediaStream(audioMediaStream);
 
+        currentParticipantProvidedUserIDs = [];
+        providedUserIDsToVideoElementsMap.clear();
+
         // Connect to the HiFi Audio API server!
         try {
-            let response = await hifiCommunicator.connectToHiFiAudioAPIServer(HIFI_AUDIO_JWT);
-            myHashedVisitID = response.audionetInitResponse.visit_id_hash;
-            currentParticipantHashedIDs.push(myHashedVisitID);
-            console.log(`My Hashed Visit ID: ${myHashedVisitID}`);
+            let response = await hifiCommunicator.connectToHiFiAudioAPIServer('<%- hiFiJWT %>');
+            myProvidedUserID = response.audionetInitResponse.user_id;
+            currentParticipantProvidedUserIDs.push(myProvidedUserID);
+            console.log(`My Provided User ID: ${myProvidedUserID}`);
         } catch (e) {
             console.error(`Error connecting to High Fidelity:\n${e}`);
             connectDisconnectButton.disabled = false;
@@ -378,84 +397,101 @@
     window.onbeforeunload = disconnectFromHiFiAndVideoService;
 </script>
 
-<script src="https://static.opentok.com/v2/js/opentok.min.js"></script>
+<script src="https://media.twiliocdn.com/sdk/js/video/releases/2.8.0/twilio-video.min.js"></script>
 <script>
-    // This script contains code specific to using TokBox as a video service provider.
-    function handleError(error) {
-        if (error) {
-            console.error(error.message);
-        }
-    }
+    // This script contains code specific to using Twilio as a video service provider.
 
-    let tokboxSession;
-    let hashedIDsToVideoElements = new Map();
-    function connectToVideoService() {
-        tokboxSession = OT.initSession(TOKBOX_API_KEY, TOKBOX_SESSION_ID);
+    const Video = Twilio.Video;
 
-        // Create a publisher
-        let publisher = OT.initPublisher('videoContainer', {
-            insertMode: 'append',
-            showControls: false,
-            publishAudio: false,
-            fitMode: "contain",
-            name: myHashedVisitID,
-        }, handleError);
+    let myTwilioRoom;
+    let localVideoTrack;
+    let providedUserIDsToVideoElementsMap = new Map();
+    async function connectToVideoService() {
+        let localTracks = await Video.createLocalTracks({
+            audio: false,
+            video: true,
+        });
 
-        hashedIDsToVideoElements.set(myHashedVisitID, publisher.element);
+        localVideoTrack = localTracks.find(track => track.kind === 'video');
+
+        let div = document.createElement("div");
+        div.appendChild(localVideoTrack.attach());
+        providedUserIDsToVideoElementsMap.set(myProvidedUserID, videoContainer.appendChild(div));
         updatePositions();
 
-        // Connect to the tokboxSession
-        tokboxSession.connect(TOKBOX_TOKEN, (error) => {
-            // If the connection is successful, publish to the tokboxSession
-            if (error) {
-                handleError(error);
-            } else {
-                tokboxSession.publish(publisher, handleError);
-            }
+        Video.connect('<%- twilioJWT %>', {
+            name: 'hifi-videochat-twilio-test-room',
+            tracks: localTracks,
+        }).then(twilioRoom => {
+            myTwilioRoom = twilioRoom;
+            console.log('Connected to Room "%s"', myTwilioRoom.name);
+
+            myTwilioRoom.participants.forEach(participantConnected);
+            myTwilioRoom.on('participantConnected', participantConnected);
+
+            myTwilioRoom.on('participantDisconnected', participantDisconnected);
+            myTwilioRoom.once('disconnected', error => myTwilioRoom.participants.forEach(participantDisconnected));
+        }, error => {
+            console.error(`Unable to connect to Room: ${error.message}`);
         });
 
-        tokboxSession.on('streamCreated', (event) => {
-            let subscriberObject = tokboxSession.subscribe(event.stream, 'videoContainer', {
-                insertMode: 'append',
-                fitMode: "contain",
-                showControls: false,
-                style: {
-                    "buttonDisplayMode": "off",
-                    "nameDisplayMode": "off",
-                },
-            }, handleError);
+        function participantConnected(participant) {
+            console.log('Participant "%s" connected', participant.identity);
 
-            hashedIDsToVideoElements.set(subscriberObject.stream.name, subscriberObject.element);
+            const div = document.createElement('div');
+            div.id = participant.sid;
+
+            participant.on('trackSubscribed', track => trackSubscribed(div, track));
+            participant.on('trackUnsubscribed', trackUnsubscribed);
+
+            participant.tracks.forEach(publication => {
+                if (publication.isSubscribed) {
+                    trackSubscribed(div, publication.track);
+                }
+            });
+
+            providedUserIDsToVideoElementsMap.set(participant.identity, videoContainer.appendChild(div));
             updatePositions();
-        });
+        }
 
-        tokboxSession.on('streamDestroyed', (event) => {
-            let hashedID = event.stream.name;
-            console.log(`Processing \`streamDestroyed\` event for hashedID: ${hashedID}`);
+        function participantDisconnected(participant) {
+            console.log('Participant "%s" disconnected', participant.identity);
+            document.getElementById(participant.sid).remove();
 
-            hashedIDsToVideoElements.delete(hashedID);
-            let idx = currentParticipantHashedIDs.indexOf(hashedID);
+            providedUserIDsToVideoElementsMap.delete(participant.identity);
+            let idx = currentParticipantProvidedUserIDs.indexOf(participant.identity);
             if (idx > -1) {
-                currentParticipantHashedIDs.splice(idx, 1);
+                currentParticipantProvidedUserIDs.splice(idx, 1);
             }
             updatePositions();
-        });
+        }
+
+        function trackSubscribed(div, track) {
+            div.appendChild(track.attach());
+        }
+
+        function trackUnsubscribed(track) {
+            track.detach().forEach(element => element.remove());
+        }
     }
 
     function disconnectFromVideoService() {
-        hashedIDsToVideoElements.delete(myHashedVisitID);
-        let myHashedVisitIDIdx = currentParticipantHashedIDs.indexOf(myHashedVisitID);
-        if (myHashedVisitIDIdx > -1) {
-            currentParticipantHashedIDs.splice(myHashedVisitIDIdx, 1);
+        providedUserIDsToVideoElementsMap.delete(myProvidedUserID);
+        myProvidedUserIDIdx = currentParticipantProvidedUserIDs.indexOf(myProvidedUserID);
+        if (myProvidedUserIDIdx > -1) {
+            currentParticipantProvidedUserIDs.splice(myProvidedUserIDIdx, 1);
         }
 
-        if (!tokboxSession) {
+        const mediaElements = localVideoTrack.detach();
+        mediaElements.forEach(mediaElement => mediaElement.parentNode.remove());
+
+        if (!myTwilioRoom) {
             return;
         }
 
-        console.log(`Disconnecting from TokBox...`);
-        tokboxSession.disconnect();
-        tokboxSession = null;
+        console.log(`Disconnecting from Twilio...`);
+        myTwilioRoom.disconnect();
+        myTwilioRoom = null;
     }
 </script>
 

@@ -1,0 +1,10 @@
+{
+    "HIFI_APP_ID": "",
+    "HIFI_SPACE_ID": "",
+    "HIFI_APP_SECRET": "",
+
+    "TWILIO_ROOM_NAME": "",
+    "TWILIO_ACCOUNT_SID": "",
+    "TWILIO_API_KEY_SID": "",
+    "TWILIO_API_KEY_SECRET": ""
+}
