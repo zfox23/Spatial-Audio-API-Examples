@@ -3,12 +3,11 @@ const express = require('express');
 const crypto = require('crypto');
 const auth = require('./auth.json');
 const twilio = require('twilio');
+const fetch = require('node-fetch');
 const { ADJECTIVES, NOUNS } = require('./words');
 
 // This is your "App ID" as obtained from the High Fidelity Audio API Developer Console. Do not share this string.
 const APP_ID = auth.HIFI_APP_ID;
-// This is your "Space ID" as obtained from the High Fidelity Audio API Developer Console. Do not share this string.
-const SPACE_ID = auth.HIFI_SPACE_ID;
 // This is the "App Secret" as obtained from the High Fidelity Audio API Developer Console. Do not share this string.
 const APP_SECRET = auth.HIFI_APP_SECRET;
 const SECRET_KEY_FOR_SIGNING = crypto.createSecretKey(Buffer.from(APP_SECRET, "utf8"));
@@ -18,14 +17,23 @@ const PORT = 8080;
 
 app.set('view engine', 'ejs');
 
-async function generateHiFiJWT(userID) {
+async function generateHiFiJWT(userID, spaceID, isAdmin) {
     let hiFiJWT;
     try {
-        hiFiJWT = await new SignJWT({
+        let jwtArgs = {
             "user_id": userID,
-            "app_id": APP_ID,
-            "space_id": SPACE_ID
-        })
+            "app_id": APP_ID
+        };
+
+        if (spaceID) {
+            jwtArgs["space_id"] = spaceID;
+        }
+
+        if (isAdmin) {
+            jwtArgs["admin"] = true;
+        }
+
+        hiFiJWT = await new SignJWT(jwtArgs)
             .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
             .sign(SECRET_KEY_FOR_SIGNING);
 
@@ -36,7 +44,7 @@ async function generateHiFiJWT(userID) {
     }
 }
 
-function generateTwilioAccessToken(providedUserID) {
+function generateTwilioAccessToken(providedUserID, spaceName) {
     const AccessToken = twilio.jwt.AccessToken;
     const VideoGrant = AccessToken.VideoGrant;
 
@@ -52,20 +60,49 @@ function generateTwilioAccessToken(providedUserID) {
 
     // Grant access to Video
     let grant = new VideoGrant();
-    grant.room = auth.TWILIO_ROOM_NAME;
+    grant.room = spaceName;
     accessToken.addGrant(grant);
 
     // Serialize the token as a JWT
     return accessToken.toJwt();
 }
 
+let spaceNameToIDMap = new Map();
 app.get('/videochat-twilio', async (req, res) => {
+    let spaceName = req.query.superSecretRoomNameParam || auth.TWILIO_ROOM_NAME;
+
+    let spaceID;
+    if (spaceNameToIDMap.has(spaceName)) {
+        spaceID = spaceNameToIDMap.get(spaceName);
+    } else {
+        let createSpaceResponse;
+        try {
+            createSpaceResponse = await fetch(`https://api.highfidelity.com/api/v1/spaces/create?token=${adminJWT}&name=${spaceName}`);
+        } catch (e) {
+            return res.status(500).send();
+        }
+    
+        let spaceJSON;
+        try {
+            spaceJSON = await createSpaceResponse.json();
+        } catch (e) {
+            return res.status(500).send();
+        }
+    
+        spaceID = spaceJSON["space-id"];
+        spaceNameToIDMap.set(spaceName, spaceID);
+    }
+
+    console.log(`The HiFi Space ID associated with Space Name \`${spaceName}\` is \`${spaceID}\``);
+
     let providedUserID = `${ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)]}-${NOUNS[Math.floor(Math.random() * NOUNS.length)]}${Math.floor(Math.random() * Math.floor(1000))}`;
-    let hiFiJWT = await generateHiFiJWT(providedUserID);
-    let twilioJWT = generateTwilioAccessToken(providedUserID);
-    res.render('index', { providedUserID, hiFiJWT, twilioJWT });
+    let hiFiJWT = await generateHiFiJWT(providedUserID, spaceID, false);
+    let twilioJWT = generateTwilioAccessToken(providedUserID, spaceName);
+    res.render('index', { providedUserID, hiFiJWT, twilioJWT, spaceName });
 });
 
-app.listen(PORT, () => {
+let adminJWT;
+app.listen(PORT, async () => {
+    adminJWT = await generateHiFiJWT("example-admin", undefined, true);
     console.log(`The High Fidelity Sample App is ready and listening at http://localhost:${PORT}\nVisit http://localhost:${PORT}/videochat-twilio in your browser.`)
 });
