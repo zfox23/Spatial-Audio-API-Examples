@@ -86,93 +86,6 @@
     toggleOutputMuteButton.addEventListener("click", toggleOutputMute);
     let videoContainer = document.querySelector('.videoContainer');
 
-    let userConfigurations = [
-        {
-            "positions": [
-                new HighFidelityAudio.Point3D({ "x": 0, "y": 0, "z": 0 }),
-            ],
-            "orientations": [
-                new HighFidelityAudio.OrientationEuler3D({ "pitchDegrees": 0, "yawDegrees": 0, "rollDegrees": 0 }),
-            ],
-            "eachVideoStyle": { "width": "100%", "height": "100%" },
-        },
-        {
-            "positions": [
-                new HighFidelityAudio.Point3D({ "x": 0, "y": 0.5, "z": 0 }),
-                new HighFidelityAudio.Point3D({ "x": 0, "y": -0.5, "z": 0 }),
-            ],
-            "orientations": [
-                new HighFidelityAudio.OrientationEuler3D({ "pitchDegrees": 0, "yawDegrees": 0, "rollDegrees": 0 }),
-                new HighFidelityAudio.OrientationEuler3D({ "pitchDegrees": 0, "yawDegrees": 0, "rollDegrees": 0 }),
-            ],
-            "eachVideoStyle": { "width": "100%", "height": "50%" },
-        },
-        {
-            "positions": [
-                new HighFidelityAudio.Point3D({ "x": 0, "y": 0.5, "z": 0 }),
-                new HighFidelityAudio.Point3D({ "x": -0.35, "y": -0.5, "z": 0 }),
-                new HighFidelityAudio.Point3D({ "x": 0.35, "y": -0.5, "z": 0 }),
-            ],
-            "orientations": [
-                new HighFidelityAudio.OrientationEuler3D({ "pitchDegrees": 0, "yawDegrees": 0, "rollDegrees": 0 }),
-                new HighFidelityAudio.OrientationEuler3D({ "pitchDegrees": 0, "yawDegrees": 0, "rollDegrees": 0 }),
-                new HighFidelityAudio.OrientationEuler3D({ "pitchDegrees": 0, "yawDegrees": 0, "rollDegrees": 0 }),
-            ],
-            "eachVideoStyle": { "width": "50%", "height": "50%" },
-        },
-        {
-            "positions": [
-                new HighFidelityAudio.Point3D({ "x": -0.5, "y": -0.5, "z": 0 }),
-                new HighFidelityAudio.Point3D({ "x": 0.5, "y": -0.5, "z": 0 }),
-                new HighFidelityAudio.Point3D({ "x": 0.5, "y": 0.5, "z": 0 }),
-                new HighFidelityAudio.Point3D({ "x": -0.5, "y": 0.5, "z": 0 }),
-            ],
-            "orientations": [
-                new HighFidelityAudio.OrientationEuler3D({ "pitchDegrees": 0, "yawDegrees": 0, "rollDegrees": 0 }),
-                new HighFidelityAudio.OrientationEuler3D({ "pitchDegrees": 0, "yawDegrees": 0, "rollDegrees": 0 }),
-                new HighFidelityAudio.OrientationEuler3D({ "pitchDegrees": 0, "yawDegrees": 0, "rollDegrees": 0 }),
-                new HighFidelityAudio.OrientationEuler3D({ "pitchDegrees": 0, "yawDegrees": 0, "rollDegrees": 0 }),
-            ],
-            "eachVideoStyle": { "width": "50%", "height": "50%" },
-        },
-        {
-            "positions": [
-                new HighFidelityAudio.Point3D({ "x": -0.75, "y": 0.5, "z": 0 }),
-                new HighFidelityAudio.Point3D({ "x": 0, "y": 0.5, "z": 0 }),
-                new HighFidelityAudio.Point3D({ "x": 0.75, "y": 0.5, "z": 0 }),
-                new HighFidelityAudio.Point3D({ "x": -0.75, "y": -0.5, "z": 0 }),
-                new HighFidelityAudio.Point3D({ "x": 0, "y": -0.5, "z": 0 }),
-            ],
-            "orientations": [
-                new HighFidelityAudio.OrientationEuler3D({ "pitchDegrees": 0, "yawDegrees": 0, "rollDegrees": 0 }),
-                new HighFidelityAudio.OrientationEuler3D({ "pitchDegrees": 0, "yawDegrees": 0, "rollDegrees": 0 }),
-                new HighFidelityAudio.OrientationEuler3D({ "pitchDegrees": 0, "yawDegrees": 0, "rollDegrees": 0 }),
-                new HighFidelityAudio.OrientationEuler3D({ "pitchDegrees": 0, "yawDegrees": 0, "rollDegrees": 0 }),
-                new HighFidelityAudio.OrientationEuler3D({ "pitchDegrees": 0, "yawDegrees": 0, "rollDegrees": 0 }),
-            ],
-            "eachVideoStyle": { "width": "33%", "height": "33%" },
-        },
-        {
-            "positions": [
-                new HighFidelityAudio.Point3D({ "x": -0.75, "y": 0.5, "z": 0 }),
-                new HighFidelityAudio.Point3D({ "x": 0, "y": 0.5, "z": 0 }),
-                new HighFidelityAudio.Point3D({ "x": 0.75, "y": 0.5, "z": 0 }),
-                new HighFidelityAudio.Point3D({ "x": -0.75, "y": -0.5, "z": 0 }),
-                new HighFidelityAudio.Point3D({ "x": 0, "y": -0.5, "z": 0 }),
-                new HighFidelityAudio.Point3D({ "x": 0.75, "y": -0.5, "z": 0 }),
-            ],
-            "orientations": [
-                new HighFidelityAudio.OrientationEuler3D({ "pitchDegrees": 0, "yawDegrees": 0, "rollDegrees": 0 }),
-                new HighFidelityAudio.OrientationEuler3D({ "pitchDegrees": 0, "yawDegrees": 0, "rollDegrees": 0 }),
-                new HighFidelityAudio.OrientationEuler3D({ "pitchDegrees": 0, "yawDegrees": 0, "rollDegrees": 0 }),
-                new HighFidelityAudio.OrientationEuler3D({ "pitchDegrees": 0, "yawDegrees": 0, "rollDegrees": 0 }),
-                new HighFidelityAudio.OrientationEuler3D({ "pitchDegrees": 0, "yawDegrees": 0, "rollDegrees": 0 }),
-                new HighFidelityAudio.OrientationEuler3D({ "pitchDegrees": 0, "yawDegrees": 0, "rollDegrees": 0 }),
-            ],
-            "eachVideoStyle": { "width": "33%", "height": "33%" },
-        },
-    ]
-
     function clamp(value, min, max) {
         return Math.min(Math.max(value, min), max);
     }
@@ -184,6 +97,8 @@
             (factor - minInput) / (maxInput - minInput);
     }
 
+    const FORWARD_ORIENTATION = new HighFidelityAudio.OrientationEuler3D({ "pitchDegrees": 0, "yawDegrees": 0, "rollDegrees": 0 });
+    let possiblePositions = [];
     function updatePositions() {
         if (!hifiCommunicator) {
             return;
@@ -198,51 +113,61 @@
 
         console.log(`${numParticipants} participants.`);
 
-        if (numParticipants > userConfigurations.length) {
-            console.error(`Can't update positions! No position config for ${numParticipants} participants.`);
-            return;
-        }
-
         let myIndex = currentParticipantProvidedUserIDs.indexOf(myProvidedUserID);
         if (myIndex === -1) {
             console.error(`Couldn't find \`myProvidedUserID\` ${myProvidedUserID} in \`currentParticipantProvidedUserIDs\`!`);
             return;
         }
 
-        let positionConfiguration = userConfigurations[numParticipants - 1];
+        let numRows;
+        let numCols;
 
-        let myPosition = positionConfiguration.positions[myIndex];
-        let myOrientation = positionConfiguration.orientations[myIndex];
+        if (numParticipants === 1) {
+            numRows = 1;
+            numCols = 1;
+        } else if (numParticipants === 2) {
+            numRows = 2;
+            numCols = 1;
+        } else if (numParticipants === 3 || numParticipants === 4) {
+            numRows = 2;
+            numCols = 2;
+        } else if (numParticipants === 5 || numParticipants === 6) {
+            numRows = 2;
+            numCols = 3;
+        } else if (numParticipants > 6) {
+            numRows = Math.ceil(Math.sqrt(numParticipants));
+            numCols = Math.ceil(Math.sqrt(numParticipants));
+        }
+
+        let virtualSpaceDimensions = {
+            "x": numRows * numCols / 2,
+            "y": numRows * numCols / 2,
+        };
+        console.log(`New virtual space dimensions (meters):\n${JSON.stringify(virtualSpaceDimensions)}`);
+        possiblePositions = [];
+        for (let i = -virtualSpaceDimensions.x / 2; i < virtualSpaceDimensions.x / 2; i += virtualSpaceDimensions.x / numCols) {
+            for (let j = -virtualSpaceDimensions.y / 2; j < virtualSpaceDimensions.y / 2; j += virtualSpaceDimensions.y / numRows) {
+                possiblePositions.push(new HighFidelityAudio.Point3D({ "x": i + virtualSpaceDimensions.x / numCols / 2, "y": j + virtualSpaceDimensions.y / numRows / 2, "z": 0 }));
+            }
+        }
+
+        let myPosition = possiblePositions[myIndex];
+        console.log(`Possible positions:\n${JSON.stringify(possiblePositions, null, 4)}`);
+        console.log(`Number of possible positions:\n${possiblePositions.length}`);
+        console.log(`My position:\n${JSON.stringify(myPosition)}`);
 
         console.log(hifiCommunicator.updateUserDataAndTransmit({
             position: myPosition,
-            orientationEuler: myOrientation,
+            orientationEuler: FORWARD_ORIENTATION,
         }));
-
-        let possiblePositions = positionConfiguration.positions;
-        let xMin = 9999;
-        let xMax = -9999;
-        let yMin = 9999;
-        let yMax = -9999;
-        for (let i = 0; i < possiblePositions.length; i++) {
-            if (possiblePositions[i].x < xMin) {
-                xMin = possiblePositions[i].x;
-            }
-            if (possiblePositions[i].x > xMax) {
-                xMax = possiblePositions[i].x;
-            }
-            if (possiblePositions[i].y < yMin) {
-                yMin = possiblePositions[i].y;
-            }
-            if (possiblePositions[i].y > yMax) {
-                yMax = possiblePositions[i].y;
-            }
-        }
 
         let videoContainerWidth = videoContainer.offsetWidth;
         let videoContainerHeight = videoContainer.offsetHeight;
 
-        let eachVideoStyle = userConfigurations[numParticipants - 1].eachVideoStyle;
+        let eachVideoStyle = {
+            "width": `${100 / numCols}%`,
+            "height": `${100 / numRows}%`,
+        };
 
         providedUserIDsToVideoElementsMap.forEach((value, key, map) => {
             let idx = currentParticipantProvidedUserIDs.indexOf(key);
@@ -250,13 +175,13 @@
                 console.error(`Couldn't find \`providedUserID\` \`${key}\` in \`currentParticipantProvidedUserIDs\`!`);
                 return;
             }
-            let position = positionConfiguration.positions[idx];
+            let position = possiblePositions[idx];
 
             value.style.width = eachVideoStyle.width;
             value.style.height = eachVideoStyle.height;
 
             // `-1` term because we want higher `position.y` values to yield a video towards the top of the browser window
-            let topOffset = linearScale(-1 * position.y, yMin, yMax, 0, videoContainerHeight) - (value.offsetHeight / 2);
+            let topOffset = linearScale(-1 * position.y, -virtualSpaceDimensions.y / 2, virtualSpaceDimensions.y / 2, 0, videoContainerHeight) - (value.offsetHeight / 2);
             topOffset = clamp(topOffset, 0, videoContainerHeight - value.offsetHeight);
             if (numParticipants > 1) {
                 value.style.top = `${topOffset}px`;
@@ -264,7 +189,7 @@
                 value.style.top = "0";
             }
 
-            let leftOffset = linearScale(position.x, xMin, xMax, 0, videoContainerWidth) - (value.offsetWidth / 2);
+            let leftOffset = linearScale(position.x, -virtualSpaceDimensions.x / 2, virtualSpaceDimensions.x / 2, 0, videoContainerWidth) - (value.offsetWidth / 2);
             leftOffset = clamp(leftOffset, 0, videoContainerWidth - value.offsetWidth);
             if (numParticipants > 1) {
                 value.style.left = `${leftOffset}px`;
