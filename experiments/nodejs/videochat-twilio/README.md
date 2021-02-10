@@ -12,4 +12,4 @@ Zach Fox
     - Obtain `HIFI_*` credentials from the [High Fidelity Spatial Audio API Developer Console](https://account.highfidelity.com/dev/account)
     - Obtain `TWILIO_*` credentials from the [Twilio Console](https://www.twilio.com/console)
 5. Run `npm run start`
-6. Using a Web browser, navigate to [localhost:8080](http://localhost:8080).
+6. Using a Web browser, navigate to [localhost:8080/videochat-twilio](http://localhost:8080/videochat-twilio).

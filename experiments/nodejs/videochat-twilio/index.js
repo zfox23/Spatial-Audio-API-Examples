@@ -59,7 +59,7 @@ function generateTwilioAccessToken(providedUserID) {
     return accessToken.toJwt();
 }
 
-app.get('/', async (req, res) => {
+app.get('/videochat-twilio', async (req, res) => {
     let providedUserID = `${ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)]}-${NOUNS[Math.floor(Math.random() * NOUNS.length)]}${Math.floor(Math.random() * Math.floor(1000))}`;
     let hiFiJWT = await generateHiFiJWT(providedUserID);
     let twilioJWT = generateTwilioAccessToken(providedUserID);
@@ -67,5 +67,5 @@ app.get('/', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`The High Fidelity Sample App is ready and listening at http://localhost:${PORT}`)
+    console.log(`The High Fidelity Sample App is ready and listening at http://localhost:${PORT}\nVisit http://localhost:${PORT}/videochat-twilio in your browser.`)
 });
