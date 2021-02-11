@@ -74,7 +74,7 @@
     </div>
 </body>
 
-<script src="https://hifi-spatial-audio-api.s3.amazonaws.com/releases/v0.2.2/HighFidelityAudio-latest.js"></script>
+<script src="https://hifi-spatial-audio-api.s3.amazonaws.com/releases/latest/HighFidelityAudio-latest.js"></script>
 <script>
     let connectDisconnectButton = document.querySelector('.connectDisconnectButton');
     connectDisconnectButton.addEventListener("click", connectToHiFiAndVideoService);
@@ -201,7 +201,7 @@
 
     function onNewHiFiUserDataReceived(receivedHiFiAudioAPIDataArray) {
         let newUserReceived = false;
-        
+
         for (let i = 0; i < receivedHiFiAudioAPIDataArray.length; i++) {
             let currentProvidedVisitID = receivedHiFiAudioAPIDataArray[i].providedUserID;
             if (currentParticipantProvidedUserIDs.indexOf(currentProvidedVisitID) === -1) {

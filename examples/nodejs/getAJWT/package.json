@@ -1,0 +1,15 @@
+{
+  "name": "spatial-audio-api-example-getajwt",
+  "version": "1.0.0",
+  "description": "Zach Fox",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Zach Fox",
+  "license": "MIT",
+  "dependencies": {
+    "hifi-spatial-audio": "^0.2.2",
+    "jose": "^3.6.1"
+  }
+}

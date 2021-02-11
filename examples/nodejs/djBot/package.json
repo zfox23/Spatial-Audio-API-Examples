@@ -1,0 +1,20 @@
+{
+  "name": "spatial-audio-api-example-djbot",
+  "version": "1.0.0",
+  "description": "Howard Stearns and Zach Fox",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Howard Stearns and Zach Fox",
+  "license": "MIT",
+  "dependencies": {
+    "audio-decode": "^1.4.0",
+    "audio-format": "^2.3.2",
+    "hifi-spatial-audio": "^0.2.2",
+    "jose": "^3.6.1",
+    "pcm-convert": "^1.6.5",
+    "wrtc": "^0.4.7",
+    "yargs": "^16.2.0"
+  }
+}
