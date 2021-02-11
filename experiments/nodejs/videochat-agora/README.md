@@ -12,4 +12,4 @@ Zach Fox
     - Obtain `HIFI_*` credentials from the [High Fidelity Spatial Audio API Developer Console](https://account.highfidelity.com/dev/account)
     - Obtain `AGORA_*` credentials from the [Agora Console](https://console.agora.io/)
 5. Run `npm run start`
-6. Using a Web browser, navigate to [localhost:8080/videochat-agora](http://localhost:8080/videochat-twilio).
+6. Using a Web browser, navigate to [localhost:8080/videochat-agora](http://localhost:8080/videochat-agora).
