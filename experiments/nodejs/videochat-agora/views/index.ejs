@@ -138,8 +138,8 @@
         }
 
         let virtualSpaceDimensions = {
-            "x": 1.5,
-            "y": 1.5,
+            "x": numRows / 2,
+            "y": numCols / 2,
         };
         console.log(`New virtual space dimensions (meters):\n${JSON.stringify(virtualSpaceDimensions)}`);
         possiblePositions = [];
@@ -198,13 +198,18 @@
     }
 
     function onNewHiFiUserDataReceived(receivedHiFiAudioAPIDataArray) {
+        let newUserReceived = false;
+        
         for (let i = 0; i < receivedHiFiAudioAPIDataArray.length; i++) {
             let currentProvidedVisitID = receivedHiFiAudioAPIDataArray[i].providedUserID;
             if (currentParticipantProvidedUserIDs.indexOf(currentProvidedVisitID) === -1) {
                 console.log(`New HiFi User! Provided ID: ${currentProvidedVisitID}`);
                 currentParticipantProvidedUserIDs.push(currentProvidedVisitID);
-                updatePositions();
             }
+        }
+        
+        if (newUserReceived) {
+            updatePositions();
         }
     }
 
