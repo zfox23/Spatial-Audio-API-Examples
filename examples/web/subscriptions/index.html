@@ -8,9 +8,7 @@
 </head>
 
 <body style="width: 100%; height: 100%; margin: 0; padding: 0;">
-    <button class="connectButton" style="width: 100%; height: 200px; margin: 0; font-weight: bold; font-size: 14px;"
-        onclick="connectToHiFiAudio()">Click to
-        Connect</button>
+    <button class="connectDisconnectButton" style="width: 100%; height: 200px; margin: 0; font-weight: bold; font-size: 14px;" disabled="true">Click to Connect</button>
     <audio controls autoplay class="outputAudioEl" style="width: 100%; height: 75px; margin: 0;"></audio>
     <div class="allUserDataUpdates" style="width: 100%; height: calc(100% - 75px - 200px); margin: 0;">
 
@@ -18,8 +16,9 @@
 
     <script src="https://hifi-spatial-audio-api.s3.amazonaws.com/releases/latest/HighFidelityAudio-latest.js"></script>
     <script>
-        // We use this to change the text of the "Connect" button to "Connected", and to disable that button after clicking it.
-        let connectButton = document.querySelector('.connectButton');
+        let connectDisconnectButton = document.querySelector('.connectDisconnectButton');
+        connectDisconnectButton.addEventListener("click", connectToHiFiAudio);
+        connectDisconnectButton.disabled = false;
 
         // This function will log the 10 most recent peer data updates to a div on the DOM.
         function onNewUserDataReceived(receivedHiFiAudioAPIDataArray) {
@@ -46,11 +45,14 @@
             allUserDataUpdates.appendChild(newDataDiv);
         }
 
+        let hifiCommunicator;
         // Called when the user presses the big "Click to Connect" button on the DOM.
         async function connectToHiFiAudio(stream) {
+            HighFidelityAudio.HiFiLogger.setHiFiLogLevel(HighFidelityAudio.HiFiLogLevel.Debug);
+
             // Disable the Connect button after the user clicks it so we don't double-connect.
-            connectButton.disabled = true;
-            connectButton.innerHTML = `Connecting...`;
+            connectDisconnectButton.disabled = true;
+            connectDisconnectButton.innerHTML = `Connecting...`;
 
             // Get the audio media stream associated with the user's default audio input device.
             let audioMediaStream;
@@ -68,7 +70,7 @@
             });
 
             // Set up our `HiFiCommunicator` object, supplying our media stream and initial user data.
-            let hifiCommunicator = new HighFidelityAudio.HiFiCommunicator({
+            hifiCommunicator = new HighFidelityAudio.HiFiCommunicator({
                 initialHiFiAudioAPIData: initialHiFiAudioAPIData
             });
             await hifiCommunicator.setInputAudioMediaStream(audioMediaStream);
@@ -80,13 +82,16 @@
                 await hifiCommunicator.connectToHiFiAudioAPIServer(HIFI_AUDIO_JWT);
             } catch (e) {
                 console.error(`Error connecting to High Fidelity:\n${e}`);
-                connectButton.disabled = false;
-                connectButton.innerHTML = `Connection error. Retry?`;
+                connectDisconnectButton.disabled = false;
+                connectDisconnectButton.innerHTML = `Connection error. Retry?`;
                 return;
             }
 
             // Show the user that we're connected by changing the text on the button.
-            connectButton.innerHTML = `Connected! Talk into your mic and watch the Volume data change below. That Volume data is computed by the server, not the client.`;
+            connectDisconnectButton.removeEventListener("click", connectToHiFiAudio);
+            connectDisconnectButton.addEventListener("click", disconnectFromHiFiAudio);
+            connectDisconnectButton.innerHTML = `Connected! Talk into your mic and watch the Volume data change below. That Volume data is computed by the server, not the client. Tap to disconnect.`;
+            connectDisconnectButton.disabled = false;
 
             // Set the `srcObject` on our `audio` DOM element to the final, mixed audio stream from the High Fidelity Audio API Server.
             document.querySelector(`.outputAudioEl`).srcObject = hifiCommunicator.getOutputAudioMediaStream();
@@ -105,6 +110,22 @@
             // Actually add the newly-constructed Data Subscription to the list of our Data Subscriptions on our `HiFiCommunicator`.
             hifiCommunicator.addUserDataSubscription(newUserDataSubscription);
         }
+
+        function disconnectFromHiFiAudio() {
+            console.log(`Disconnecting from High Fidelity Audio API Servers...`);
+
+            connectDisconnectButton.removeEventListener("click", disconnectFromHiFiAudio);
+            connectDisconnectButton.addEventListener("click", connectToHiFiAudio);
+            connectDisconnectButton.disabled = false;
+            connectDisconnectButton.innerHTML = `Connect`;
+
+            if (hifiCommunicator) {
+                hifiCommunicator.disconnectFromHiFiAudioAPIServer();
+            }
+            hifiCommunicator = null;
+        }
+
+        window.onbeforeunload = disconnectFromHiFiAudio;
     </script>
 </body>
 
