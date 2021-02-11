@@ -3,6 +3,8 @@ This repository contains example projects that make use of the [High Fidelity Sp
 
 These example projects augment the API walkthrough guides you can find at [highfidelity.com/api/guides](https://www.highfidelity.com/api/guides).
 
+**We would love your contributions!** If you're interested in submitting an example application of your own, open a pull request against this repository.
+
 # The `examples` Directory
 😎 The `examples` directory of this repository contains complete, commented, tested, hopefully-working example projects that import the High Fidelity Spatial Audio Client Library.
 
