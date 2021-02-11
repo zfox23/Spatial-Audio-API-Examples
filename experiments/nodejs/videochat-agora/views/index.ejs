@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>High Fidelity - Spatial Audio with Video Chat from Agora</title>
+
+    <style>
+        body {
+            background-color: #222222;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        p {
+            color: white;
+            margin: 0;
+        }
+
+        button {
+            width: 200px;
+            height: 100%;
+            margin: 0;
+        }
+
+        .controlsContainer {
+            position: fixed;
+            width: 100%;
+            height: 40px;
+            padding: 10px;
+            left: 0;
+            top: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-evenly;
+            background-color: #111111;
+        }
+
+        .controlsContainer>div {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .videoContainer {
+            width: 100%;
+            height: calc(100vh - 40px - 20px);
+            position: fixed;
+            bottom: 0;
+            left: 0;
+        }
+
+        .videoContainer>div {
+            position: absolute !important;
+        }
+
+        .videoContainer video {
+            transform: rotateY(180deg);
+        }
+    </style>
+</head>
+
+<body style="width: 100%; height: 100%; margin: 0; padding: 0;">
+    <div id="videoContainer" class="videoContainer"></div>
+    <div class="controlsContainer">
+        <div>
+            <p>HiFi Spatial Audio with Agora Video Chat</p>
+            <p>(ID: <%- providedUserID %>) (Space: <%- spaceName %>)</p>
+        </div>
+        <button class="connectDisconnectButton" disabled="true">Click to Connect</button>
+        <button class="toggleInputMuteButton" disabled="true">Toggle Mic Mute (currently unmuted)</button>
+        <button class="toggleOutputMuteButton">Toggle Output Mute (currently unmuted)</button>
+        <audio autoplay class="outputAudioEl"></audio>
+    </div>
+</body>
+
+<script src="https://hifi-spatial-audio-api.s3.amazonaws.com/releases/v0.2.2/HighFidelityAudio-latest.js"></script>
+<script>
+    let connectDisconnectButton = document.querySelector('.connectDisconnectButton');
+    connectDisconnectButton.addEventListener("click", connectToHiFiAndVideoService);
+    connectDisconnectButton.disabled = false;
+    let toggleInputMuteButton = document.querySelector('.toggleInputMuteButton');
+    toggleInputMuteButton.addEventListener("click", toggleInputMute);
+    let outputAudioEl = document.querySelector(`.outputAudioEl`);
+    let toggleOutputMuteButton = document.querySelector('.toggleOutputMuteButton');
+    toggleOutputMuteButton.addEventListener("click", toggleOutputMute);
+    let videoContainer = document.querySelector('.videoContainer');
+
+    function clamp(value, min, max) {
+        return Math.min(Math.max(value, min), max);
+    }
+
+    function linearScale(factor, minInput, maxInput, minOutput, maxOutput) {
+        factor = clamp(factor, minInput, maxInput);
+
+        return minOutput + (maxOutput - minOutput) *
+            (factor - minInput) / (maxInput - minInput);
+    }
+
+    const FORWARD_ORIENTATION = new HighFidelityAudio.OrientationEuler3D({ "pitchDegrees": 0, "yawDegrees": 0, "rollDegrees": 0 });
+    let possiblePositions = [];
+    function updatePositions() {
+        if (!hifiCommunicator) {
+            return;
+        }
+
+        let numParticipants = currentParticipantProvidedUserIDs.length;
+        if (!numParticipants) {
+            return;
+        }
+
+        currentParticipantProvidedUserIDs.sort();
+
+        console.log(`${numParticipants} participants.`);
+
+        let myIndex = currentParticipantProvidedUserIDs.indexOf(myProvidedUserID);
+        if (myIndex === -1) {
+            console.error(`Couldn't find \`myProvidedUserID\` ${myProvidedUserID} in \`currentParticipantProvidedUserIDs\`!`);
+            return;
+        }
+
+        let numRows;
+        let numCols;
+
+        if (numParticipants === 1) {
+            numRows = 1;
+            numCols = 1;
+        } else if (numParticipants === 2) {
+            numRows = 2;
+            numCols = 1;
+        } else if (numParticipants === 3 || numParticipants === 4) {
+            numRows = 2;
+            numCols = 2;
+        } else if (numParticipants === 5 || numParticipants === 6) {
+            numRows = 2;
+            numCols = 3;
+        } else if (numParticipants > 6) {
+            numRows = Math.ceil(Math.sqrt(numParticipants));
+            numCols = Math.ceil(Math.sqrt(numParticipants));
+        }
+
+        let virtualSpaceDimensions = {
+            "x": 1.5,
+            "y": 1.5,
+        };
+        console.log(`New virtual space dimensions (meters):\n${JSON.stringify(virtualSpaceDimensions)}`);
+        possiblePositions = [];
+        for (let i = -virtualSpaceDimensions.x / 2; i < virtualSpaceDimensions.x / 2; i += virtualSpaceDimensions.x / numCols) {
+            for (let j = -virtualSpaceDimensions.y / 2; j < virtualSpaceDimensions.y / 2; j += virtualSpaceDimensions.y / numRows) {
+                possiblePositions.push(new HighFidelityAudio.Point3D({ "x": i + virtualSpaceDimensions.x / numCols / 2, "y": j + virtualSpaceDimensions.y / numRows / 2, "z": 0 }));
+            }
+        }
+
+        let myPosition = possiblePositions[myIndex];
+        console.log(`Possible positions:\n${JSON.stringify(possiblePositions, null, 4)}`);
+        console.log(`Number of possible positions:\n${possiblePositions.length}`);
+        console.log(`My position:\n${JSON.stringify(myPosition)}`);
+
+        console.log(hifiCommunicator.updateUserDataAndTransmit({
+            position: myPosition,
+            orientationEuler: FORWARD_ORIENTATION,
+        }));
+
+        let videoContainerWidth = videoContainer.offsetWidth;
+        let videoContainerHeight = videoContainer.offsetHeight;
+
+        let eachVideoStyle = {
+            "width": `${100 / numCols}%`,
+            "height": `${100 / numRows}%`,
+        };
+
+        providedUserIDsToVideoElementsMap.forEach((value, key, map) => {
+            let idx = currentParticipantProvidedUserIDs.indexOf(key);
+            if (idx === -1) {
+                console.error(`Couldn't find \`providedUserID\` \`${key}\` in \`currentParticipantProvidedUserIDs\`!`);
+                return;
+            }
+            let position = possiblePositions[idx];
+
+            value.style.width = eachVideoStyle.width;
+            value.style.height = eachVideoStyle.height;
+
+            // `-1` term because we want higher `position.y` values to yield a video towards the top of the browser window
+            let topOffset = linearScale(-1 * position.y, -virtualSpaceDimensions.y / 2, virtualSpaceDimensions.y / 2, 0, videoContainerHeight) - (value.offsetHeight / 2);
+            topOffset = clamp(topOffset, 0, videoContainerHeight - value.offsetHeight);
+            if (numParticipants > 1) {
+                value.style.top = `${topOffset}px`;
+            } else {
+                value.style.top = "0";
+            }
+
+            let leftOffset = linearScale(position.x, -virtualSpaceDimensions.x / 2, virtualSpaceDimensions.x / 2, 0, videoContainerWidth) - (value.offsetWidth / 2);
+            leftOffset = clamp(leftOffset, 0, videoContainerWidth - value.offsetWidth);
+            if (numParticipants > 1) {
+                value.style.left = `${leftOffset}px`;
+            } else {
+                value.style.left = "0";
+            }
+        });
+    }
+
+    function onNewHiFiUserDataReceived(receivedHiFiAudioAPIDataArray) {
+        for (let i = 0; i < receivedHiFiAudioAPIDataArray.length; i++) {
+            let currentProvidedVisitID = receivedHiFiAudioAPIDataArray[i].providedUserID;
+            if (currentParticipantProvidedUserIDs.indexOf(currentProvidedVisitID) === -1) {
+                console.log(`New HiFi User! Provided ID: ${currentProvidedVisitID}`);
+                currentParticipantProvidedUserIDs.push(currentProvidedVisitID);
+                updatePositions();
+            }
+        }
+    }
+
+    async function connectToHiFiAndVideoService() {
+        await connectToHiFi();
+        await connectToVideoService();
+    }
+
+    let hifiCommunicator;
+    let myProvidedUserID;
+    let currentParticipantProvidedUserIDs = [];
+    async function connectToHiFi() {
+        // Disable the Connect button after the user clicks it so we don't double-connect.
+        connectDisconnectButton.disabled = true;
+        connectDisconnectButton.innerHTML = `Connecting...`;
+        toggleInputMuteButton.disabled = true;
+
+        // Get the audio media stream associated with the user's default audio input device.
+        let audioMediaStream;
+        try {
+            audioMediaStream = await navigator.mediaDevices.getUserMedia({ audio: HighFidelityAudio.getBestAudioConstraints(), video: false });
+        } catch (e) {
+            return;
+        }
+
+        // Set up the initial data for our user.
+        // They'll be standing at the origin, facing "forward".
+        let initialHiFiAudioAPIData = new HighFidelityAudio.HiFiAudioAPIData({
+            position: new HighFidelityAudio.Point3D({ "x": 0, "y": 0, "z": 0 }),
+            orientationEuler: new HighFidelityAudio.OrientationEuler3D({ "pitch": 0, "yaw": 0, "roll": 0 })
+        });
+
+        HighFidelityAudio.HiFiLogger.setHiFiLogLevel(HighFidelityAudio.HiFiLogLevel.Debug);
+
+        // Set up our `HiFiCommunicator` object, supplying our media stream and initial user data.
+        hifiCommunicator = new HighFidelityAudio.HiFiCommunicator({
+            initialHiFiAudioAPIData: initialHiFiAudioAPIData
+        });
+        await hifiCommunicator.setInputAudioMediaStream(audioMediaStream);
+
+        currentParticipantProvidedUserIDs = [];
+        providedUserIDsToVideoElementsMap.clear();
+
+        // Connect to the HiFi Audio API server!
+        try {
+            let response = await hifiCommunicator.connectToHiFiAudioAPIServer('<%- hiFiJWT %>');
+            myProvidedUserID = response.audionetInitResponse.user_id;
+            currentParticipantProvidedUserIDs.push(myProvidedUserID);
+            console.log(`My Provided User ID: ${myProvidedUserID}`);
+        } catch (e) {
+            console.error(`Error connecting to High Fidelity:\n${e}`);
+            connectDisconnectButton.disabled = false;
+            toggleInputMuteButton.disabled = true;
+            connectDisconnectButton.innerHTML = `Connection error. Retry?`;
+            return;
+        }
+
+        // Show the user that we're connected by changing the text on the button.
+        connectDisconnectButton.removeEventListener("click", connectToHiFiAndVideoService);
+        connectDisconnectButton.addEventListener("click", disconnectFromHiFiAndVideoService);
+        connectDisconnectButton.innerHTML = `Disconnect`;
+        connectDisconnectButton.disabled = false;
+        toggleInputMuteButton.disabled = false;
+
+        // Set the `srcObject` on our `audio` DOM element to the final, mixed audio stream from the High Fidelity Audio API Server.
+        outputAudioEl.srcObject = hifiCommunicator.getOutputAudioMediaStream();
+        // We explicitly call `play()` here because certain browsers won't play the newly-set stream automatically.
+        outputAudioEl.play();
+
+        // Set up a new User Data Subscription to get User Data updates from the server.
+        let newUserDataSubscription = new HighFidelityAudio.UserDataSubscription({
+            // Setting `providedUserID` to `null` (or omitting it) means we will get data updates from **all** connected Users, including ourselves.
+            "providedUserID": null,
+            // There are other components we could subscribe to here, but we're only subscribing to Volume data updates.
+            "components": [HighFidelityAudio.AvailableUserDataSubscriptionComponents.Position, HighFidelityAudio.AvailableUserDataSubscriptionComponents.OrientationEuler],
+            // See above for the definition of `onNewHiFiUserDataReceived`.
+            "callback": onNewHiFiUserDataReceived
+        });
+        // Actually add the newly-constructed Data Subscription to the list of our Data Subscriptions on our `HiFiCommunicator`.
+        hifiCommunicator.addUserDataSubscription(newUserDataSubscription);
+    }
+
+    let isMuted = false;
+    async function toggleInputMute() {
+        if (!hifiCommunicator) {
+            return;
+        }
+        if (await hifiCommunicator.setInputAudioMuted(!isMuted)) {
+            isMuted = !isMuted;
+            toggleInputMuteButton.innerHTML = `Toggle Mute (currently ${isMuted ? "muted" : "unmuted"})`;
+        }
+    }
+
+    function toggleOutputMute() {
+        outputAudioEl.muted = !outputAudioEl.muted;
+        console.log(`Set output mute status to \`${outputAudioEl.muted}\``);
+        toggleOutputMuteButton.innerHTML = `Toggle Output Mute (currently ${outputAudioEl.muted ? "muted" : "unmuted"})`;
+    }
+
+    async function disconnectFromHiFiAndVideoService() {
+        await disconnectFromVideoService();
+        disconnectFromHiFi();
+    }
+
+    function disconnectFromHiFi() {
+        console.log(`Disconnecting from High Fidelity Audio API Servers...`);
+
+        connectDisconnectButton.removeEventListener("click", disconnectFromHiFiAndVideoService);
+        connectDisconnectButton.addEventListener("click", connectToHiFiAndVideoService);
+        connectDisconnectButton.disabled = false;
+        connectDisconnectButton.innerHTML = `Connect`;
+
+        toggleInputMuteButton.disabled = true;
+        isMuted = false;
+
+        if (hifiCommunicator) {
+            hifiCommunicator.disconnectFromHiFiAudioAPIServer();
+        }
+        hifiCommunicator = null;
+    }
+
+    window.onresize = updatePositions;
+    window.onbeforeunload = disconnectFromHiFiAndVideoService;
+</script>
+
+<script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.3.0.js"></script>
+<script>
+    // This script contains code specific to using Agora as a video service provider.
+    let rtc = {
+        // For the local client.
+        client: AgoraRTC.createClient({ mode: "rtc", codec: "vp8" }),
+        localVideoTrack: null,
+    };
+
+    rtc.client.on("user-published", async (user, mediaType) => {
+        // Subscribe to a remote user.
+        await rtc.client.subscribe(user, mediaType);
+        console.log("subscribe success");
+
+        // If the subscribed track is video.
+        if (mediaType === "video") {
+            // Get `RemoteVideoTrack` in the `user` object.
+            const remoteVideoTrack = user.videoTrack;
+            // Dynamically create a container in the form of a DIV element for playing the remote video track.
+            const playerContainer = document.createElement("div");
+            // Specify the ID of the DIV container. You can use the `uid` of the remote user.
+            playerContainer.id = user.uid.toString();
+            providedUserIDsToVideoElementsMap.set(user.uid, videoContainer.appendChild(playerContainer));
+            updatePositions();
+            remoteVideoTrack.play(playerContainer, {fit: 'contain'});
+        }
+    });
+
+    rtc.client.on("user-unpublished", user => {
+        document.getElementById(user.uid).remove();
+
+        providedUserIDsToVideoElementsMap.delete(user.uid);
+        let idx = currentParticipantProvidedUserIDs.indexOf(user.uid);
+        if (idx > -1) {
+            currentParticipantProvidedUserIDs.splice(idx, 1);
+        }
+        updatePositions();
+    });
+
+    let localVideoTrack;
+    let providedUserIDsToVideoElementsMap = new Map();
+    async function connectToVideoService() {
+        let options = {
+            agoraAppID: '<%- agoraAppID %>',
+            spaceName: '<%- spaceName %>',
+            agoraToken: '<%- agoraToken %>'
+        };
+        const uid = await rtc.client.join(options.agoraAppID, options.spaceName, options.agoraToken, '<%- providedUserID %>');
+        rtc.localVideoTrack = await AgoraRTC.createCameraVideoTrack({mirror: false});
+        await rtc.client.publish([rtc.localVideoTrack]);
+
+        const playerContainer = document.createElement("div");
+        playerContainer.id = myProvidedUserID;
+        rtc.localVideoTrack.play(playerContainer, {fit: 'contain'});
+        providedUserIDsToVideoElementsMap.set(myProvidedUserID, videoContainer.appendChild(playerContainer));
+        updatePositions();
+    }
+
+    async function disconnectFromVideoService() {
+        providedUserIDsToVideoElementsMap.delete(myProvidedUserID);
+        myProvidedUserIDIdx = currentParticipantProvidedUserIDs.indexOf(myProvidedUserID);
+        if (myProvidedUserIDIdx > -1) {
+            currentParticipantProvidedUserIDs.splice(myProvidedUserIDIdx, 1);
+        }
+
+
+        if (rtc.localVideoTrack) {
+            rtc.localVideoTrack.close();
+            rtc.localVideoTrack = null;
+        }
+
+        rtc.client.remoteUsers.forEach(user => {
+            // Destroy the dynamically created DIV container.
+            const playerContainer = document.getElementById(user.uid);
+            playerContainer && playerContainer.remove();
+        });
+
+        console.log(`Disconnecting from Agora...`);
+        await rtc.client.leave();
+    }
+</script>
+
+</html>

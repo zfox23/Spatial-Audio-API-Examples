@@ -1,0 +1,18 @@
+{
+  "name": "hifi-videochat-agora-example",
+  "version": "1.0.0",
+  "description": "Visit https://highfidelity.com/api/guides/nodejs/express for more information.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "author": "Zach Fox",
+  "license": "MIT",
+  "dependencies": {
+    "agora-access-token": "^2.0.4",
+    "ejs": "^3.1.5",
+    "express": "^4.17.1",
+    "jose": "^3.5.4",
+    "node-fetch": "^2.6.1"
+  }
+}
