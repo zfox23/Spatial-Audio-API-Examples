@@ -19,7 +19,21 @@
             </select>
         </div>
     </div>
-    <button class="connectButton" style="width: 100%; height: 150px; margin: 0;" onclick="connectToHiFiAudio()">Click to
+    <div class="postProcessingContainer" style="display:flex; justify-content: center; margin: 12px;">
+        <div>
+            <input type="checkbox" id="echoCancellation" name="echoCancellation" value="echoCancellation">
+            <label for="echoCancellation"> Enable Echo Cancellation (recommended: disabled)</label>
+        </div>
+        <div>
+            <input type="checkbox" id="noiseSuppression" name="noiseSuppression" value="noiseSuppression">
+            <label for="noiseSuppression"> Enable Noise Suppression (recommended: disabled)</label>
+        </div>
+        <div>
+            <input type="checkbox" id="autoGainControl" name="autoGainControl" value="autoGainControl">
+            <label for="autoGainControl"> Enable Automatic Gain Control (recommended: disabled)</label>
+        </div>
+    </div>
+    <button class="connectButton" style="width: 100%; height: 150px; margin: 0;" onclick="configureHiFiAudioConnection()">Click to
         Connect</button>
     <audio controls autoplay class="outputAudioEl" style="width: 100%; height: 75px; margin: 30px 0 0 0;"></audio>
 </body>
@@ -40,6 +54,16 @@
     inputDeviceSelect.addEventListener("change", (e) => { inputDeviceSelectChanged(); });
     // Ensure we are notified when the user changes their output device selection.
     outputDeviceSelect.addEventListener("change", (e) => { outputDeviceSelectChanged(); });
+    
+    // When the "Enable Echo Cancellation" checkbox "checked" value changes, if we're already connected to High Fidelity, reset the
+    // audio stream that we're sending to HiFi with/without Echo Cancellation.
+    document.querySelector("#echoCancellation").addEventListener("change", (e) => { if (hifiCommunicator) { configureHiFiAudioConnection(); } });
+    // When the "Enable Noise Suppression" checkbox "checked" value changes, if we're already connected to High Fidelity, reset the
+    // audio stream that we're sending to HiFi with/without Noise Suppression.
+    document.querySelector("#noiseSuppression").addEventListener("change", (e) => { if (hifiCommunicator) { configureHiFiAudioConnection(); } });
+    // When the "Enable Automatic Gain Control" checkbox "checked" value changes, if we're already connected to High Fidelity, reset the
+    // audio stream that we're sending to HiFi with/without Automatic Gain Control.
+    document.querySelector("#autoGainControl").addEventListener("change", (e) => { if (hifiCommunicator) { configureHiFiAudioConnection(); } });
 
     let selectedInputDeviceID;
     function inputDeviceSelectChanged() {
@@ -49,7 +73,7 @@
         // If we're already connected to High Fidelity, calling this function again will
         // only update the audio input stream associated with this user.
         if (hifiCommunicator) {
-            connectToHiFiAudio();
+            configureHiFiAudioConnection();
         }
     }
 
@@ -130,12 +154,17 @@
     }
 
     let hifiCommunicator;
-    async function connectToHiFiAudio() {
+    async function configureHiFiAudioConnection() {
         // Use `getBestAudioConstraints()` to disable Echo Cancellation, Automatic Gain Control, and Noise Suppression
         let audioConstraints = HighFidelityAudio.getBestAudioConstraints();
         if (selectedInputDeviceID) {
             audioConstraints.deviceId = { "exact": selectedInputDeviceID };
         }
+        audioConstraints.echoCancellation = document.querySelector(`#echoCancellation`).checked;
+        audioConstraints.noiseSuppression = document.querySelector(`#noiseSuppression`).checked;
+        audioConstraints.autoGainControl = document.querySelector(`#autoGainControl`).checked;
+
+        console.log(`All audio constraints:\n${JSON.stringify(audioConstraints)}`);
 
         // Get the audio media stream associated with the user's default audio input device.
         let audioMediaStream;
