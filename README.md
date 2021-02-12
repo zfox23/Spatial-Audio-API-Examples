@@ -40,3 +40,10 @@ Experience High Fidelity Spatial Audio with 2D video chat powered by TokBox.
 Experience High Fidelity Spatial Audio with 2D video chat powered by Agora.
 ### [Video Chat - Twilio](./experiments/nodejs/videochat-twilio)
 Experience High Fidelity Spatial Audio with 2D video chat powered by Twilio.
+
+# Live Demos
+This repository employs GitHub Pages, which means that you can look at some of these example applications live by browsing [this page](https://highfidelity.github.io/Spatial-Audio-API-Examples/).
+
+**None of the example projects committed to this repository contain an embedded JWT, which means connecting to the High Fidelity Spatial Audio API Server from these live examples *will not work*.**
+
+For more information about JWTs, see the "Authorized Access and JWTs" section of our [Spatial Audio FAQ](https://www.highfidelity.com/api-spatial-audio-faq).
