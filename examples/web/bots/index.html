@@ -1,0 +1,963 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>HiFi Audio API Example: Bots</title>
+    <link rel="shortcut icon" type="image/x-icon" href="images/favicon.ico"/>
+</head>
+
+<body style="width: 100%; height: 100%; margin: 0; padding: 0;">
+    <div class="console" style="z-index: 1; background-color: #efefef; padding: 10px; position: fixed; left: 0; top: 60px; width: 260px; font-family: monospace; font-size: 12px;">
+        <div class="console-log" style="margin:2px; border-radius: 5px; padding: 5px; border: 2px solid transparent; display: block; width: fit-content;"></div>
+    </div>
+    <canvas class="thecanvas" style="position:fixed; right: 0; top: 0;"></canvas>
+    <p class="example-description" style="position: fixed; left: 0; width: 100%; text-align: center;">Click the connect button to setup the audio nodes.<br>Drag the listener around to perceive spatialization<br>Right click to change orientation</p>
+    <button class="triggerButton" style="cursor: pointer; font-size: 18px; background-color: #000000; color: white; width: 280px; top: 0; left: 0; height: 60px; margin: 0; position: fixed;"></button>
+    <script src="https://hifi-spatial-audio-api.s3-us-west-2.amazonaws.com/releases/latest/HighFidelityAudio-latest.js"></script>
+    <script src="https://hifi-spatial-audio-api.s3-us-west-2.amazonaws.com/releases/latest/HighFidelityControls-latest.js"></script>
+    <script>
+        const RADIANS_TO_DEGREES = 57.2958;
+        // This is the JWT associated with "luis-2 stack space".
+        const HIFI_AUDIO_JWT = "";
+        const SoundNodeType = {
+            NODE: 0, // Basic node
+            EMITTER: 1, // Sends a stream from a audio file
+            RECEIVER: 2, // Receives the mix and play locally
+            BOT: 3 // EMITTER with programable actions
+        }
+
+        const ActionType = {
+            DEFAULT: 0,
+            LOOKAT: 1, // Look at a point on the canvas
+            TALK: 2, // Play an audio file with "someone talking"
+            MOTION: 3  // Motion between two points
+        };
+
+        const MotionType = {
+            LINEAR: 0,
+            EASE_IN: 1,
+            EASE_OUT: 2,
+            EASE_IN_OUT: 3
+        };
+
+        const TaskType = {
+            ACTION: 0, // Task with lookat, talk or motion action data
+            CALLBACK: 1 // Task that calls a function
+        };
+
+        // Class that manages the physics loop
+        // Steps are based on the system's requestAnimationFrame
+        class PhysicsLoop {
+            constructor() {
+                this.deltaTimeSec = 0;
+                this.previousTime = 0;
+                this.onStep = {};
+                this.isRunning = false;
+            }
+            // Subscribe to the step callback
+            addOnStepCback(name, cback) {
+                this.onStep[name] = cback;
+            }
+            // Unsubscribe to the step callback
+            removeOnStepCback(name) {
+                if (this.onStep.hasOwnProperty(name)) {
+                    delete this.onStep[name];
+                }
+            }
+            // Start the Physics loop
+            start() {
+                this.isRunning = true;
+                this._startPhysicsLoop();
+            }
+            // Stop the Physics loop
+            stop() {
+                this.isRunning = false;
+            }
+            // Compute current delta time in seconds
+            _updateDeltaTime() {
+                let timeNow = Date.now();
+                this.deltaTimeSec = (timeNow - this.previousTime) / 1000.0;
+                this.previousTime = timeNow;
+            }
+            // Start the loop
+            _startPhysicsLoop() {
+                this._updateDeltaTime();
+                for (let [name, cback] of Object.entries(this.onStep)) {
+                    cback(this.deltaTimeSec); // Send deltatime to subscribers
+                }
+                if (this.isRunning) { // Request another frame is running
+                    window.requestAnimationFrame(this._startPhysicsLoop.bind(this));
+                }        
+            }
+        }
+        
+        // Some helper functions to simplify drawing calls and changes in coordenates
+        class CanvasHelper {
+            static finishPath(ctx, color, width) {
+                ctx[(width !== undefined) ? "strokeStyle" : "fillStyle"] = color;
+                ctx[(width !== undefined) ? "lineWidth" : ""] = width;
+                ctx[(width !== undefined) ? "stroke" : "fill"].call(ctx);
+            }
+            // Compact function to render circles filled or stroked
+            static renderCircle(ctx, x, y, radius, from, to, color, width) {
+                ctx.beginPath();
+                ctx.arc(x, y, radius, from, to, false);
+                CanvasHelper.finishPath(ctx, color, width);
+            }
+            // Compact function to render polygons filled or stroked
+            static renderPolygon(ctx, points, color, width) {
+                ctx.beginPath();
+                points.forEach((point, i) => {
+                    ctx[i === 0 ? "moveTo" : "lineTo"].call(ctx, point[0], point[1]);
+                });
+                CanvasHelper.finishPath(ctx, color, width);
+            }
+            // Render text 
+            static renderText(ctx, x, y, text, color, size, family) {
+                family = family ? family : "console";
+                ctx.font = `${size}px ${family}`;
+                ctx.fillStyle = color;
+                ctx.fillText(text, x, y);
+            }
+            // World coordenates to canvas conversion
+            static worldToCanvasCoords(canvasWidth, canvasHeight, coords, offset, zoom) {
+                let relPos = { x: coords.x - offset.x, y: coords.y - offset.y };
+                let canvasPos = { x: 0.5 * canvasWidth - relPos.x / zoom, y: 0.5 * canvasHeight - relPos.y / zoom };
+                return canvasPos;
+            }
+            // Canvas coordenates to world conversion
+            static canvasToWorldCoords(canvasWidth, canvasHeight, coords, offset, zoom) {
+                let newLocPos = { x: (coords.x - 0.5 * canvasWidth) * zoom, y: (coords.y - 0.5 * canvasHeight) * zoom, z: 0.0 };
+                let npos = { x: offset.x - newLocPos.x, y: offset.y - newLocPos.y, z: offset.z - newLocPos.z };
+                return npos;
+            }
+        }
+        
+        // Root class with the node's physical attributes needed to display it  
+        class Renderable2D {
+            constructor(config) {
+                this.position = Object.assign({}, config.position);
+                this.orientation = config.orientation; // radians
+                this.radius = config.radius;
+                this.name = config.name;
+                this.color = config.color;
+                this.selected = false;
+                this.hover = false;                
+            }
+            // Simple point-circle collision detection for node selection.
+            isPointInside(worldPoint) {
+                let distVec = { x: worldPoint.x - this.position.x, y: worldPoint.y - this.position.y };
+                let distance = Math.sqrt(distVec.x * distVec.x + distVec.y * distVec.y);
+                return distance < this.radius;
+            }
+            // Get a point located one unit in front of node.
+            getLookingAtPoint() {
+                let angle = this.orientation - 0.5 * Math.PI;
+                return { x: this.position.x - Math.cos(angle), y: this.position.y - Math.sin(angle) };
+            }
+            // Get the absolute lookat angle for a point in the plane
+            getLookAtAngle(targetPos) {
+                let dir = { x: targetPos.x - this.position.x, y: targetPos.y - this.position.y };
+                return Math.atan2(dir.y, dir.x) - 0.5 * Math.PI;
+            }
+            // Render loop. Child classes can implement their own method
+            render(canvas, ctx, offset, zoom) {
+                let canvasPos = CanvasHelper.worldToCanvasCoords(canvas.scrollWidth, canvas.scrollHeight, this.position, offset, zoom);
+                // Apply transform
+                ctx.translate(canvasPos.x, canvasPos.y);
+                ctx.rotate(this.orientation)
+                if (this.hover || this.selected) { // Render the selection/hover effect
+                    this.renderSelect(ctx, canvasPos, zoom);
+                }
+                this.renderNode(ctx, canvasPos, zoom); // Call the renderNode function
+                // Undo transform
+                ctx.rotate(-this.orientation);
+                ctx.translate(-canvasPos.x, -canvasPos.y);
+            }
+            // Default method to render basic nodes
+            renderNode(ctx, position, zoom) {
+                CanvasHelper.renderCircle(ctx, 0, 0, this.radius / zoom, 0, 2.0 * Math.PI, this.color );
+            }
+            // Default method to render selection/hover effect
+            renderSelect(ctx, position, zoom) {
+                CanvasHelper.renderCircle(ctx, 0, 0, (this.radius / zoom) + 4, 0, 2.0 * Math.PI, this.selected ? '#FF0000' : '#CCCCCC', 4);
+            }
+        }
+        
+        // Simple class to handle the node's connection, position and orientation
+        class SoundNode extends Renderable2D {
+            constructor(config) {
+                super(config);
+                // Create the API's position and orientation objects that will be sent to the mixer
+                this.mixerPosition = new HighFidelityAudio.Point3D({ x: -this.position.x, y: this.position.z, z: -this.position.y });
+                this.mixerOrientation = new HighFidelityAudio.OrientationEuler3D({ "pitchDegrees": 0, "yawDegrees": -RADIANS_TO_DEGREES * this.orientation, "rollDegrees": 0 });
+                this.hifiCommunicator = null; // HighFidelityAudio.HiFiCommunicator
+                this.stream = null; // Input or output stream
+                this.type = SoundNodeType.NODE;
+                this.volume = null; // Value with the volume from mixer in decibels.
+                this.connectResponse = null;
+            }
+            // If the node is connected, its id will be the visit id hash provided by the server
+            getId() {
+                return this.connectResponse && this.connectResponse.success ? this.connectResponse.audionetInitResponse.visit_id_hash : null;
+            }
+            // This function receives position ({x, y, z}) and orientation (radians), updates the renderable2D and soundNode values and send it. 
+            updateData() {
+                // We need to convert the position sent to the mixer
+                this.mixerPosition.x = -this.position.x;
+                this.mixerPosition.y = this.position.z;
+                this.mixerPosition.z = -this.position.y;
+                this.mixerOrientation.yawDegrees = -RADIANS_TO_DEGREES * this.orientation;
+                this.sendUpdatedData();
+            }
+            // Send the converted position and orientation to the mixer
+            sendUpdatedData(name) {
+                if (this.hifiCommunicator) {
+                    let response = this.hifiCommunicator.updateUserDataAndTransmit({
+                        position: this.mixerPosition,
+                        orientationEuler: this.mixerOrientation
+                    });
+                }
+            }
+            // Volume data can be used to render a sound bubble effect on the node
+            updateReceivedData(data) {
+                this.volume = data.volumeDecibels !== null ? data.volumeDecibels : this.volume;
+            }
+            // Notify connection changes for debugging
+            onConnectionStateChanged(newConnectionState) {
+                console.log(`New High Fidelity connection for: ${this.name} state: ${newConnectionState}`);
+            }
+            // Connect to the server using a valid space token
+            async connect() {
+                console.log(`Connecting Receiver: ` + this.name + ` to High Fidelity Audio API Servers...`);
+                // Setup the communicator
+                this.hifiCommunicator = new HighFidelityAudio.HiFiCommunicator({
+                    initialHiFiAudioAPIData: new HighFidelityAudio.HiFiAudioAPIData({
+                        position: this.mixerPosition,
+                        orientationEuler: this.mixerOrientation
+                    }),
+                    onConnectionStateChanged: this.onConnectionStateChanged.bind(this), // Subscribe to connection changes
+                });
+                if (this.stream) { // The stream can be valid at this point if it has been set previously by children
+                    await this.hifiCommunicator.setInputAudioMediaStream(this.stream, false);
+                }
+                try {
+                    this.connectResponse = await this.hifiCommunicator.connectToHiFiAudioAPIServer(HIFI_AUDIO_JWT);
+                    console.log(`Call to \`connectToHiFiAudioAPIServer()\` for: ${this.name} succeeded! Response:\n${JSON.stringify(this.connectResponse)}`);
+                    return this.connectResponse.success;
+                } catch (e) {
+                    console.error(`Call to \`connectToHiFiAudioAPIServer()\` for: ${this.name} failed! Error:\n${e}`);
+                    this.connectResponse = null;
+                    return false;
+                }
+            }
+            // Disconnect from the server
+            async disconnect() {
+                console.log(`Disconnecting Emitter: ${this.name} from High Fidelity Audio API Servers...`);
+                let disconnectStatus = await this.hifiCommunicator.disconnectFromHiFiAudioAPIServer();
+                this.connectResponse = null;
+                console.log(`Disconnected status for ${this.name} : ${disconnectStatus}`);
+            }
+        }
+        
+        // SoundNode with output stream only. Establish a connection just for listening
+        class SoundReceiver extends SoundNode {
+            constructor(config, onDataReceived) {
+                super(config);
+                this.type = SoundNodeType.RECEIVER;
+                this.onDataReceived = onDataReceived ? onDataReceived : () => {};
+            }
+            // Custom render method. 
+            renderNode(ctx, position, zoom) {
+                // Create a sound cone pointing forward
+                CanvasHelper.renderPolygon(ctx, [[0, 0], [1000, -1000], [-1000, -1000]], "#FAFAFFAA");
+                // Render first 10 circles around the receiver every meter. Undo rotation first.
+                ctx.rotate(-this.orientation);
+                for (let i = 1; i < 11; i++) {
+                    let radius = i / zoom;
+                    CanvasHelper.renderCircle(ctx, 0, 0, radius, 0, 2.0 * Math.PI, this.color + "AA", 1);
+                    CanvasHelper.renderText(ctx, radius, 0, `${i}m`, this.color, 15);
+                }
+                ctx.rotate(this.orientation);
+                super.renderNode(ctx, position, zoom);
+            }
+            // Custom connection method. After successfully connected we setup the output audio to play the server mix locally.
+            async connect() {
+                if (await super.connect()) {
+                    let outputAudioElem = document.createElement('audio');
+                    outputAudioElem.srcObject = this.hifiCommunicator.getOutputAudioMediaStream();
+                    // We must call `play()` here because certain browsers won't autoplay this stream as we expect.
+                    outputAudioElem.play();
+                    // This will get only volume updates for all Users (including ourselves).
+                    let userDataSubscription = new HighFidelityAudio.UserDataSubscription({
+                        "components": [ HighFidelityAudio.AvailableUserDataSubscriptionComponents.VolumeDecibels ],
+                        "callback": (data) => { this.onDataReceived(data); }
+                    });
+                    this.hifiCommunicator.addUserDataSubscription(userDataSubscription);
+                    return true;
+                }
+                return false;
+            }
+        }
+        
+        // Helper class to handle the creation of a stream object from an audio file.
+        class FileAudioStream {
+            constructor(gain) {
+                this.stream = null; // Stream object
+                this.mediaElement = null; // Media element used to control the stream
+                this.fileName = null; // File id to avoid unnecessary reloads
+                this.gain = gain; // Volume of the input stream
+            }
+            async createStreamFromAudioFile(filename, onFinishPlaying) {
+                if (this.fileName === filename) {
+                    resolve(this.mediaElement);
+                }
+                let loadAudioFile = new Promise(resolve => {
+                    let audioElem = document.createElement('audio');
+                    audioElem.setAttribute('src', filename);
+                    audioElem.addEventListener("loadeddata", (e) => {
+                        resolve(e.target);
+                    });
+                    audioElem.addEventListener('ended',function(){
+                        if (onFinishPlaying) {
+                            onFinishPlaying();
+                        }
+                    }.bind(this), false);
+                });
+                // Wait until the audio file is loaded
+                this.mediaElement = await loadAudioFile;
+                // Create a media element from audio context
+                var ac = new AudioContext();
+                let audioElementSource = ac.createMediaElementSource(this.mediaElement);
+                var dest = ac.createMediaStreamDestination();
+                // Setup a gain control
+                var volume = ac.createGain();
+                volume.connect(dest);
+                volume.gain.value = this.gain;
+                audioElementSource.connect(volume);
+                // Return the input stream
+                this.stream = dest.stream;
+                return this.stream;
+            }
+        }
+
+        // SoundNode with input stream from an audio file. Used to just send the audio file data from it's position and orientation
+        class SoundEmitter extends SoundNode {
+            constructor(config, gain) {
+                super(config); // config : {position, orientation, name, radius, color}
+                this.type = SoundNodeType.EMITTER;
+                this.fileStream = new FileAudioStream(gain);
+                this.emitting = false;
+            }
+            // Set the input audio stream once the file is loaded
+            async prepareAudioFile(fileName, onFinishedEmitting) {
+                this.stream = await this.fileStream.createStreamFromAudioFile(fileName, () => { // on audio 'ended' event fired
+                    this.emitting = false;
+                    if (onFinishedEmitting) {
+                        onFinishedEmitting(); // Send the event to child classes
+                    }
+                });
+                await this.hifiCommunicator.setInputAudioMediaStream(this.stream, false);
+            }
+            // Set the input audio stream and play it once it loaded
+            async prepareAndPlayAudioFile(fileName, onFinishedEmitting) {
+                await this.prepareAudioFile(fileName, onFinishedEmitting);
+                this.emit();
+            }
+            // Play the audio file
+            emit() {
+                this.fileStream.mediaElement.play();
+                this.emitting = true;
+            }
+        }
+
+        // Basic action for to program bots
+        class Action {
+            constructor(name) {
+                this.name = name;
+                this.type = ActionType.DEFAULT;
+                this.duration = 0;
+                this.timeLapse = 0;
+                this.delay = 0;
+                this.active = false;
+            }
+            // Compute if the action should be executed or it's finished
+            update(node, deltaTime) {
+                if (this.active) {
+                    let lastTime = this.timeLapse;
+                    this.timeLapse += deltaTime;
+                    if (this.timeLapse < this.duration) {
+                        if (this.compute && this.timeLapse > 0) {
+                            if (lastTime <= 0 && this.onActionActive) {
+                                this.onActionActive(node);
+                            }
+                            this.compute(node);
+                        }
+                    } else {
+                        this.active = false;
+                        if (this.onActionTimeout) {
+                            this.onActionTimeout(node);
+                        }
+                    }
+                }
+            }
+            // Unimplemented functions for base action
+            compute(node) {} // The code that runs every step while the action is active
+            onActionStart(node) {} // Triggered when the action starts
+            onActionTimeout(node) {} // Triggered when the action finishes
+            onActionActive(node) {} // Triggered when the action has start computing after the delay
+            // Start the action loop.
+            start(node) {
+                this.timeLapse = -this.delay; // The action will be computed when timeLapse > 0
+                this.active = true;
+                if (this.onActionStart) {
+                    this.onActionStart(node);
+                }        
+            }
+
+        }
+        // Action to program the motion between points of a bot
+        class MotionAction extends Action {
+            constructor(name, motionType) {
+                super(name);
+                this.type = ActionType.MOTION;
+                this.initialPosition = null; // Motion from point
+                this.finalPosition = null; // Motion to point
+                this.motionType = motionType; // Type of eased function applied to movement
+            }
+            // Transform the value based on the motion type
+            static getEasedValue(type, value) {
+                switch (type) {
+                    case MotionType.EASE_IN:
+                        // Ease in cubic
+                        return value * value * value;
+                        break;
+                    case MotionType.EASE_OUT:
+                        // Ease out cubic
+                        return (--value) * value * value + 1;
+                        break;
+                    case MotionType.EASE_IN_OUT:
+                        // Ease in cubic
+                        return value < 0.5 ? 4 * value * value * value : (value - 1) * (2 * value - 2) * (2 * value - 2) + 1;
+                        break;
+                    default:
+                        return value;
+                        break;
+                }
+            }
+            // Calculate the interpolated value between two point based on the action active time
+            compute(node) {
+                let ratio = this.timeLapse / this.duration; // Value between 0.0 and 1.0 used for interpolation
+                let easeRatio = MotionAction.getEasedValue(this.motionType, ratio); // Ease the value of the ratio
+                // Set the interpolated position of the bot using the initial and final positions and the ratio
+                node.position.x = this.initialPosition.x + (this.finalPosition.x - this.initialPosition.x) * easeRatio;
+                node.position.y = this.initialPosition.y + (this.finalPosition.y - this.initialPosition.y) * easeRatio;
+                node.position.z = this.initialPosition.z + (this.finalPosition.z - this.initialPosition.z) * easeRatio;
+            }
+            // Update the data for this action, for reusablility
+            setData(data) {
+                this.initialPosition = data.from;
+                this.finalPosition = data.to;
+                this.duration = data.duration;
+                this.delay = data.delay;
+                this.motionType = data.type;
+            }
+            // We make sure that once the action is ended the bot is on the final position
+            onActionTimeout(node) {
+                node.position = this.finalPosition;
+                this.onActionEnded(node, this);
+            }
+            // Setup ended callback
+            start(node, onActionEnded) {
+                this.onActionEnded = onActionEnded;
+                super.start(node);
+            }
+        }
+        // Action to control the bot orientation. Look at a point interpolated between two points. (MotionAction)
+        class LookAtAction extends MotionAction {
+            constructor(name, motionType) {
+                super(name, motionType);
+                this.lookAtNode = { position: {x: 0, y: 0, z: 0 } }; // Dummy node. MotionAction will update these coordenates under the hood
+                this.type = ActionType.LOOKAT;
+            }
+            // Set the action data and update initial position for the dummy node
+            setData(data) {
+                super.setData(data);
+                this.lookAtNode.x = data.from.x;
+                this.lookAtNode.y = data.from.y;
+            }
+            // Compute the interpolated position (MotionAction) of the dummy node and rotate the owner node to look at it.
+            compute(node) {
+                super.compute(this.lookAtNode);
+                node.orientation = node.getLookAtAngle(this.lookAtNode.position);
+            }
+            onActionTimeout(node) {
+                super.onActionTimeout(this.lookAtNode);
+            }
+        }
+        // Action plays and audio file
+        class TalkAction extends Action {
+            constructor(name, fileName) {
+                super(name);
+                this.type = ActionType.TALK;
+                this.fileName = fileName;
+            }
+            async onActionTimeout(node) {
+                // Play the audio after the timeout
+                if (node.type === SoundNodeType.BOT) {
+                    await node.prepareAndPlayAudioFile(this.fileName, () => {
+                        this.onActionEnded(node, this);
+                    });;
+                }
+            }
+            setData(data) {
+                this.duration = 0; // In this case the duration is determined by the audio data. It plays after the delay
+                this.delay = data.delay;
+            }
+            start(node, onActionEnded) {
+                this.onActionEnded = onActionEnded;
+                super.start(node);
+            }
+        }
+        // Class that manages actions to control bots' behavior
+        class TaskManager{
+            constructor(meetingPoints, meetingRadius) {
+                // Define the talking action based on the available audio files 
+                this.talkActionNames = ["hi", "bye", "lead", "follow", "deep", "answer1", "answer2"];
+                this.motionActionName = "Move";
+                this.meetingPoints = meetingPoints; // Points that bots will use a base to gather aroung
+                this.meetingRadius = meetingRadius; // Radius around the meeting point where bots will be located
+                this.taskQueue = []; // Queue for the actions to be processed one by one
+                this.bots = {}; // Object that stores the bots that are can be programmed
+                this.meetingIdx = 0; // Current index for the meeting point
+                this.forceMeetingPoint = null; // When the Listener moves this is set so the bots end up gathering around it.
+            }
+            // Add an existing bot and prepare it to allow programming
+            addBot(bot) {
+                // Setup actions from the added bot. These actions' data will be updated before starting them
+                bot.addAction(this.motionActionName, ActionType.MOTION, { motionType: MotionType.EASE_IN_OUT });
+                bot.addAction(this.lookAtActionName, ActionType.LOOKAT, { motionType: MotionType.EASE_IN_OUT });
+                this.talkActionNames.forEach(actionName => {
+                    bot.addAction(`Say_${actionName}`, ActionType.TALK, { fileName: `./audio/${bot.name}_${actionName}.mp3`});
+                })
+                this.bots[bot.getId()] = bot;
+            }
+            // Computes a set of random points around a meeting point where bots will gather
+            static get2DRandomDataAround(origin, radius, count) {              
+                let positions = [];
+                for (let i = 0; i < count; i++) {
+                    let angleStep = i * 2.0 * Math.PI  / count;
+                    let randomAngleOffset = Math.PI * Math.random() / count;
+                    let angle = randomAngleOffset + angleStep;
+                    positions.push({x: origin.x + radius * Math.cos(angle), y: origin.y + radius * Math.sin(angle), z: origin.z});
+                }
+                // Suffle the position order
+                positions = positions.sort( () => .5 - Math.random() );
+                return positions;
+            }
+            // Update the actions and manage the queue
+            update(deltaTime) {
+                if (this.taskQueue.length > 0) {
+                    let task = this.taskQueue[0]; // Update the beginning of the queue
+                    if (task.type == TaskType.ACTION) {
+                        if (!task.triggered && this.bots[task.botId]) {
+                            // Trigger the action if necessary
+                            this.bots[task.botId].triggerAction(task.name, task.data, () => {
+                                this.taskQueue.shift(); // Once the action is finished remove it from the queue
+                            });
+                            task.triggered = true;
+                        }
+                    } else if (task.type == TaskType.CALLBACK) {
+                        this.taskQueue.shift(); // Remove the callback from the queue immediately
+                        task.cback(); // Call the function
+                    }
+
+                }
+                Object.keys(this.bots).forEach(id => {
+                    this.bots[id].update(deltaTime); // The bots physics update is managed by this class (TaskManager)
+                });
+            }
+            // Trigger a random conversation between some of the bots 
+            startConversation() {
+                // Choose a leader bot to trigger a question and start a conversation. Random responses by the rest will also be queued
+                let ids = Object.keys(this.bots);
+                let leaderId = ids[Math.floor(Math.random() * ids.length)]; // Random leader
+                this.addActionToQueue(leaderId, "Say_deep", { delay: 0 }); // Queue a deep question for the leader
+                ids.forEach(id => {
+                    let isLeader = id === leaderId;
+                    if (!isLeader && Math.random() < 0.25) { // 25% chance for this bot to trigger a random response
+                        let answerIdx = Math.ceil(0.5 + Math.random()); // Random response from the available audios (answer1 or answer2)
+                        this.addActionToQueue(id, `Say_answer${answerIdx}`, { delay: 0 });
+                    }
+                });
+                this.addCallbackToQueue(() => { this.moveToNextMeetingPoint(); });
+            }
+            // Add a callback action to the queue (currently: moveToNextMeetingPoint())
+            addCallbackToQueue(cback) {
+                this.taskQueue.push({ type: TaskType.CALLBACK, cback: cback });
+            }
+            // Add a bot action to the queue. The action should be already set up for this bot. Data will be updated on trigger time.
+            addActionToQueue(botId, actionName, actionData) {
+                let taskData = { type: TaskType.ACTION, name: actionName, botId: botId, data: actionData, triggered: false };
+                this.taskQueue.push(taskData);
+            }
+            // Bots will move around the canvas following a leader. Talk for a while on that point and then move to the next point.
+            moveToNextMeetingPoint() {
+                // Compute next meeting point index
+                this.meetingIdx = this.meetingIdx + 1 < this.meetingPoints.length ? this.meetingIdx + 1 : 0;
+                let currentMeetingPoint = this.meetingPoints[this.meetingIdx];
+                // If the listener moved we overwrite the next meeting point with its position to gather around it
+                if (this.forceMeetingPoint) {
+                    currentMeetingPoint = Object.assign({}, this.forceMeetingPoint);
+                    this.forceMeetingPoint = null; // Reset the forced point
+                }
+                let ids = Object.keys(this.bots);
+                let newMeetingPositions = TaskManager.get2DRandomDataAround(currentMeetingPoint, this.meetingRadius, ids.length);
+                // Let's choose a leader bot to guide the rest to the next meeting point
+                let leaderId = ids[Math.floor(Math.random() * ids.length)];
+                this.addActionToQueue(leaderId, "Say_lead", { delay: 0 }); // Trigger a "follow me" from the leader
+                ids.forEach((id, i) => {
+                    let bot = this.bots[id];
+                    let isLeader = id === leaderId;
+                    let actionDelay = isLeader ? 0 : i + 2.0 * Math.random(); // Compute a random delay for the reactions if the bot is a follower
+                    let moveActionData = { 
+                        from: Object.assign({}, bot.position), // From current position
+                        to: newMeetingPositions[i], // Random position around the new meeting point
+                        duration: 6.0, // Every movement will take six seconds from point to point
+                        delay: actionDelay, 
+                        type: MotionType.EASE_IN_OUT 
+                    };
+                    let shouldStay = false; // Some of the bots are going to stay and trigger a "bye" kind of reaction
+                    if (!isLeader) {
+                        shouldStay = Math.random() < 0.15; // 15% chance to not move yet and say bye
+                        if (shouldStay) {
+                            this.addActionToQueue(id,"Say_bye", { delay: 0 });
+                        } else if (Math.random() < 0.25) { // 25% change to respond to the leader's move
+                            this.addActionToQueue(id, "Say_follow", { delay: 0 });
+                        }
+                    }
+                    moveActionData.delay = shouldStay ? 10.0 : moveActionData.delay; // The bot that stays will meet with the rest after ten seconds
+                    
+                    let lookAtActionData = {
+                        from: Object.assign({}, bot.getLookingAtPoint()), // from a point 1 meter in front of the node
+                        to: Object.assign({},currentMeetingPoint), // to the next meeting point
+                        delay: moveActionData.delay * 0.5, // Start looking at action before motion (Look to the endpoint before moving there)
+                        duration: moveActionData.duration + moveActionData.delay * 0.5, // Adjust duration to finish both actions at the same time
+                        type: MotionType.EASE_IN_OUT 
+                    }
+                    bot.triggerAction(this.motionActionName, moveActionData, () => {}); // Trigger this actions immediately
+                    bot.triggerAction(this.lookAtActionName, lookAtActionData, () => {});
+                });
+                this.addCallbackToQueue(() => { this.startConversation(); });
+            }
+
+            reset() {
+                this.bots = {};
+                this.taskQueue = [];
+            }
+        }
+        // A SoundEmitter with some functions to handle actions and custom rendering
+        class Bot extends SoundEmitter {
+            constructor(config, gain) {
+                super(config, gain);
+                this.type = SoundNodeType.BOT;
+                this.actions = {};
+            }
+            // Set up a named action for this bot
+            addAction(name, type, actionData) {
+                if (type === ActionType.TALK) {
+                    this.actions[name] = new TalkAction(name, actionData.fileName);
+                } else if (type === ActionType.MOTION) {
+                    this.actions[name] = new MotionAction(name, actionData.motionType);
+                } else if (type === ActionType.LOOKAT) {
+                    this.actions[name] = new LookAtAction(name, actionData.motionType);
+                }
+            }
+            // Trigger a named action after updating its data
+            triggerAction(name, actionData, onActionEnded) {
+                if (this.actions[name]) {
+                    this.actions[name].setData(actionData);
+                    this.actions[name].start(this, onActionEnded ? onActionEnded : () => {});
+                }
+            }
+            // Update this bot
+            update(deltaTime) {
+                Object.keys(this.actions).forEach(name => {
+                    this.actions[name].update(this, deltaTime); // Update all actions
+                });
+                this.updateData(); // Update and send data to the mixer
+            }
+            // Custom rendering method for bots 
+            renderNode(ctx, position, zoom) {
+                // Compute volume ratio
+                let volumeRatio = ((this.volume ? this.volume : -120.0) + 120.0) / 120.0;
+                let radius = (this.radius / zoom);
+                // Render a semi-transparent circular area for the bot's visor 
+                CanvasHelper.renderCircle(ctx, 0, 0, 0.95 * radius, 0, 2.0 * Math.PI, "#00000015");
+                // Render a circular area that represents volume bubble
+                CanvasHelper.renderCircle(ctx, 0, 0, volumeRatio * 1.2 * radius, 0, 2.0 * Math.PI, this.color + "55");
+                // Render a partial, thick arc for the main body 
+                CanvasHelper.renderCircle(ctx, 0, 0, 0.4 * radius, -0.35, Math.PI + 0.35, this.color + "EE", radius);
+                // Close the gap with a smaller circular area
+                CanvasHelper.renderCircle(ctx, 0, 0, 0.55 * radius, 0, 2.0 * Math.PI, this.color);
+            }
+        }
+        // Class will create the listener and bots and it will manage its behaviour
+        class App {
+            constructor(config) {
+                this.config = config;
+                this.physicsLoop = new PhysicsLoop();
+                this.taskManager = null;
+                this.soundNodes = {};
+                this.receiverId = null;
+                this.zoomAmount = 0.01; // Define the scale for how the world is displayed on the canvas
+                this.selectedNodeId = null;
+                this.hoveredNodeId = null;
+                this.canvas = null;
+                this.triggerButton = null;
+                this.consoleElement = null;
+                // Subscribe to the physics loop for render
+                this.physicsLoop.addOnStepCback("drawCanvas", () => {
+                    if (this.soundNodes[this.receiverId]) {
+                        this.soundNodes[this.receiverId].updateData();
+                    }
+                    this.redraw();
+                });
+                // To add/remove event listener propertly and with the right context we need to bind them first into variables
+                this.connectNodesBinded = this.connectNodes.bind(this);
+                this.disconnectNodesBinded = this.disconnectNodes.bind(this);
+            }
+            // Connect the UI elements that trigger the example and and display information
+            setupUI(canvas, triggerButton, consoleElement) {
+                this.canvas = canvas;
+                this.triggerButton = triggerButton;
+                this.consoleElement = consoleElement;
+                // Configure the triggerButton
+                this.triggerButton.addEventListener("click", this.connectNodesBinded, false);
+                this.triggerButton.innerHTML = `Click to Connect`;
+                window.addEventListener('resize', this.onResizeCanvas.bind(this), false);
+                window.addEventListener('load', this.onResizeCanvas.bind(this), false);
+                // Setup the canvas to receive control events
+                let hifiControls = new HighFidelityControls.HiFiControls({ mainAppElement: this.canvas });
+                hifiControls.onLeftDrag = this.onLeftDrag.bind(this);
+                hifiControls.onRightDrag = this.onRightDrag.bind(this);
+                hifiControls.onCanvasMove = this.onCanvasMove.bind(this);
+                hifiControls.onCanvasDown = this.onCanvasDown.bind(this);
+                // Start the physics loop
+                this.physicsLoop.start();
+            }
+
+            async connectNodes() {
+                // Clear console
+                this.displayLog("");
+                // Initiate the task manager
+                this.taskManager = new TaskManager(this.config.MEETING_POINTS, this.config.MEETING_RADIUS);
+                // Subscribe to the physics loop for the task manager 
+                this.physicsLoop.addOnStepCback("updateTask", this.taskManager.update.bind(this.taskManager));
+                // Compute random points around the first meeting point for bot's initial positions
+                let botRandomPos = TaskManager.get2DRandomDataAround(this.taskManager.meetingPoints[0], this.taskManager.meetingRadius, 4);
+                // Data configuration for all nodes base on type
+                let nodeData = [
+                    {name: "Listener", radius: this.config.LISTENER_RADIUS, color: "#AFAAFF", position: this.config.SPAWN_POINT, orientation: 0, type: SoundNodeType.RECEIVER},
+                    {name: "Allison", radius: this.config.BOT_RADIUS, color: "#FF00FF", position: botRandomPos[0], orientation: 0, type: SoundNodeType.BOT},
+                    {name: "Henry", radius: this.config.BOT_RADIUS, color: "#00FFFF", position: botRandomPos[1], orientation: 0, type: SoundNodeType.BOT},
+                    {name: "Kevin", radius: this.config.BOT_RADIUS, color: "#0000FF", position: botRandomPos[2], orientation: 0, type: SoundNodeType.BOT},
+                    {name: "Lisa", radius: this.config.BOT_RADIUS, color: "#00FF00", position: botRandomPos[3], orientation: 0, type: SoundNodeType.BOT}
+                ];
+                
+                // Clear the console log and reset trigger button status
+                this.displayLog("", true);
+                this.triggerButton.disabled = true;
+                this.triggerButton.innerHTML = `wait...`;
+
+                for (let i = 0; i < nodeData.length; i++) {
+                    let node = null;
+                    if (nodeData[i].type == SoundNodeType.BOT) {
+                        node = new Bot(nodeData[i], this.config.TRACKS_GAIN);
+                        node.orientation = node.getLookAtAngle(this.taskManager.meetingPoints[0]);
+                    } else if (nodeData[i].type == SoundNodeType.RECEIVER) { 
+                        // When the receiver gets data from the server we update nodes 
+                        let onDataReceived = (dataArray) => {
+                            dataArray.forEach(data => {
+                                if (this.soundNodes[data.hashedVisitID]) {
+                                    this.soundNodes[data.hashedVisitID].updateReceivedData(data);
+                                }
+                            });
+                        }
+                        node = new SoundReceiver(nodeData[i], onDataReceived);
+                    }
+                    if (node) {
+                        if (await node.connect()) {
+                            let nodeId = node.getId();
+                            this.displayLog(`Node "${nodeData[i].name}" connected.`, `${nodeId}`, (e) => {
+                                this.selectNode(e.target.dataset.log);
+                            });
+                            this.soundNodes[nodeId] = node;
+                            if (node.type === SoundNodeType.RECEIVER) {
+                                this.receiverId = nodeId;
+                            } else if (node.type === SoundNodeType.BOT) {
+                                // Add bot to the task manager
+                                this.taskManager.addBot(node);
+                            }
+                        } else {
+                            this.displayLog(`Node "${nodeData[i].name}" error connecting.`);
+                        }
+                    }
+                }
+                // Start bot actions
+                this.taskManager.moveToNextMeetingPoint();
+                // Reset trigger button status
+                this.triggerButton.disabled = false;
+                this.triggerButton.innerHTML = `Disconnect`;
+                this.triggerButton.removeEventListener('click', this.connectNodesBinded, false);
+                this.triggerButton.addEventListener('click', this.disconnectNodesBinded, false);
+                this.displayLog(`Bots ready!`);
+            }
+
+            async disconnectNodes() {
+                this.triggerButton.disabled = true;
+                this.triggerButton.innerHTML = `wait...`;
+                let ids = Object.keys(this.soundNodes);
+                for (let i = 0; i < ids.length; i++) {
+                    let id = ids[i];
+                    await this.soundNodes[id].disconnect();
+                    this.displayLog(`Node "${this.soundNodes[id].name}" disconnected.`);
+                    delete this.soundNodes[id];
+                };
+                this.physicsLoop.removeOnStepCback("updateTask");
+                this.taskManager = null;
+                // Reset triggerButton
+                this.triggerButton.disabled = false;
+                this.triggerButton.innerHTML = `Connect`;
+                this.triggerButton.removeEventListener('click', this.disconnectNodesBinded, false);
+                this.triggerButton.addEventListener('click', this.connectNodesBinded, false);
+            }
+            // Add log entries to the console log UI element
+            displayLog(text, data, onclick) {
+                let newLog = document.querySelector(".console-log").cloneNode(); // Make a copy of one of the logs
+                newLog.onclick = onclick;
+                if (text.length === 0) { // Clear the console log
+                    this.consoleElement.innerHTML = "";
+                }
+                // Set the text on the copied element and add the new log entry
+                newLog.innerHTML = text;
+                if (data) {
+                    newLog.style.cursor = "pointer";
+                    newLog.dataset["log"] = data;
+                }
+                this.consoleElement.appendChild(newLog);
+            }
+
+            redraw() {
+                let ctx = this.canvas.getContext('2d');
+                ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                // Call render method for all nodes
+                Object.keys(this.soundNodes).forEach(id => {
+                    this.soundNodes[id].render(this.canvas, ctx, this.config.SPAWN_POINT, this.zoomAmount);
+                });
+            }
+            // Hover node using id
+            hoverNode(id) {
+                if (this.hoveredNodeId !== id) {
+                    this.hoveredNodeId = id;
+                    Object.keys(this.soundNodes).forEach(nodeId => {
+                        this.soundNodes[nodeId].hover = nodeId === id;
+                    });
+                    this.canvas.style.cursor = this.hoveredNodeId ? "pointer" : "default";
+                }
+            }
+            // Select node using id
+            selectNode(id) {
+                if (this.selectedNodeId !== id) {
+                    this.selectedNodeId = id;
+                    Object.keys(this.soundNodes).forEach(nodeId => {
+                        this.soundNodes[nodeId].selected = nodeId === id;
+                        let logEntry = this.consoleElement.querySelector(`[data-log="${nodeId}"]`);
+                        logEntry.style.borderColor = nodeId === id ? "#FF0000" : "transparent";
+                    });
+                }
+            }
+            // Find the first node that intersects with a point in the canvas
+            findNodeOnCanvas(point, isSelection) {
+                // Compute world position based on the canvas point and search for a node
+                let worldPoint = CanvasHelper.canvasToWorldCoords(this.canvas.scrollWidth, this.canvas.scrollHeight, point, this.config.SPAWN_POINT, this.zoomAmount);
+                for (let [id, node] of Object.entries(this.soundNodes)) {
+                    if (node.isPointInside(worldPoint)) {
+                        return id;
+                    }
+                }
+            }
+            // Move the selected node with a left drag
+            onLeftDrag(e) {
+                // Compute the world position based on the control event
+                let worldPos = CanvasHelper.canvasToWorldCoords(this.canvas.scrollWidth, this.canvas.scrollHeight, {x: e.clientX, y: e.clientY}, this.config.SPAWN_POINT, this.zoomAmount);
+                if (this.selectedNodeId && this.soundNodes[this.selectedNodeId]) {
+                    let selectedNode = this.soundNodes[this.selectedNodeId];
+                    // Update listener position
+                    if (selectedNode.type === SoundNodeType.RECEIVER) {
+                        selectedNode.position = worldPos;
+                    }
+                }
+            }
+            //Rotate the selected node with a right drag
+            onRightDrag(e) { 
+                if (this.soundNodes[this.receiverId]) {
+                    // Compute the world position based on the control event
+                    let worldPos = CanvasHelper.canvasToWorldCoords(this.canvas.scrollWidth, this.canvas.scrollHeight, {x: e.clientX, y: e.clientY}, this.config.SPAWN_POINT, this.zoomAmount);
+                    this.soundNodes[this.receiverId].orientation = this.soundNodes[this.receiverId].getLookAtAngle(worldPos);
+                }
+            }
+            // Compute hover on all nodes
+            onCanvasMove(e) {
+                let nodeId = this.findNodeOnCanvas({x: e.clientX, y: e.clientY});
+                this.hoverNode(nodeId);
+            }
+            // Select a node with a left click or rotate the listener with a right click
+            onCanvasDown(e) {
+                const MOUSE_RIGHT_BUTTON = 2;
+                if (e.button != MOUSE_RIGHT_BUTTON) {
+                    let nodeId = this.findNodeOnCanvas({x: e.clientX, y: e.clientY});
+                    this.selectNode(nodeId);
+                } else {
+                    if (this.selectedNodeId && this.soundNodes[this.selectedNodeId] && this.soundNodes[this.selectedNodeId].type === SoundNodeType.RECEIVER) {
+                        let targetPos = CanvasHelper.canvasToWorldCoords(this.canvas.scrollWidth, this.canvas.scrollHeight, {x: e.clientX, y: e.clientY}, this.config.SPAWN_POINT, this.zoomAmount);
+                        this.soundNodes[this.selectedNodeId].orientation = this.soundNodes[this.selectedNodeId].getLookAtAngle(targetPos);
+                    }
+                }
+            }
+            // Set the zoom according to the window size
+            onResizeCanvas() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+                this.zoomAmount = 0.0045 * 1280 / (Math.min(this.canvas.height, this.canvas.width));
+            }
+        }
+
+        HighFidelityAudio.HiFiLogger.setHiFiLogLevel(HighFidelityAudio.HiFiLogLevel.Debug);
+        let SPAWN_POINT = {x: 0, y: 0, z: 0};
+
+        let APP_CONFIG = {
+            SPAWN_POINT : SPAWN_POINT, // Initial position for the receiver
+            MEETING_POINTS : [ // Points around the spawn point as meeting points for the bots
+                {x: SPAWN_POINT.x - 1.5, y: SPAWN_POINT.y - 1.5, z: SPAWN_POINT.z}, 
+                {x: SPAWN_POINT.x + 1.5, y: SPAWN_POINT.y - 1.5, z: SPAWN_POINT.z},
+                {x: SPAWN_POINT.x + 1.5, y: SPAWN_POINT.y + 1.5, z: SPAWN_POINT.z},
+                {x: SPAWN_POINT.x - 1.5, y: SPAWN_POINT.y + 1.5, z: SPAWN_POINT.z}
+            ],
+            MEETING_RADIUS : 0.75,
+            TRACKS_GAIN : 0.4, // The volume for all tracks
+            BOT_RADIUS: 0.25, // Radius of the speakers
+            LISTENER_RADIUS: 0.2 // Radius of the listener
+        }
+        let app = new App(APP_CONFIG);
+        let canvasElement = document.querySelector('.thecanvas');
+        let triggerButton = document.querySelector(`.triggerButton`);
+        let consoleElement = document.querySelector(".console");
+        app.setupUI(canvasElement, triggerButton, consoleElement);
+
+    </script>
+</body>
+
+</html>
