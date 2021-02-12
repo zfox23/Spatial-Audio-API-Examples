@@ -11,6 +11,8 @@ These example projects augment the API walkthrough guides you can find at [highf
 ## Plain HTML/JS Examples
 ### [simple](./examples/web/simple/)
 Corresponds to the "Build a Simple Web App" guide at [highfidelity.com/api/guides/web/simple](https://www.highfidelity.com/api/guides/web/simple).
+### [simple-with-device-selection](./examples/web/simple-with-device-selection/)
+Similar to the "simple" example above, except this one allows a user to select their audio input/output devices dynamically.
 ### [subscriptions](./examples/web/subscriptions/)
 This project exemplifies how to make use of [User Data Subscriptions](https://docs.highfidelity.com/latest/modules/classes_hifiuserdatasubscription.html) in projects that use the High Fidelity Spatial Audio API.
 ### [tracks](./examples/web/tracks/)

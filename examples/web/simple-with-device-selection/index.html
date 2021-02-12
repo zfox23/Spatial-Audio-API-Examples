@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>High Fidelity Spatial Audio API Example - Simple with Device Selection</title>
+</head>
+
+<body style="width: 100%; height: 100%; margin: 0; padding: 0;">
+    <div class="deviceSelectionContainer" style="display:flex; justify-content: center; margin: 12px;">
+        <div style="width:50%; padding: 12px;">
+            <label for="inputDeviceSelect" style="font-size:18px;font-weight:bold;">Audio Input Devices:</label>
+            <select id="inputDeviceSelect" name="inputDeviceSelect" style="width:100%;font-size:14px;padding:8px;">
+            </select>
+        </div>
+        <div style="width:50%; padding: 12px;">
+            <label for="outputDeviceSelect" style="font-size:18px;font-weight:bold;">Audio Output Devices:</label>
+            <select id="outputDeviceSelect" name="outputDeviceSelect" style="width:100%;font-size:14px;padding:8px;">
+            </select>
+        </div>
+    </div>
+    <button class="connectButton" style="width: 100%; height: 150px; margin: 0;" onclick="connectToHiFiAudio()">Click to
+        Connect</button>
+    <audio controls autoplay class="outputAudioEl" style="width: 100%; height: 75px; margin: 30px 0 0 0;"></audio>
+</body>
+
+<script src="https://hifi-spatial-audio-api.s3.amazonaws.com/releases/latest/HighFidelityAudio-latest.js"></script>
+<script>
+    // For maximum debuggage.
+    HighFidelityAudio.HiFiLogger.setHiFiLogLevel(HighFidelityAudio.HiFiLogLevel.Debug);
+
+    // We'll use these DOM elements inside `setupAudioIODropdowns()`.
+    let inputDeviceSelect = document.querySelector("#inputDeviceSelect");
+    let outputDeviceSelect = document.querySelector("#outputDeviceSelect");
+
+    // We use this to change the text of the "Connect" button to "Connected", and to disable that button after clicking it.
+    let connectButton = document.querySelector('.connectButton');
+
+    // Ensure we are notified when the user changes their input device selection.
+    inputDeviceSelect.addEventListener("change", (e) => { inputDeviceSelectChanged(); });
+    // Ensure we are notified when the user changes their output device selection.
+    outputDeviceSelect.addEventListener("change", (e) => { outputDeviceSelectChanged(); });
+
+    let selectedInputDeviceID;
+    function inputDeviceSelectChanged() {
+        selectedInputDeviceID = inputDeviceSelect.value;
+        console.log(`User changed their input device selection! New selection value:\n${selectedInputDeviceID}`);
+
+        // If we're already connected to High Fidelity, calling this function again will
+        // only update the audio input stream associated with this user.
+        if (hifiCommunicator) {
+            connectToHiFiAudio();
+        }
+    }
+
+    let selectedOutputDeviceID;
+    function outputDeviceSelectChanged() {
+        selectedOutputDeviceID = outputDeviceSelect.value;
+
+        // Get a list of all Audio Nodes in the DOM.
+        let allAudioNodes = document.querySelectorAll("audio");
+        allAudioNodes.forEach((audioNode) => {
+            // In order to change the output device associated with an `<audio>` element, that `<audio>` element must support
+            // the `sinkId` property.
+            if (typeof audioNode.sinkId !== 'undefined') {
+                audioNode.setSinkId(selectedOutputDeviceID)
+                    .then(() => {
+                        console.log(`New audio output device with ID \`${selectedOutputDeviceID}\` successfully attached to \`${audioNode.classList[0]}\`.`);
+                    })
+                    .catch(error => {
+                        console.error(`Error when setting output device on \`${audioNode}\`:\n${error}`);
+                    });
+            } else {
+                console.error(`Your browser does not support output device selection.`);
+            }
+        });
+    }
+
+    async function setupAudioIODropdowns() {
+        // Ensure browser compatibility
+        if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+            console.warn("Your browser does not support `enumerateDevices()`; audio input/output device selection is unavailable.");
+            return;
+        }
+
+        // Clear existing selections
+        inputDeviceSelect.innerHTML = ``;
+        outputDeviceSelect.innerHTML = ``;
+
+        // Some browsers require that the user interact with the DOM before `enumerateDevices()` can be called.
+        // This demo attempts to call `enumerateDevices()` immediately when the user navigates to the website.
+        let ioDevices;
+        try {
+            ioDevices = await navigator.mediaDevices.enumerateDevices();
+        } catch (e) {
+            console.error(`Error in \`enumerateDevices()\`:\n${e}`);
+            return;
+        }
+
+        let numInputDevices = 0;
+        let numOutputDevices = 0;
+
+        for (let i = 0; i < ioDevices.length; i++) {
+            let deviceLabel = ioDevices[i].label;
+            console.log(`Device label: ${deviceLabel}\nKind: ${ioDevices[i].kind}\nID: ${ioDevices[i].deviceId}`)
+
+            // Some devices don't have a label.
+            // In some cases, browsers won't supply a label to certain devices.
+            if (!deviceLabel || deviceLabel.length === 0) {
+                deviceLabel = "Unknown Device";
+            }
+
+            // Dynamically create new `option`s for each dropdown
+            let option = document.createElement('option');
+            option.innerHTML = deviceLabel;
+            // The `value` attribute of each `option` will be the device's `deviceId`, which is what is used
+            // by the browser when, for example, deciding which I/O device to use.
+            option.setAttribute('value', ioDevices[i].deviceId);
+
+            if (ioDevices[i].kind === "audioinput") {
+                inputDeviceSelect.appendChild(option);
+                numInputDevices++;
+            } else if (ioDevices[i].kind === "audiooutput") {
+                outputDeviceSelect.appendChild(option);
+                numOutputDevices++;
+            }
+        };
+
+        console.log(`Media device enumeration complete.\n${numInputDevices} input devices found.\n${numOutputDevices} output devices found.`);
+    }
+
+    let hifiCommunicator;
+    async function connectToHiFiAudio() {
+        // Use `getBestAudioConstraints()` to disable Echo Cancellation, Automatic Gain Control, and Noise Suppression
+        let audioConstraints = HighFidelityAudio.getBestAudioConstraints();
+        if (selectedInputDeviceID) {
+            audioConstraints.deviceId = { "exact": selectedInputDeviceID };
+        }
+
+        // Get the audio media stream associated with the user's default audio input device.
+        let audioMediaStream;
+        try {
+            audioMediaStream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints, video: false });
+        } catch (e) {
+            return;
+        }
+
+        // If we've already previously set up our `hifiCommunicator`...
+        if (hifiCommunicator) {
+            // Simply set a new input audio media stream
+            console.log(`Setting new input audio stream...`);
+            await hifiCommunicator.setInputAudioMediaStream(audioMediaStream);
+            return;
+        }
+
+        // Disable the Connect button after the user clicks it so we don't double-connect.
+        connectButton.disabled = true;
+        connectButton.innerHTML = `Connecting...`;
+
+        // Set up the initial data for our user.
+        // They'll be standing at the origin, facing "forward".
+        let initialHiFiAudioAPIData = new HighFidelityAudio.HiFiAudioAPIData({
+            position: new HighFidelityAudio.Point3D({ "x": 0, "y": 0, "z": 0 }),
+            orientationEuler: new HighFidelityAudio.OrientationEuler3D({ "pitch": 0, "yaw": 0, "roll": 0 })
+        });
+
+        // Set up our `HiFiCommunicator` object, supplying our media stream and initial user data.
+        hifiCommunicator = new HighFidelityAudio.HiFiCommunicator({
+            initialHiFiAudioAPIData: initialHiFiAudioAPIData
+        });
+        await hifiCommunicator.setInputAudioMediaStream(audioMediaStream);
+
+        // Connect to the HiFi Audio API server!
+        // Supply your own JWT here.
+        const HIFI_AUDIO_JWT = "";
+        try {
+            await hifiCommunicator.connectToHiFiAudioAPIServer(HIFI_AUDIO_JWT);
+        } catch (e) {
+            console.error(`Error connecting to High Fidelity:\n${JSON.stringify(e)}`);
+            connectButton.disabled = false;
+            connectButton.innerHTML = `Connection error. Retry?`;
+            return;
+        }
+
+        // Show the user that we're connected by changing the text on the button.
+        connectButton.innerHTML = `Connected!`;
+
+        // Set the `srcObject` on our `audio` DOM element to the final, mixed audio stream from the High Fidelity Audio API Server.
+        document.querySelector(`.outputAudioEl`).srcObject = hifiCommunicator.getOutputAudioMediaStream();
+        // We explicitly call `play()` here because certain browsers won't play the newly-set stream automatically.
+        document.querySelector(`.outputAudioEl`).play();
+    }
+
+    async function start() {
+        await setupAudioIODropdowns();
+    }
+    start();
+</script>
+
+</html>
