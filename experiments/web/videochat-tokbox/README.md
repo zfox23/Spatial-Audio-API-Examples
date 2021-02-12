@@ -1,6 +1,8 @@
 # "Video Chat - TokBox" Example
 Experience High Fidelity Spatial Audio with 2D video chat! Understand how it enhances the experience! Enjoy meetings!
 
+!["Video Chat - TokBox" Example Screenshot](./screenshot.png)
+
 ## Author
 Zach Fox
 

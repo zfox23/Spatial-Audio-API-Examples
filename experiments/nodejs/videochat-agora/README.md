@@ -1,6 +1,8 @@
 # "Video Chat - Agora" Example
 Experience High Fidelity Spatial Audio with 2D video chat using Agora! Understand how it enhances the experience! Enjoy meetings!
 
+!["Video Chat - Agora" Example Screenshot](./screenshot.png)
+
 ## Author
 Zach Fox
 

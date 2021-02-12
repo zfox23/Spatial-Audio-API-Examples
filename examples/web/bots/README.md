@@ -1,5 +1,7 @@
 # "Bots" Example
 
+![Bots Example](./screenshot.png)
+
 ## Author
 Luis Cuenca
 

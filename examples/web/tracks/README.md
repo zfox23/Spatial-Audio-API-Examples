@@ -1,5 +1,7 @@
 # "Tracks" Example
 
+![Tracks Example GIF](./screenshot.gif)
+
 ## Author
 Luis Cuenca
 

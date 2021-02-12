@@ -9,6 +9,8 @@ These example projects augment the API walkthrough guides you can find at [highf
 😎 The `examples` directory of this repository contains complete, commented, tested, hopefully-working example projects that import the High Fidelity Spatial Audio Client Library.
 
 ## Plain HTML/JS Examples
+### [bots](./examples/web/bots/)
+Listen to a simulated conversation between bots as they walk around you in this virtual space.
 ### [simple](./examples/web/simple/)
 Corresponds to the "Build a Simple Web App" guide at [highfidelity.com/api/guides/web/simple](https://www.highfidelity.com/api/guides/web/simple).
 ### [simple-with-device-selection](./examples/web/simple-with-device-selection/)
