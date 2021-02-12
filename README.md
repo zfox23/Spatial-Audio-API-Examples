@@ -29,7 +29,7 @@ Corresponds to the "Build a Web App with the Spatial Audio API, Express, and EJS
 Corresponds to the "Get a JWT" guide at [highfidelity.com/api/guides/misc/getAJWT](https://www.highfidelity.com/api/guides/misc/getAJWT).
 
 # The `experiments` Directory
-🐉 The `experiments` directory of this repository contains **experimental example projects** that import the High Fidelity Spatial Audio Client Library. These examples might not work. If they do work, they'll almost certainly be really cool. They also might not be documented very thoroughly. Enjoy!
+🐉 The `experiments` directory of this repository contains experimental example projects that import the High Fidelity Spatial Audio Client Library. These examples may not be documented as thoroughly as the above examples. Enjoy!
 
 ## Plain HTML/JS Experiments
 ### [Video Chat - TokBox](./experiments/web/videochat-tokbox)
