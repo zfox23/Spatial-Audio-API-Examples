@@ -1,5 +1,6 @@
-// You can obtain a test JWT (for testing purposes only) from the High Fidelity Spatial Audio API Developer Console:
-// https://account.highfidelity.com/dev/account
+// Connect to the High Fidelity Audio Spatial API Server by supplying your own JWT here.
+// Follow this guide to get a JWT: https://www.highfidelity.com/api/guides/misc/getAJWT
+// If you don't need a guide, obtain JWT credentials after signing up for a developer account at https://account.highfidelity.com/dev/account
 const HIFI_AUDIO_JWT = "";
 
 // You can obtain static authorization information for testing purposes only from within your Project's settings page.
