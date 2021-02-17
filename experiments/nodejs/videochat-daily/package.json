@@ -1,0 +1,17 @@
+{
+  "name": "hifi-videochat-daily-example",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "author": "Zach Fox",
+  "license": "MIT",
+  "dependencies": {
+    "ejs": "^3.1.5",
+    "express": "^4.17.1",
+    "jose": "^3.5.4",
+    "node-fetch": "^2.6.1"
+  }
+}

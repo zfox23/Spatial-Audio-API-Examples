@@ -38,6 +38,8 @@ Experience High Fidelity Spatial Audio with 2D video chat powered by TokBox.
 ## NodeJS Experiments
 ### [Video Chat - Agora](./experiments/nodejs/videochat-agora)
 Experience High Fidelity Spatial Audio with 2D video chat powered by Agora.
+### [Video Chat - Daily](./experiments/nodejs/videochat-daily)
+Experience High Fidelity Spatial Audio with 2D video chat powered by Daily.
 ### [Video Chat - Twilio](./experiments/nodejs/videochat-twilio)
 Experience High Fidelity Spatial Audio with 2D video chat powered by Twilio.
 

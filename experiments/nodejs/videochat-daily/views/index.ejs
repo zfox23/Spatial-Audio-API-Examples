@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>High Fidelity - Spatial Audio with Video Chat from Daily</title>
+
+    <style>
+        body {
+            background-color: #222222;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        p {
+            color: white;
+            margin: 0;
+        }
+
+        button {
+            width: 200px;
+            height: 100%;
+            margin: 0;
+        }
+
+        .controlsContainer {
+            position: fixed;
+            width: 100%;
+            height: 40px;
+            padding: 10px;
+            left: 0;
+            top: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-evenly;
+            background-color: #111111;
+        }
+
+        .controlsContainer>div {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .videoContainer {
+            width: 100%;
+            height: calc(100vh - 40px - 20px);
+            position: fixed;
+            bottom: 0;
+            left: 0;
+        }
+
+        .videoContainer>div {
+            position: absolute !important;
+        }
+
+        .videoContainer>div>video {
+            width: 100%;
+            height: 100%;
+            transform: rotateY(180deg);
+        }
+    </style>
+</head>
+
+<body style="width: 100%; height: 100%; margin: 0; padding: 0;">
+    <div id="videoContainer" class="videoContainer"></div>
+    <div class="controlsContainer">
+        <div>
+            <p>HiFi Spatial Audio with Daily Video Chat</p>
+            <p>(ID: <%- providedUserID %>) (Space: <%- spaceName %>)</p>
+        </div>
+        <button class="connectDisconnectButton" disabled="true">Connect</button>
+        <button class="toggleInputMuteButton" disabled="true">Toggle Mic Mute (currently unmuted)</button>
+        <button class="toggleOutputMuteButton">Toggle Output Mute (currently unmuted)</button>
+        <audio autoplay class="outputAudioEl"></audio>
+    </div>
+</body>
+
+<script src="https://hifi-spatial-audio-api.s3.amazonaws.com/releases/latest/HighFidelityAudio-latest.js"></script>
+<script>
+    let connectDisconnectButton = document.querySelector('.connectDisconnectButton');
+    connectDisconnectButton.addEventListener("click", connectToHiFiAndVideoService);
+    let toggleInputMuteButton = document.querySelector('.toggleInputMuteButton');
+    toggleInputMuteButton.addEventListener("click", toggleInputMute);
+    let outputAudioEl = document.querySelector(`.outputAudioEl`);
+    let toggleOutputMuteButton = document.querySelector('.toggleOutputMuteButton');
+    toggleOutputMuteButton.addEventListener("click", toggleOutputMute);
+    let videoContainer = document.querySelector('.videoContainer');
+
+    function clamp(value, min, max) {
+        return Math.min(Math.max(value, min), max);
+    }
+
+    function linearScale(factor, minInput, maxInput, minOutput, maxOutput) {
+        factor = clamp(factor, minInput, maxInput);
+
+        return minOutput + (maxOutput - minOutput) *
+            (factor - minInput) / (maxInput - minInput);
+    }
+
+    const FORWARD_ORIENTATION = new HighFidelityAudio.OrientationEuler3D({ "pitchDegrees": 0, "yawDegrees": 0, "rollDegrees": 0 });
+    let possiblePositions = [];
+    function updatePositions() {
+        if (!hifiCommunicator) {
+            return;
+        }
+
+        let numParticipants = currentParticipantProvidedUserIDs.length;
+        if (!numParticipants) {
+            return;
+        }
+
+        currentParticipantProvidedUserIDs.sort();
+
+        console.log(`${numParticipants} participants.`);
+
+        let myIndex = currentParticipantProvidedUserIDs.indexOf(myProvidedUserID);
+        if (myIndex === -1) {
+            console.error(`Couldn't find \`myProvidedUserID\` ${myProvidedUserID} in \`currentParticipantProvidedUserIDs\`!`);
+            return;
+        }
+
+        let numRows;
+        let numCols;
+
+        if (numParticipants === 1) {
+            numRows = 1;
+            numCols = 1;
+        } else if (numParticipants === 2) {
+            numRows = 2;
+            numCols = 1;
+        } else if (numParticipants === 3 || numParticipants === 4) {
+            numRows = 2;
+            numCols = 2;
+        } else if (numParticipants === 5 || numParticipants === 6) {
+            numRows = 2;
+            numCols = 3;
+        } else if (numParticipants > 6) {
+            numRows = Math.ceil(Math.sqrt(numParticipants));
+            numCols = Math.ceil(Math.sqrt(numParticipants));
+        }
+
+        let virtualSpaceDimensions = {
+            "x": numRows / 2,
+            "y": numCols / 2,
+        };
+        console.log(`New virtual space dimensions (meters):\n${JSON.stringify(virtualSpaceDimensions)}`);
+        possiblePositions = [];
+        for (let i = -virtualSpaceDimensions.x / 2; i < virtualSpaceDimensions.x / 2; i += virtualSpaceDimensions.x / numCols) {
+            for (let j = -virtualSpaceDimensions.y / 2; j < virtualSpaceDimensions.y / 2; j += virtualSpaceDimensions.y / numRows) {
+                possiblePositions.push(new HighFidelityAudio.Point3D({ "x": i + virtualSpaceDimensions.x / numCols / 2, "y": j + virtualSpaceDimensions.y / numRows / 2, "z": 0 }));
+            }
+        }
+
+        let myPosition = possiblePositions[myIndex];
+        console.log(`My position:\n${JSON.stringify(myPosition)}`);
+
+        console.log(hifiCommunicator.updateUserDataAndTransmit({
+            position: myPosition,
+            orientationEuler: FORWARD_ORIENTATION,
+        }));
+
+        let videoContainerWidth = videoContainer.offsetWidth;
+        let videoContainerHeight = videoContainer.offsetHeight;
+
+        let eachVideoStyle = {
+            "width": `${100 / numCols}%`,
+            "height": `${100 / numRows}%`,
+        };
+
+        providedUserIDsToVideoContainersMap.forEach((value, key, map) => {
+            let idx = currentParticipantProvidedUserIDs.indexOf(key);
+            if (idx === -1) {
+                console.error(`Couldn't find \`providedUserID\` \`${key}\` in \`currentParticipantProvidedUserIDs\`!`);
+                return;
+            }
+            let position = possiblePositions[idx];
+
+            value.style.width = eachVideoStyle.width;
+            value.style.height = eachVideoStyle.height;
+
+            // `-1` term because we want higher `position.y` values to yield a video towards the top of the browser window
+            let topOffset = linearScale(-1 * position.y, -virtualSpaceDimensions.y / 2, virtualSpaceDimensions.y / 2, 0, videoContainerHeight) - (value.offsetHeight / 2);
+            topOffset = clamp(topOffset, 0, videoContainerHeight - value.offsetHeight);
+            if (numParticipants > 1) {
+                value.style.top = `${topOffset}px`;
+            } else {
+                value.style.top = "0";
+            }
+
+            let leftOffset = linearScale(position.x, -virtualSpaceDimensions.x / 2, virtualSpaceDimensions.x / 2, 0, videoContainerWidth) - (value.offsetWidth / 2);
+            leftOffset = clamp(leftOffset, 0, videoContainerWidth - value.offsetWidth);
+            if (numParticipants > 1) {
+                value.style.left = `${leftOffset}px`;
+            } else {
+                value.style.left = "0";
+            }
+        });
+    }
+
+    function onNewHiFiUserDataReceived(receivedHiFiAudioAPIDataArray) {
+        let newUserReceived = false;
+
+        for (let i = 0; i < receivedHiFiAudioAPIDataArray.length; i++) {
+            let currentProvidedVisitID = receivedHiFiAudioAPIDataArray[i].providedUserID;
+            if (currentParticipantProvidedUserIDs.indexOf(currentProvidedVisitID) === -1) {
+                console.log(`New HiFi User! Provided ID: ${currentProvidedVisitID}`);
+                currentParticipantProvidedUserIDs.push(currentProvidedVisitID);
+            }
+        }
+
+        if (newUserReceived) {
+            updatePositions();
+        }
+    }
+
+    async function connectToHiFiAndVideoService() {
+        await connectToHiFi();
+        await connectToVideoService();
+    }
+
+    let hifiCommunicator;
+    let myProvidedUserID;
+    let currentParticipantProvidedUserIDs = [];
+    async function connectToHiFi() {
+        // Disable the Connect button after the user clicks it so we don't double-connect.
+        connectDisconnectButton.disabled = true;
+        connectDisconnectButton.innerHTML = `Connecting...`;
+        toggleInputMuteButton.disabled = true;
+
+        // Get the audio media stream associated with the user's default audio input device.
+        let audioMediaStream;
+        try {
+            audioMediaStream = await navigator.mediaDevices.getUserMedia({ audio: HighFidelityAudio.getBestAudioConstraints(), video: false });
+        } catch (e) {
+            return;
+        }
+
+        // Set up the initial data for our user.
+        // They'll be standing at the origin, facing "forward".
+        let initialHiFiAudioAPIData = new HighFidelityAudio.HiFiAudioAPIData({
+            position: new HighFidelityAudio.Point3D({ "x": 0, "y": 0, "z": 0 }),
+            orientationEuler: new HighFidelityAudio.OrientationEuler3D({ "pitch": 0, "yaw": 0, "roll": 0 })
+        });
+
+        HighFidelityAudio.HiFiLogger.setHiFiLogLevel(HighFidelityAudio.HiFiLogLevel.Debug);
+
+        // Set up our `HiFiCommunicator` object, supplying our media stream and initial user data.
+        hifiCommunicator = new HighFidelityAudio.HiFiCommunicator({
+            initialHiFiAudioAPIData: initialHiFiAudioAPIData
+        });
+        await hifiCommunicator.setInputAudioMediaStream(audioMediaStream);
+
+        currentParticipantProvidedUserIDs = [];
+        providedUserIDsToVideoContainersMap.clear();
+
+        // Connect to the HiFi Audio API server!
+        try {
+            let response = await hifiCommunicator.connectToHiFiAudioAPIServer('<%- hiFiJWT %>');
+            myProvidedUserID = response.audionetInitResponse.user_id;
+            currentParticipantProvidedUserIDs.push(myProvidedUserID);
+            console.log(`My Provided User ID: ${myProvidedUserID}`);
+        } catch (e) {
+            console.error(`Error connecting to High Fidelity:\n${e}`);
+            connectDisconnectButton.disabled = false;
+            toggleInputMuteButton.disabled = true;
+            connectDisconnectButton.innerHTML = `Connection error. Retry?`;
+            return;
+        }
+
+        // Show the user that we're connected by changing the text on the button.
+        connectDisconnectButton.removeEventListener("click", connectToHiFiAndVideoService);
+        connectDisconnectButton.addEventListener("click", disconnectFromHiFiAndVideoService);
+        connectDisconnectButton.innerHTML = `Disconnect`;
+        connectDisconnectButton.disabled = false;
+        toggleInputMuteButton.disabled = false;
+
+        // Set the `srcObject` on our `audio` DOM element to the final, mixed audio stream from the High Fidelity Audio API Server.
+        outputAudioEl.srcObject = hifiCommunicator.getOutputAudioMediaStream();
+        // We explicitly call `play()` here because certain browsers won't play the newly-set stream automatically.
+        outputAudioEl.play();
+
+        // Set up a new User Data Subscription to get User Data updates from the server.
+        let newUserDataSubscription = new HighFidelityAudio.UserDataSubscription({
+            // Setting `providedUserID` to `null` (or omitting it) means we will get data updates from **all** connected Users, including ourselves.
+            "providedUserID": null,
+            // There are other components we could subscribe to here, but we're only subscribing to Volume data updates.
+            "components": [HighFidelityAudio.AvailableUserDataSubscriptionComponents.Position, HighFidelityAudio.AvailableUserDataSubscriptionComponents.OrientationEuler],
+            // See above for the definition of `onNewHiFiUserDataReceived`.
+            "callback": onNewHiFiUserDataReceived
+        });
+        // Actually add the newly-constructed Data Subscription to the list of our Data Subscriptions on our `HiFiCommunicator`.
+        hifiCommunicator.addUserDataSubscription(newUserDataSubscription);
+    }
+
+    let isMuted = false;
+    async function toggleInputMute() {
+        if (!hifiCommunicator) {
+            return;
+        }
+        if (await hifiCommunicator.setInputAudioMuted(!isMuted)) {
+            isMuted = !isMuted;
+            toggleInputMuteButton.innerHTML = `Toggle Mute (currently ${isMuted ? "muted" : "unmuted"})`;
+        }
+    }
+
+    function toggleOutputMute() {
+        outputAudioEl.muted = !outputAudioEl.muted;
+        console.log(`Set output mute status to \`${outputAudioEl.muted}\``);
+        toggleOutputMuteButton.innerHTML = `Toggle Output Mute (currently ${outputAudioEl.muted ? "muted" : "unmuted"})`;
+    }
+
+    function disconnectFromHiFiAndVideoService() {
+        disconnectFromVideoService();
+        disconnectFromHiFi();
+    }
+
+    function disconnectFromHiFi() {
+        console.log(`Disconnecting from High Fidelity Audio API Servers...`);
+
+        connectDisconnectButton.removeEventListener("click", disconnectFromHiFiAndVideoService);
+        connectDisconnectButton.addEventListener("click", connectToHiFiAndVideoService);
+        connectDisconnectButton.disabled = false;
+        connectDisconnectButton.innerHTML = `Connect`;
+
+        toggleInputMuteButton.disabled = true;
+        isMuted = false;
+
+        if (hifiCommunicator) {
+            hifiCommunicator.disconnectFromHiFiAudioAPIServer();
+        }
+        hifiCommunicator = null;
+    }
+
+    window.onresize = updatePositions;
+    window.onbeforeunload = disconnectFromHiFiAndVideoService;
+</script>
+
+<script crossorigin src="https://unpkg.com/@daily-co/daily-js"></script>
+<script>
+    // This script contains code specific to using Daily as a video service provider.
+
+    let providedUserIDsToVideoContainersMap = new Map();
+    let myDailyCallObject;
+    async function connectToVideoService() {
+        try {
+            myDailyCallObject = DailyIframe.createCallObject();
+            await myDailyCallObject.join({
+                url: 'https://zfox23.daily.co/hifi-videochat-daily-test-room',
+                token: '<%- dailyJWT %>'
+            });
+        } catch (e) {
+            myDailyCallObject = undefined;
+            console.error(`Error when creating Daily Call Object:\n${JSON.stringify(e, null, 4)}`);
+            return;
+        }
+
+        console.log(myDailyCallObject.participants())
+
+        participantConnected(myDailyCallObject.participants().local);
+        for (const [key, value] of Object.entries(myDailyCallObject.participants())) {
+            if (key === "local") {
+                continue;
+            }
+            participantConnected(value);
+        }
+
+        myDailyCallObject.on("participant-joined", participantConnected);
+        myDailyCallObject.on("participant-left", participantDisconnected);
+
+        function participantConnected(participant) {
+            if (participant.participant) {
+                participant = participant.participant;
+            }
+
+            console.log(`Participant connected! Adding:\n${JSON.stringify(participant)}`);
+
+            const div = document.createElement('div');
+            div.id = participant.user_name;
+
+            let participantVideo = document.createElement("video");
+            let interval = setInterval(() => {
+                let participants = myDailyCallObject.participants();
+                let videoTrack = participant.videoTrack || (participants && participants[participant.session_id] && myDailyCallObject.participants()[participant.session_id].videoTrack);
+                if (videoTrack) {
+                    let participantVideoMediaStream = new MediaStream([videoTrack]);
+                    participantVideo.autoplay = true;
+                    participantVideo.muted = true;
+                    participantVideo.playsInline = true;
+                    participantVideo.srcObject = participantVideoMediaStream;
+                    clearInterval(interval);
+                } else {
+                    console.log(`Waiting for video track for \`${participant.user_name}\`...`);
+                    console.log(myDailyCallObject.participants()[participant.session_id].videoTrack)
+                }
+            }, 1000);
+
+            div.appendChild(participantVideo);
+            videoContainer.appendChild(div);
+
+            providedUserIDsToVideoContainersMap.set(participant.user_name, div);
+            updatePositions();
+        }
+
+        function participantDisconnected(participant) {
+            if (participant.participant) {
+                participant = participant.participant;
+            }
+            console.log(`Participant disconnected:\n${JSON.stringify(participant)}`)
+            document.getElementById(participant.user_name).remove();
+
+            providedUserIDsToVideoContainersMap.delete(participant.user_name);
+            let idx = currentParticipantProvidedUserIDs.indexOf(participant.user_name);
+            if (idx > -1) {
+                currentParticipantProvidedUserIDs.splice(idx, 1);
+            }
+            updatePositions();
+        }
+    }
+
+    function disconnectFromVideoService() {
+        let videoElements = Array.from(videoContainer.getElementsByTagName("video"));
+        videoElements.forEach((element) => {
+            element.parentNode.remove();
+        });
+
+        providedUserIDsToVideoContainersMap.delete(myProvidedUserID);
+        myProvidedUserIDIdx = currentParticipantProvidedUserIDs.indexOf(myProvidedUserID);
+        if (myProvidedUserIDIdx > -1) {
+            currentParticipantProvidedUserIDs.splice(myProvidedUserIDIdx, 1);
+        }
+
+        if (!myDailyCallObject) {
+            return;
+        }
+
+        console.log(`Disconnecting from Daily...`);
+        myDailyCallObject.leave();
+        myDailyCallObject = null;
+    }
+    
+    // Make the last thing we do enable the "connectDisconnectButton", so people can't click on that button before we're ready.
+    connectDisconnectButton.disabled = false;
+</script>
+
+</html>
