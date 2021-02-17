@@ -58,12 +58,26 @@
             font-size: 12px;
         }
 
+        .userDataContainer__fromServer {
+            display: none;
+        }
+
         .userData {
             margin: 8px;
         }
 
         .userData>p {
             margin: 0;
+        }
+
+        .regionContainer * {
+            position:absolute;
+        }
+        .regionContainer .regionPictureContainer {
+            z-index: 0;
+        }
+        .regionContainer .theCanvas {
+            z-index: 1;
         }
     </style>
 </head>
@@ -110,6 +124,7 @@
         <div class="regionPictureContainer">
             <img id="regionPictureImage" src="" style="width:400px;height:400px;" />
         </div>
+        <canvas class="thecanvas" tabindex="1" style="width:400px;height:400px;" height="400px" width="400px"></canvas>
     </div>
 
     <script src="https://hifi-spatial-audio-api.s3.amazonaws.com/releases/latest/HighFidelityAudio-latest.js"></script>
@@ -127,6 +142,11 @@
                 {x: 0, y: -1, name: "Zen Zeppelin Port", imageUrl: "./images/jason-lam-78aCYD_pQgg-unsplash_800.jpg"}
             ]
         };
+        let CANVAS = document.querySelector('.thecanvas');
+        CANVAS.width = CANVAS.scrollWidth;
+        CANVAS.height = CANVAS.scrollHeight;
+        let CTX = CANVAS.getContext("2d");
+
         function findRegionByRegionCoord(regionInfo, x, y) {
             for (let i = 0; i < regionInfo.regions.length; i = i + 1) {
                 let region = regionInfo.regions[i];
@@ -195,7 +215,9 @@
             currentPosition = newPosition;
             let regionNameTag = document.querySelector(`.ourRegionName`);
             regionNameTag.innerHTML = "You are at " + region.name;
-            document.getElementById("regionPictureImage").src = region.imageUrl;
+            let regionImage = document.getElementById("regionPictureImage");
+            regionImage.src = region.imageUrl;
+            regionImage.alt = region.name;
             let buttons = document.querySelector(".buttonContainer").getElementsByTagName("button");
             let adjacentRegions = getAdjacentRegions(regionInfo, region);
             for (let i = 0; i < buttons.length; i = i + 1) {
@@ -238,13 +260,89 @@
             goDirection("west");
             updateAndTransmit();
         }
+        
+        // ctx = the canvas HTML element
+        // Thanks Luis :)
+        class CanvasHelper {
+            static finishPath(ctx, color, width) {
+                ctx[(width !== undefined) ? "strokeStyle" : "fillStyle"] = color;
+                ctx[(width !== undefined) ? "lineWidth" : ""] = width;
+                ctx[(width !== undefined) ? "stroke" : "fill"].call(ctx);
+            }
+            // Compact function to render circles filled or stroked
+            static renderCircle(ctx, x, y, radius, from, to, color, width) {
+                ctx.beginPath();
+                ctx.arc(x, y, radius, from, to, false);
+                CanvasHelper.finishPath(ctx, color, width);
+            }
+            // Compact function to render polygons filled or stroked
+            static renderPolygon(ctx, points, color, width) {
+                ctx.beginPath();
+                points.forEach((point, i) => {
+                    ctx[i === 0 ? "moveTo" : "lineTo"].call(ctx, point[0], point[1]);
+                });
+                CanvasHelper.finishPath(ctx, color, width);
+            }
+            // Render text 
+            static renderText(ctx, x, y, text, color, size, family) {
+                family = family ? family : "console";
+                ctx.font = `${size}px ${family}`;
+                ctx.fillStyle = color;
+                ctx.fillText(text, x, y);
+            }
+            // World coordenates to canvas conversion
+            static worldToCanvasCoords(canvasWidth, canvasHeight, coords, offset, zoom) {
+                console.log(`worldToCanvasCoords: canvasWidth: ${canvasWidth}, canvasHeight: ${canvasHeight}, coords: ${JSON.stringify(coords)}, offset: ${JSON.stringify(offset)}, zoom: ${zoom}`)
+                let relPos = { x: coords.x - offset.x, y: coords.y - offset.y };
+                console.log(`relPos: ${JSON.stringify(relPos)}`)
+                let canvasPos = { x: (0.5 * canvasWidth) - (relPos.x / zoom), y: (0.5 * canvasHeight) - (relPos.y / zoom) };
+                console.log(`canvasPos: ${JSON.stringify(canvasPos)}`)
+                return canvasPos;
+            }
+            // Canvas coordenates to world conversion
+            static canvasToWorldCoords(canvasWidth, canvasHeight, coords, offset, zoom) {
+                let newLocPos = { x: (coords.x - 0.5 * canvasWidth) * zoom, y: (coords.y - 0.5 * canvasHeight) * zoom, z: 0.0 };
+                let npos = { x: offset.x - newLocPos.x, y: offset.y - newLocPos.y, z: offset.z - newLocPos.z };
+                return npos;
+            }
+        }
+        function draw(t){
+            if (typeof(currentPosition) == "undefined") {
+                return;
+            }
+            let region = getCurrentRegion(REGION_INFO, currentPosition);
+            let zoom = 5;
+
+            CTX.clearRect(0, 0, CANVAS.width, CANVAS.height);
+            CTX.resetTransform();
+
+            for (let i = 0; i < allUserDataFromServer.length; i++) {
+                let user = allUserDataFromServer[i];
+                if (!user || !user.position) {
+                    continue;
+                }
+
+                let userRegion = getCurrentRegion(REGION_INFO, user.position);
+                if (userRegion != region) {
+                    continue;
+                }
+                console.log("user.position: " + JSON.stringify(user.position));
+                var canvasCoords = CanvasHelper.worldToCanvasCoords(CANVAS.scrollWidth, CANVAS.scrollHeight, user.position, {x: (region.x + 0.5) * REGION_INFO.regionSize, y: (region.y + 0.5) * REGION_INFO.regionSize}, REGION_INFO.regionSize / CANVAS.scrollHeight);
+                console.log("canvasCoords: " + JSON.stringify(canvasCoords));
+                CTX.translate(canvasCoords.x, canvasCoords.y);
+                CanvasHelper.renderCircle(CTX, 0, 0, 8, 0, 2.0 * Math.PI, 'rgba(255, 0, 0, 0.5)', undefined);
+                CTX.resetTransform();
+            }
+
+            window.requestAnimationFrame(draw);
+        }
 
         let outputAudioEl = document.querySelector(`.outputAudioEl`);
         let userDataContainer__fromServer = document.querySelector(`.userDataContainer__fromServer`);
 
         let currentPosition = new HighFidelityAudio.Point3D({ "x": 0, "y": 0, "z": 0 });
+        let currentOrientationEuler = new HighFidelityAudio.OrientationEuler3D({ "pitchDegrees": 0, "yawDegrees": 270, "rollDegrees": 0 });
         goToRegion(REGION_INFO, getRandomRegion(REGION_INFO));
-        let currentOrientationEuler = new HighFidelityAudio.OrientationEuler3D({ "pitchDegrees": 0, "yawDegrees": 0, "rollDegrees": 0 });
 
         let ourHashedVisitID = document.querySelector(`.ourHashedVisitID`);
         let ourPositionContainer = document.querySelector(`.ourPositionContainer`);
@@ -532,6 +630,9 @@
                 orientationEuler: currentOrientationEuler,
             }));
         }
+
+        // DRAW STUFF
+        draw();
     </script>
 </body>
 
