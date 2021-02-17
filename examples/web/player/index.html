@@ -12,7 +12,7 @@
     <div class="console" style="z-index: 1; background-color: #efefef; padding: 10px; position: fixed; left: 0; top: 60px; width: 260px; font-family: monospace; font-size: 12px;">
         <div class="console-log" style="margin:2px; border-radius: 5px; padding: 5px; border: 2px solid transparent; display: block; width: fit-content;"></div>
     </div>
-    <canvas class="thecanvas" style="position:fixed; right: 0; top: 0;"></canvas>
+    <canvas class="thecanvas" tabindex="1" style="position:fixed; right: 0; top: 0;"></canvas>
     <p class="example-description" style="position: fixed; left: 0; width: 100%; text-align: center;">Click the connect button to setup the player node.<br>Drag the player around and talk to others<br>Right click to change orientation</p>
     <button class="triggerButton" style="cursor: pointer; font-size: 18px; background-color: #000000; color: white; width: 280px; top: 0; left: 0; height: 60px; margin: 0; position: fixed;"></button>
     <script src="https://hifi-spatial-audio-api.s3-us-west-2.amazonaws.com/releases/latest/HighFidelityAudio-latest.js"></script>
@@ -428,6 +428,20 @@
                 hifiControls.onRightDrag = this.onRightDrag.bind(this);
                 hifiControls.onCanvasMove = this.onCanvasMove.bind(this);
                 hifiControls.onCanvasDown = this.onCanvasDown.bind(this);
+
+                hifiControls.onTurnRightKeyDown = this.onTurnRightKeyDown.bind(this);
+                hifiControls.onMoveForwardKeyDown = this.onMoveForwardKeyDown.bind(this);
+                hifiControls.onMoveBackwardKeyDown = this.onMoveBackwardKeyDown.bind(this);
+                hifiControls.onStrafeLeftKeyDown = this.onStrafeLeftKeyDown.bind(this);
+                hifiControls.onStrafeRightKeyDown = this.onStrafeRightKeyDown.bind(this);
+                hifiControls.onTurnLeftKeyUp = this.onTurnLeftKeyUp.bind(this);
+                hifiControls.onTurnRightKeyUp = this.onTurnRightKeyUp.bind(this);
+                hifiControls.onMoveForwardKeyUp = this.onMoveForwardKeyUp.bind(this);
+                hifiControls.onMoveBackwardKeyUp = this.onMoveBackwardKeyUp.bind(this);
+                hifiControls.onStrafeLeftKeyUp = this.onStrafeLeftKeyUp.bind(this);
+                hifiControls.onStrafeRightKeyUp = this.onStrafeRightKeyUp.bind(this);
+
+                this.forceCanvasKeyEvent();
                 // Start the physics loop
                 this.physicsLoop.start();
             }
@@ -604,6 +618,53 @@
                 this.canvas.width = window.innerWidth;
                 this.canvas.height = window.innerHeight;
                 this.zoomAmount = 0.0045 * 1280 / (Math.min(this.canvas.height, this.canvas.width));
+            }
+
+            // Key Controls Bindings
+            // Every time a key is pressed the canvas will be focused in order to force it to catch the event
+            forceCanvasKeyEvent() {
+                let eventsToSendToCanvas = ['keydown', 'keyup', 'keypress'];
+                eventsToSendToCanvas.forEach(eventName => {
+                    document.addEventListener(eventName, (e) => {
+                        if (this.canvas && !this.canvas.onfocus) {
+                            this.canvas.focus();
+                        }
+                    });
+                });
+            }
+
+            onTurnRightKeyDown(e) {
+                console.log("onTurnRightKeyDown");
+            }
+            onMoveForwardKeyDown(e) {
+                console.log("onMoveForwardKeyDown");
+            }
+            onMoveBackwardKeyDown(e) {
+                console.log("onMoveBackwardKeyDown");
+            }
+            onStrafeLeftKeyDown(e) {
+                console.log("onStrafeLeftKeyDown");
+            }
+            onStrafeRightKeyDown(e) {
+                console.log("onStrafeRightKeyDown");
+            }
+            onTurnLeftKeyUp(e) {
+                console.log("onTurnLeftKeyUp");
+            }
+            onTurnRightKeyUp(e) {
+                console.log("onTurnRightKeyUp");
+            }
+            onMoveForwardKeyUp(e) {
+                console.log("onMoveForwardKeyUp");
+            }
+            onMoveBackwardKeyUp(e) {
+                console.log("onMoveBackwardKeyUp");
+            }
+            onStrafeLeftKeyUp(e) {
+                console.log("onStrafeLeftKeyUp");
+            }
+            onStrafeRightKeyUp(e) {
+                console.log("onStrafeRightKeyUp");
             }
         }
 
