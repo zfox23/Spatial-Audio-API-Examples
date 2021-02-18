@@ -1,0 +1,29 @@
+{
+    "regionSize": 5,
+    "regions": [
+        {
+            "x": -1,
+            "y": 0,
+            "name": "Awesome Area",
+            "imageUrl": "./images/levon-vardanyan-phYeAlPwHrg-unsplash_800.jpg"
+        },
+        {
+            "x": 0,
+            "y": 0,
+            "name": "Peaceful Pond",
+            "imageUrl": "./images/eugene-kuznetsov-qBJmwk9m4z0-unsplash_800.jpg"
+        },
+        {
+            "x": 1,
+            "y": 0,
+            "name": "Fanciful Forest",
+            "imageUrl": "./images/jocelyne-yvonne-MCpBIwisljo-unsplash_800.jpg"
+        },
+        {
+            "x": 0,
+            "y": -1,
+            "name": "Zen Zeppelin Port",
+            "imageUrl": "./images/jason-lam-78aCYD_pQgg-unsplash_800.jpg"
+        }
+    ]
+}

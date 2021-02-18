@@ -129,19 +129,8 @@
 
     <script src="https://hifi-spatial-audio-api.s3.amazonaws.com/releases/latest/HighFidelityAudio-latest.js"></script>
     <script>
-        let REGION_INFO = {
-            "regionSize": 5,
-            "regions": [
-                // <span>Photo by <a href="https://unsplash.com/@lyovon?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText">Levon Vardanyan</a> on <a href="https://unsplash.com/?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText">Unsplash</a></span>
-                {x: -1, y: 0, name: "Awesome Area", imageUrl: "./images/levon-vardanyan-phYeAlPwHrg-unsplash_800.jpg"},
-                // <span>Photo by <a href="https://unsplash.com/@eugene_kuznetsov?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText">Eugene Kuznetsov</a> on <a href="https://unsplash.com/?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText">Unsplash</a></span>
-                {x: 0, y: 0, name: "Peaceful Pond", imageUrl: "./images/eugene-kuznetsov-qBJmwk9m4z0-unsplash_800.jpg"},
-                // <span>Photo by <a href="https://unsplash.com/@ledi777?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText">Jocelyne Yvonne</a> on <a href="https://unsplash.com/?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText">Unsplash</a></span>
-                {x: 1, y: 0, name: "Fanciful Forest", imageUrl: "./images/jocelyne-yvonne-MCpBIwisljo-unsplash_800.jpg"},
-                // <span>Photo by <a href="https://unsplash.com/@j_lam83?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText">Jason Lam</a> on <a href="https://unsplash.com/?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText">Unsplash</a></span>
-                {x: 0, y: -1, name: "Zen Zeppelin Port", imageUrl: "./images/jason-lam-78aCYD_pQgg-unsplash_800.jpg"}
-            ]
-        };
+        let REGION_INFO = {};
+
         let CANVAS = document.querySelector('.thecanvas');
         CANVAS.width = CANVAS.scrollWidth;
         CANVAS.height = CANVAS.scrollHeight;
@@ -168,7 +157,6 @@
             }
             return undefined;
         }
-        let DEFAULT_REGION = findRegionByName(REGION_INFO, name);
         function getAdjacentRegions(regionInfo, region) {
             return {
                 "west": findRegionByRegionCoord(regionInfo, region.x - 1, region.y),
@@ -180,7 +168,6 @@
         function debugRegions(regionInfo) {
             for (let i = 0; i < regionInfo.regions.length; i = i + 1) {
                  let region = regionInfo.regions[i];
-                 console.log("Adjacent regions for " + region.name + ": ");
                  let adjacentRegions = getAdjacentRegions(regionInfo, region);
                  let adjacentRegionNames = Object.keys(adjacentRegions);
                  for (let j = 0; j < adjacentRegionNames.length; j = j + 1) { 
@@ -188,7 +175,6 @@
                     let adjacentRegion = adjacentRegions[adjacentRegionDesc];
                     let adjacentRegionName = "N/A";
                     if (adjacentRegion) { adjacentRegionName = adjacentRegion.name; }
-                    console.log("    " + adjacentRegionDesc + ": " + adjacentRegionName)
                  }
             }
         }
@@ -212,7 +198,9 @@
 
         function goToRegion(regionInfo, region) {
             let newPosition = getRandomPositionInRegion(regionInfo, region);
-            currentPosition = newPosition;
+            currentPosition.x = newPosition.x;
+            currentPosition.y = newPosition.y;
+            currentPosition.z = newPosition.z;
             let regionNameTag = document.querySelector(`.ourRegionName`);
             regionNameTag.innerHTML = "You are at " + region.name;
             let regionImage = document.getElementById("regionPictureImage");
@@ -292,11 +280,8 @@
             }
             // World coordenates to canvas conversion
             static worldToCanvasCoords(canvasWidth, canvasHeight, coords, offset, zoom) {
-                console.log(`worldToCanvasCoords: canvasWidth: ${canvasWidth}, canvasHeight: ${canvasHeight}, coords: ${JSON.stringify(coords)}, offset: ${JSON.stringify(offset)}, zoom: ${zoom}`)
                 let relPos = { x: coords.x - offset.x, y: coords.y - offset.y };
-                console.log(`relPos: ${JSON.stringify(relPos)}`)
                 let canvasPos = { x: (0.5 * canvasWidth) - (relPos.x / zoom), y: (0.5 * canvasHeight) - (relPos.y / zoom) };
-                console.log(`canvasPos: ${JSON.stringify(canvasPos)}`)
                 return canvasPos;
             }
             // Canvas coordenates to world conversion
@@ -306,43 +291,12 @@
                 return npos;
             }
         }
-        function draw(t){
-            if (typeof(currentPosition) == "undefined") {
-                return;
-            }
-            let region = getCurrentRegion(REGION_INFO, currentPosition);
-            let zoom = 5;
-
-            CTX.clearRect(0, 0, CANVAS.width, CANVAS.height);
-            CTX.resetTransform();
-
-            for (let i = 0; i < allUserDataFromServer.length; i++) {
-                let user = allUserDataFromServer[i];
-                if (!user || !user.position) {
-                    continue;
-                }
-
-                let userRegion = getCurrentRegion(REGION_INFO, user.position);
-                if (userRegion != region) {
-                    continue;
-                }
-                console.log("user.position: " + JSON.stringify(user.position));
-                var canvasCoords = CanvasHelper.worldToCanvasCoords(CANVAS.scrollWidth, CANVAS.scrollHeight, user.position, {x: (region.x + 0.5) * REGION_INFO.regionSize, y: (region.y + 0.5) * REGION_INFO.regionSize}, REGION_INFO.regionSize / CANVAS.scrollHeight);
-                console.log("canvasCoords: " + JSON.stringify(canvasCoords));
-                CTX.translate(canvasCoords.x, canvasCoords.y);
-                CanvasHelper.renderCircle(CTX, 0, 0, 8, 0, 2.0 * Math.PI, 'rgba(255, 0, 0, 0.5)', undefined);
-                CTX.resetTransform();
-            }
-
-            window.requestAnimationFrame(draw);
-        }
 
         let outputAudioEl = document.querySelector(`.outputAudioEl`);
         let userDataContainer__fromServer = document.querySelector(`.userDataContainer__fromServer`);
 
         let currentPosition = new HighFidelityAudio.Point3D({ "x": 0, "y": 0, "z": 0 });
         let currentOrientationEuler = new HighFidelityAudio.OrientationEuler3D({ "pitchDegrees": 0, "yawDegrees": 270, "rollDegrees": 0 });
-        goToRegion(REGION_INFO, getRandomRegion(REGION_INFO));
 
         let ourHashedVisitID = document.querySelector(`.ourHashedVisitID`);
         let ourPositionContainer = document.querySelector(`.ourPositionContainer`);
@@ -631,7 +585,56 @@
             }));
         }
 
-        // DRAW STUFF
+        // Load the map!
+        let mapReq = new XMLHttpRequest();
+        mapReq.addEventListener("load", function() {
+            let newRegionInfo = JSON.parse(this.responseText);
+            let regionInfoParts = Object.keys(newRegionInfo);
+            for (let i = 0; i < regionInfoParts.length; i = i + 1) {
+                let key = regionInfoParts[i];
+                REGION_INFO[key] = newRegionInfo[key];
+            }
+            goToRegion(REGION_INFO, getRandomRegion(REGION_INFO));
+        });
+        let urlParamString = document.URL.split("?")[1] || "map=./maps/alliteration_nation.json";
+        let urlParams = new URLSearchParams(urlParamString);
+        mapReq.open("GET", urlParams.get("map"));
+        mapReq.send();
+
+        // DRAW STUFF (when we're ready...)
+        function doDraw(t) {
+            if (typeof(currentPosition) == "undefined") {
+                return;
+            }
+            if (Object.keys(REGION_INFO).length == 0) {
+                return;
+            }
+            let region = getCurrentRegion(REGION_INFO, currentPosition);
+            let zoom = 5;
+
+            CTX.clearRect(0, 0, CANVAS.width, CANVAS.height);
+            CTX.resetTransform();
+
+            for (let i = 0; i < allUserDataFromServer.length; i++) {
+                let user = allUserDataFromServer[i];
+                if (!user || !user.position) {
+                    continue;
+                }
+
+                let userRegion = getCurrentRegion(REGION_INFO, user.position);
+                if (userRegion.x != region.x || userRegion.y != region.y) {
+                    continue;
+                }
+                var canvasCoords = CanvasHelper.worldToCanvasCoords(CANVAS.scrollWidth, CANVAS.scrollHeight, user.position, {x: (region.x + 0.5) * REGION_INFO.regionSize, y: (region.y + 0.5) * REGION_INFO.regionSize}, REGION_INFO.regionSize / CANVAS.scrollHeight);
+                CTX.translate(canvasCoords.x, canvasCoords.y);
+                CanvasHelper.renderCircle(CTX, 0, 0, 8, 0, 2.0 * Math.PI, 'rgba(255, 0, 0, 0.5)', undefined);
+                CTX.resetTransform();
+            }
+        }
+        function draw(t) {
+            doDraw(t);
+            window.requestAnimationFrame(draw);
+        }
         draw();
     </script>
 </body>
