@@ -297,6 +297,8 @@
 
         let currentPosition = new HighFidelityAudio.Point3D({ "x": 0, "y": 0, "z": 0 });
         let currentOrientationEuler = new HighFidelityAudio.OrientationEuler3D({ "pitchDegrees": 0, "yawDegrees": 270, "rollDegrees": 0 });
+        let currentVisit = {};
+        currentVisit.id = undefined;
 
         let ourHashedVisitID = document.querySelector(`.ourHashedVisitID`);
         let ourPositionContainer = document.querySelector(`.ourPositionContainer`);
@@ -448,6 +450,7 @@
             console.log(`Call to \`connectToHiFiAudioAPIServer()\` succeeded! Response:\n${JSON.stringify(connectResponse)}`);
             console.log(`Our \`hashedVisitID\` is:\n${connectResponse.audionetInitResponse.visit_id_hash}`);
             ourHashedVisitID.innerHTML = `Hashed Visit ID: ${connectResponse.audionetInitResponse.visit_id_hash}`;
+            currentVisit.id = connectResponse.audionetInitResponse.visit_id_hash;
 
             // This will get all Position and Orientation updates for all Users (including ourselves).
             let newUserDataSubscription = new HighFidelityAudio.UserDataSubscription({
@@ -527,6 +530,23 @@
         mapReq.send();
 
         // DRAW STUFF (when we're ready...)
+        function isClient(user) {
+            // TODO: Figure out why hashedVisitID from server is equal to our hashedVisitId on first connect but different on later connects without refreshing the page
+            //return user.hashedVisitID == currentVisit.id;
+            return user.providedUserID == <%- providedUserID %>;
+        }
+        function drawUser(canvas, regionInfo, region, position, isClient) {
+            var canvasCoords = CanvasHelper.worldToCanvasCoords(canvas.scrollWidth, canvas.scrollHeight, position, {x: (region.x + 0.5) * regionInfo.regionSize, y: (region.y + 0.5) * regionInfo.regionSize}, regionInfo.regionSize / canvas.scrollHeight);
+            CTX.translate(canvasCoords.x, canvasCoords.y);
+            if (isClient) {
+                CanvasHelper.renderCircle(CTX, 0, 0, 16, 0, 2.0 * Math.PI, 'rgba(255, 255, 255, 0.5)', undefined);
+                CanvasHelper.renderCircle(CTX, 0, 0, 16, 0, 2.0 * Math.PI, 'rgba(30, 30, 30, 1.0)', 1);
+            } else {
+                CanvasHelper.renderCircle(CTX, 0, 0, 8, 0, 2.0 * Math.PI, 'rgba(255, 255, 255, 0.5)', undefined);
+                CanvasHelper.renderCircle(CTX, 0, 0, 8, 0, 2.0 * Math.PI, 'rgba(30, 30, 30, 1.0)', 1);
+            }
+            CTX.translate(-canvasCoords.x, -canvasCoords.y);
+        }
         function doDraw(t) {
             if (typeof(currentPosition) == "undefined") {
                 return;
@@ -535,10 +555,11 @@
                 return;
             }
             let region = getCurrentRegion(REGION_INFO, currentPosition);
-            let zoom = 5;
 
             CTX.clearRect(0, 0, CANVAS.width, CANVAS.height);
             CTX.resetTransform();
+            
+            drawUser(CANVAS, REGION_INFO, region, currentPosition, true);
 
             for (let i = 0; i < allUserDataFromServer.length; i++) {
                 let user = allUserDataFromServer[i];
@@ -550,10 +571,12 @@
                 if (userRegion.x != region.x || userRegion.y != region.y) {
                     continue;
                 }
-                var canvasCoords = CanvasHelper.worldToCanvasCoords(CANVAS.scrollWidth, CANVAS.scrollHeight, user.position, {x: (region.x + 0.5) * REGION_INFO.regionSize, y: (region.y + 0.5) * REGION_INFO.regionSize}, REGION_INFO.regionSize / CANVAS.scrollHeight);
-                CTX.translate(canvasCoords.x, canvasCoords.y);
-                CanvasHelper.renderCircle(CTX, 0, 0, 8, 0, 2.0 * Math.PI, 'rgba(255, 0, 0, 0.5)', undefined);
-                CTX.resetTransform();
+
+                if (isClient(user)) {
+                    continue;
+                }
+
+                drawUser(CANVAS, REGION_INFO, region, user.position, false);
             }
         }
         function draw(t) {
