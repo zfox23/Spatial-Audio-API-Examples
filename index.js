@@ -37,7 +37,7 @@ async function generateJWT(userID) {
 
 const RANDOM_NAMES = ['Steve', 'Lashawna', 'Erline', 'Connie', 'Keven', 'Tiesha', 'Hoyt', 'Sheldon', 'Jolyn', 'Dorcas', 'Young'];
 app.get('/', async (req, res) => {
-    let providedUserID = `${RANDOM_NAMES[Math.floor(Math.random() * RANDOM_NAMES.length)]}${Math.floor(Math.random() * Math.floor(100))}`;
+    let providedUserID = `${RANDOM_NAMES[Math.floor(Math.random() * RANDOM_NAMES.length)]}${Math.floor(Math.random() * Math.floor(100000))}`;
     let hiFiJWT = await generateJWT(providedUserID);
     res.render('index', { providedUserID, hiFiJWT });
 });
