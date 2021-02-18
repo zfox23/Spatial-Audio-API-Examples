@@ -136,6 +136,8 @@
         CANVAS.height = CANVAS.scrollHeight;
         let CTX = CANVAS.getContext("2d");
 
+        let TALK_STATES = {};
+
         function findRegionByRegionCoord(regionInfo, x, y) {
             for (let i = 0; i < regionInfo.regions.length; i = i + 1) {
                 let region = regionInfo.regions[i];
@@ -486,6 +488,7 @@
             let disconnectStatus = await hifiCommunicator.disconnectFromHiFiAudioAPIServer();
             hifiCommunicator = null;
             console.log(disconnectStatus);
+            allUserDataFromServer.length = 0;
         }
 
         function updatePositionContainer() {
@@ -529,25 +532,125 @@
         mapReq.open("GET", urlParams.get("map"));
         mapReq.send();
 
+        let talkParams = {
+            dbMemory: 500,
+            startThresholdPercent: 0.9,
+            endThresholdPercent: 0.85,
+            minTalkDb: -50,
+            cooldownTime: 50,
+            animateTime: 400
+        };
+        function updateTalkStates(dt, talkStates, users) {
+            let newTalkStates = {};
+            let minmaxWeight = (talkParams.dbMemory - Math.min(100, dt)) / talkParams.dbMemory;
+            let nowWeight = Math.min(100, dt) / talkParams.dbMemory;
+
+            // Update talk states for each supplied user
+            for (let i = 0; i < users.length; i = i + 1) {
+                let user = users[i];
+                let newTalkState = {};
+                newTalkStates[user.providedUserID] = newTalkState;
+                let oldTalkState = talkStates[user.providedUserID] || {
+                    minDb: 120,
+                    maxDb: -120,
+                    currentDb: -120,
+                    lastDb: -120,
+                    aboveThreshold: false,
+                    cooldown: Math.random() * talkParams.cooldownTime,
+                    animates: []
+                };
+                // Calculate running average min/max db to find the appropriate thresholds for talking animations
+                newTalkState.minDb = (minmaxWeight * Math.min(user.volumeDecibels, oldTalkState.minDb)) + (nowWeight * user.volumeDecibels);
+                newTalkState.maxDb = (minmaxWeight * Math.max(user.volumeDecibels, oldTalkState.maxDb)) + (nowWeight * user.volumeDecibels);
+                newTalkState.lastDb = oldTalkState.currentDb;
+                newTalkState.currentDb = user.volumeDecibels;
+                // Count down animation counters
+                let canAddAnimate = oldTalkState.cooldown == 0;
+                newTalkState.cooldown = Math.max(0, oldTalkState.cooldown - dt);
+                newTalkState.animates = [];
+                for (let j = 0; j < oldTalkState.animates.length; j = j + 1) {
+                    let oldAnimate = oldTalkState.animates[j];
+                    let animate = Math.max(-0.1, oldAnimate - dt);
+                    if (animate >= 0) {
+                        newTalkState.animates.push(animate);
+                    }
+                }
+                // Determine if a user's speech passes above some threshold, with some hysteresis
+                newTalkState.aboveThreshold = oldTalkState.aboveThreshold;
+                if (oldTalkState.minDb < oldTalkState.maxDb && user.volumeDecibels > talkParams.minTalkDb) {
+                    let startThresholdDb = oldTalkState.minDb + (talkParams.startThresholdPercent * (oldTalkState.maxDb - oldTalkState.minDb));
+                    let endThresholdDb = oldTalkState.minDb + (talkParams.endThresholdPercent * (oldTalkState.maxDb - oldTalkState.minDb));
+                    if (!oldTalkState.aboveThreshold) {
+                        if (user.volumeDecibels > startThresholdDb) {
+                            newTalkState.aboveThreshold = true;
+                        }
+                    } else {
+                        if (user.volumeDecibels < endThresholdDb) {
+                            newTalkState.aboveThreshold = false;
+                        }
+                    }
+                }
+                // If user's speech passes a threshold, start an animation
+                if (canAddAnimate && newTalkState.aboveThreshold && !oldTalkState.aboveThreshold) {
+                    newTalkState.animates.push(talkParams.animateTime);
+                    newTalkState.cooldown = talkParams.cooldownTime;
+                }
+            }
+
+            // Set updated talk states in the map
+            let activeUsernames = Object.keys(newTalkStates);
+            for (let i = 0; i < activeUsernames.length; i = i + 1) {
+                let username = activeUsernames[i];
+                talkStates[username] = newTalkStates[username];
+            }
+
+            // Clean up talk states not in user list
+            let potentiallyStaleUsernames = Object.keys(talkStates);
+            for (let i = 0; i < potentiallyStaleUsernames.length; i = i + 1) {
+                let potentiallyStaleUsername = potentiallyStaleUsernames[i];
+                if (!newTalkStates[potentiallyStaleUsername]) {
+                    delete talkStates[potentiallyStaleUsername];
+                }
+            }
+        }
         // DRAW STUFF (when we're ready...)
         function isClient(user) {
             // TODO: Figure out why hashedVisitID from server is equal to our hashedVisitId on first connect but different on later connects without refreshing the page
             //return user.hashedVisitID == currentVisit.id;
-            return user.providedUserID == <%- providedUserID %>;
+            return user.providedUserID == "<%- providedUserID %>";
         }
-        function drawUser(canvas, regionInfo, region, position, isClient) {
+        function drawUser(canvas, regionInfo, region, position, isClient, talkState) {
             var canvasCoords = CanvasHelper.worldToCanvasCoords(canvas.scrollWidth, canvas.scrollHeight, position, {x: (region.x + 0.5) * regionInfo.regionSize, y: (region.y + 0.5) * regionInfo.regionSize}, regionInfo.regionSize / canvas.scrollHeight);
             CTX.translate(canvasCoords.x, canvasCoords.y);
+
+            let circleRadius = 8;
             if (isClient) {
-                CanvasHelper.renderCircle(CTX, 0, 0, 16, 0, 2.0 * Math.PI, 'rgba(255, 255, 255, 0.5)', undefined);
-                CanvasHelper.renderCircle(CTX, 0, 0, 16, 0, 2.0 * Math.PI, 'rgba(30, 30, 30, 1.0)', 1);
-            } else {
-                CanvasHelper.renderCircle(CTX, 0, 0, 8, 0, 2.0 * Math.PI, 'rgba(255, 255, 255, 0.5)', undefined);
-                CanvasHelper.renderCircle(CTX, 0, 0, 8, 0, 2.0 * Math.PI, 'rgba(30, 30, 30, 1.0)', 1);
+                circleRadius = 16;
             }
+            // Render the talk pulsating animations
+            let animates = talkState.animates;
+            let animRadiusStart = circleRadius * 0.25;
+            let animRadiusEnd = circleRadius * 2.25;
+            let animAlphaStart = 0.5;
+            let animAlphaEnd = 0.1;
+            for (let i = 0; i < animates.length; i = i + 1) {
+                let animate = animates[i];
+                let animPercent = (talkParams.animateTime - animate) / talkParams.animateTime;
+                let animPercentInverse = 1.0 - animPercent;
+                let animRadius = (animPercentInverse * animRadiusStart) + (animPercent * animRadiusEnd);
+                let animAlpha = (animPercentInverse * animAlphaStart) + (animPercent * animAlphaEnd);
+                CanvasHelper.renderCircle(CTX, 0, 0, animRadius, 0, 2.0 * Math.PI, 'rgba(255, 255, 255, ' + animAlpha + ')', undefined);
+            }
+            // Render the base circle of the user
+            CanvasHelper.renderCircle(CTX, 0, 0, circleRadius, 0, 2.0 * Math.PI, 'rgba(255, 255, 255, 0.5)', undefined);
+            CanvasHelper.renderCircle(CTX, 0, 0, circleRadius, 0, 2.0 * Math.PI, 'rgba(30, 30, 30, 1.0)', 1);
+
             CTX.translate(-canvasCoords.x, -canvasCoords.y);
         }
+        var lastT = 0;
         function doDraw(t) {
+            let dt = Math.max(0, t - lastT);
+            lastT = t;
             if (typeof(currentPosition) == "undefined") {
                 return;
             }
@@ -558,12 +661,17 @@
 
             CTX.clearRect(0, 0, CANVAS.width, CANVAS.height);
             CTX.resetTransform();
-            
-            drawUser(CANVAS, REGION_INFO, region, currentPosition, true);
 
-            for (let i = 0; i < allUserDataFromServer.length; i++) {
+            updatedUsers = [];
+
+            for (let i = 0; i < allUserDataFromServer.length; i = i + 1) {
                 let user = allUserDataFromServer[i];
                 if (!user || !user.position) {
+                    continue;
+                }
+
+                if (isClient(user)) {
+                    updatedUsers.push(user);
                     continue;
                 }
 
@@ -572,11 +680,14 @@
                     continue;
                 }
 
-                if (isClient(user)) {
-                    continue;
-                }
+                updatedUsers.push(user);
+            }
 
-                drawUser(CANVAS, REGION_INFO, region, user.position, false);
+            updateTalkStates(dt, TALK_STATES, updatedUsers);
+
+            for (let i = 0; i < updatedUsers.length; i = i + 1) {
+                let user = updatedUsers[i];
+                drawUser(CANVAS, REGION_INFO, region, user.position, isClient(user), TALK_STATES[user.providedUserID]);
             }
         }
         function draw(t) {
