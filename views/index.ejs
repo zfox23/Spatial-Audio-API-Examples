@@ -17,33 +17,6 @@
             margin: 2px 0 4px 0;
         }
 
-        .connectDisconnectButton {
-            width: 200px;
-            height: 100px;
-            margin: 0 auto;
-        }
-
-        .outputAudioEl {
-            width: 300px;
-            height: 50px;
-            margin: 0;
-        }
-
-        .buttonContainer {
-            display: flex;
-            flex-wrap: wrap;
-        }
-
-        .buttonContainer>div {
-            margin: 8px 8px;
-        }
-
-        .buttonContainer>div>button {
-            width: 70px;
-            height: 50px;
-            margin: 0;
-        }
-
         .userDataTitle {
             width: 100%;
             font-weight: bold;
@@ -58,6 +31,9 @@
             font-size: 12px;
         }
 
+        .userDataContainer__ours {
+            display: none;
+        }
         .userDataContainer__fromServer {
             display: none;
         }
@@ -79,13 +55,65 @@
         .regionContainer .theCanvas {
             z-index: 1;
         }
+        .connectDisconnectButton {
+            width: 100px;
+            height: 50px;
+            top: 50px;
+            right: 0;
+        }
+        .outputAudioEl {
+            width: 100%;
+            height: 50px;
+            top: 0;
+            left: 0;
+        }
+        .ourRegionName {
+            width: fit-content;
+            height: fit-content;
+            padding: 4px;
+            top: 60px;
+            left: 10px;
+            text-align: left;
+            color: white;
+            background-color: rgba(0, 0, 0, 0.4);
+            font-family: sans-serif;
+            margin: 0 auto;
+        }
+        .directionButton {
+            width: 70px;
+            height: 50px;
+            margin: 0;
+        }
+        .buttonContainer #button__north {
+            top: 50px;
+            left: 0;
+            right: 0;
+            margin: 0 auto;
+        }
+        .buttonContainer #button__south {
+            bottom: 0;
+            left: 0;
+            right: 0;
+            margin: 0 auto;
+        }
+        .buttonContainer #button__west {
+            left: 0;
+            top: 0;
+            bottom: 0;
+            margin: auto 0;
+        }
+        .buttonContainer #button__east {
+            right: 0;
+            top: 0;
+            bottom: 0;
+            margin: auto 0;
+        }
     </style>
 </head>
 
 <body>
     <div>
-        <button class="connectDisconnectButton"></button>
-        <audio controls autoplay class="outputAudioEl"></audio>
+        
     </div>
 
     <div class="userDataContainer userDataContainer__ours">
@@ -98,33 +126,22 @@
         </div>
     </div>
 
-    <div class="computedDataContainer computedDataContainer__ours">
-        <h2 class="computedDataTitle">Computed Data:</h2>
-        <div class="computedData">
-            <p class="ourRegionName"></p>
-        </div>
-    </div>
-
-    <div class="buttonContainer">
-        <div>
-            <button id="button__north" class="directionButton" onclick="goNorth()">North</button>
-        </div>
-        <div>
-            <button id="button__west" class="directionButton" onclick="goWest()">West</button>
-            <button id="button__east" class="directionButton" onclick="goEast()">East</button>
-        </div>
-        <div>
-            <button id="button__south" class="directionButton" onclick="goSouth()">South</button>
-        </div>
-    </div>
-
     <div class="userDataContainer userDataContainer__fromServer"></div>
 
-    <div class="regionContainer">
+    <div class="regionContainer" style="width:400px;height:400px;">
         <div class="regionPictureContainer">
             <img id="regionPictureImage" src="" style="width:400px;height:400px;" />
         </div>
         <canvas class="thecanvas" tabindex="1" style="width:400px;height:400px;" height="400px" width="400px"></canvas>
+        <div class="buttonContainer" style="width:400px;height:400px;" >
+            <audio controls autoplay class="outputAudioEl"></audio>
+            <button class="connectDisconnectButton"></button>
+            <p class="ourRegionName"></p>
+            <button id="button__north" class="directionButton" onclick="goNorth()">North</button>
+            <button id="button__west" class="directionButton" onclick="goWest()">West</button>
+            <button id="button__east" class="directionButton" onclick="goEast()">East</button>
+            <button id="button__south" class="directionButton" onclick="goSouth()">South</button>
+        </div>
     </div>
 
     <script src="https://hifi-spatial-audio-api.s3.amazonaws.com/releases/latest/HighFidelityAudio-latest.js"></script>
@@ -182,8 +199,8 @@
         }
         function getRandomPositionInRegion(regionInfo, region) {
             return new HighFidelityAudio.Point3D({
-                "x": (region.x + Math.random()) * regionInfo.regionSize,
-                "y": (region.y + Math.random()) * regionInfo.regionSize,
+                "x": (region.x + 0.25 + (0.5 * Math.random())) * regionInfo.regionSize,
+                "y": (region.y + 0.25 + (0.5 * Math.random())) * regionInfo.regionSize,
                 "z": 0
             });
         }
@@ -204,11 +221,11 @@
             currentPosition.y = newPosition.y;
             currentPosition.z = newPosition.z;
             let regionNameTag = document.querySelector(`.ourRegionName`);
-            regionNameTag.innerHTML = "You are at " + region.name;
+            regionNameTag.innerHTML = region.name;
             let regionImage = document.getElementById("regionPictureImage");
             regionImage.src = region.imageUrl;
             regionImage.alt = region.name;
-            let buttons = document.querySelector(".buttonContainer").getElementsByTagName("button");
+            let buttons = document.getElementsByClassName("directionButton");
             let adjacentRegions = getAdjacentRegions(regionInfo, region);
             for (let i = 0; i < buttons.length; i = i + 1) {
                 let button = buttons[i];
