@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Street Meetings</title>
+    <title>Street Meet</title>
     <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" type="text/css" href="other.css" />
@@ -9,17 +9,21 @@
   <body>
     <div id="twilioJWT" data-jwt='<%- twilioJWT %>'></div>
     <div id="hifiJWT" data-jwt='<%- hiFiJWT %>'></div>
+    <canvas id="textboard" width="180px" height="20px"></canvas>
     <div id="pano-container"></div>
-    <div class="controlsContainer">
-        <div>
+    <div class="controlsBanner">
+      <div class="controlsContainer">
+          <button class="connectDisconnectButton" disabled="true">Street meet!</button>
+          <div>
             <p>HiFi Spatial Audio with Twilio and StreetView</p>
-            <p>(ID: <%- providedUserID %>) (Space: <%- spaceName %>)</p>
+            <p>Your ID: <%- providedUserID %></p>
         </div>
-        <button class="connectDisconnectButton" disabled="true">Click to Connect</button>
-        <button class="toggleInputMuteButton" disabled="true">Toggle Mic Mute (currently unmuted)</button>
-        <button class="toggleWebCam" disabled="true">Connect Camera</button>
-        <audio autoplay class="outputAudioEl"></audio>
+          <div class="toggleButton toggleWebCam cameraToggle-on toggle-disabled"></div>
+          <div class="toggleButton toggleMic micToggle-on toggle-disabled"></div>
+          <audio autoplay class="outputAudioEl"></audio>
+      </div>
     </div>
+    
     <div class="videoContainer"></div>
 
     <script src="https://hifi-spatial-audio-api.s3-us-west-2.amazonaws.com/releases/latest/HighFidelityAudio-latest.js"></script>

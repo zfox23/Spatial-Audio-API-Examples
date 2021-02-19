@@ -1,6 +1,7 @@
-import * as THREE from 'https://unpkg.com/three/build/three.module.js';
-import * as RANDOM_NAMES from './words.js';
+
 import * as CT from './constants.js';
+import { THREE } from './constants.js';
+
 // Root class with the node's physical attributes needed to display it  
 class Renderable3D {
     constructor(config) {
@@ -11,47 +12,14 @@ class Renderable3D {
         this.color = config.color;
         this.offset = new THREE.Vector3();
         this.texture = null;
-    }
-    updateModel() {
-        this.mesh.position.set(this.position.x + this.offset.x, this.position.z + this.offset.z, this.position.y + this.offset.y);
-        this.mesh.quaternion.copy(this.orientation);
-    }
-
-    nameFromString(str) {
-        var seed = str.charCodeAt(0) ^ str.charCodeAt(1);
-        var aIdx = Math.abs((Math.sin(seed++) * 10000)) % RANDOM_NAMES.ADJECTIVES.length;
-        var nIdx = Math.abs((Math.sin(seed++) * 10000)) % RANDOM_NAMES.NOUNS.length;
-        let adjective = RANDOM_NAMES.ADJECTIVES[Math.floor(aIdx)];
-        let noun = RANDOM_NAMES.NOUNS[Math.floor(nIdx)];
-        adjective = adjective.charAt(0).toUpperCase() + adjective.slice(1);
-        noun = noun.charAt(0).toUpperCase() + noun.slice(1);
-        return adjective + " " + noun;
-
-    }
-    colorFromString(str) {
-        var baseRed = 128;
-        var baseGreen = 128;
-        var baseBlue = 128;
-    
-        var seed = str.charCodeAt(0) ^ str.charCodeAt(1);
-        var rand_1 = Math.abs((Math.sin(seed++) * 10000)) % 256;
-        var rand_2 = Math.abs((Math.sin(seed++) * 10000)) % 256;
-        var rand_3 = Math.abs((Math.sin(seed++) * 10000)) % 256;
-    
-        var red = Math.round((rand_1 + baseRed) / 2).toString(16);
-        var green = Math.round((rand_2 + baseGreen) / 2).toString(16);
-        var blue = Math.round((rand_3 + baseBlue) / 2).toString(16);
-        red = red.length == 1 ? "0" + red : red;
-        green = green.length == 1 ? "0" + green : green;
-        blue = blue.length == 1 ? "0" + blue : blue;
-        return "#" + red + green + blue;
-    }
-    setupFromId(id) {
-        this.color = this.colorFromString(id);
-        console.log("Name: " + this.name);
         this.geometry = new THREE.BoxGeometry( 1, 2, 1 );
         this.material = new THREE.MeshPhongMaterial( { color: this.color } );
         this.mesh = new THREE.Mesh(this.geometry, this.material);
+    }
+
+    updateModel() {
+        this.mesh.position.set(this.position.x + this.offset.x, this.position.z + this.offset.z, this.position.y + this.offset.y);
+        this.mesh.quaternion.copy(this.orientation);
     }
 
 }
@@ -142,6 +110,12 @@ class SoundNode extends Renderable3D {
             return false;
         }
     }
+    async setMute(muted) {
+        if (this.hifiCommunicator) {
+            return await this.hifiCommunicator.setInputAudioMuted(muted);
+        }
+        return false;
+    }
     // Disconnect from the server
     async disconnect() {
         console.log(`Disconnecting Emitter: ${this.name} from High Fidelity Audio API Servers...`);
@@ -189,8 +163,27 @@ export class Player extends SoundReceiver {
         this.type = CT.SoundNodeType.PLAYER;
         this.targetPosition = new THREE.Vector3().copy(config.position);
         this.firstData = true;
+        this.monitorMaterial = new THREE.MeshPhongMaterial({ color: this.colorFromString(this.name) });
+        this.screenMaterial = new THREE.MeshBasicMaterial( { color: "#000000" } );
+        this.controlsMaterial = new THREE.MeshPhongMaterial({ color: "#0000FF" });
+        this.board = null;
+        this.id = config.id;
     }
 
+    initModel(model) {
+        if (model) {
+            this.mesh = model.clone();
+            this.mesh.children[1].material = this.screenMaterial;
+            this.mesh.children[1].material.needsUpdate = true;
+            this.mesh.children[0].material = this.monitorMaterial;
+            this.mesh.children[0].material.needsUpdate = true;
+            this.mesh.children[2].material = this.controlsMaterial;
+            this.mesh.children[2].material.needsUpdate = true;
+            this.mesh.children[3].material = this.controlsMaterial;
+            this.mesh.children[3].material.needsUpdate = true;
+            this.displayName(this.name);
+        }
+    }
 
     async prepareInputStream() {
         // Get the audio media stream associated with the user's default audio input device.
@@ -241,15 +234,50 @@ export class Player extends SoundReceiver {
     connectCamera(videoElem) {
         this.videoElem = videoElem;
         this.texture = new THREE.VideoTexture(videoElem.firstChild);
-        this.material.map = this.texture;
-        this.material.needsUpdate = true;
+        this.screenMaterial.color.setHex(0xFFFFFF);
+        this.screenMaterial.map = this.texture;
+        this.screenMaterial.needsUpdate = true;
     }
 
     disconnectCamera() {
-        this.material.map = null;
-        this.material.needsUpdate = true;
+        this.screenMaterial.map = null;
+        this.screenMaterial.color.setHex(0x000000);
+        this.screenMaterial.needsUpdate = true;
     }
 
+    displayName(name) {
+        this.board = document.getElementById("textboard").cloneNode(true);;
+        var ctx = this.board.getContext("2d");
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, this.board.width, this.board.height);
+        ctx.fillStyle = "black";
+        ctx.font = "16px Arial";
+        ctx.fillText(name, 5, 15);
+        let tex = new THREE.Texture(this.board);
+        this.controlsMaterial.map = tex.clone();
+        this.controlsMaterial.color.setHex(0xFFFFFF);
+        this.controlsMaterial.needsUpdate = true;
+        this.controlsMaterial.map.needsUpdate = true;
+    }
+
+    colorFromString(str) {
+        var baseRed = 128;
+        var baseGreen = 128;
+        var baseBlue = 128;
+    
+        var seed = str.charCodeAt(0) ^ str.charCodeAt(1);
+        var rand_1 = Math.abs((Math.sin(seed++) * 10000)) % 256;
+        var rand_2 = Math.abs((Math.sin(seed++) * 10000)) % 256;
+        var rand_3 = Math.abs((Math.sin(seed++) * 10000)) % 256;
+    
+        var red = Math.round((rand_1 + baseRed) / 2).toString(16);
+        var green = Math.round((rand_2 + baseGreen) / 2).toString(16);
+        var blue = Math.round((rand_3 + baseBlue) / 2).toString(16);
+        red = red.length == 1 ? "0" + red : red;
+        green = green.length == 1 ? "0" + green : green;
+        blue = blue.length == 1 ? "0" + blue : blue;
+        return "#" + red + green + blue;
+    }
 }
 
 // A SoundEmitter with some functions to handle actions and custom rendering

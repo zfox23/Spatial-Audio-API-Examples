@@ -1,12 +1,12 @@
 {
-  "name": "hifi-videochat-twilio-example",
+  "name": "street-meet-example",
   "version": "1.0.0",
   "description": "Visit https://highfidelity.com/api/guides/nodejs/express for more information.",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
-  "author": "Zach Fox",
+  "author": "Luis Cuenca",
   "license": "MIT",
   "dependencies": {
     "ejs": "^3.1.5",

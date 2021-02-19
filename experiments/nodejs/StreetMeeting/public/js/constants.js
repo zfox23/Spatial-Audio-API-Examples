@@ -1,3 +1,5 @@
+import * as three from 'https://unpkg.com/three@0.125.2/build/three.module.js';
+
 export const API_TOKEN = "AIzaSyC6ol8YMrSLFTimj-eqZFdFlck74XhpgOY";
 export const INIT_FUNC_NAME = "initPano";
 
@@ -14,4 +16,5 @@ export const EPSILON = 0.001;
 export const CENTER_REFERENCE = {
     lat: 40.987037, 
     lng: -102.069751
-}
+};
+export let THREE = three;

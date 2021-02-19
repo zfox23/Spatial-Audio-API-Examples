@@ -13,7 +13,7 @@ const APP_SECRET = auth.HIFI_APP_SECRET;
 const SECRET_KEY_FOR_SIGNING = crypto.createSecretKey(Buffer.from(APP_SECRET, "utf8"));
 
 const app = express();
-const PORT = 8080;
+const PORT = 8587;
 
 app.set('view engine', 'ejs');
 app.use(express.static('public'));
@@ -69,7 +69,7 @@ function generateTwilioAccessToken(providedUserID, spaceName) {
 }
 
 let spaceNameToIDMap = new Map();
-app.get('/videochat-twilio', async (req, res) => {
+app.get('/streetMeet', async (req, res) => {
     let spaceName = req.query.superSecretRoomNameParam || auth.TWILIO_ROOM_NAME;
 
     let spaceID;

@@ -1,5 +1,5 @@
-import * as THREE from 'https://unpkg.com/three/build/three.module.js';
-import * as CT from '../js/constants.js';
+import * as CT from './constants.js';
+import { THREE } from './constants.js';
 
 class Location {
     constructor() {
@@ -66,9 +66,9 @@ export class Panorama{
     generateOffsets() {
         let aroundCount = 6;
         for (let j = 1; j <= this.maxOffsetDistance; j++) {
-            for (let i = 0; i < aroundCount; i++) {
+            for (let i = 0; i < aroundCount - 1; i++) {
                 let angle = 2 * Math.PI * (i / aroundCount);
-                let offset = new THREE.Vector3(j * Math.cos(angle), 0.0, j * Math.sin(angle));
+                let offset = new THREE.Vector3(1.5 * j * Math.cos(angle), 0.0, 1.5 * j * Math.sin(angle));
                 this.offsets.push(offset);
             }
         }
@@ -78,7 +78,7 @@ export class Panorama{
         let fromData = this.dataCache[fromId];
         let toData = this.dataCache[toId];
         if (fromData && toData && fromData.data && toData.data) {
-            let distance = 1.4 * this.getDistanceBetween(fromData.data.location, toData.data.location);
+            let distance = 1.4 * Panorama.getDistanceBetween(fromData.data.location, toData.data.location);
             //console.log("Distance: " + distance);
             let offset = new THREE.Vector3(-distance * Math.cos(heading / CT.RADIANS_TO_DEGREES), 0, -distance * Math.sin(heading / CT.RADIANS_TO_DEGREES));
             toData.position = new THREE.Vector3(fromData.position.x,fromData.position.y, fromData.position.z);
@@ -87,7 +87,7 @@ export class Panorama{
         }
     }
 
-    getDistanceBetween(loc1, loc2) {
+    static getDistanceBetween(loc1, loc2) {
         const R = 6371e3; // metres
         const fi1 = loc1.lat * Math.PI/180; // φ, λ in radians
         const fi2 = loc2.lat * Math.PI/180;

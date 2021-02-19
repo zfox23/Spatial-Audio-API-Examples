@@ -4,6 +4,7 @@ import { GLScene } from '../js/scene.js'
 import { Panorama } from '../js/panorama.js'
 import { PhysicsLoop } from '../js/physics.js'
 import { VideoTwilio } from '../js/twilio.js'
+import { OBJLoader } from './ext/objloader.js'
 import * as CT from '../js/constants.js';
 
 export class App {
@@ -26,17 +27,19 @@ export class App {
         this.triggerButton = null;
         this.cameraButton = null;
         this.videoContainer = null;
+        this.cameraModel = null;
+        this.allowRendering = false;
     }
 
     // Connect the UI elements that trigger the example and and display information
-    setupUI(triggerButton, cameraButton, videoContainer) {
+    setupUI(triggerButton, cameraButton, micButton, videoContainer) {
         this.triggerButton = triggerButton;
         this.cameraButton = cameraButton;
+        this.micButton = micButton;
         this.videoContainer = videoContainer;
         this.twilio = new VideoTwilio(this.videoContainer);
         // Configure the triggerButton
         this.triggerButton.addEventListener("click", this.initPanoBinded, false);
-        this.triggerButton.innerHTML = `Click to Connect`;
         window.addEventListener('resize', this.onResizeCanvas.bind(this), false);
     }
 
@@ -44,14 +47,39 @@ export class App {
         this.streetViewPano.init(this.config);
         this.streetViewPano.onPanoramaLoaded = () => {
             let offset = this.streetViewPano.computeOffsetsAt(this.foundNodes, this.config.initialPosition);
-            this.glScene.init(this.streetViewPano.canvas, this.config, offset);
-            let hifiControls = new HighFidelityControls.HiFiControls({ mainAppElement: document });
-            hifiControls.onLeftDrag = this.onLeftDrag.bind(this);
-            this.streetViewPano.panorama.setPov(this.config.pov);
-            // onWheel doesn't work 
-            // hifiControls.onWheel = this.onWheel.bind(this);
-            this.resizeCanvases(true);
-            this.connectNodes();
+            
+            // instantiate a loader
+            const loader = new OBJLoader();
+            // load a resource
+            loader.load(
+                // resource URL
+                '../model/monitor.obj',
+                // called when resource is loaded
+                (function (obj) {
+                    this.cameraModel = obj;
+                    this.glScene.init(this.streetViewPano.canvas, this.config, offset, obj);
+                    let hifiControls = new HighFidelityControls.HiFiControls({ mainAppElement: document });
+                    hifiControls.onLeftDrag = this.onLeftDrag.bind(this);
+                    this.streetViewPano.panorama.setPov(this.config.pov);
+                    // onWheel doesn't work 
+                    // hifiControls.onWheel = this.onWheel.bind(this);
+                    this.resizeCanvases(true);
+                    this.connectNodes();
+
+                }).bind(this),
+                // called when loading is in progresses
+                function ( xhr ) {
+
+                    console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+
+                },
+                // called when loading has errors
+                function ( error ) {
+
+                    console.log( 'An error happened' );
+
+                }
+            );
         };
         this.streetViewPano.onPanoPovChanged = (pov) => {
             //console.log("pano pov changed");
@@ -62,6 +90,7 @@ export class App {
             let offset = this.streetViewPano.computeOffsetsAt(this.foundNodes, pos);
             if (this.streetViewPano.loaded) {
                 this.glScene.cameraController.moveCameraTo(pos, offset);
+                this.allowRendering = true;
             }
         }
         this.loop.addOnStepCback("render", (deltaTime) => {
@@ -75,7 +104,9 @@ export class App {
             Object.keys(this.foundNodes).forEach(key => {
                 this.foundNodes[key].updatePhysics();
             });
-            this.glScene.render(deltaTime);
+            if (this.allowRendering) {
+                this.glScene.render(deltaTime);
+            }            
         })
         this.loop.start();
     }
@@ -94,22 +125,15 @@ export class App {
             console.log(`Node "${node.name}" connected.`);
             this.soundNodes[nodeId] = node;
             this.playerId = nodeId;
-            node.setupFromId(nodeId);
             await node.prepareInputStream();
         } else {
             console.log(`Node "${node.name}" error connecting.`);
         }
 
-        // Reset trigger button status
-        /*
-        this.triggerButton.disabled = false;
-        this.triggerButton.innerHTML = `Disconnect`;
-        this.triggerButton.removeEventListener('click', this.initPanoBinded, false);
-        this.triggerButton.addEventListener('click', this.disconnectNodesBinded, false);
-        */
        this.triggerButton.style.opacity = 0;
         console.log(`Ready Player 1`);
-        
+        this.micButton.classList.remove("toggle-disabled");
+        this.micButton.addEventListener('click', this.toggleMic.bind(this));
         this.cameraButton.addEventListener('click', this.toggleCamera.bind(this));
         this.twilio.onTrackAdded = (identity, div) => {
             Object.keys(this.foundNodes).forEach(id => {
@@ -139,14 +163,37 @@ export class App {
             });
         }
         await this.twilio.connectToVideoService();
-        this.cameraButton.disabled = false;
-        
+        this.cameraButton.classList.remove("toggle-disabled");    
     }
+
+    async toggleMic(e) {
+        let isMuted = !this.micButton.classList.contains("micToggle-on");
+        let player = this.soundNodes[this.playerId];
+        if (player && player.setMute(!isMuted)) {
+            if (!isMuted) {
+                this.micButton.classList.remove("micToggle-on");
+                this.micButton.classList.add("micToggle-off");
+            } else {
+                this.micButton.classList.remove("micToggle-off");
+                this.micButton.classList.add("micToggle-on");
+            }
+            console.log("Mic mute set to" + isMuted ? "muted" : "unmuted");
+        } else {
+            console.log("Mic mute failed");
+        }
+    }
+
     async toggleCamera(e) {
-        this.cameraButton.disabled = true;
+        this.cameraButton.classList.add("toggle-disabled");
         let isCamConnected = await this.twilio.toggleCamera();
-        this.cameraButton.disabled = false;
-        this.cameraButton.innerHTML = isCamConnected ? "Disconnect Camera" : "Connect Camera";
+        this.cameraButton.classList.remove("toggle-disabled");
+        if (isCamConnected) {
+            this.cameraButton.classList.remove("cameraToggle-on");
+            this.cameraButton.classList.add("cameraToggle-off");
+        } else {
+            this.cameraButton.classList.remove("cameraToggle-off");
+            this.cameraButton.classList.add("cameraToggle-on");
+        }
     }
     
     onResizeCanvas() {
@@ -186,12 +233,14 @@ export class App {
                         let playerConfig = {
                             name: data.providedUserID, 
                             radius: this.config.PLAYER_RADIUS, 
-                            color: "#FF0000", 
+                            color: "#FF0000",
                             position: { x: -data.position.x, y: -data.position.z, z: data.position.y }, 
                             orientation: data.orientationQuat,
-                            type: CT.SoundNodeType.PLAYER};
+                            id: data.hashedVisitID,
+                            type: CT.SoundNodeType.PLAYER
+                        };
                         let newPlayer = new Player(playerConfig);
-                        newPlayer.setupFromId(data.hashedVisitID);
+                        newPlayer.initModel(this.cameraModel);                        
                         this.glScene.scene.add(newPlayer.mesh);
                         this.foundNodes[data.hashedVisitID] = newPlayer;
                     }

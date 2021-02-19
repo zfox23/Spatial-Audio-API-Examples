@@ -1,5 +1,6 @@
-import * as THREE from 'https://unpkg.com/three/build/three.module.js';
-import * as CT from '../js/constants.js';
+import * as CT from './constants.js';
+import { THREE } from './constants.js';
+
 class CameraController {
     constructor(camera, pov, position, offset) {
         this.camera = camera;
@@ -110,17 +111,7 @@ export class GLScene{
         directionalLight.shadow.camera.bottom = - 100;
         directionalLight.shadow.camera.left = - 120;
         directionalLight.shadow.camera.right = 120;
-        this.scene.add( directionalLight );
-    
-        // export mesh
-    
-        const geometry = new THREE.BoxGeometry( 1, 2, 1 );
-        const material = new THREE.MeshPhongMaterial( { color: "#00ff00" } );
-    
-        this.mesh = new THREE.Mesh( geometry, material );
-        this.mesh.castShadow = true;
-        this.mesh.position.set(panoConfig.SPAWN_POINT.x, panoConfig.SPAWN_POINT.z, panoConfig.SPAWN_POINT.y);
-        this.scene.add( this.mesh );        
+        this.scene.add( directionalLight );      
     
         //
         this.renderer = new THREE.WebGLRenderer( { alpha: true, antialias: true } );
