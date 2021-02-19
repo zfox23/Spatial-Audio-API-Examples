@@ -167,6 +167,12 @@
         let CTX = CANVAS.getContext("2d");
 
         let TALK_STATES = {};
+        // NOTE: z-axis should always be 0 and is ignored by physics/region checking
+        let PHYSICS_STATE = {
+            position: new HighFidelityAudio.Point3D({ "x": 0, "y": 0, "z": 0 }),
+            velocity: new HighFidelityAudio.Point3D({ "x": 0, "y": 0, "z": 0 }), // m/s
+            acceleration: new HighFidelityAudio.Point3D({ "x": 0, "y": 0, "z": 0 }) // m/s^2
+        };
 
         function findRegionByRegionCoord(regionInfo, x, y) {
             for (let i = 0; i < regionInfo.regions.length; i = i + 1) {
@@ -228,11 +234,11 @@
             return region;
         }
 
-        function goToRegion(regionInfo, region) {
+        function goToRegion(physicsState, regionInfo, region) {
             let newPosition = getRandomPositionInRegion(regionInfo, region);
-            currentPosition.x = newPosition.x;
-            currentPosition.y = newPosition.y;
-            currentPosition.z = newPosition.z;
+            physicsState.position = newPosition;
+            physicsState.velocity = new HighFidelityAudio.Point3D({x: 0, y: 0, z: 0});
+            physicsState.acceleration = new HighFidelityAudio.Point3D({x: 0, y: 0, z: 0});
             let regionNameTag = document.querySelector(`.ourRegionName`);
             regionNameTag.innerHTML = region.name;
             //let regionImage = document.getElementById("regionPictureImage");
@@ -259,11 +265,11 @@
             }
         }
         function goDirection(direction) {
-            let region = getCurrentRegion(REGION_INFO, currentPosition);
+            let region = getCurrentRegion(REGION_INFO, PHYSICS_STATE.position);
             let adjacentRegions = getAdjacentRegions(REGION_INFO, region);
             let newRegion = adjacentRegions[direction];
             if (newRegion) {
-                goToRegion(REGION_INFO, newRegion);
+                goToRegion(PHYSICS_STATE, REGION_INFO, newRegion);
             }
         }
         function goNorth() {
@@ -329,7 +335,6 @@
         let outputAudioEl = document.querySelector(`.outputAudioEl`);
         let userDataContainer__fromServer = document.querySelector(`.userDataContainer__fromServer`);
 
-        let currentPosition = new HighFidelityAudio.Point3D({ "x": 0, "y": 0, "z": 0 });
         let currentOrientationEuler = new HighFidelityAudio.OrientationEuler3D({ "pitchDegrees": 0, "yawDegrees": 270, "rollDegrees": 0 });
         let currentVisit = {};
         currentVisit.id = undefined;
@@ -460,7 +465,7 @@
             console.log(`Connecting to High Fidelity Audio API Servers...`);
 
             let initialHiFiAudioAPIData = new HighFidelityAudio.HiFiAudioAPIData({
-                position: currentPosition,
+                position: PHYSICS_STATE.position,
                 orientationEuler: currentOrientationEuler,
             });
 
@@ -524,7 +529,7 @@
         }
 
         function updatePositionContainer() {
-            ourPositionContainer.innerHTML = `Position: ${currentPosition ? JSON.stringify(currentPosition) : "&#60;unknown&#62;"}`;
+            ourPositionContainer.innerHTML = `Position: ${PHYSICS_STATE.position ? JSON.stringify(PHYSICS_STATE.position) : "&#60;unknown&#62;"}`;
         }
 
         function updateOrientationContainer() {
@@ -543,7 +548,7 @@
             }
 
             console.log(hifiCommunicator.updateUserDataAndTransmit({
-                position: currentPosition,
+                position: PHYSICS_STATE.position,
                 orientationEuler: currentOrientationEuler,
             }));
         }
@@ -557,7 +562,7 @@
                 let key = regionInfoParts[i];
                 REGION_INFO[key] = newRegionInfo[key];
             }
-            goToRegion(REGION_INFO, getRandomRegion(REGION_INFO));
+            goToRegion(PHYSICS_STATE, REGION_INFO, getRandomRegion(REGION_INFO));
         });
         let urlParamString = document.URL.split("?")[1] || "map=./maps/alliteration_nation.json";
         let urlParams = new URLSearchParams(urlParamString);
@@ -645,12 +650,35 @@
                 }
             }
         }
-        // DRAW STUFF (when we're ready...)
         function isClient(user) {
             // TODO: Figure out why hashedVisitID from server is equal to our hashedVisitId on first connect but different on later connects without refreshing the page
             //return user.hashedVisitID == currentVisit.id;
             return user.providedUserID == "<%- providedUserID %>";
         }
+        function getUsersInRegion(regionInfo, region, allUsers) {
+            let usersInRegion = [];
+
+            for (let i = 0; i < allUsers.length; i = i + 1) {
+                let user = allUsers[i];
+                if (!user || !user.position) {
+                    continue;
+                }
+
+                if (isClient(user)) {
+                    usersInRegion.push(user);
+                    continue;
+                }
+
+                let userRegion = getCurrentRegion(REGION_INFO, user.position);
+                if (userRegion.x != region.x || userRegion.y != region.y) {
+                    continue;
+                }
+
+                usersInRegion.push(user);
+            }
+            return usersInRegion;
+        }
+        // DRAW STUFF (when we're ready...)
         function drawUser(canvas, regionInfo, region, position, isClient, talkState) {
             var canvasCoords = CanvasHelper.worldToCanvasCoords(canvas.scrollWidth, canvas.scrollHeight, position, {x: (region.x + 0.5) * regionInfo.regionSize, y: (region.y + 0.5) * regionInfo.regionSize}, regionInfo.regionSize / canvas.scrollHeight);
             CTX.translate(canvasCoords.x, canvasCoords.y);
@@ -679,64 +707,182 @@
 
             CTX.translate(-canvasCoords.x, -canvasCoords.y);
         }
-        var lastT = 0;
-        function doDraw(t) {
-            let dt = Math.max(0, t - lastT);
-            lastT = t;
-            if (typeof(currentPosition) == "undefined") {
-                return;
-            }
+        function doDraw(dt, usersInRegion) {
             if (Object.keys(REGION_INFO).length == 0) {
                 return;
             }
-            let region = getCurrentRegion(REGION_INFO, currentPosition);
+            let region = getCurrentRegion(REGION_INFO, PHYSICS_STATE.position);
 
             CTX.clearRect(0, 0, CANVAS.width, CANVAS.height);
             CTX.resetTransform();
 
-            updatedUsers = [];
+            updateTalkStates(dt, TALK_STATES, usersInRegion);
 
-            for (let i = 0; i < allUserDataFromServer.length; i = i + 1) {
-                let user = allUserDataFromServer[i];
-                if (!user || !user.position) {
-                    continue;
-                }
-
-                if (isClient(user)) {
-                    updatedUsers.push(user);
-                    continue;
-                }
-
-                let userRegion = getCurrentRegion(REGION_INFO, user.position);
-                if (userRegion.x != region.x || userRegion.y != region.y) {
-                    continue;
-                }
-
-                updatedUsers.push(user);
-            }
-
-            updateTalkStates(dt, TALK_STATES, updatedUsers);
-
-            for (let i = 0; i < updatedUsers.length; i = i + 1) {
-                let user = updatedUsers[i];
+            for (let i = 0; i < usersInRegion.length; i = i + 1) {
+                let user = usersInRegion[i];
                 drawUser(CANVAS, REGION_INFO, region, user.position, isClient(user), TALK_STATES[user.providedUserID]);
             }
         }
-        function draw(t) {
-            let smallerDimension = Math.min(window.innerWidth, window.innerHeight);
-            let largerDimension = Math.max(window.innerWidth, window.innerHeight);
-            let margin = Math.round((largerDimension - smallerDimension) * 0.5);
-            let marginStyle = ""
-            if (smallerDimension == window.innerWidth) {
-                marginStyle = `top: ${margin}px;`;
-            } else {
-                marginStyle = `left: ${margin}px;`;
+
+        function cloneVec(v) {
+            return new HighFidelityAudio.Point3D({
+                x: v.x,
+                y: v.y,
+                z: v.z
+            });
+        }
+        function getDistance2(a, b) {
+            let dx = a.x - b.x;
+            let dy = a.y - b.y;
+            return (dx * dx) + (dy * dy);
+        }
+        function addVecInPlace(a, b) {
+            a.x = a.x + b.x;
+            a.y = a.y + b.y;
+            a.z = a.z + b.z;
+        }
+        function subVecInPlace(a, b) {
+            a.x = a.x - b.x;
+            a.y = a.y - b.y;
+            a.z = a.z - b.z;
+        }
+        function mulVecInPlace(v, m) {
+            v.x = v.x * m;
+            v.y = v.y * m;
+            v.z = v.z * m;
+        }
+        function getVecMag2d(vec) {
+            return (vec.x * vec.x) + (vec.y * vec.y);
+        }
+        function limitVec2dInPlace(vec, max) {
+            let vecMag2 = getVecMag2d(vec);
+            let max2 = max * max;
+            if (vecMag2 < max2) {
+                return;
             }
-            console.log(`marginStyle: ${marginStyle}`)
-            CANVAS.style = `width: ${smallerDimension}px; height: ${smallerDimension}px; ${marginStyle}`;
-            CANVAS.width = smallerDimension;
-            CANVAS.height = smallerDimension;
-            doDraw(t);
+            let ratio2 = max2 / vecMag2;
+            let ratio = Math.sqrt(ratio2);
+            mulVecInPlace(vec, ratio);
+        }
+        function updateClientPhysics(dt, region, regionInfo, physicsState, users) {
+            let lastPosition = new HighFidelityAudio.Point3D({
+                x: physicsState.position.x,
+                y: physicsState.position.y,
+                z: physicsState.position.z
+            });
+            // Values outside of these are clamped after calculations
+            let minX = (region.x + 0.05) * regionInfo.regionSize;
+            let minY = (region.y + 0.05) * regionInfo.regionSize;
+            let maxX = (region.x + 0.95) * regionInfo.regionSize;
+            let maxY = (region.y + 0.95) * regionInfo.regionSize;
+            let maxVelocity = 0.25;
+            let maxAcceleration = 0.05;
+            // Values outide of these are gently pushed by the physics
+            let desiredRadius = regionInfo.regionSize / 4;
+            let desiredPosition = new HighFidelityAudio.Point3D({
+                x: (region.x + 0.5) * regionInfo.regionSize,
+                y: (region.y + 0.5) * regionInfo.regionSize,
+                z: 0
+            });
+            let desiredPersonalSpace = 0.5;
+            // Displacement "forces" (acceleration per meter displacement) and friction (% velocity decrease per second)
+            let kRadius = 0.1;
+            let kPersonalSpace = 0.01;
+            let friction = 0.25;
+            // Apply position/velocity from previous frame
+            let dp = cloneVec(physicsState.velocity);
+            mulVecInPlace(dp, dt / 1000);
+            addVecInPlace(physicsState.position, dp);
+            let dv = cloneVec(physicsState.acceleration);
+            mulVecInPlace(dv, dt / 1000);
+            addVecInPlace(physicsState.velocity, dv);
+            // Apply friction
+            mulVecInPlace(physicsState.velocity, (1 - (friction * dt / 1000)));
+            // Clamp position/velocity
+            if (physicsState.position.x > maxX || physicsState.position.x < minX ||
+                physicsState.position.y > maxY || physicsState.position.y < minY) {
+                mulVecInPlace(physicsState.velocity, 0);
+                mulVecInPlace(physicsState.acceleration, 0);
+            }
+            physicsState.position.x = Math.min(maxX, Math.max(minX, physicsState.position.x));
+            physicsState.position.y = Math.min(maxY, Math.max(minY, physicsState.position.y));
+            limitVec2dInPlace(physicsState.velocity, maxVelocity);
+            // Update acceleration
+            physicsState.acceleration.x = 0;
+            physicsState.acceleration.y = 0;
+            let centerOffset = cloneVec(desiredPosition);
+            subVecInPlace(centerOffset, physicsState.position);
+            let centerDistance2 = getVecMag2d(centerOffset);
+            let desiredRadius2 = desiredRadius * desiredRadius;
+            if (centerDistance2 > desiredRadius2) {
+                let maxCenterOffset = cloneVec(centerOffset);
+                limitVec2dInPlace(maxCenterOffset, desiredRadius);
+                let aRadius = cloneVec(centerOffset);
+                subVecInPlace(aRadius, maxCenterOffset);
+                mulVecInPlace(aRadius, kRadius);
+                addVecInPlace(physicsState.acceleration, aRadius);
+            //console.log(`position: ${JSON.stringify(physicsState.position)}, desiredPosition: ${JSON.stringify(desiredPosition)}, centerOffset: ${JSON.stringify(centerOffset)}, maxCenterOffset: ${JSON.stringify(maxCenterOffset)} aRadius: ${JSON.stringify(aRadius)}`)
+            }
+            let desiredPersonalSpace2 = desiredPersonalSpace * desiredPersonalSpace;
+            for (let i = 0; i < users.length; i = i + 1) {
+                let user = users[i];
+                if (isClient(user)) {
+                    continue;
+                }
+                let neighborDistance2 = getDistance2(physicsState.position, user.position);
+                if (neighborDistance2 > desiredPersonalSpace2) {
+                    continue;
+                }
+                let clientFromNeighbor = cloneVec(physicsState.position);
+                subVecInPlace(clientFromNeighbor, user.position);
+                let ratio2 = desiredPersonalSpace2 / (neighborDistance2 + 0.01 * desiredPersonalSpace2);
+                let ratio = Math.sqrt(ratio2);
+                let idealDistance = cloneVec(clientFromNeighbor);
+                mulVecInPlace(idealDistance, ratio);
+                let aPersonalSpace = cloneVec(idealDistance);
+                subVecInPlace(aPersonalSpace, clientFromNeighbor);
+                mulVecInPlace(aPersonalSpace, kPersonalSpace);
+                addVecInPlace(physicsState.acceleration, aPersonalSpace);
+            //console.log(`physicsState.position: ${JSON.stringify(physicsState.position)}, clientFromNeighbor: ${JSON.stringify(clientFromNeighbor)}, ratio: ${ratio} idealDistance: ${JSON.stringify(idealDistance)} aPersonalSpace: ${JSON.stringify(aPersonalSpace)}`)
+            }
+            // Clamp acceleration
+            limitVec2dInPlace(physicsState.acceleration, maxAcceleration);
+            // Only request update if update actually occurred on a server-related property
+            let needsUpdate = lastPosition.x != physicsState.position.x ||
+                lastPosition.y != physicsState.position.y ||
+                lastPosition.z != physicsState.position.z;
+            return needsUpdate;
+        }
+        var lastT = 0;
+        function draw(t) {
+            let dt = Math.max(0, t - lastT);
+            lastT = t;
+            if (REGION_INFO.regions) {
+                let region = getCurrentRegion(REGION_INFO, PHYSICS_STATE.position);
+                if (region) {
+                    let usersInRegion = getUsersInRegion(REGION_INFO, region, allUserDataFromServer);
+
+                    let smallerDimension = Math.min(window.innerWidth, window.innerHeight);
+                    let largerDimension = Math.max(window.innerWidth, window.innerHeight);
+                    let margin = Math.round((largerDimension - smallerDimension) * 0.5);
+                    let marginStyle = ""
+                    if (smallerDimension == window.innerWidth) {
+                        marginStyle = `top: ${margin}px;`;
+                    } else {
+                        marginStyle = `left: ${margin}px;`;
+                    }
+                    CANVAS.style = `width: ${smallerDimension}px; height: ${smallerDimension}px; ${marginStyle}`;
+                    CANVAS.width = smallerDimension;
+                    CANVAS.height = smallerDimension;
+                    doDraw(dt, usersInRegion);
+
+                    // TODO: Fail gracefully if position becomes undefined for some reason
+                    let needsUpdate = updateClientPhysics(dt, region, REGION_INFO, PHYSICS_STATE, usersInRegion);
+                    if (needsUpdate) {
+                        updateAndTransmit();
+                    }
+                }
+            }
             window.requestAnimationFrame(draw);
         }
         draw();
