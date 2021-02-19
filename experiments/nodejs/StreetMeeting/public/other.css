@@ -1,0 +1,75 @@
+body {
+    background-color: #222222;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    width: 100%;
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+}
+
+p {
+    color: white;
+    margin: 0;
+}
+
+button {
+    width: 200px;
+    height: 100%;
+    margin: 0;
+}
+
+.controlsContainer {
+    position: fixed;
+    width: 100%;
+    height: 40px;
+    padding: 10px;
+    left: 0;
+    top: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+    background-color: #111111;
+    z-index: 20;
+}
+
+.controlsContainer > div {
+    display: flex;
+    flex-direction: column;
+}
+
+.videoContainer {
+    width: 20%;
+    position: fixed;
+    bottom: 20%;
+    right: 0;
+    z-index: 32;
+}
+
+.videoContainer>div {
+    position: absolute !important;
+}
+
+.videoContainer>div>video {
+    width: 100%;
+    height: 100%;
+    transform: rotateY(180deg);
+}
+
+#pano-container, .gl-canvas {
+    width: 100%;
+    height: 100%;
+}
+
+.gl-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+div[aria-label="Street View"] {
+    pointer-events: none;
+}
+
+#map {
+    height: 100%;
+}
