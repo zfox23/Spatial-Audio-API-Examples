@@ -53,7 +53,7 @@ export class App {
             // load a resource
             loader.load(
                 // resource URL
-                '../model/monitor.obj',
+                '/streetMeet/model/monitor.obj',
                 // called when resource is loaded
                 (function (obj) {
                     this.cameraModel = obj;
