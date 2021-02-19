@@ -16,8 +16,8 @@ script.async = true;
 // Append the 'script' element to 'head'
 document.head.appendChild(script);
 
-let lat = 37.869;
-let lng = -122.255;
+let lat = 37.7647271;
+let lng = -3.7906838;
 
 if (window.location.search.indexOf("?") > -1) {
     let coordinates = window.location.search.split("?")[1].split(",");
@@ -35,7 +35,7 @@ let spawn_point = {x: directionX * distFromOrigen, y: directionY * distFromOrige
 HighFidelityAudio.HiFiLogger.setHiFiLogLevel(HighFidelityAudio.HiFiLogLevel.Debug);
 
 const APP_CONFIG = {
-    position: { lat: 37.869, lng: -122.255 },
+    position: { lat: lat, lng: lng },
     pov: {
         heading: 60,
         pitch: 0,

@@ -105,5 +105,5 @@ app.get('/streetMeet', async (req, res) => {
 let adminJWT;
 app.listen(PORT, async () => {
     adminJWT = await generateHiFiJWT("example-admin", undefined, true);
-    console.log(`The High Fidelity Sample App is ready and listening at http://localhost:${PORT}\nVisit http://localhost:${PORT}/videochat-twilio in your browser.`)
+    console.log(`The High Fidelity Sample App is ready and listening at http://localhost:${PORT}\nVisit http://localhost:${PORT}/streetMeet in your browser.`)
 });
