@@ -679,6 +679,7 @@
             return usersInRegion;
         }
         // DRAW STUFF (when we're ready...)
+        // TODO: variable "canvas" is unused
         function drawUser(canvas, regionInfo, region, position, isClient, talkState) {
             var canvasCoords = CanvasHelper.worldToCanvasCoords(canvas.scrollWidth, canvas.scrollHeight, position, {x: (region.x + 0.5) * regionInfo.regionSize, y: (region.y + 0.5) * regionInfo.regionSize}, regionInfo.regionSize / canvas.scrollHeight);
             CTX.translate(canvasCoords.x, canvasCoords.y);
@@ -762,6 +763,7 @@
             }
             let ratio2 = max2 / vecMag2;
             let ratio = Math.sqrt(ratio2);
+            // TODO: Limit to 2d
             mulVecInPlace(vec, ratio);
         }
         function updateClientPhysics(dt, region, regionInfo, physicsState, users) {
