@@ -192,7 +192,7 @@ shadowJar {
 	relocate('org.eclipse.jetty', 'com.highfidelity.jetty')
 	relocate('org.eclipse.jetty.websocket', 'com.highfidelity.jetty.websocket')
 	relocate('javax.servlet', 'com.highfidelity.javax.servlet' )
-    destinationDir = file './build/'
+    destinationDir = file './build/libs/'
     classifier = ''
 
     manifest {
