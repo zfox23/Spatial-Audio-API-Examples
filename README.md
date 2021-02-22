@@ -42,6 +42,8 @@ Experience High Fidelity Spatial Audio with 2D video chat powered by Agora.
 Experience High Fidelity Spatial Audio with 2D video chat powered by Daily.
 ### [Video Chat - Twilio](./experiments/nodejs/videochat-twilio)
 Experience High Fidelity Spatial Audio with 2D video chat powered by Twilio.
+### [3D Dots](./experiments/web/dots3d)
+Move around as dots in a 3d space with spatial audio.
 
 # Live Demos
 This repository employs GitHub Pages, which means that you can look at some of these example applications live by browsing [this page](https://highfidelity.github.io/Spatial-Audio-API-Examples/).
