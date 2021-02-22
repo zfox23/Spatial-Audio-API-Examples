@@ -1,4 +1,4 @@
-package com.example.examplemod;
+package com.highfidelity.hifimc;
 
 
 import java.io.IOException;

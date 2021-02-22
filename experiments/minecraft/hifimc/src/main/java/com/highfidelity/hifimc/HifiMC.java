@@ -1,4 +1,4 @@
-package com.example.examplemod;
+package com.highfidelity.hifimc;
 
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.stream.Collectors;
@@ -34,10 +34,11 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 
 
 // The value here should match an entry in the META-INF/mods.toml file
-@Mod("examplemod")
-public class ExampleMod {
+@Mod(HifiMC.MOD_ID)
+public class HifiMC {
     // Directly reference a log4j logger.
     private static final Logger LOGGER = LogManager.getLogger();
+    public static final String MOD_ID = "hifimc";
 
     // Convenience method to create and configure a ContextHandler.
     private static ContextHandler createContextHandler(String contextPath, Handler wrappedHandler) {
@@ -48,7 +49,7 @@ public class ExampleMod {
         return ch;
     }
 
-    public ExampleMod() {
+    public HifiMC() {
         // Register the setup method for modloading
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
         // Register the enqueueIMC method for modloading
