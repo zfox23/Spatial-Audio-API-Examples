@@ -127,21 +127,6 @@
 
 <body>
     <div>
-        
-    </div>
-
-    <div class="userDataContainer userDataContainer__ours">
-        <h2 class="userDataTitle">Our Local User Data:</h2>
-        <div class="userData">
-            <p class="ourProvidedUserID">Provided User ID: <%- providedUserID %></p>
-            <p class="ourHashedVisitID"></p>
-            <p class="ourPositionContainer"></p>
-            <p class="ourOrientationContainer"></p>
-        </div>
-    </div>
-
-    <div class="userDataContainer userDataContainer__fromServer"></div>
-
     <div class="regionContainer">
         <div class="regionPictureContainer">
         </div>
@@ -186,15 +171,6 @@
         function getRegionCoord(regionInfo, x, y) {
             return {x: Math.floor(x / regionInfo.regionSize), y: Math.floor(y / regionInfo.regionSize)};
         }
-        function findRegionByName(regionInfo, name) {
-            for (let i = 0; i < regionInfo.regions.length; i = i + 1) {
-                let region = regionInfo.regions[i];
-                if (region.name == name) {
-                    return region;
-                }
-            }
-            return undefined;
-        }
         function getAdjacentRegions(regionInfo, region) {
             return {
                 "west": findRegionByRegionCoord(regionInfo, region.x - 1, region.y),
@@ -202,19 +178,6 @@
                 "north": findRegionByRegionCoord(regionInfo, region.x, region.y - 1),
                 "south": findRegionByRegionCoord(regionInfo, region.x, region.y + 1)
             };
-        }
-        function debugRegions(regionInfo) {
-            for (let i = 0; i < regionInfo.regions.length; i = i + 1) {
-                 let region = regionInfo.regions[i];
-                 let adjacentRegions = getAdjacentRegions(regionInfo, region);
-                 let adjacentRegionNames = Object.keys(adjacentRegions);
-                 for (let j = 0; j < adjacentRegionNames.length; j = j + 1) { 
-                    let adjacentRegionDesc = adjacentRegionNames[j];
-                    let adjacentRegion = adjacentRegions[adjacentRegionDesc];
-                    let adjacentRegionName = "N/A";
-                    if (adjacentRegion) { adjacentRegionName = adjacentRegion.name; }
-                 }
-            }
         }
         function getRandomPositionInRegion(regionInfo, region) {
             return new HighFidelityAudio.Point3D({
@@ -329,17 +292,8 @@
         }
 
         let outputAudioEl = document.querySelector(`.outputAudioEl`);
-        let userDataContainer__fromServer = document.querySelector(`.userDataContainer__fromServer`);
         // Orientation determines the direction that the client hears audio sources from
         let currentOrientationEuler = new HighFidelityAudio.OrientationEuler3D({ "pitchDegrees": 0, "yawDegrees": 270, "rollDegrees": 0 });
-        let currentVisit = {};
-        currentVisit.id = undefined;
-
-        let ourHashedVisitID = document.querySelector(`.ourHashedVisitID`);
-        let ourPositionContainer = document.querySelector(`.ourPositionContainer`);
-        updatePositionContainer();
-        let ourOrientationContainer = document.querySelector(`.ourOrientationContainer`);
-        updateOrientationContainer();
 
         let connectDisconnectButton = document.querySelector(`.connectDisconnectButton`);
         connectDisconnectButton.addEventListener("click", getUserMediaWrapper);
@@ -370,20 +324,6 @@
             console.log(`New High Fidelity connection state: ${newConnectionState}`);
             if (newConnectionState === HighFidelityAudio.HiFiConnectionStates.Disconnected || newConnectionState === HighFidelityAudio.HiFiConnectionStates.Failed) {
                 disconnectFromHiFiAudio();
-            }
-        }
-
-        function updateAllUserDataDiv() {
-            userDataContainer__fromServer.innerHTML = `<h2 class="userDataTitle">All User Data Reported By Server (Including Ours)</h2>`;
-
-            for (let i = 0; i < allUserDataFromServer.length; i++) {
-                let currentDiv = document.createElement('div');
-                currentDiv.classList.add("userData");
-                currentDiv.innerHTML += `<p>Provided User ID: ${allUserDataFromServer[i].providedUserID ? allUserDataFromServer[i].providedUserID : "&#60;unknown&#62;"}</p>`;
-                currentDiv.innerHTML += `<p>Hashed Visit ID: ${allUserDataFromServer[i].hashedVisitID ? allUserDataFromServer[i].hashedVisitID : "&#60;unknown&#62;"}</p>`;
-                currentDiv.innerHTML += `<p>Position: ${allUserDataFromServer[i].position ? JSON.stringify(allUserDataFromServer[i].position) : "&#60;unknown&#62;"}</p>`;
-                currentDiv.innerHTML += `<p>Volume (dB): ${allUserDataFromServer[i].volumeDecibels ? allUserDataFromServer[i].volumeDecibels : "&#60;unknown&#62;"}</p>`;
-                userDataContainer__fromServer.appendChild(currentDiv);
             }
         }
 
@@ -434,10 +374,6 @@
                     dataUpdated = true;
                 }
             }
-
-            if (dataUpdated) {
-                updateAllUserDataDiv();
-            }
         }
 
         async function connectToHiFiAudio(inputAudioMediaStream) {
@@ -467,8 +403,6 @@
 
             console.log(`Call to \`connectToHiFiAudioAPIServer()\` succeeded! Response:\n${JSON.stringify(connectResponse)}`);
             console.log(`Our \`hashedVisitID\` is:\n${connectResponse.audionetInitResponse.visit_id_hash}`);
-            ourHashedVisitID.innerHTML = `Hashed Visit ID: ${connectResponse.audionetInitResponse.visit_id_hash}`;
-            currentVisit.id = connectResponse.audionetInitResponse.visit_id_hash;
 
             // This will get all Position/VolumeDecibels updates for all Users (including ourselves).
             let newUserDataSubscription = new HighFidelityAudio.UserDataSubscription({
@@ -506,13 +440,7 @@
             allUserDataFromServer.length = 0;
         }
 
-        function updatePositionContainer() {
-            ourPositionContainer.innerHTML = `Position: ${PHYSICS_STATE.position ? JSON.stringify(PHYSICS_STATE.position) : "&#60;unknown&#62;"}`;
-        }
-
         function updateAndTransmit() {
-            updateOrientationContainer();
-            updatePositionContainer();
             transmitHiFiAudioAPIDataToMixer();
         }
 
