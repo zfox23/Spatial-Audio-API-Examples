@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>High Fidelity Spatial Audio API Example - Simple</title>
+    </head>
+
+    <body style="width: 100%; height: 100%; margin: 0; padding: 0;">
+        <button class="connectButton" style="width: 100%; height: 200px; margin: 0;" onclick="connectToHiFiAudio()">Click to Connect</button>
+        <audio controls autoplay class="outputAudioEl" style="width: 100%; height: 75px; margin: 30px 0 0 0;"></audio>
+    </body>
+
+    <script src="https://hifi-spatial-audio-api.s3.amazonaws.com/releases/v0.2.8/HighFidelityAudio-latest.js"></script>
+    <script>
+        let connectButton = document.querySelector('.connectButton');
+        async function connectToHiFiAudio(stream) {
+            connectButton.disabled = true;
+            connectButton.innerHTML = `Connecting...`;
+            let audioMediaStream;
+            try {
+                audioMediaStream = await navigator.mediaDevices.getUserMedia({ audio: HighFidelityAudio.getBestAudioConstraints(), video: false });
+            } catch (e) {
+                return;
+            }
+            let initialHiFiAudioAPIData = new HighFidelityAudio.HiFiAudioAPIData({
+                position: new HighFidelityAudio.Point3D({ "x": 0, "y": 0, "z": 0 }),
+                orientationEuler: new HighFidelityAudio.OrientationEuler3D({ "pitch": 0, "yaw": 0, "roll": 0 })
+            });
+            let hifiCommunicator = new HighFidelityAudio.HiFiCommunicator({
+                transmitRateLimitTimeoutMS: 10,
+                initialHiFiAudioAPIData: initialHiFiAudioAPIData
+            });
+            await hifiCommunicator.setInputAudioMediaStream(audioMediaStream);
+            const HIFI_AUDIO_JWT = "##HIFI_JWT##"; // "##HIFI_JWT##" will be replaced here with the value set in [instance folder]/config/hifimc-client.toml
+            try {
+                await hifiCommunicator.connectToHiFiAudioAPIServer(HIFI_AUDIO_JWT);
+            } catch (e) {
+                console.error(`Error connecting to High Fidelity:\n${e}`);
+                connectButton.disabled = false;
+                connectButton.innerHTML = `Connection error. Retry?`;
+                return;
+            }
+            connectButton.innerHTML = `Connected!`;
+            document.querySelector(`.outputAudioEl`).srcObject = hifiCommunicator.getOutputAudioMediaStream();
+            document.querySelector(`.outputAudioEl`).play();
+
+            mcLocationWebSocket = new WebSocket('ws://localhost:7777/locdata');
+            mcLocationWebSocket.onmessage = function (event) {
+                console.log(event.data);
+                mcLoc = JSON.parse(event.data)
+                userData = {
+                    position: new HighFidelityAudio.Point3D({ "x": mcLoc.x/2.0, "y": mcLoc.y/2.0, "z": mcLoc.z/2.0 }),
+                    orientationEuler: new HighFidelityAudio.OrientationEuler3D({
+                            "pitchDegrees": 0,
+                            "yawDegrees": mcLoc.yaw,
+                            "rollDegrees": 0
+                        })
+                }
+                hifiCommunicator.updateUserDataAndTransmit(userData);
+            }
+        }
+    </script>
+</html>
