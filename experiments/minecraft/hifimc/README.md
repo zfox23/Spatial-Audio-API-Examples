@@ -43,7 +43,7 @@ This simple Minecraft mod allows you to experience High Fidelity's spatial audio
     #Visit localhost:7777 in a web browser when the mod is loaded to connect to the space.
     hifiJwt = "MY_HIFI_JWT"
 ```
-3. Start your Minecraft client, connecting to a Minecraft server, and open a browser tab to `localhost:7777` to have spatial audio while playing Minecraft.
+3. Start your Minecraft client, connecting to a Minecraft server, and open (or refresh) a browser tab to `localhost:7777` to have spatial audio while playing Minecraft.
 
 ## Limitations/Caveats
 
