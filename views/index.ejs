@@ -144,20 +144,61 @@
 
     <script src="https://hifi-spatial-audio-api.s3.amazonaws.com/releases/latest/HighFidelityAudio-latest.js"></script>
     <script>
+        // Region map JSON
         let REGION_INFO = {};
+        // Prepare to load the map
+        let mapReq = new XMLHttpRequest();
+        mapReq.addEventListener("load", function() {
+            let newRegionInfo = JSON.parse(this.responseText);
+            let regionInfoParts = Object.keys(newRegionInfo);
+            for (let i = 0; i < regionInfoParts.length; i = i + 1) {
+                let key = regionInfoParts[i];
+                REGION_INFO[key] = newRegionInfo[key];
+            }
+            goToRegion(PHYSICS_STATE, REGION_INFO, getRandomRegion(REGION_INFO));
+        });
+        let urlParamString = document.URL.split("?")[1] || "map=./maps/alliteration_nation.json";
+        let urlParams = new URLSearchParams(urlParamString);
+        mapReq.open("GET", urlParams.get("map"));
+        // Load the map
+        mapReq.send();
 
+        // Render info
         let CANVAS = document.querySelector('.thecanvas');
         CANVAS.width = CANVAS.scrollWidth;
         CANVAS.height = CANVAS.scrollHeight;
         let CTX = CANVAS.getContext("2d");
-
         let TALK_STATES = {};
+        // Configurable params for updateTalkStates and drawUser
+        let TALK_PARAMS = {
+            dbMemory: 500,
+            startThresholdPercent: 0.9,
+            endThresholdPercent: 0.85,
+            minTalkDb: -50,
+            cooldownTime: 50,
+            animateTime: 400
+        };
+
+        // Position/orientation/physics state
         // NOTE: z-axis should always be 0 and is ignored by physics/region checking
         let PHYSICS_STATE = {
             position: new HighFidelityAudio.Point3D({ "x": 0, "y": 0, "z": 0 }),
             velocity: new HighFidelityAudio.Point3D({ "x": 0, "y": 0, "z": 0 }), // m/s
             acceleration: new HighFidelityAudio.Point3D({ "x": 0, "y": 0, "z": 0 }) // m/s^2
         };
+        // Orientation determines the direction that the client hears audio sources from
+        let currentOrientationEuler = new HighFidelityAudio.OrientationEuler3D({ "pitchDegrees": 0, "yawDegrees": 270, "rollDegrees": 0 });
+
+        // Session state and event listener
+        let outputAudioEl = document.querySelector(`.outputAudioEl`);
+        let connectDisconnectButton = document.querySelector(`.connectDisconnectButton`);
+        connectDisconnectButton.addEventListener("click", getUserMediaWrapper);
+        connectDisconnectButton.innerHTML = `Click to Connect`;
+        let hifiCommunicator = null;
+        let allUserDataFromServer = [];
+        HighFidelityAudio.HiFiLogger.setHiFiLogLevel(HighFidelityAudio.HiFiLogLevel.Debug);
+
+        // Start of utility functions. Code to initialize render/physics loop (updateFrameLoop) is at the bottom of this script.
 
         function findRegionByRegionCoord(regionInfo, x, y) {
             for (let i = 0; i < regionInfo.regions.length; i = i + 1) {
@@ -291,18 +332,6 @@
             }
         }
 
-        let outputAudioEl = document.querySelector(`.outputAudioEl`);
-        // Orientation determines the direction that the client hears audio sources from
-        let currentOrientationEuler = new HighFidelityAudio.OrientationEuler3D({ "pitchDegrees": 0, "yawDegrees": 270, "rollDegrees": 0 });
-
-        let connectDisconnectButton = document.querySelector(`.connectDisconnectButton`);
-        connectDisconnectButton.addEventListener("click", getUserMediaWrapper);
-        connectDisconnectButton.innerHTML = `Click to Connect`;
-
-        let hifiCommunicator = null;
-
-        HighFidelityAudio.HiFiLogger.setHiFiLogLevel(HighFidelityAudio.HiFiLogLevel.Debug);
-
         async function getUserMediaWrapper() {
             let bestAudioConstraints = HighFidelityAudio.getBestAudioConstraints();
             console.log(`Using the following audio constraints for the user's audio input device:\n${JSON.stringify(bestAudioConstraints)}`);
@@ -327,7 +356,6 @@
             }
         }
 
-        let allUserDataFromServer = [];
         function onNewUserDataReceived(receivedHiFiAudioAPIDataArray) {
             let dataUpdated = false;
 
@@ -455,35 +483,11 @@
             }));
         }
 
-        // Load the map!
-        let mapReq = new XMLHttpRequest();
-        mapReq.addEventListener("load", function() {
-            let newRegionInfo = JSON.parse(this.responseText);
-            let regionInfoParts = Object.keys(newRegionInfo);
-            for (let i = 0; i < regionInfoParts.length; i = i + 1) {
-                let key = regionInfoParts[i];
-                REGION_INFO[key] = newRegionInfo[key];
-            }
-            goToRegion(PHYSICS_STATE, REGION_INFO, getRandomRegion(REGION_INFO));
-        });
-        let urlParamString = document.URL.split("?")[1] || "map=./maps/alliteration_nation.json";
-        let urlParams = new URLSearchParams(urlParamString);
-        mapReq.open("GET", urlParams.get("map"));
-        mapReq.send();
-
-        let talkParams = {
-            dbMemory: 500,
-            startThresholdPercent: 0.9,
-            endThresholdPercent: 0.85,
-            minTalkDb: -50,
-            cooldownTime: 50,
-            animateTime: 400
-        };
         // Monitor the volumeDecibels of users to decide when to create talking animations, and advance the animations.
         function updateTalkStates(dt, talkStates, users) {
             let newTalkStates = {};
-            let minmaxWeight = (talkParams.dbMemory - Math.min(100, dt)) / talkParams.dbMemory;
-            let nowWeight = Math.min(100, dt) / talkParams.dbMemory;
+            let minmaxWeight = (TALK_PARAMS.dbMemory - Math.min(100, dt)) / TALK_PARAMS.dbMemory;
+            let nowWeight = Math.min(100, dt) / TALK_PARAMS.dbMemory;
 
             // Update talk states for each supplied user
             for (let i = 0; i < users.length; i = i + 1) {
@@ -496,7 +500,7 @@
                     currentDb: -120,
                     lastDb: -120,
                     aboveThreshold: false,
-                    cooldown: Math.random() * talkParams.cooldownTime,
+                    cooldown: Math.random() * TALK_PARAMS.cooldownTime,
                     animates: []
                 };
                 // Calculate running average min/max db to find the appropriate thresholds for talking animations
@@ -517,9 +521,9 @@
                 }
                 // Determine if a user's speech passes above some threshold, with some hysteresis
                 newTalkState.aboveThreshold = oldTalkState.aboveThreshold;
-                if (oldTalkState.minDb < oldTalkState.maxDb && user.volumeDecibels > talkParams.minTalkDb) {
-                    let startThresholdDb = oldTalkState.minDb + (talkParams.startThresholdPercent * (oldTalkState.maxDb - oldTalkState.minDb));
-                    let endThresholdDb = oldTalkState.minDb + (talkParams.endThresholdPercent * (oldTalkState.maxDb - oldTalkState.minDb));
+                if (oldTalkState.minDb < oldTalkState.maxDb && user.volumeDecibels > TALK_PARAMS.minTalkDb) {
+                    let startThresholdDb = oldTalkState.minDb + (TALK_PARAMS.startThresholdPercent * (oldTalkState.maxDb - oldTalkState.minDb));
+                    let endThresholdDb = oldTalkState.minDb + (TALK_PARAMS.endThresholdPercent * (oldTalkState.maxDb - oldTalkState.minDb));
                     if (!oldTalkState.aboveThreshold) {
                         if (user.volumeDecibels > startThresholdDb) {
                             newTalkState.aboveThreshold = true;
@@ -532,8 +536,8 @@
                 }
                 // If user's speech passes a threshold, start an animation
                 if (canAddAnimate && newTalkState.aboveThreshold && !oldTalkState.aboveThreshold) {
-                    newTalkState.animates.push(talkParams.animateTime);
-                    newTalkState.cooldown = talkParams.cooldownTime;
+                    newTalkState.animates.push(TALK_PARAMS.animateTime);
+                    newTalkState.cooldown = TALK_PARAMS.cooldownTime;
                 }
             }
 
@@ -596,7 +600,7 @@
             let animAlphaEnd = 0.1;
             for (let i = 0; i < animates.length; i = i + 1) {
                 let animate = animates[i];
-                let animPercent = (talkParams.animateTime - animate) / talkParams.animateTime;
+                let animPercent = (TALK_PARAMS.animateTime - animate) / TALK_PARAMS.animateTime;
                 let animPercentInverse = 1.0 - animPercent;
                 let animRadius = (animPercentInverse * animRadiusStart) + (animPercent * animRadiusEnd);
                 let animAlpha = (animPercentInverse * animAlphaStart) + (animPercent * animAlphaEnd);
@@ -753,7 +757,7 @@
             return needsUpdate;
         }
         var lastT = 0;
-        function draw(t) {
+        function updateFrameLoop(t) {
             let dt = Math.max(0, t - lastT);
             lastT = t;
             if (REGION_INFO.regions) {
@@ -790,9 +794,13 @@
                     }
                 }
             }
-            window.requestAnimationFrame(draw);
+            window.requestAnimationFrame(updateFrameLoop);
         }
-        draw();
+
+        // End of utility functions. Initialization code begins below
+
+        // Start animation/physics
+        updateFrameLoop();
     </script>
 </body>
 
