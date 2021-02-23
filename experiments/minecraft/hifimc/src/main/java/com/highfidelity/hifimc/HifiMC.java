@@ -88,9 +88,7 @@ public class HifiMC {
             webServer.start();
             // webServer.join();
         } catch (Exception e) {
-            System.out.println("------------------------ caught webServer exception");
-            e.printStackTrace();
-            System.out.println(e);
+        	LOGGER.error("------------------------ caught webServer exception", e);
         }
     }
 

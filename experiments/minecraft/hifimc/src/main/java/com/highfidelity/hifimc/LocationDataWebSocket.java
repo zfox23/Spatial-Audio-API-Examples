@@ -27,17 +27,17 @@ public class LocationDataWebSocket {
 
     @OnWebSocketClose
     public void onClose(int statusCode, String reason) {
-        System.out.println("Close: " + reason);
+    	HifiMC.LOGGER.info("Close: " + reason);
     }
 
     @OnWebSocketError
     public void onError(Throwable t) {
-        System.out.println("Error: " + t.getMessage());
+    	HifiMC.LOGGER.error("Error: ", t);
     }
 
     @OnWebSocketConnect
     public void onConnect(Session session) {
-        System.out.println("Connect: " + session.getRemoteAddress().getAddress());
+        HifiMC.LOGGER.info("Connect: " + session.getRemoteAddress().getAddress());
 
         executorService.scheduleAtFixedRate(() -> {
                 try {
@@ -71,6 +71,6 @@ public class LocationDataWebSocket {
 
     @OnWebSocketMessage
     public void onMessage(String message) {
-        System.out.println("Message: " + message);
+    	HifiMC.LOGGER.info("Message: " + message);
     }
 }
