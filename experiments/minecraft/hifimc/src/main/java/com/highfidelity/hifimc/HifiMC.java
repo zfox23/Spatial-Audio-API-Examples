@@ -38,9 +38,8 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 // The value here should match an entry in the META-INF/mods.toml file
 @Mod(HifiMC.MOD_ID)
 public class HifiMC {
-    // Directly reference a log4j logger.
-    public static final Logger LOGGER = LogManager.getLogger();
     public static final String MOD_ID = "hifimc";
+    public static final Logger LOGGER = LogManager.getLogger(MOD_ID);
     public static final Config CONFIG = new Config();
 
     // Convenience method to create and configure a ContextHandler.
