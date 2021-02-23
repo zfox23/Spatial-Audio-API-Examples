@@ -1,4 +1,6 @@
-const auth = require('./auth.json')
+const path = require('path');
+
+const auth = require(path.join(__dirname, 'auth.json'));
 
 const { default: SignJWT } = require('jose/jwt/sign');
 const express = require('express');
@@ -9,7 +11,7 @@ const APP_ID = auth.APP_ID;
 // This is your "Space ID" as obtained from the High Fidelity Audio API Developer Console. Do not share this string.
 const SPACE_ID = auth.HIFI_SPACE_ID;
 // This is the "App Secret" as obtained from the High Fidelity Audio API Developer Console. Do not share this string.
-const APP_SECRET = auth.APP_SECRET;
+const APP_SECRET = auth.HIFI_APP_SECRET;
 const SECRET_KEY_FOR_SIGNING = crypto.createSecretKey(Buffer.from(APP_SECRET, "utf8"));
 
 const app = express();
@@ -42,7 +44,7 @@ app.get('/', async (req, res) => {
     let hiFiJWT = await generateJWT(providedUserID);
     res.render('index', { providedUserID, hiFiJWT });
 });
-app.use(express.static("public"));
+app.use("/", express.static(path.join(__dirname, 'public')));
 
 app.listen(PORT, () => {
     console.log(`The High Fidelity Sample App is ready and listening at http://localhost:${PORT}`)
