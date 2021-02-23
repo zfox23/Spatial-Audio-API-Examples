@@ -1,4 +1,4 @@
-const Version = "c.1.20";
+const Version = "g.1.20";
 // Provide publish/subscribe communications with others. This could be to a server, p2p, etc.
 // Using a pub/sub discipline is up to the application, but it happens to work well here.
 class Client extends Croquet.View {
