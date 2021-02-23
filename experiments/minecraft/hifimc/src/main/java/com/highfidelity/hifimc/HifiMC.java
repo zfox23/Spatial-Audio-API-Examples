@@ -32,7 +32,6 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 public class HifiMC {
     public static final String MOD_ID = "hifimc";
     public static final Logger LOGGER = LogManager.getLogger(MOD_ID);
-    public static final Config CONFIG = new Config();
 
     // Convenience method to create and configure a ContextHandler.
     private static ContextHandler createContextHandler(String contextPath, Handler wrappedHandler) {
