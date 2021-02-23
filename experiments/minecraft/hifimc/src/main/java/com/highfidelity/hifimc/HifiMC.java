@@ -18,7 +18,7 @@ import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.TickEvent.ClientTickEvent;
+import net.minecraftforge.event.TickEvent.RenderTickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
@@ -96,14 +96,14 @@ public class HifiMC {
     }
 
     @SubscribeEvent
-    public void onLivingUpdateEvent(ClientTickEvent event) {
-    	if (event.phase != TickEvent.Phase.END) {
+    public void onLivingUpdateEvent(RenderTickEvent event) {
+    	if (event.phase != TickEvent.Phase.START) {
     		return;
     	}
         @SuppressWarnings("resource")
 		ClientPlayerEntity player = Minecraft.getInstance().player;
         if (player != null) {
-            Vector3d pos = player.getEyePosition(0);
+            Vector3d pos = player.getEyePosition(event.renderTickTime);
             float yaw = player.getRotationYawHead(); // degrees clockwise from north?
             LocationDataWebSocket.x = pos.x;
             LocationDataWebSocket.y = pos.y;
