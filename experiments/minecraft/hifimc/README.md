@@ -15,8 +15,8 @@ This simple Minecraft mod allows you to experience High Fidelity's spatial audio
         - Windows Powershell: `gradlew.bat genEclipseRuns eclipse`
         - Unix-like: `./gradlew genEclipseRuns eclipse`
     - IntelliJ Idea:
-        - Windows Powershell: `gradlew.bat genIntellijRuns`
-        - Unix-like: `./gradlew genIntellijRuns`
+        - Windows Powershell: `gradlew.bat genIntellijRuns idea`
+        - Unix-like: `./gradlew genIntellijRuns idea`
 5. Start your IDE and open your workspace, where you can edit the mod
     - Eclipse:
         - It is recommended to select a workspace folder at least one directory higher than this one, for example the `minecraft` folder in this repository.
@@ -44,7 +44,7 @@ This simple Minecraft mod allows you to experience High Fidelity's spatial audio
     #Visit localhost:7777 in a web browser when the mod is loaded to connect to the space.
     hifiJwt = "MY_HIFI_JWT"
 ```
-4. Start your Minecraft client, connecting to a Minecraft server, and open (or refresh) a browser tab to `localhost:7777` to have spatial audio while playing Minecraft.
+4. Start your Minecraft client, connecting to a Minecraft server, and open (or refresh) a tab in a [supported browser](https://www.highfidelity.com/knowledge/what-devices-are-compatible) to `localhost:7777` to have spatial audio while playing Minecraft.
 
 ## Limitations/Caveats
 
