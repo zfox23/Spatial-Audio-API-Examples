@@ -17,7 +17,7 @@ This simple Minecraft mod allows you to experience High Fidelity's spatial audio
     - IntelliJ Idea:
         - Windows Powershell: `gradlew.bat genIntellijRuns`
         - Unix-like: `./gradlew genIntellijRuns`
-5. Start your IDE and open your workspace, where you can edit, run, and debug the mod
+5. Start your IDE and open your workspace, where you can edit the mod
     - Eclipse:
         - It is recommended to select a workspace folder at least one directory higher than this one, for example the `minecraft` folder in this repository.
         - Import this Minecraft mod into your workspace
@@ -27,18 +27,7 @@ This simple Minecraft mod allows you to experience High Fidelity's spatial audio
             - This directory should be listed and checked in the list of projects
             - Click "Finish"
     - IntelliJ Idea: You may see a "module not specified" error. To fix this, edit your Configurations and select your "main" module.
-6. In order to test the mod from within the IDE, some additional configuration is required
-    - Configure the audio space JWT to test with in `run/config/hifimc-client.toml`. An example config file is provided below:
-```
-#Client configuration settings
-[general]
-    #Defines the JWT to use to connect to a High Fidelity audio space.
-    #Visit localhost:7777 in a web browser when the mod is loaded to connect to the space.
-    hifiJwt = "MY_HIFI_JWT"
-```
-    - Configure the username and password for connecting to a Minecraft server, by adding `--username [username]` and `--password [password]` to your client launch arguments.
-7. Test the mod within the IDE by running the client, connecting to a Minecraft server, and opening a browser tab to `localhost:7777`. Consider using a web-based client for the second client, such as the [Express Webapp example](https://github.com/highfidelity/Spatial-Audio-API-Examples/tree/hifimc/examples/nodejs/express-webapp), for audio testing purposes.
-7. Build the mod
+6. Build the mod
     - Windows Powershell: `gradlew.bat build`
     - Unix-like: `./gradlew build`
     - The mod will be built at `build/libs/hifimc-VERSION.jar`
