@@ -1,0 +1,83 @@
+body {
+  height: 95vh;
+  width: 95%; /* Don't wiggle on mobile when moving around */
+}
+map {
+    height: 100%;
+    width: 100%;
+    display: block;
+}
+map, picture {
+    background-size: cover;
+    background-position: center;
+}
+avatar {
+    height: 100px;
+    width: 100px;
+    border-radius: 50%;
+    position: absolute;
+    background-color: transparent;
+ }
+volume, picture {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    height: 100%;
+    width: 100%;
+}
+volume {
+    box-shadow:  0 0 10px black, 0 0 5px black;
+    transition: height 100ms, width 100ms;
+}
+nameDisplay, avatar button, self, countdown {
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    color: white;
+    text-shadow: 0 0 10px black, 0 0 5px black;
+    position: absolute;
+    background-color: transparent;
+}
+nameDisplay {
+    left: 50%;
+    transform: translate(-50%, 0);
+    top: 10px;
+    min-width: 80%;
+}
+self {
+    top: 30%;
+    width: 100%;
+}
+self i {
+    position: relative;
+    top: 4px;
+}
+avatar button {
+    border: none;
+    bottom: 10px;
+    left: 5px;
+}
+avatar button.disabled {
+    color: grey;
+    text-shadow: none;
+}
+countdown {
+    display: none;
+    bottom: 4px;
+    left: 22px;
+}
+countdown.counting {
+    display: inline-block;
+}
+.hidden {
+    display: none;
+}
+
+room {
+    display: block;
+}
+total, concurrency {
+    display: inline;
+}
