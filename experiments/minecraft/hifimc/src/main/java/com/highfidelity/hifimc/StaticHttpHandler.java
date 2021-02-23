@@ -60,7 +60,7 @@ public class StaticHttpHandler extends AbstractHandler
 "                initialHiFiAudioAPIData: initialHiFiAudioAPIData\n" +
 "            });\n" +
 "            await hifiCommunicator.setInputAudioMediaStream(audioMediaStream);\n" +
-"            const HIFI_AUDIO_JWT = \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcHBfaWQiOiI0ZWM0MzM0ZS0zNTVmLTQwNmQtYjEwNC02YzZkZGZhMDNiMDAiLCJzcGFjZV9pZCI6ImM3NTllZmFiLTUzMjYtNDU5NS1iZjQwLTI3YmE4NTI5OWZlMSIsInN0YWNrIjoiYXVkaW9uZXQtbWl4ZXItYXBpLWFscGhhLTAxIn0.E2OXrR2xS9ujUjkQU_mVFNgmjOXlGRFMexcwIMn30vw\";\n" +
+"            const HIFI_AUDIO_JWT = \"" + Config.CLIENT.hifiJwt.get() + "\";\n" +
 "            try {\n" +
 "                await hifiCommunicator.connectToHiFiAudioAPIServer(HIFI_AUDIO_JWT);\n" +
 "            } catch (e) {\n" +
