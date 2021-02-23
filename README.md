@@ -11,6 +11,8 @@ These example projects augment the API walkthrough guides you can find at [highf
 ## Plain HTML/JS Examples
 ### [bots](./examples/web/bots/)
 Listen to a simulated conversation between bots as they walk around you in this virtual space.
+### [dots](./examples/web/dots/)
+A basic, but complete, 2D multi-user spatialized sound demo, in less than 600 lines of code.
 ### [complex](./examples/web/complex/)
 A more complicated version of [the simple Web App](./examples/web/simple/), with more user controls and UI..
 ### [simple](./examples/web/simple/)
