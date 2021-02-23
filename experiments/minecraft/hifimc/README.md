@@ -1,6 +1,6 @@
 # Minecraft Mod Example
 
-This simple Minecraft mod allows you to experience High Fidelity's spatial audio while playing Minecraft with others. The mod will allow you to hear spatial audio from other players who also have the mod installed and are connected to the same audio space.
+This simple Minecraft mod allows you to experience High Fidelity's spatial audio while playing Minecraft: Java Edition with others. The mod will allow you to hear spatial audio from other players who also have the mod installed and are connected to the same audio space.
 
 ## Developing
 
@@ -34,8 +34,9 @@ This simple Minecraft mod allows you to experience High Fidelity's spatial audio
 
 ## Usage
 
-1. After the mod is built at `build/libs/hifimc-VERSION.jar`, copy it to your `.minecraft/mods` folder, or the `mods` folder of your instance as applicable for your Minecraft launcher.
-2. Configure your modded instance to use the audio space JWT of your choice in `.minecraft/config/hifimc-client.toml`. An example config file is provided below:
+1. Install [Minecraft Forge](https://files.minecraftforge.net/) for Minecraft: Java Edition version 1.16
+2. After the mod is built at `build/libs/hifimc-VERSION.jar`, copy it to your `.minecraft/mods` folder, or the `mods` folder of your instance as applicable for your Minecraft launcher.
+3. Configure your modded instance to use the audio space JWT of your choice in `.minecraft/config/hifimc-client.toml`. An example config file is provided below:
 ```
 #Client configuration settings
 [general]
@@ -43,7 +44,7 @@ This simple Minecraft mod allows you to experience High Fidelity's spatial audio
     #Visit localhost:7777 in a web browser when the mod is loaded to connect to the space.
     hifiJwt = "MY_HIFI_JWT"
 ```
-3. Start your Minecraft client, connecting to a Minecraft server, and open (or refresh) a browser tab to `localhost:7777` to have spatial audio while playing Minecraft.
+4. Start your Minecraft client, connecting to a Minecraft server, and open (or refresh) a browser tab to `localhost:7777` to have spatial audio while playing Minecraft.
 
 ## Limitations/Caveats
 
