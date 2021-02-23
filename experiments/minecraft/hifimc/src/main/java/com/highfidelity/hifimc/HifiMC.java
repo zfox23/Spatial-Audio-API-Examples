@@ -1,6 +1,5 @@
 package com.highfidelity.hifimc;
 
-import java.io.File;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.stream.Collectors;
 
@@ -18,11 +17,11 @@ import org.eclipse.jetty.websocket.server.WebSocketHandler;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
-import net.minecraft.entity.Entity;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegistryEvent;
-import net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.TickEvent.ClientTickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.InterModComms;
 import net.minecraftforge.fml.ModLoadingContext;
@@ -137,20 +136,19 @@ public class HifiMC {
     }
 
     @SubscribeEvent
-    public void onLivingUpdateEvent(LivingUpdateEvent event) {
-        Entity entity = event.getEntity();
-        if (entity instanceof ClientPlayerEntity) {
-            if (entity != null) {
-                ClientPlayerEntity player = Minecraft.getInstance().player;
-                if (player != null) {
-                    Vector3d pos = player.getEyePosition(0);
-                    float yaw = player.getRotationYawHead(); // degrees clockwise from north?
-                    LocationDataWebSocket.x = pos.x;
-                    LocationDataWebSocket.y = pos.y;
-                    LocationDataWebSocket.z = pos.z;
-                    LocationDataWebSocket.yaw = (-yaw + 180.0) % 360.0;
-                }
-            }
+    public void onLivingUpdateEvent(ClientTickEvent event) {
+    	if (event.phase != TickEvent.Phase.END) {
+    		return;
+    	}
+        @SuppressWarnings("resource")
+		ClientPlayerEntity player = Minecraft.getInstance().player;
+        if (player != null) {
+            Vector3d pos = player.getEyePosition(0);
+            float yaw = player.getRotationYawHead(); // degrees clockwise from north?
+            LocationDataWebSocket.x = pos.x;
+            LocationDataWebSocket.y = pos.y;
+            LocationDataWebSocket.z = pos.z;
+            LocationDataWebSocket.yaw = (-yaw + 180.0) % 360.0;
         }
     }
 
