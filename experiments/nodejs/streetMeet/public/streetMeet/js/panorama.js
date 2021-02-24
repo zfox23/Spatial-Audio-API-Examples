@@ -24,9 +24,9 @@ export class Panorama{
     }
 
     computeOffsetsAt(nodes, point) {
-        // Function to compute the availible offsets for the position we are moving to
+        // Function to compute the available offsets for the position we are moving to
         // This is necessary so two players will not end up occupying the same position
-        const EPSILON = 0.001;
+        const EPSILON = 0.1;
         // Create a data array with information of occupy offsets
         let avaliableOffsets = [];
         for (let i = 0; i < this.offsets.length; i++) {
@@ -35,32 +35,41 @@ export class Panorama{
         // Compute all possible offsets around the panorama point
         let ids = Object.keys(nodes);
         let recomputeCurrentOffset = false;
+        let neighbors = {};
         for (let i = 0; i < ids.length; i++) {
             let node = nodes[ids[i]];
+            let position3d = new THREE.Vector3(node.position.x, node.position.z, node.position.y);
             // Check if this node is already using this offset
-            if (node.position.distanceTo(point) < (this.config.OFFSET_LEVELS + EPSILON)) {
-                let nodeOffset = new THREE.Vector3().copy(node.position).sub(point);
-                let offsetFound = -1;
-                this.offsets.forEach(offset, index => {
-                    if (this.offset.distanceTo(nodeOffset) < EPSILON) {
-                        recomputeCurrentOffset = recomputeCurrentOffset || index === this.currentOffsetIdx;
-                        offsetFound = index;
-                        avaliableOffsets[index] = false;
-                    }
-                });
-                if (offsetFound !== -1) {
-                    node.offsetIndex = offsetFound;
-                    break;
+            if (point.distanceTo(position3d) < (this.config.OFFSET_RADIUS * this.config.OFFSET_LEVELS + EPSILON)) {
+                // Estimate other player offset
+                let nodeOffset = position3d.clone().sub(point);
+                neighbors[ids[i]] = nodeOffset;
+            }
+        }
+        ids = Object.keys(neighbors);
+        for (let i = 0; i < ids.length; i++) {
+            let nodeOffset = neighbors[ids[i]];
+            for (let j = 0; j < this.offsets.length; j++) {
+                let offset = this.offsets[j];                
+                if (offset.distanceTo(nodeOffset) < EPSILON) {
+                    // If the other player is using our same offset get the next available one 
+                    recomputeCurrentOffset = recomputeCurrentOffset || j === this.currentOffsetIdx;
+                    avaliableOffsets[j] = false;
+                    continue;
                 }
             }
         }
+
         // If my current offset is invalid, find a new one
-        if (recomputeCurrentOffset) {
+        if (recomputeCurrentOffset || this.currentOffsetIdx > 5) {
+            let prevOffsetIdx = this.currentOffsetIdx;
             for (let i = 0; i < avaliableOffsets.length; i++) {
                 if (avaliableOffsets[i]) {
                     this.currentOffsetIdx = i;
+                    break;
                 }
             }
+            console.log("Recomputing offset: from " + prevOffsetIdx + " to " + this.currentOffsetIdx);
         }
         return this.offsets[this.currentOffsetIdx];
     }
@@ -71,14 +80,14 @@ export class Panorama{
         for (let j = 1; j <= this.config.OFFSET_LEVELS; j++) {
             for (let i = 0; i < aroundCount - 1; i++) {
                 let angle = 2 * Math.PI * (i / aroundCount);
-                let offset = new THREE.Vector3(1.5 * j * Math.cos(angle), 0.0, 1.5 * j * Math.sin(angle));
+                let offset = new THREE.Vector3(this.config.OFFSET_RADIUS * j * Math.cos(angle), 0.0, this.config.OFFSET_RADIUS * j * Math.sin(angle));
                 this.offsets.push(offset);
             }
         }
     }
 
     computePosition3D(fromId, toId, heading) {
-        // Get the destination's 3d point, computing the distance and the direction using the origin and destination point coordenates (lat lng) and heading 
+        // Get the destination's 3d point, computing the distance and the direction using the origin and destination point coordinates (lat lng) and heading 
         let fromData = this.dataCache[fromId];
         let toData = this.dataCache[toId];
         if (fromData && toData && fromData.location && toData.location) {
@@ -97,7 +106,7 @@ export class Panorama{
     }
 
     static getDistanceBetween(loc1, loc2) {
-        // Compute the distance in meters between two coordenates (lat,lng)
+        // Compute the distance in meters between two coordinates (lat,lng)
         const R = 6371e3; // metres
         const fi1 = loc1.lat * Math.PI/180; // φ, λ in radians
         const fi2 = loc2.lat * Math.PI/180;
@@ -129,7 +138,7 @@ export class Panorama{
         this.config = config;
         // Generate the offsets around the panorama central point for the player position
         this.generateOffsets();
-        this.currentOffsetIdx = Math.floor(Math.random() * this.offsets.length);
+        this.currentOffsetIdx = 0;
         this.panorama = new google.maps.StreetViewPanorama(config.PANO_CONTAINER, config.streetViewConfig);
         
         this.panorama.addListener("links_changed", () => {
@@ -172,7 +181,16 @@ export class Panorama{
 
         this.panorama.addListener("pov_changed", () => {
             // Trigger the callback with the new panorama POV data
-            this.onPanoPovChanged(this.panorama.getPov());
+            this.updatePov();
         });
+    }
+
+    updatePov() {
+        let pov = this.panorama.getPov();
+        this.onPanoPovChanged(pov);
+    }
+
+    getCurrentPosition() {
+        return this.dataCache[this.currentPanoId].position;
     }
 }

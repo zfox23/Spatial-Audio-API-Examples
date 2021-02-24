@@ -4,7 +4,7 @@ export const SoundNodeType = {
     NODE: 0, // Basic node
     EMITTER: 1, // Sends a stream from a audio file
     RECEIVER: 2, // Receives the mix and play locally
-    BOT: 3, // EMITTER with programable actions
+    BOT: 3, // EMITTER with programmable actions
     PLAYER: 4 // PLAYER receiver with input stream from mic
 }
 

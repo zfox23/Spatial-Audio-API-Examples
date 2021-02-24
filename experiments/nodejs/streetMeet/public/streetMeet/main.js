@@ -60,9 +60,10 @@ const APP_CONFIG = {
         motionTrackingControl: true
     }, 
     PANO_CONTAINER: document.getElementById("pano-container"), // Container for Google Street View elements
-    BASE_POSITION: new THREE.Vector3(spawnFromLatLng.x, spawnFromLatLng.z, spawnFromLatLng.y), // On three.js coordenates (y, z swap)
+    BASE_POSITION: new THREE.Vector3(spawnFromLatLng.x, spawnFromLatLng.z, spawnFromLatLng.y), // On three.js coordinates (y, z swap)
     SPAWN_POINT : spawnFromLatLng, // Initial position on meters
-    OFFSET_LEVELS: 3
+    OFFSET_LEVELS: 3,
+    OFFSET_RADIUS: 3
 }
 
 let videoContainer = document.querySelector('.videoContainer');

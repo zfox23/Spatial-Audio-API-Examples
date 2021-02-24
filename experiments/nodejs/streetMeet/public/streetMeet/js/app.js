@@ -53,7 +53,7 @@ export class App {
             // Load the monitor (avatar) model before initiating the scene
             const loader = new OBJLoader();
             loader.load(
-                '/streetMeet/model/monitor2.obj',
+                '/streetMeet/model/monitor.obj',
                 (function (obj) { // Once the model is loaded
                     this.cameraModel = obj;
                     this.glScene.init(this.streetViewPano.canvas, this.config, offset, obj);
@@ -74,10 +74,7 @@ export class App {
             this.glScene.cameraController.setCameraFromView(pov);
         }
         this.streetViewPano.onPanoPositionChanged = (pos) => {
-            // This function is triggered when StreetView changes positions (lat, lng)
-            let offset = this.streetViewPano.computeOffsetsAt(this.foundNodes, pos);
-            // Initiate the 3d camera movement to mimic StreetView animation between positions
-            this.glScene.cameraController.moveCameraTo(pos, offset);
+            this.updateOffset(pos);
         }
         this.loop.addOnStepCback("render", (deltaTime) => {
             // Render loop
@@ -137,7 +134,6 @@ export class App {
             // When a new video track is added, find the owner and add it to its node
             Object.keys(this.foundNodes).forEach(id => {
                 if (this.foundNodes[id].name === identity) {
-                    console.log("Owner found");
                     this.foundNodes[id].connectCamera(div);
                 }
             }); 
@@ -146,7 +142,6 @@ export class App {
             // When a video track is been removed, find the owner and remove it from its node
             Object.keys(this.foundNodes).forEach(id => {
                 if (this.foundNodes[id].name === identity) {
-                    console.log("Owner found");
                     this.foundNodes[id].disconnectCamera();
                 }
             }); 
@@ -201,6 +196,7 @@ export class App {
                 
     // When my player gets data from the server we update the other nodes 
     onDataReceived(dataArray) {
+        let newAdded = false;
         dataArray.forEach(data => {
             if (data.hashedVisitID !== this.playerId) {
                 if (!this.foundNodes[data.hashedVisitID]) {
@@ -216,10 +212,26 @@ export class App {
                     newPlayer.initModel(this.cameraModel);
                     this.glScene.scene.add(newPlayer.mesh);
                     this.foundNodes[data.hashedVisitID] = newPlayer;
+                    newAdded = true;
+                    
                 }
                 this.foundNodes[data.hashedVisitID].updateReceivedData(data);
             }
         });
+        if (newAdded) {
+            this.updateOffset();
+            this.streetViewPano.updatePov();
+        }
+    }
+
+    updateOffset(pos) {
+        if (!pos) {
+            pos = this.streetViewPano.getCurrentPosition();
+        }
+        // This function is triggered when StreetView changes positions (lat, lng)
+        let offset = this.streetViewPano.computeOffsetsAt(this.foundNodes, pos);
+        // Initiate the 3d camera movement to mimic StreetView animation between positions
+        this.glScene.cameraController.moveCameraTo(pos, offset);
     }
 
     // Left mouse drag move the rotates the camera

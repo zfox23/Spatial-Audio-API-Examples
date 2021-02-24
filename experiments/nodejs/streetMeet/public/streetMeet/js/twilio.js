@@ -17,7 +17,7 @@ export class VideoTwilio {
         }).then(twilioRoom => {
             this.room = twilioRoom;
             console.log('Connected to Room "%s"', this.room.name);
-            // Set up callbacks for new participant connection and desconnection
+            // Set up callbacks for new participant connection and disconnection
             this.room.participants.forEach(this.participantConnected.bind(this));
             this.room.on('participantConnected', this.participantConnected.bind(this));
     
