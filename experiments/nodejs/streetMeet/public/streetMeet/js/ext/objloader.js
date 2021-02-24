@@ -12,7 +12,7 @@ import {
 	Points,
 	PointsMaterial,
 	Vector3
-} from 'https://unpkg.com/three@0.125.2/build/three.module.js';
+} from '/streetMeet/build/three.module.js';
 
 var OBJLoader = ( function () {
 

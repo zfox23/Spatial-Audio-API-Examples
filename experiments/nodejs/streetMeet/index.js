@@ -17,6 +17,7 @@ const PORT = 8587;
 
 app.set('view engine', 'ejs');
 app.use(express.static('public'));
+app.use('/streetMeet/build', express.static('node_modules/three/build/'));
 
 async function generateHiFiJWT(userID, spaceID, isAdmin) {
     let hiFiJWT;
@@ -99,7 +100,8 @@ app.get('/streetMeet', async (req, res) => {
     let providedUserID = `${ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)]}-${NOUNS[Math.floor(Math.random() * NOUNS.length)]}${Math.floor(Math.random() * Math.floor(1000))}`;
     let hiFiJWT = await generateHiFiJWT(providedUserID, spaceID, false);
     let twilioJWT = generateTwilioAccessToken(providedUserID, spaceName);
-    res.render('index', { providedUserID, hiFiJWT, twilioJWT, spaceName });
+    let googleAPIKey = auth.GOOGLE_API_KEY;
+    res.render('index', { providedUserID, hiFiJWT, twilioJWT, spaceName, googleAPIKey });
 });
 
 let adminJWT;

@@ -1,13 +1,18 @@
+import * as THREE from '/streetMeet/build/three.module.js';
 
-import * as CT from './constants.js';
-import { THREE } from './constants.js';
+export const SoundNodeType = {
+    NODE: 0, // Basic node
+    EMITTER: 1, // Sends a stream from a audio file
+    RECEIVER: 2, // Receives the mix and play locally
+    BOT: 3, // EMITTER with programable actions
+    PLAYER: 4 // PLAYER receiver with input stream from mic
+}
 
 // Root class with the node's physical attributes needed to display it  
 class Renderable3D {
     constructor(config) {
         this.position = new THREE.Vector3().copy(config.position);
         this.orientation = new THREE.Quaternion();
-        this.radius = config.radius;
         this.name = config.name;
         this.color = config.color;
         this.offset = new THREE.Vector3();
@@ -33,7 +38,7 @@ class SoundNode extends Renderable3D {
         this.mixerOrientation = new HighFidelityAudio.OrientationQuat3D(new THREE.Quaternion());
         this.hifiCommunicator = null; // HighFidelityAudio.HiFiCommunicator
         this.stream = null; // Input or output stream
-        this.type = CT.SoundNodeType.NODE;
+        this.type = SoundNodeType.NODE;
         this.volume = null; // Value with the volume from mixer in decibels.
         this.connectResponse = null;
     }
@@ -47,21 +52,22 @@ class SoundNode extends Renderable3D {
         this.mixerPosition.x = -this.position.x;
         this.mixerPosition.y = this.position.z;
         this.mixerPosition.z = -this.position.y;
-        this.mixerOrientation.x = this.orientation.x;
-        this.mixerOrientation.y = this.orientation.y;
-        this.mixerOrientation.z = this.orientation.z;
-        this.mixerOrientation.w = this.orientation.w;
+        // Transform quaternion
+        this.mixerOrientation = this.orientation.clone();
+        let transQuat = new THREE.Quaternion(0, 1, 0, 0);
+        this.mixerOrientation.multiply(transQuat);
         this.sendUpdatedData();
     }
     // Send the converted position and orientation to the mixer
     sendUpdatedData(name) {
         if (this.hifiCommunicator) {
-            let response = this.hifiCommunicator.updateUserDataAndTransmit({
+            this.hifiCommunicator.updateUserDataAndTransmit({
                 position: this.mixerPosition,
                 orientationQuat: this.mixerOrientation
             });
         }
     }
+
     // Volume data can be used to render a sound bubble effect on the node
     updateReceivedData(data) {
         this.volume = data.volumeDecibels !== null ? data.volumeDecibels : this.volume;
@@ -71,13 +77,9 @@ class SoundNode extends Renderable3D {
             this.position.y = data.position.z !== null ? -data.position.z : this.position.z;
         }
         if (data.orientationQuat !== null) {
-            this.orientation.x = data.orientationQuat.x;
-            this.orientation.y = data.orientationQuat.y;
-            this.orientation.z = data.orientationQuat.z;
-            this.orientation.w = data.orientationQuat.w;
-            if (data.orientationQuat.x === null || data.orientationQuat.y === null || data.orientationQuat.z === null || data.orientationQuat.w === null) {
-                console.log("Null values");
-            }
+            this.orientation.copy(data.orientationQuat);
+            let transQuat = new THREE.Quaternion(0, 1, 0, 0);
+            this.orientation.multiply(transQuat);
         }
         this.mesh.visible = true;
     }
@@ -129,7 +131,7 @@ class SoundNode extends Renderable3D {
 class SoundReceiver extends SoundNode {
     constructor(config, onDataReceived) {
         super(config);
-        this.type = CT.SoundNodeType.RECEIVER;
+        this.type = SoundNodeType.RECEIVER;
         this.onDataReceived = onDataReceived ? onDataReceived : () => {};
     }
 
@@ -159,13 +161,14 @@ class SoundReceiver extends SoundNode {
 // A SoundEmitter with some functions to handle actions and custom rendering
 export class Player extends SoundReceiver {
     constructor(config, onDataReceived) {
-        super(config, onDataReceived); // config : {position, orientation, name, radius, color}
-        this.type = CT.SoundNodeType.PLAYER;
+        super(config, onDataReceived); // config : {position, orientation, name, color}
+        this.type = SoundNodeType.PLAYER;
         this.targetPosition = new THREE.Vector3().copy(config.position);
+        this.targetOrientationQuat = new THREE.Quaternion();
         this.firstData = true;
         this.monitorMaterial = new THREE.MeshPhongMaterial({ color: this.colorFromString(this.name) });
         this.screenMaterial = new THREE.MeshBasicMaterial( { color: "#000000" } );
-        this.controlsMaterial = new THREE.MeshPhongMaterial({ color: "#0000FF" });
+        this.controlsMaterial = new THREE.MeshBasicMaterial({ color: "#0000FF" });
         this.board = null;
         this.id = config.id;
     }
@@ -173,14 +176,26 @@ export class Player extends SoundReceiver {
     initModel(model) {
         if (model) {
             this.mesh = model.clone();
-            this.mesh.children[1].material = this.screenMaterial;
-            this.mesh.children[1].material.needsUpdate = true;
-            this.mesh.children[0].material = this.monitorMaterial;
-            this.mesh.children[0].material.needsUpdate = true;
-            this.mesh.children[2].material = this.controlsMaterial;
-            this.mesh.children[2].material.needsUpdate = true;
-            this.mesh.children[3].material = this.controlsMaterial;
-            this.mesh.children[3].material.needsUpdate = true;
+            this.mesh.children.forEach(submesh => {
+                // Iterate Monitor.obj submeshes and apply predefined materials
+                switch (submesh.name) {
+                    case "Monitor":
+                        submesh.material = this.monitorMaterial;
+                        break;
+                    case "Screen":
+                        submesh.material = this.screenMaterial;
+                        break;
+                    case "Control1":
+                        submesh.material = this.controlsMaterial;
+                        break;
+                    case "Control2":
+                        submesh.material = this.controlsMaterial;
+                        break;
+                    default:
+                        break;
+                }
+                submesh.material.needsUpdate = true;
+            });
             this.displayName(this.name);
         }
     }
@@ -197,20 +212,34 @@ export class Player extends SoundReceiver {
 
     updateReceivedData(data) { 
         if (this.firstData) {
+            // If this is the first data received don't interpolate
             this.firstData = false;
             this.position.x = data.position.x !== null ? -data.position.x : this.position.x;
             this.position.z = data.position.y !== null ? data.position.y : this.position.z;
             this.position.y = data.position.z !== null ? -data.position.z : this.position.y;
-        } else if (data.position) {
-            this.targetPosition.x = data.position.x !== null ? -data.position.x : this.targetPosition.x;
-            this.targetPosition.z = data.position.y !== null ? data.position.y : this.targetPosition.z;
-            this.targetPosition.y = data.position.z !== null ? -data.position.z : this.targetPosition.y;
+            if (data.orientationQuat) {
+                this.orientation.copy(data.orientationQuat);
+            }
+            
+        } else {
+            if (data.position) {
+                // Interpolate
+                this.targetPosition.x = data.position.x !== null ? -data.position.x : this.targetPosition.x;
+                this.targetPosition.z = data.position.y !== null ? data.position.y : this.targetPosition.z;
+                this.targetPosition.y = data.position.z !== null ? -data.position.z : this.targetPosition.y;
+            }
+            if (data.orientationQuat) {
+                this.targetOrientationQuat.copy(data.orientationQuat);
+                let transQuat = new THREE.Quaternion(0, 1, 0, 0);
+                this.targetOrientationQuat.multiply(transQuat);
+            }
         }
         let newData = { 
             position: null, 
-            orientationQuat: data.orientationQuat, 
+            orientationQuat: null, 
             volumeDecibels: data.volumeDecibels
         }
+        // Trigger function on the parent class without setting position, so we can use interpolation
         super.updateReceivedData(newData);
     }
 
@@ -224,14 +253,17 @@ export class Player extends SoundReceiver {
                 y: this.targetPosition.y - this.position.y, 
                 z: this.targetPosition.z - this.position.z
             };
+            // THREE.Vector3.lerp creates artifacts we'll do it manually
             this.position.x = Math.abs(delta.x) > MIN_DELTA ? this.position.x + (delta.x) * TAU : this.targetPosition.x;
             this.position.y = Math.abs(delta.y) > MIN_DELTA ? this.position.y + (delta.y) * TAU : this.targetPosition.y;
             this.position.z = Math.abs(delta.z) > MIN_DELTA ? this.position.z + (delta.z) * TAU : this.targetPosition.z;
+            this.orientation.slerp(this.targetOrientationQuat, 2.0 * TAU);
             super.updateModel();
         }
     }
 
     connectCamera(videoElem) {
+        // When a new video track is received from this player we need to assign it as a texture to the screen material
         this.videoElem = videoElem;
         this.texture = new THREE.VideoTexture(videoElem.firstChild);
         this.screenMaterial.color.setHex(0xFFFFFF);
@@ -240,27 +272,35 @@ export class Player extends SoundReceiver {
     }
 
     disconnectCamera() {
+        // When a player stops sending video data unset the texture and assing a black color to the screen
         this.screenMaterial.map = null;
         this.screenMaterial.color.setHex(0x000000);
         this.screenMaterial.needsUpdate = true;
     }
 
     displayName(name) {
-        this.board = document.getElementById("textboard").cloneNode(true);;
+        // Create a canvas clone from the existing "textboard" canvas
+        // We will use this 2d canvas to draw text and set it as a texture for the controls material
+        if (!this.board) {
+            this.board = document.getElementById("textboard").cloneNode(true);
+            // Create a new texture from the board
+            let tex = new THREE.Texture(this.board);
+            this.controlsMaterial.map = tex.clone();
+            this.controlsMaterial.color.setHex(0xFFFFFF);
+        }
         var ctx = this.board.getContext("2d");
+        // Write the name on black over a white background
         ctx.fillStyle = "white";
         ctx.fillRect(0, 0, this.board.width, this.board.height);
         ctx.fillStyle = "black";
         ctx.font = "16px Arial";
         ctx.fillText(name, 5, 15);
-        let tex = new THREE.Texture(this.board);
-        this.controlsMaterial.map = tex.clone();
-        this.controlsMaterial.color.setHex(0xFFFFFF);
         this.controlsMaterial.needsUpdate = true;
         this.controlsMaterial.map.needsUpdate = true;
     }
 
     colorFromString(str) {
+        // Create a random color based on the player ID. All clients should render players consistently, with a unique color
         var baseRed = 128;
         var baseGreen = 128;
         var baseBlue = 128;
@@ -280,10 +320,10 @@ export class Player extends SoundReceiver {
     }
 }
 
-// A SoundEmitter with some functions to handle actions and custom rendering
+// My player
 export class MyPlayer extends Player {
     constructor(config, onDataReceived) {
-        super(config, onDataReceived); // config : {position, orientation, name, radius, color}
-        this.isMyPlayer = true; // Render guides
+        super(config, onDataReceived); // config : {position, orientation, name, color}
+        this.isMyPlayer = true;
     }
 }
