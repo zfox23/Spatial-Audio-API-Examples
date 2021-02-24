@@ -50,6 +50,8 @@ Experience High Fidelity Spatial Audio with 2D video chat powered by Twilio.
 Move around as dots in a 3d space with spatial audio.
 ### [Plaza](./experiments/nodejs/plaza)
 Explore various environments connected in a grid with spatial audio between them.
+### [Haunted Mansion Envrionment](./experiments/environments/mansion)
+Explore a 3d auditory experience with your friends.
 
 # Live Demos
 This repository employs GitHub Pages, which means that you can look at some of these example applications live by browsing [this page](https://highfidelity.github.io/Spatial-Audio-API-Examples/).
