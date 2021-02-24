@@ -1,0 +1,409 @@
+{
+
+     "audio_sources": [
+         {
+             "filename": "steps_cc.mp3",
+             "x_start": -4.0,
+             "y_start": 3.0,
+             "z_start": -5.0,
+             "x_end": 2.0,
+             "y_end": 3.0,
+             "z_end": -1.0,
+             "orientation": 20,
+             "min_time": 0,
+             "max_time": 10
+         },
+         {
+             "filename": "wolves_cc.mp3",
+             "x_start": 6.0,
+             "y_start": 4.0,
+             "z_start": 14.0,
+             "orientation": 180,
+             "min_time": 30,
+             "max_time": 60
+         },
+         {
+             "filename": "wind.mp3",
+             "loop": true,
+             "x_start": 0.0,
+             "y_start": 10.0,
+             "z_start": 0.0,
+             "orientation": 180,
+             "min_time": 0,
+             "max_time": 0
+         },
+         {
+             "filename": "music.mp3",
+             "loop": true,
+             "x_start": -4.0,
+             "y_start": 7.0,
+             "z_start": 5.0,
+             "orientation": 90,
+             "min_time": 0,
+             "max_time": 0
+         },
+         {
+             "filename": "musicbox_cc.mp3",
+             "loop": true,
+             "x_start": 10.0,
+             "y_start": 1.0,
+             "z_start": 2.0,
+             "orientation": 270,
+             "min_time": 30,
+             "max_time": 60
+         },
+         {
+             "filename": "phone_cc.mp3",
+             "loop": true,
+             "x_start": 5.0,
+             "y_start": 1.0,
+             "z_start": 2.0,
+             "orientation": 270,
+             "min_time": 20,
+             "max_time": 40
+         },
+         {
+             "filename": "drips_cc.mp3",
+             "loop": true,
+             "x_start": -6.5,
+             "y_start": 1.0,
+             "z_start": 12.0,
+             "orientation": 90,
+             "min_time": 0,
+             "max_time": 0
+         },
+         {
+             "filename": "piano_cc.mp3",
+             "loop": true,
+             "x_start": 5.5,
+             "y_start": 1.0,
+             "z_start": 9.0,
+             "orientation": 90,
+             "min_time": 30,
+             "max_time": 60
+         },
+         {
+             "filename": "bear.mp3",
+             "loop": true,
+             "x_start": 10.0,
+             "y_start": 1.0,
+             "z_start": 9.0,
+             "orientation": 200,
+             "min_time": 45,
+             "max_time": 90
+         }  
+     ],
+    "rooms": {
+        "hallway0": {
+             "x_min": -1.0,
+             "x_max": 1.0,
+             "y_min": 0,
+             "y_max": 3.0,
+             "z_min": -1.0,
+             "z_max": 17.0,
+             "reverb_time": 0.1,
+             "wet_level": 0.0,
+             "attenuation_coefficients": {
+                "hallway1": 0.75,
+                "greathall": 0.90
+             },             
+             "doors": {
+                 "greathall1": {
+                     "x": -1.0,
+                     "z": 2.0,
+                     "r": 0.75
+                 },
+                 "greathall2": {
+                     "x": -1.0,
+                     "z": 4.0,
+                     "r": 0.75
+                 },
+                 "greathall3": {
+                     "x": -1.0,
+                     "z": 6.0,
+                     "r": 0.75
+                 },
+                 "greathall4": {
+                     "x": -1.0,
+                     "z": 8.0,
+                     "r": 0.75
+                 },
+                 "hallway1": {
+                     "x": 1.0,
+                     "z": 4.75,
+                     "r": 0.75
+                 },
+                 "kitchen": {
+                     "x": -1.0,
+                     "z": 12.0,
+                     "r": 0.75
+                 },
+                 "bath1": {
+                     "x": -1.0,
+                     "z": 16.0,
+                     "r": 0.75
+                 },
+                 "library": {
+                     "x": 1.0,
+                     "z": 2.0,
+                     "r": 0.75
+                 },
+                 "music": {
+                     "x": 1.0,
+                     "z": 7.0,
+                     "r": 0.75
+                 }
+             }
+        },       
+        "hallway1": {
+             "x_min": 1.0,
+             "x_max": 11.0,
+             "y_min": 0,
+             "y_max": 3.0,
+             "z_min": 4.0,
+             "z_max": 5.5,
+             "reverb_time": 0.1,
+             "wet_level": 0.0,
+             "attenuation_coefficients": {
+                "greathall": 0.90,
+                "hallway0": 0.75
+             },              
+             "doors": {
+                 "hallway0": {
+                     "x": 1.0,
+                     "z": 4.75,
+                     "r": 0.75
+                 },
+                 "library": {
+                     "x": 3.0,
+                     "z": 4.0,
+                     "r": 0.75
+                 },
+                 "music": {
+                     "x": 3.0,
+                     "z": 5.5,
+                     "r": 0.75
+                 } ,
+                 "bed1": {
+                     "x": 9.0,
+                     "z": 4.0,
+                     "r": 0.75
+                 },
+                 "bed2": {
+                     "x": 9.0,
+                     "z": 5.5,
+                     "r": 0.75
+                 }                 
+             }             
+        },
+        "greathall": {
+             "x_min": -7.0,
+             "x_max": -1.0,
+             "y_min": 0,
+             "y_max": 3.0,
+             "z_min": 0.0,
+             "z_max": 10.0,
+             "reverb_time": 0.0,
+             "wet_level": 0.0,
+             "attenuation_coefficients": {
+                "kitchen": 0.95,
+                "hallway0": 0.95,
+                "hallway1": 0.95
+             },              
+             "doors": {
+                 "hall1-1": {
+                     "x": -1.0,
+                     "z": 2.0,
+                     "r": 0.75
+                 },
+                 "hall1-2": {
+                     "x": -1.0,
+                     "z": 4.0,
+                     "r": 0.75
+                 },
+                 "hall1-3": {
+                     "x": -1.0,
+                     "z": 6.0,
+                     "r": 0.75
+                 },
+                 "hall1-4": {
+                     "x": -1.0,
+                     "z": 8.0,
+                     "r": 0.75
+                 },
+                 "kitchen": {
+                     "x": -2.0,
+                     "z": 10.0,
+                     "r": 0.75
+                 }
+             }       
+        },
+        "kitchen": {
+             "x_min": -6.0,
+             "x_max": -1.0,
+             "y_min": 0,
+             "y_max": 3.0,
+             "z_min": 10.0,
+             "z_max": 14.0,
+             "reverb_time": 0.1,
+             "wet_level": 0.0,
+             "attenuation_coefficients": {
+                "greathall": 0.90,
+                "hallway0": 0.90,
+                "hallway1": 0.95
+             },              
+             "doors": {
+                 "greathall": {
+                     "x": -2.0,
+                     "z": 10.0,
+                     "r": 0.75
+                 },
+                 "hallway0": {
+                     "x": -1.0,
+                     "z": 12.0,
+                     "r": 0.75
+                 },
+                 "pantry": {
+                     "x": -4.5,
+                     "z": 14.0,
+                     "r": 0.75
+                 }                 
+             }
+        },
+        "pantry": {
+             "x_min": -6.0,
+             "x_max": -3.5,
+             "y_min": 0,
+             "y_max": 3.0,
+             "z_min": 14.0,
+             "z_max": 17.0,
+             "reverb_time": 0.1,
+             "wet_level": 0.0,
+             "attenuation_coefficients": {
+                "kitchen": 0.90
+             },              
+             "doors": {
+                 "kitchen": {
+                     "x": -4.5,
+                     "z": 14.0,
+                     "r": 0.75
+                 }
+             }
+        },
+        "bath1": {
+             "x_min": -3.5,
+             "x_max": -1.0,
+             "y_min": 0,
+             "y_max": 3.0,
+             "z_min": 14.0,
+             "z_max": 17.0,
+             "reverb_time": 0.1,
+             "wet_level": 0.0,
+             "attenuation_coefficients": {
+                "hallway0": 0.75,
+                "hallway1": 0.85
+             },              
+             "doors": {
+                 "hallway0": {
+                     "x": -1.0,
+                     "z": 16.0,
+                     "r": 0.75
+                 }
+             }
+        },
+        "library": {
+             "x_min": 1.0,
+             "x_max": 6.0,
+             "y_min": 0,
+             "y_max": 3.0,
+             "z_min": 0.0,
+             "z_max": 4.0,
+             "reverb_time": 0.1,
+             "wet_level": 0.0,
+             "attenuation_coefficients": {
+                "hallway0": 0.90,
+                "hallway1": 0.90
+             },              
+             "doors": {
+                 "hallway0": {
+                     "x": 1.0,
+                     "z": 2.0,
+                     "r": 0.75
+                 },
+                 "hallway1": {
+                     "x": 3.0,
+                     "z": 4.0,
+                     "r": 0.75
+                 }                 
+             }
+        },
+        "music": {
+             "x_min": 1.0,
+             "x_max": 6.0,
+             "y_min": 0,
+             "y_max": 3.0,
+             "z_min": 5.5,
+             "z_max": 10.0,
+             "reverb_time": 0.1,
+             "wet_level": 0.0,
+             "attenuation_coefficients": {
+                "hallway0": 0.90,
+                "hallway1": 0.90
+             },              
+             "doors": {
+                 "hallway0": {
+                     "x": 1.0,
+                     "z": 7.0,
+                     "r": 0.75
+                 },
+                 "hallway1": {
+                     "x": 3.0,
+                     "z": 5.5,
+                     "r": 0.75
+                 }                 
+             }
+        },
+        "bed1": {
+             "x_min": 6.0,
+             "x_max": 11.0,
+             "y_min": 0,
+             "y_max": 3.0,
+             "z_min": 0.0,
+             "z_max": 4.0,
+             "reverb_time": 0.1,
+             "wet_level": 0.0,
+             "attenuation_coefficients": {
+                "hallway0": 0.95,
+                "hallway1": 0.90
+             },
+             "doors": {
+                 "hallway1": {
+                     "x": 9.0,
+                     "z": 4.0,
+                     "r": 0.75
+                 }                 
+             }
+        },
+        "bed2": {
+             "x_min": 6.0,
+             "x_max": 11.0,
+             "y_min": 0,
+             "y_max": 3.0,
+             "z_min": 5.5,
+             "z_max": 10.0,
+             "reverb_time": 0.1,
+             "wet_level": 0.0,
+             "attenuation_coefficients": {
+                "hallway0": 0.95,
+                "hallway1": 0.90
+             },              
+             "doors": {
+                 "hallway1": {
+                     "x": 9.0,
+                     "z": 5.5,
+                     "r": 0.75
+                 }                 
+             }
+        }        
+    }
+}

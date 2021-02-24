@@ -1,0 +1,20 @@
+{
+  "name": "hifi-spacial-api-example-mansion-worker",
+  "version": "1.0.0",
+  "description": "Audiobot worker for the mansion",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "author": "Roxanne Skelly",
+  "license": "ISC",
+  "dependencies": {
+    "audio-decode": "^1.4.0",
+    "audio-format": "^2.3.2",
+    "hifi-spatial-audio": "^0.2.8",
+    "pcm-convert": "^1.6.5",
+    "wrtc": "^0.4.7",
+    "yargs": "^16.2.0"
+  }
+}
