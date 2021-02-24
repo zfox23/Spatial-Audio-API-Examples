@@ -2,6 +2,10 @@
 
 This simple Minecraft mod allows you to experience High Fidelity's spatial audio while playing Minecraft: Java Edition with others. The mod will allow you to hear spatial audio from other players who also have the mod installed and are connected to the same audio space.
 
+## Authors
+
+Seth Alves, Sabrina Shanman
+
 ## Developing
 
 1. Install Java 8 (OpenJDK, aka HotSpot) from [AdoptOpenJDK](https://adoptopenjdk.net/) or your local package manager
