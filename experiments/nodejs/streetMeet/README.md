@@ -15,4 +15,4 @@ Luis Cuenca
     - Obtain `TWILIO_*` credentials from the [Twilio Console](https://www.twilio.com/console)
     - Obtain `STREET_VIEW_*` credentials from the [Google Console](https://console.cloud.google.com/)
 5. Run `npm run start`
-6. Using a Web browser, navigate to [localhost:8080/streetMeet](http://localhost:8587/streetMeet).
+6. Using a Web browser, navigate to [localhost:8587/streetMeet](http://localhost:8587/streetMeet).
