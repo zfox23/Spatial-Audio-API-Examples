@@ -17,5 +17,5 @@ Sabrina Shanman, Jazmin Cano
 3. Copy `auth.example.json` to `auth.json`
 4. Populate your credentials inside `auth.json`
     - Obtain `HIFI_*` credentials from [High Fidelity's Spatial Audio API Developer Console](https://account.highfidelity.com/dev/account)
-5. Run `npm run start`
+5. Run `node index.js`
 6. Navigate to `localhost:8080` in [your browser](https://www.highfidelity.com/knowledge/what-devices-are-compatible) and click the "Click to Connect" button
