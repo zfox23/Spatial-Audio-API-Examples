@@ -1,0 +1,514 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>HiFi Audio API Example - Complex</title>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        h2 {
+            margin: 2px 0 4px 0;
+        }
+
+        .connectDisconnectButton {
+            width: 200px;
+            height: 100px;
+            margin: 0 auto;
+        }
+
+        .outputAudioEl {
+            width: 300px;
+            height: 50px;
+            margin: 0;
+        }
+
+        .thingsToRemember {
+            margin: 0;
+            display: inline-block;
+        }
+
+        .bigButtonContainer {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .smallButtonContainer {
+            margin: 8px 8px;
+        }
+
+        .smallButtonContainer>button {
+            width: 70px;
+            height: 50px;
+            margin: 0;
+        }
+
+        .ourUserDataTitle,
+        .theirUserDataTitle {
+            width: 100%;
+            font-weight: bold;
+            margin: 4px 12px 2px 12px;
+        }
+
+        .userDataContainer {
+            display: flex;
+            flex-wrap: wrap;
+            margin: 6px 4px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 12px;
+        }
+
+        .userData {
+            margin: 8px;
+        }
+
+        .userData>p {
+            margin: 0;
+        }
+    </style>
+</head>
+
+<body style="width: 100%; height: 100%; margin: 0; padding: 0;">
+    <div>
+        <button class="connectDisconnectButton"></button>
+        <audio controls autoplay class="outputAudioEl"></audio>
+        <ul class="thingsToRemember">
+            <li>`+x` is to the right and `-x` is to the left</li>
+            <li>`+y` is into the screen and `-y` is out of the screen towards the user</li>
+            <li>`+z` is up and `-z` is down</li>
+            <li>The coordinate system is right-handed, so +yaw is counter clockwise.</li>
+        </ul>
+    </div>
+
+    <div class="userDataContainer userDataContainer__ours">
+        <h2 class="ourUserDataTitle">Our Local User Data:</h2>
+        <div class="userData">
+            <p class="ourHashedVisitID"></p>
+            <p class="ourPositionContainer"></p>
+            <p class="ourOrientationContainer"></p>
+            <p class="ourHiFiGainContainer"></p>
+        </div>
+    </div>
+
+    <div class="bigButtonContainer">
+        <div class="smallButtonContainer">
+            <button onclick="subtractX()">x - 1m</button>
+            <button onclick="addX()">x + 1m</button>
+        </div>
+        <div class="smallButtonContainer">
+            <button onclick="subtractY()">y - 1m</button>
+            <button onclick="addY()">y + 1m</button>
+        </div>
+        <div class="smallButtonContainer">
+            <button onclick="subtractZ()">z - 1m</button>
+            <button onclick="addZ()">z + 1m</button>
+        </div>
+
+        <div class="smallButtonContainer">
+            <button onclick="subtractPitch()">pitch - 45°</button>
+            <button onclick="addPitch()">pitch + 45°</button>
+        </div>
+        <div class="smallButtonContainer">
+            <button onclick="subtractYaw()">yaw - 45°</button>
+            <button onclick="addYaw()">yaw + 45°</button>
+        </div>
+        <div class="smallButtonContainer">
+            <button onclick="subtractRoll()">roll - 45°</button>
+            <button onclick="addRoll()">roll + 45°</button>
+        </div>
+        <div class="smallButtonContainer">
+            <button onclick="sendIdentityQuaternion()">Send Identity Quat</button>
+        </div>
+
+        <div class="smallButtonContainer">
+            <button onclick="addHiFiGain()">HiFiGain + 0.25</button>
+            <button onclick="subtractHiFiGain()">HiFiGain - 0.25</button>
+            <button onclick="resetHiFiGain()">HiFiGain reset</button>
+        </div>
+
+        <div class="smallButtonContainer">
+            <button onclick="resetPosition()">Reset Position</button>
+        </div>
+
+        <div class="smallButtonContainer">
+            <button onclick="muteOrUnmute()">Toggle Mute</button>
+        </div>
+    </div>
+
+    <div class="userDataContainer userDataContainer__fromServer"></div>
+
+    <script
+        src="https://hifi-spatial-audio-api.s3-us-west-2.amazonaws.com/releases/latest/HighFidelityAudio-latest.js"></script>
+    <script
+        src="https://hifi-spatial-audio-api.s3-us-west-2.amazonaws.com/releases/latest/HighFidelityControls-latest.js"></script>
+    <script>
+        let outputAudioEl = document.querySelector(`.outputAudioEl`);
+        let userDataContainer__fromServer = document.querySelector(`.userDataContainer__fromServer`);
+
+        let currentPosition = new HighFidelityAudio.Point3D({ "x": 0, "y": 0, "z": 0 });
+        let currentOrientationEuler = new HighFidelityAudio.OrientationEuler3D({ "pitchDegrees": 0, "yawDegrees": 0, "rollDegrees": 0 });
+        let currentHiFiGain = 1.0;
+
+        let ourHashedVisitID = document.querySelector(`.ourHashedVisitID`);
+        let ourPositionContainer = document.querySelector(`.ourPositionContainer`);
+        updatePositionContainer();
+        let ourOrientationContainer = document.querySelector(`.ourOrientationContainer`);
+        updateOrientationContainer();
+        let ourHiFiGainContainer = document.querySelector(`.ourHiFiGainContainer`);
+        updateHiFiGainContainer();
+
+        let connectDisconnectButton = document.querySelector(`.connectDisconnectButton`);
+        connectDisconnectButton.addEventListener("click", getUserMediaWrapper);
+        connectDisconnectButton.innerHTML = `Click to Connect`;
+
+        let hifiCommunicator = null;
+        let isMuted = false;
+
+        HighFidelityAudio.HiFiLogger.setHiFiLogLevel(HighFidelityAudio.HiFiLogLevel.Debug);
+
+        async function getUserMediaWrapper() {
+            // If we were to set our constraint for `audio` to `true` here, the browser would
+            // decide what kind of post-processing effects to apply to the user's audio input stream.
+            // Most likely, Automatic Echo Cancellation, Noise Suppression, and Automatic Gain Control
+            // would be enabled, which would not show off our audio in the best light.
+            // Thus, we call `HighFidelityAudio.getBestAudioConstraints()` to determine the "best"
+            // audio constraints that will show off High Fidelity's technology in the best light.
+            let bestAudioConstraints = HighFidelityAudio.getBestAudioConstraints();
+            console.log(`Using the following audio constraints for the user's audio input device:\n${JSON.stringify(bestAudioConstraints)}`);
+
+            let inputAudioMediaStream;
+            try {
+                inputAudioMediaStream = await navigator.mediaDevices.getUserMedia({ audio: bestAudioConstraints, video: false });
+            } catch (e) {
+                console.error(`Call to \`getUserMedia()\` failed! Error:\n${e}`);
+                return;
+            }
+
+            connectDisconnectButton.disabled = true;
+            connectDisconnectButton.innerHTML = `wait...`;
+            await connectToHiFiAudio(inputAudioMediaStream);
+        }
+
+        function onConnectionStateChanged(newConnectionState) {
+            console.log(`New High Fidelity connection state: ${newConnectionState}`);
+            if (newConnectionState === HighFidelityAudio.HiFiConnectionStates.Disconnected || newConnectionState === HighFidelityAudio.HiFiConnectionStates.Failed) {
+                disconnectFromHiFiAudio();
+            }
+        }
+
+        function updateUserDataDiv() {
+            userDataContainer__fromServer.innerHTML = `<h2 class="theirUserDataTitle">All User Data Reported By Server (Including Ours)</h2>`;
+
+            for (let i = 0; i < allUserDataFromServer.length; i++) {
+                let currentDiv = document.createElement('div');
+                currentDiv.classList.add("userData");
+                currentDiv.innerHTML += `<p>Provided User ID: ${allUserDataFromServer[i].providedUserID ? allUserDataFromServer[i].providedUserID : "&#60;unknown&#62;"}</p>`;
+                currentDiv.innerHTML += `<p>Hashed Visit ID: ${allUserDataFromServer[i].hashedVisitID ? allUserDataFromServer[i].hashedVisitID : "&#60;unknown&#62;"}</p>`;
+                currentDiv.innerHTML += `<p>Position: ${allUserDataFromServer[i].position ? JSON.stringify(allUserDataFromServer[i].position) : "&#60;unknown&#62;"}</p>`;
+                currentDiv.innerHTML += `<p>Orientation: ${allUserDataFromServer[i].orientationEuler ? JSON.stringify(allUserDataFromServer[i].orientationEuler) : "&#60;unknown&#62;"}</p>`;
+                currentDiv.innerHTML += `<p>Volume (dB): ${allUserDataFromServer[i].volumeDecibels ? allUserDataFromServer[i].volumeDecibels : "&#60;unknown&#62;"}</p>`;
+                currentDiv.innerHTML += `<p>HiFi Gain: ${allUserDataFromServer[i].hiFiGain ? allUserDataFromServer[i].hiFiGain : "&#60;unknown&#62;"}</p>`;
+                userDataContainer__fromServer.appendChild(currentDiv);
+            }
+        }
+
+        let allUserDataFromServer = [];
+        function onNewUserDataReceived(receivedHiFiAudioAPIDataArray) {
+            let dataUpdated = false;
+
+            for (let recdItr = 0; recdItr < receivedHiFiAudioAPIDataArray.length; recdItr++) {
+                let currentDataFromServer = receivedHiFiAudioAPIDataArray[recdItr];
+
+                // We can't do anything with this data.
+                if (!currentDataFromServer.providedUserID && !currentDataFromServer.hashedVisitID) {
+                    continue;
+                }
+
+                let isNewUser = true;
+                for (let allItr = 0; allItr < allUserDataFromServer.length; allItr++) {
+                    if ((currentDataFromServer.providedUserID && currentDataFromServer.providedUserID === allUserDataFromServer[allItr].providedUserID) ||
+                        currentDataFromServer.hashedVisitID && currentDataFromServer.hashedVisitID === allUserDataFromServer[allItr].hashedVisitID) {
+                        isNewUser = false;
+                        dataUpdated = true;
+
+                        if (currentDataFromServer.position) {
+                            if (!allUserDataFromServer[allItr].position) {
+                                allUserDataFromServer[allItr].position = new HighFidelityAudio.Point3D();
+                            }
+
+                            if (typeof (currentDataFromServer.position.x) === "number") {
+                                allUserDataFromServer[allItr].position.x = currentDataFromServer.position.x;
+                            }
+                            if (typeof (currentDataFromServer.position.y) === "number") {
+                                allUserDataFromServer[allItr].position.y = currentDataFromServer.position.y;
+                            }
+                            if (typeof (currentDataFromServer.position.z) === "number") {
+                                allUserDataFromServer[allItr].position.z = currentDataFromServer.position.z;
+                            }
+                        }
+
+                        if (currentDataFromServer.orientationEuler) {
+                            if (!allUserDataFromServer[allItr].orientationEuler) {
+                                allUserDataFromServer[allItr].orientationEuler = new HighFidelityAudio.OrientationEuler3D();
+                            }
+
+                            if (typeof (currentDataFromServer.orientationEuler.pitchDegrees) === "number") {
+                                allUserDataFromServer[allItr].orientationEuler.pitchDegrees = currentDataFromServer.orientationEuler.pitchDegrees;
+                            }
+                            if (typeof (currentDataFromServer.orientationEuler.yawDegrees) === "number") {
+                                allUserDataFromServer[allItr].orientationEuler.yawDegrees = currentDataFromServer.orientationEuler.yawDegrees;
+                            }
+                            if (typeof (currentDataFromServer.orientationEuler.rollDegrees) === "number") {
+                                allUserDataFromServer[allItr].orientationEuler.rollDegrees = currentDataFromServer.orientationEuler.rollDegrees;
+                            }
+                        }
+
+                        if (typeof (currentDataFromServer.volumeDecibels) === "number") {
+                            allUserDataFromServer[allItr].volumeDecibels = currentDataFromServer.volumeDecibels;
+                        }
+
+                        if (typeof (currentDataFromServer.hiFiGain) === "number") {
+                            allUserDataFromServer[allItr].hiFiGain = currentDataFromServer.hiFiGain;
+                        }
+                        break;
+                    }
+                }
+
+                if (isNewUser) {
+                    allUserDataFromServer.push(currentDataFromServer);
+                    dataUpdated = true;
+                }
+            }
+
+            if (dataUpdated) {
+                updateUserDataDiv();
+            }
+        }
+
+        async function connectToHiFiAudio(inputAudioMediaStream) {
+            console.log(`Connecting to High Fidelity Audio API Servers...`);
+
+            let initialHiFiAudioAPIData = new HighFidelityAudio.HiFiAudioAPIData({
+                position: currentPosition,
+                orientationEuler: currentOrientationEuler,
+                hiFiGain: currentHiFiGain,
+            });
+
+            hifiCommunicator = new HighFidelityAudio.HiFiCommunicator({
+                initialHiFiAudioAPIData: initialHiFiAudioAPIData,
+                onConnectionStateChanged: onConnectionStateChanged
+            });
+            await hifiCommunicator.setInputAudioMediaStream(inputAudioMediaStream, false);
+
+            // Connect to the High Fidelity Audio Spatial API Server by supplying your own JWT here.
+            // Follow this guide to get a JWT: https://www.highfidelity.com/api/guides/misc/getAJWT
+            // If you don't need a guide, obtain JWT credentials after signing up for a developer account at https://account.highfidelity.com/dev/account
+            const HIFI_AUDIO_JWT = "";
+            let connectResponse;
+            try {
+                connectResponse = await hifiCommunicator.connectToHiFiAudioAPIServer(HIFI_AUDIO_JWT);
+            } catch (e) {
+                console.error(`Call to \`connectToHiFiAudioAPIServer()\` failed! Error:\n${JSON.stringify(e)}`);
+                connectDisconnectButton.disabled = false;
+                connectDisconnectButton.innerHTML = `Click to Connect`;
+                return;
+            }
+
+            console.log(`Call to \`connectToHiFiAudioAPIServer()\` succeeded! Response:\n${JSON.stringify(connectResponse)}`);
+            console.log(`Our \`hashedVisitID\` is:\n${connectResponse.audionetInitResponse.visit_id_hash}`);
+            ourHashedVisitID.innerHTML = `<p>Hashed Visit ID: ${connectResponse.audionetInitResponse.visit_id_hash}</p>`;
+
+            // This will get all Position and Orientation updates for all Users (including ourselves).
+            let newUserDataSubscription = new HighFidelityAudio.UserDataSubscription({
+                "components": [
+                    HighFidelityAudio.AvailableUserDataSubscriptionComponents.Position,
+                    HighFidelityAudio.AvailableUserDataSubscriptionComponents.OrientationEuler,
+                    HighFidelityAudio.AvailableUserDataSubscriptionComponents.VolumeDecibels,
+                    HighFidelityAudio.AvailableUserDataSubscriptionComponents.HiFiGain
+                ],
+                "callback": (receivedHiFiAudioAPIDataArray) => {
+                    onNewUserDataReceived(receivedHiFiAudioAPIDataArray);
+                }
+            });
+            hifiCommunicator.addUserDataSubscription(newUserDataSubscription);
+
+            connectDisconnectButton.removeEventListener("click", getUserMediaWrapper);
+            connectDisconnectButton.addEventListener("click", disconnectFromHiFiAudio);
+            connectDisconnectButton.disabled = false;
+            connectDisconnectButton.innerHTML = `Click to Disconnect`;
+
+            outputAudioEl.srcObject = hifiCommunicator.getOutputAudioMediaStream();
+            // We must call `play()` here because certain browsers won't autoplay this stream as we expect.
+            outputAudioEl.play();
+        }
+
+        async function disconnectFromHiFiAudio() {
+            console.log(`Disconnecting from High Fidelity Audio API Servers...`);
+
+            connectDisconnectButton.removeEventListener("click", disconnectFromHiFiAudio);
+            connectDisconnectButton.addEventListener("click", getUserMediaWrapper);
+            connectDisconnectButton.disabled = false;
+            connectDisconnectButton.innerHTML = `Click to Connect`;
+
+            isMuted = false;
+
+            let disconnectStatus = await hifiCommunicator.disconnectFromHiFiAudioAPIServer();
+            hifiCommunicator = null;
+            console.log(disconnectStatus);
+        }
+
+        function updatePositionContainer() {
+            ourPositionContainer.innerHTML = `Position: ${currentPosition ? JSON.stringify(currentPosition) : "&#60;unknown&#62;"}`;
+        }
+
+        function updateOrientationContainer() {
+            ourOrientationContainer.innerHTML = `Orientation: ${currentOrientationEuler ? JSON.stringify(currentOrientationEuler) : "&#60;unknown&#62;"}`;
+        }
+
+        function updateHiFiGainContainer() {
+            ourHiFiGainContainer.innerHTML = `HiFi Gain: ${currentHiFiGain}`;
+        }
+
+        function subtractX() {
+            currentPosition.x -= 1;
+            updatePositionContainer();
+            transmitHiFiAudioAPIDataToMixer();
+        }
+        function addX() {
+            currentPosition.x += 1;
+            updatePositionContainer();
+            transmitHiFiAudioAPIDataToMixer();
+        }
+        function subtractY() {
+            currentPosition.y -= 1;
+            updatePositionContainer();
+            transmitHiFiAudioAPIDataToMixer();
+        }
+        function addY() {
+            currentPosition.y += 1;
+            updatePositionContainer();
+            transmitHiFiAudioAPIDataToMixer();
+        }
+        function subtractZ() {
+            currentPosition.z -= 1;
+            updatePositionContainer();
+            transmitHiFiAudioAPIDataToMixer();
+        }
+        function addZ() {
+            currentPosition.z += 1;
+            updatePositionContainer();
+            transmitHiFiAudioAPIDataToMixer();
+        }
+
+        function subtractPitch() {
+            currentOrientationEuler.pitchDegrees -= 45;
+            updateOrientationContainer();
+            transmitHiFiAudioAPIDataToMixer();
+        }
+        function addPitch() {
+            currentOrientationEuler.pitchDegrees += 45;
+            updateOrientationContainer();
+            transmitHiFiAudioAPIDataToMixer();
+        }
+        function subtractYaw() {
+            currentOrientationEuler.yawDegrees -= 45;
+            updateOrientationContainer();
+            transmitHiFiAudioAPIDataToMixer();
+        }
+        function addYaw() {
+            currentOrientationEuler.yawDegrees += 45;
+            updateOrientationContainer();
+            transmitHiFiAudioAPIDataToMixer();
+        }
+        function subtractRoll() {
+            currentOrientationEuler.rollDegrees -= 45;
+            updateOrientationContainer();
+            transmitHiFiAudioAPIDataToMixer();
+        }
+        function addRoll() {
+            currentOrientationEuler.rollDegrees += 45;
+            updateOrientationContainer();
+            transmitHiFiAudioAPIDataToMixer();
+        }
+
+        function addHiFiGain() {
+            currentHiFiGain += 0.25;
+            updateHiFiGainContainer();
+            transmitHiFiAudioAPIDataToMixer();
+        }
+        function subtractHiFiGain() {
+            if (currentHiFiGain < 0.25) {
+                return;
+            }
+            currentHiFiGain -= 0.25;
+            updateHiFiGainContainer();
+            transmitHiFiAudioAPIDataToMixer();
+        }
+        function resetHiFiGain() {
+            currentHiFiGain = 1.0;
+            updateHiFiGainContainer();
+            transmitHiFiAudioAPIDataToMixer();
+        }
+
+        function sendIdentityQuaternion() {
+            currentOrientationEuler.pitchDegrees = 0;
+            currentOrientationEuler.yawDegrees = 0;
+            currentOrientationEuler.rollDegrees = 0;
+
+            updateOrientationContainer();
+
+            if (!hifiCommunicator) {
+                return;
+            }
+            console.log(hifiCommunicator.updateUserDataAndTransmit({
+                orientationQuat: { "w": 1, "x": 0, "y": 0, "z": 0 }
+            }));
+        }
+
+        function resetPosition() {
+            currentPosition.x = 0;
+            currentPosition.y = 0;
+            currentPosition.z = 0;
+
+            updatePositionContainer();
+
+            transmitHiFiAudioAPIDataToMixer();
+        }
+
+        async function muteOrUnmute() {
+            if (!hifiCommunicator) {
+                return;
+            }
+            if (await hifiCommunicator.setInputAudioMuted(!isMuted)) {
+                isMuted = !isMuted;
+            }
+        }
+
+        function transmitHiFiAudioAPIDataToMixer() {
+            if (!hifiCommunicator) {
+                return;
+            }
+
+            console.log(hifiCommunicator.updateUserDataAndTransmit({
+                position: currentPosition,
+                orientationEuler: currentOrientationEuler,
+                hiFiGain: currentHiFiGain,
+            }));
+        }
+    </script>
+    <script>
+        let hifiControls = new HighFidelityControls.HiFiControls({
+            mainAppElement: window
+        });
+        hifiControls.onMoveForwardKeyDown = () => { console.log(`User pressed the "Move Forward" button!`); }
+        hifiControls.onMoveForwardKeyUp = () => { console.log(`User released the "Move Forward" button!`); }
+        hifiControls.onClick = (e) => { console.log(`User clicked at (${e.clientX}, ${e.clientY})!`); }
+    </script>
+</body>
+
+</html>

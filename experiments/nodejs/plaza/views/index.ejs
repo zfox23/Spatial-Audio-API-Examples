@@ -1,0 +1,807 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>High Fidelity Spatial Audio API - Express & EJS Web App</title>
+    <style>
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        h2 {
+            margin: 2px 0 4px 0;
+        }
+
+        .userDataTitle {
+            width: 100%;
+            font-weight: bold;
+            margin: 4px 12px 2px 12px;
+        }
+
+        .userDataContainer {
+            display: flex;
+            flex-wrap: wrap;
+            margin: 6px 4px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 12px;
+        }
+
+        .userDataContainer__ours {
+            display: none;
+        }
+        .userDataContainer__fromServer {
+            display: none;
+        }
+
+        .userData {
+            margin: 8px;
+        }
+
+        .userData>p {
+            margin: 0;
+        }
+
+        .regionContainer * {
+            position: absolute;
+        }
+        .regionContainer .regionPictureContainer {
+            z-index: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .regionPictureContainer .regionPictureImage {
+            width: 100%;
+            height: 100%;
+        }
+        .regionContainer .thecanvas {
+            z-index: 1;
+            /* Thes canvas gets resized to the lesser of these two */
+            width: 100%;
+            height: 100%;
+        }
+        .connectDisconnectButton {
+            width: 100px;
+            height: 50px;
+            top: 50px;
+            right: 0;
+        }
+        .outputAudioEl {
+            width: 100%;
+            height: 50px;
+            top: 0;
+            left: 0;
+        }
+        .ourRegionName {
+            width: fit-content;
+            height: fit-content;
+            padding: 4px;
+            top: 60px;
+            left: 10px;
+            text-align: left;
+            color: white;
+            background-color: rgba(0, 0, 0, 0.4);
+            font-family: sans-serif;
+            margin: 0 auto;
+        }
+        .directionButton {
+            width: 70px;
+            height: 50px;
+            margin: 0;
+        }
+        .buttonContainer {
+            z-index: 2;
+            width: 100%;
+            height: 100%;
+        }
+        .buttonContainer #button__north {
+            top: 50px;
+            left: 0;
+            right: 0;
+            margin: 0 auto;
+        }
+        .buttonContainer #button__south {
+            bottom: 0;
+            left: 0;
+            right: 0;
+            margin: 0 auto;
+        }
+        .buttonContainer #button__west {
+            left: 0;
+            top: 0;
+            bottom: 0;
+            margin: auto 0;
+        }
+        .buttonContainer #button__east {
+            right: 0;
+            top: 0;
+            bottom: 0;
+            margin: auto 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div>
+    <div class="regionContainer">
+        <div class="regionPictureContainer">
+        </div>
+        <canvas class="thecanvas" tabindex="1"></canvas>
+        <p class="ourRegionName"></p>
+        <div class="buttonContainer">
+            <audio controls autoplay class="outputAudioEl"></audio>
+            <button class="connectDisconnectButton"></button>
+            <button id="button__north" class="directionButton" onclick="goNorth()">North</button>
+            <button id="button__west" class="directionButton" onclick="goWest()">West</button>
+            <button id="button__east" class="directionButton" onclick="goEast()">East</button>
+            <button id="button__south" class="directionButton" onclick="goSouth()">South</button>
+        </div>
+    </div>
+
+    <script src="https://hifi-spatial-audio-api.s3.amazonaws.com/releases/latest/HighFidelityAudio-latest.js"></script>
+    <script>
+        // Region map JSON
+        let REGION_INFO = {};
+        // Prepare to load the map
+        let mapReq = new XMLHttpRequest();
+        mapReq.addEventListener("load", function() {
+            let newRegionInfo = JSON.parse(this.responseText);
+            let regionInfoParts = Object.keys(newRegionInfo);
+            for (let i = 0; i < regionInfoParts.length; i = i + 1) {
+                let key = regionInfoParts[i];
+                REGION_INFO[key] = newRegionInfo[key];
+            }
+            goToRegion(PHYSICS_STATE, REGION_INFO, getRandomRegion(REGION_INFO));
+        });
+        let urlParamString = document.URL.split("?")[1] || "map=./maps/alliteration_nation.json";
+        let urlParams = new URLSearchParams(urlParamString);
+        mapReq.open("GET", urlParams.get("map"));
+        // Load the map
+        mapReq.send();
+
+        // Render info
+        let CANVAS = document.querySelector('.thecanvas');
+        CANVAS.width = CANVAS.scrollWidth;
+        CANVAS.height = CANVAS.scrollHeight;
+        let CTX = CANVAS.getContext("2d");
+        let TALK_STATES = {};
+        // Configurable params for updateTalkStates and drawUser
+        let TALK_PARAMS = {
+            dbMemory: 500,
+            startThresholdPercent: 0.9,
+            endThresholdPercent: 0.85,
+            minTalkDb: -50,
+            cooldownTime: 50,
+            animateTime: 400
+        };
+
+        // Position/orientation/physics state
+        // NOTE: z-axis should always be 0 and is ignored by physics/region checking
+        let PHYSICS_STATE = {
+            position: new HighFidelityAudio.Point3D({ "x": 0, "y": 0, "z": 0 }),
+            velocity: new HighFidelityAudio.Point3D({ "x": 0, "y": 0, "z": 0 }), // m/s
+            acceleration: new HighFidelityAudio.Point3D({ "x": 0, "y": 0, "z": 0 }) // m/s^2
+        };
+        // Orientation determines the direction that the client hears audio sources from
+        let currentOrientationEuler = new HighFidelityAudio.OrientationEuler3D({ "pitchDegrees": 0, "yawDegrees": 270, "rollDegrees": 0 });
+
+        // Session state and event listener
+        let outputAudioEl = document.querySelector(`.outputAudioEl`);
+        let connectDisconnectButton = document.querySelector(`.connectDisconnectButton`);
+        connectDisconnectButton.addEventListener("click", getUserMediaWrapper);
+        connectDisconnectButton.innerHTML = `Click to Connect`;
+        let hifiCommunicator = null;
+        let allUserDataFromServer = [];
+        HighFidelityAudio.HiFiLogger.setHiFiLogLevel(HighFidelityAudio.HiFiLogLevel.Debug);
+
+        // Start of utility functions. Code to initialize render/physics loop (updateFrameLoop) is at the bottom of this script.
+
+        function findRegionByRegionCoord(regionInfo, x, y) {
+            for (let i = 0; i < regionInfo.regions.length; i = i + 1) {
+                let region = regionInfo.regions[i];
+                if (region.x == x && region.y == y) {
+                    return region;
+                }
+            }
+            return undefined;
+        }
+        function getRegionCoord(regionInfo, x, y) {
+            return {x: Math.floor(x / regionInfo.regionSize), y: Math.floor(y / regionInfo.regionSize)};
+        }
+        function getAdjacentRegions(regionInfo, region) {
+            return {
+                "west": findRegionByRegionCoord(regionInfo, region.x - 1, region.y),
+                "east": findRegionByRegionCoord(regionInfo, region.x + 1, region.y),
+                "north": findRegionByRegionCoord(regionInfo, region.x, region.y - 1),
+                "south": findRegionByRegionCoord(regionInfo, region.x, region.y + 1)
+            };
+        }
+        function getRandomPositionInRegion(regionInfo, region) {
+            return new HighFidelityAudio.Point3D({
+                "x": (region.x + 0.25 + (0.5 * Math.random())) * regionInfo.regionSize,
+                "y": (region.y + 0.25 + (0.5 * Math.random())) * regionInfo.regionSize,
+                "z": 0
+            });
+        }
+        function getRandomRegion(regionInfo) {
+            let startRegionIndex = Math.floor(Math.random() * regionInfo.regions.length);
+            let randomRegion = regionInfo.regions[startRegionIndex];
+            return randomRegion;
+        }
+        function getCurrentRegion(regionInfo, position) {
+            var regionCoord = getRegionCoord(regionInfo, position.x, position.y);
+            var region = findRegionByRegionCoord(regionInfo, regionCoord.x, regionCoord.y);
+            return region;
+        }
+
+        function goToRegion(physicsState, regionInfo, region) {
+            let newPosition = getRandomPositionInRegion(regionInfo, region);
+            physicsState.position = newPosition;
+            physicsState.velocity = new HighFidelityAudio.Point3D({x: 0, y: 0, z: 0});
+            physicsState.acceleration = new HighFidelityAudio.Point3D({x: 0, y: 0, z: 0});
+            let regionNameTag = document.querySelector(`.ourRegionName`);
+            regionNameTag.innerHTML = region.name;
+            let regionPictureContainer = document.querySelector(".regionPictureContainer");
+            regionPictureContainer.style = "background: url(\"" + region.imageUrl + "\") center/cover";
+            let buttons = document.getElementsByClassName("directionButton");
+            let adjacentRegions = getAdjacentRegions(regionInfo, region);
+            for (let i = 0; i < buttons.length; i = i + 1) {
+                let button = buttons[i];
+                let buttonDirectionMatch = button.id.match(/__(.+)$/);
+                if (buttonDirectionMatch) {
+                    let direction = buttonDirectionMatch[1];
+                    let adjacentRegion = adjacentRegions[direction];
+                    if (adjacentRegion) {
+                        button.disabled = false;
+                        button.innerHTML = adjacentRegion.name
+                    } else {
+                        button.disabled = true;
+                        button.innerHTML = "(" + direction + ")"
+                    }
+                }
+            }
+        }
+        function goDirection(direction) {
+            let region = getCurrentRegion(REGION_INFO, PHYSICS_STATE.position);
+            let adjacentRegions = getAdjacentRegions(REGION_INFO, region);
+            let newRegion = adjacentRegions[direction];
+            if (newRegion) {
+                goToRegion(PHYSICS_STATE, REGION_INFO, newRegion);
+            }
+        }
+        function goNorth() {
+            goDirection("north");
+            updateAndTransmit();
+        }
+        function goSouth() {
+            goDirection("south");
+            updateAndTransmit();
+        }
+        function goEast() {
+            goDirection("east");
+            updateAndTransmit();
+        }
+        function goWest() {
+            goDirection("west");
+            updateAndTransmit();
+        }
+        
+        // ctx = the canvas HTML element
+        class CanvasHelper {
+            static finishPath(ctx, color, width) {
+                ctx[(width !== undefined) ? "strokeStyle" : "fillStyle"] = color;
+                ctx[(width !== undefined) ? "lineWidth" : ""] = width;
+                ctx[(width !== undefined) ? "stroke" : "fill"].call(ctx);
+            }
+            // Compact function to render circles filled or stroked
+            static renderCircle(ctx, x, y, radius, from, to, color, width) {
+                ctx.beginPath();
+                ctx.arc(x, y, radius, from, to, false);
+                CanvasHelper.finishPath(ctx, color, width);
+            }
+            // Compact function to render polygons filled or stroked
+            static renderPolygon(ctx, points, color, width) {
+                ctx.beginPath();
+                points.forEach((point, i) => {
+                    ctx[i === 0 ? "moveTo" : "lineTo"].call(ctx, point[0], point[1]);
+                });
+                CanvasHelper.finishPath(ctx, color, width);
+            }
+            // Render text 
+            static renderText(ctx, x, y, text, color, size, family) {
+                family = family ? family : "console";
+                ctx.font = `${size}px ${family}`;
+                ctx.fillStyle = color;
+                ctx.fillText(text, x, y);
+            }
+            // World coordenates to canvas conversion
+            static worldToCanvasCoords(canvasWidth, canvasHeight, coords, offset, zoom) {
+                let relPos = { x: coords.x - offset.x, y: coords.y - offset.y };
+                let canvasPos = { x: (0.5 * canvasWidth) - (relPos.x / zoom), y: (0.5 * canvasHeight) - (relPos.y / zoom) };
+                return canvasPos;
+            }
+            // Canvas coordenates to world conversion
+            static canvasToWorldCoords(canvasWidth, canvasHeight, coords, offset, zoom) {
+                let newLocPos = { x: (coords.x - 0.5 * canvasWidth) * zoom, y: (coords.y - 0.5 * canvasHeight) * zoom, z: 0.0 };
+                let npos = { x: offset.x - newLocPos.x, y: offset.y - newLocPos.y, z: offset.z - newLocPos.z };
+                return npos;
+            }
+        }
+
+        async function getUserMediaWrapper() {
+            let bestAudioConstraints = HighFidelityAudio.getBestAudioConstraints();
+            console.log(`Using the following audio constraints for the user's audio input device:\n${JSON.stringify(bestAudioConstraints)}`);
+
+            let inputAudioMediaStream;
+            try {
+                inputAudioMediaStream = await navigator.mediaDevices.getUserMedia({ audio: bestAudioConstraints, video: false });
+            } catch (e) {
+                console.error(`Call to \`getUserMedia()\` failed! Error:\n${e}`);
+                return;
+            }
+
+            connectDisconnectButton.disabled = true;
+            connectDisconnectButton.innerHTML = `wait...`;
+            await connectToHiFiAudio(inputAudioMediaStream);
+        }
+
+        function onConnectionStateChanged(newConnectionState) {
+            console.log(`New High Fidelity connection state: ${newConnectionState}`);
+            if (newConnectionState === HighFidelityAudio.HiFiConnectionStates.Disconnected || newConnectionState === HighFidelityAudio.HiFiConnectionStates.Failed) {
+                disconnectFromHiFiAudio();
+            }
+        }
+
+        function onNewUserDataReceived(receivedHiFiAudioAPIDataArray) {
+            let dataUpdated = false;
+
+            for (let recdItr = 0; recdItr < receivedHiFiAudioAPIDataArray.length; recdItr++) {
+                let currentDataFromServer = receivedHiFiAudioAPIDataArray[recdItr];
+
+                // We can't do anything with user data that doesn't contain a User ID or Hashed Visit ID.
+                if (!currentDataFromServer.providedUserID && !currentDataFromServer.hashedVisitID) {
+                    continue;
+                }
+
+                let isNewUser = true;
+                for (let allItr = 0; allItr < allUserDataFromServer.length; allItr++) {
+                    if ((currentDataFromServer.providedUserID && currentDataFromServer.providedUserID === allUserDataFromServer[allItr].providedUserID) ||
+                        currentDataFromServer.hashedVisitID && currentDataFromServer.hashedVisitID === allUserDataFromServer[allItr].hashedVisitID) {
+                        isNewUser = false;
+                        dataUpdated = true;
+
+                        if (currentDataFromServer.position) {
+                            if (!allUserDataFromServer[allItr].position) {
+                                allUserDataFromServer[allItr].position = new HighFidelityAudio.Point3D();
+                            }
+
+                            if (typeof (currentDataFromServer.position.x) === "number") {
+                                allUserDataFromServer[allItr].position.x = currentDataFromServer.position.x;
+                            }
+                            if (typeof (currentDataFromServer.position.y) === "number") {
+                                allUserDataFromServer[allItr].position.y = currentDataFromServer.position.y;
+                            }
+                            if (typeof (currentDataFromServer.position.z) === "number") {
+                                allUserDataFromServer[allItr].position.z = currentDataFromServer.position.z;
+                            }
+                        }
+
+                        if (typeof (currentDataFromServer.volumeDecibels) === "number") {
+                            allUserDataFromServer[allItr].volumeDecibels = currentDataFromServer.volumeDecibels;
+                        }
+                        break;
+                    }
+                }
+
+                if (isNewUser) {
+                    allUserDataFromServer.push(currentDataFromServer);
+                    dataUpdated = true;
+                }
+            }
+        }
+
+        async function connectToHiFiAudio(inputAudioMediaStream) {
+            console.log(`Connecting to High Fidelity Audio API Servers...`);
+
+            let initialHiFiAudioAPIData = new HighFidelityAudio.HiFiAudioAPIData({
+                position: PHYSICS_STATE.position,
+                orientationEuler: currentOrientationEuler,
+            });
+
+            hifiCommunicator = new HighFidelityAudio.HiFiCommunicator({
+                initialHiFiAudioAPIData: initialHiFiAudioAPIData,
+                onConnectionStateChanged: onConnectionStateChanged
+            });
+            await hifiCommunicator.setInputAudioMediaStream(inputAudioMediaStream, false);
+
+            const HIFI_AUDIO_JWT = '<%- hiFiJWT %>';
+            let connectResponse;
+            try {
+                connectResponse = await hifiCommunicator.connectToHiFiAudioAPIServer(HIFI_AUDIO_JWT);
+            } catch (e) {
+                console.error(`Call to \`connectToHiFiAudioAPIServer()\` failed! Error:\n${JSON.stringify(e)}`);
+                connectDisconnectButton.disabled = false;
+                connectDisconnectButton.innerHTML = `Click to Connect`;
+                return;
+            }
+
+            console.log(`Call to \`connectToHiFiAudioAPIServer()\` succeeded! Response:\n${JSON.stringify(connectResponse)}`);
+            console.log(`Our \`hashedVisitID\` is:\n${connectResponse.audionetInitResponse.visit_id_hash}`);
+
+            // This will get all Position/VolumeDecibels updates for all Users (including ourselves).
+            let newUserDataSubscription = new HighFidelityAudio.UserDataSubscription({
+                "components": [
+                    HighFidelityAudio.AvailableUserDataSubscriptionComponents.Position,
+                    HighFidelityAudio.AvailableUserDataSubscriptionComponents.VolumeDecibels
+                ],
+                "callback": (receivedHiFiAudioAPIDataArray) => {
+                    onNewUserDataReceived(receivedHiFiAudioAPIDataArray);
+                }
+            });
+            hifiCommunicator.addUserDataSubscription(newUserDataSubscription);
+
+            connectDisconnectButton.removeEventListener("click", getUserMediaWrapper);
+            connectDisconnectButton.addEventListener("click", disconnectFromHiFiAudio);
+            connectDisconnectButton.disabled = false;
+            connectDisconnectButton.innerHTML = `Click to Disconnect`;
+
+            outputAudioEl.srcObject = hifiCommunicator.getOutputAudioMediaStream();
+            // We must call `play()` here because certain browsers won't autoplay this stream as we expect.
+            outputAudioEl.play();
+        }
+
+        async function disconnectFromHiFiAudio() {
+            console.log(`Disconnecting from High Fidelity Audio API Servers...`);
+
+            connectDisconnectButton.removeEventListener("click", disconnectFromHiFiAudio);
+            connectDisconnectButton.addEventListener("click", getUserMediaWrapper);
+            connectDisconnectButton.disabled = false;
+            connectDisconnectButton.innerHTML = `Click to Connect`;
+
+            let disconnectStatus = await hifiCommunicator.disconnectFromHiFiAudioAPIServer();
+            hifiCommunicator = null;
+            console.log(disconnectStatus);
+            allUserDataFromServer.length = 0;
+        }
+
+        function updateAndTransmit() {
+            transmitHiFiAudioAPIDataToMixer();
+        }
+
+        function transmitHiFiAudioAPIDataToMixer() {
+            if (!hifiCommunicator) {
+                return;
+            }
+
+            console.log(hifiCommunicator.updateUserDataAndTransmit({
+                position: PHYSICS_STATE.position,
+                orientationEuler: currentOrientationEuler,
+            }));
+        }
+
+        // Monitor the volumeDecibels of users to decide when to create talking animations, and advance the animations.
+        function updateTalkStates(dt, talkStates, users) {
+            let newTalkStates = {};
+            let minmaxWeight = (TALK_PARAMS.dbMemory - Math.min(100, dt)) / TALK_PARAMS.dbMemory;
+            let nowWeight = Math.min(100, dt) / TALK_PARAMS.dbMemory;
+
+            // Update talk states for each supplied user
+            for (let i = 0; i < users.length; i = i + 1) {
+                let user = users[i];
+                let newTalkState = {};
+                newTalkStates[user.providedUserID] = newTalkState;
+                let oldTalkState = talkStates[user.providedUserID] || {
+                    minDb: 120,
+                    maxDb: -120,
+                    currentDb: -120,
+                    lastDb: -120,
+                    aboveThreshold: false,
+                    cooldown: Math.random() * TALK_PARAMS.cooldownTime,
+                    animates: []
+                };
+                // Calculate running average min/max db to find the appropriate thresholds for talking animations
+                newTalkState.minDb = (minmaxWeight * Math.min(user.volumeDecibels, oldTalkState.minDb)) + (nowWeight * user.volumeDecibels);
+                newTalkState.maxDb = (minmaxWeight * Math.max(user.volumeDecibels, oldTalkState.maxDb)) + (nowWeight * user.volumeDecibels);
+                newTalkState.lastDb = oldTalkState.currentDb;
+                newTalkState.currentDb = user.volumeDecibels;
+                // Count down animation counters
+                let canAddAnimate = oldTalkState.cooldown == 0;
+                newTalkState.cooldown = Math.max(0, oldTalkState.cooldown - dt);
+                newTalkState.animates = [];
+                for (let j = 0; j < oldTalkState.animates.length; j = j + 1) {
+                    let oldAnimate = oldTalkState.animates[j];
+                    let animate = Math.max(-0.1, oldAnimate - dt);
+                    if (animate >= 0) {
+                        newTalkState.animates.push(animate);
+                    }
+                }
+                // Determine if a user's speech passes above some threshold, with some hysteresis
+                newTalkState.aboveThreshold = oldTalkState.aboveThreshold;
+                if (oldTalkState.minDb < oldTalkState.maxDb && user.volumeDecibels > TALK_PARAMS.minTalkDb) {
+                    let startThresholdDb = oldTalkState.minDb + (TALK_PARAMS.startThresholdPercent * (oldTalkState.maxDb - oldTalkState.minDb));
+                    let endThresholdDb = oldTalkState.minDb + (TALK_PARAMS.endThresholdPercent * (oldTalkState.maxDb - oldTalkState.minDb));
+                    if (!oldTalkState.aboveThreshold) {
+                        if (user.volumeDecibels > startThresholdDb) {
+                            newTalkState.aboveThreshold = true;
+                        }
+                    } else {
+                        if (user.volumeDecibels < endThresholdDb) {
+                            newTalkState.aboveThreshold = false;
+                        }
+                    }
+                }
+                // If user's speech passes a threshold, start an animation
+                if (canAddAnimate && newTalkState.aboveThreshold && !oldTalkState.aboveThreshold) {
+                    newTalkState.animates.push(TALK_PARAMS.animateTime);
+                    newTalkState.cooldown = TALK_PARAMS.cooldownTime;
+                }
+            }
+
+            // Set updated talk states in the map
+            let activeUsernames = Object.keys(newTalkStates);
+            for (let i = 0; i < activeUsernames.length; i = i + 1) {
+                let username = activeUsernames[i];
+                talkStates[username] = newTalkStates[username];
+            }
+
+            // Clean up talk states not in user list
+            let potentiallyStaleUsernames = Object.keys(talkStates);
+            for (let i = 0; i < potentiallyStaleUsernames.length; i = i + 1) {
+                let potentiallyStaleUsername = potentiallyStaleUsernames[i];
+                if (!newTalkStates[potentiallyStaleUsername]) {
+                    delete talkStates[potentiallyStaleUsername];
+                }
+            }
+        }
+        function isClient(user) {
+            return user.providedUserID == "<%- providedUserID %>";
+        }
+        function getUsersInRegion(regionInfo, region, allUsers) {
+            let usersInRegion = [];
+
+            for (let i = 0; i < allUsers.length; i = i + 1) {
+                let user = allUsers[i];
+                if (!user || !user.position) {
+                    continue;
+                }
+
+                if (isClient(user)) {
+                    usersInRegion.push(user);
+                    continue;
+                }
+
+                let userRegion = getCurrentRegion(REGION_INFO, user.position);
+                if (userRegion.x != region.x || userRegion.y != region.y) {
+                    continue;
+                }
+
+                usersInRegion.push(user);
+            }
+            return usersInRegion;
+        }
+        // Draw a user as a translucent dot, with pulsating circles growing and fading around the dot as the corresponding user talks.
+        function drawUser(canvas, regionInfo, region, position, isClient, talkState) {
+            var canvasCoords = CanvasHelper.worldToCanvasCoords(canvas.scrollWidth, canvas.scrollHeight, position, {x: (region.x + 0.5) * regionInfo.regionSize, y: (region.y + 0.5) * regionInfo.regionSize}, regionInfo.regionSize / canvas.scrollHeight);
+            CTX.translate(canvasCoords.x, canvasCoords.y);
+
+            let circleRadius = 8;
+            if (isClient) {
+                circleRadius = 16;
+            }
+            // Render the talk pulsating animations
+            let animates = talkState.animates;
+            let animRadiusStart = circleRadius * 0.25;
+            let animRadiusEnd = circleRadius * 2.25;
+            let animAlphaStart = 0.5;
+            let animAlphaEnd = 0.1;
+            for (let i = 0; i < animates.length; i = i + 1) {
+                let animate = animates[i];
+                let animPercent = (TALK_PARAMS.animateTime - animate) / TALK_PARAMS.animateTime;
+                let animPercentInverse = 1.0 - animPercent;
+                let animRadius = (animPercentInverse * animRadiusStart) + (animPercent * animRadiusEnd);
+                let animAlpha = (animPercentInverse * animAlphaStart) + (animPercent * animAlphaEnd);
+                CanvasHelper.renderCircle(CTX, 0, 0, animRadius, 0, 2.0 * Math.PI, 'rgba(255, 255, 255, ' + animAlpha + ')', undefined);
+            }
+            // Render the base circle of the user
+            CanvasHelper.renderCircle(CTX, 0, 0, circleRadius, 0, 2.0 * Math.PI, 'rgba(255, 255, 255, 0.5)', undefined);
+            CanvasHelper.renderCircle(CTX, 0, 0, circleRadius, 0, 2.0 * Math.PI, 'rgba(30, 30, 30, 1.0)', 1);
+
+            CTX.translate(-canvasCoords.x, -canvasCoords.y);
+        }
+        function doDraw(dt, usersInRegion) {
+            if (Object.keys(REGION_INFO).length == 0) {
+                return;
+            }
+            let region = getCurrentRegion(REGION_INFO, PHYSICS_STATE.position);
+
+            CTX.clearRect(0, 0, CANVAS.width, CANVAS.height);
+            CTX.resetTransform();
+
+            updateTalkStates(dt, TALK_STATES, usersInRegion);
+
+            for (let i = 0; i < usersInRegion.length; i = i + 1) {
+                let user = usersInRegion[i];
+                drawUser(CANVAS, REGION_INFO, region, user.position, isClient(user), TALK_STATES[user.providedUserID]);
+            }
+        }
+
+        function cloneVec3(v) {
+            return new HighFidelityAudio.Point3D({
+                x: v.x,
+                y: v.y,
+                z: v.z
+            });
+        }
+        function getVec2Distance2(a, b) {
+            let dx = a.x - b.x;
+            let dy = a.y - b.y;
+            return (dx * dx) + (dy * dy);
+        }
+        function addVec3InPlace(a, b) {
+            a.x = a.x + b.x;
+            a.y = a.y + b.y;
+            a.z = a.z + b.z;
+        }
+        function subVec3InPlace(a, b) {
+            a.x = a.x - b.x;
+            a.y = a.y - b.y;
+            a.z = a.z - b.z;
+        }
+        function mulVec3InPlace(v, m) {
+            v.x = v.x * m;
+            v.y = v.y * m;
+            v.z = v.z * m;
+        }
+        function getVec2Mag2(vec) {
+            return (vec.x * vec.x) + (vec.y * vec.y);
+        }
+        function limitVec2InPlace(vec, max) {
+            let vecMag2 = getVec2Mag2(vec);
+            let max2 = max * max;
+            if (vecMag2 < max2) {
+                return;
+            }
+            let ratio2 = max2 / vecMag2;
+            let ratio = Math.sqrt(ratio2);
+            mulVec3InPlace(vec, ratio);
+        }
+        function updateClientPhysics(dt, region, regionInfo, physicsState, users) {
+            let lastPosition = new HighFidelityAudio.Point3D({
+                x: physicsState.position.x,
+                y: physicsState.position.y,
+                z: physicsState.position.z
+            });
+            // Values outside of these are clamped after calculations
+            let minX = (region.x + 0.05) * regionInfo.regionSize;
+            let minY = (region.y + 0.05) * regionInfo.regionSize;
+            let maxX = (region.x + 0.95) * regionInfo.regionSize;
+            let maxY = (region.y + 0.95) * regionInfo.regionSize;
+            let maxVelocity = 0.25;
+            let maxAcceleration = 0.05;
+            // Values outide of these are gently pushed by the physics
+            let desiredRadius = regionInfo.regionSize / 4;
+            let desiredPosition = new HighFidelityAudio.Point3D({
+                x: (region.x + 0.5) * regionInfo.regionSize,
+                y: (region.y + 0.5) * regionInfo.regionSize,
+                z: 0
+            });
+            let desiredPersonalSpace = 0.5;
+            // Displacement "forces" (acceleration per meter displacement) and friction (% velocity decrease per second)
+            let kRadius = 0.1;
+            let kPersonalSpace = 0.01;
+            let friction = 0.25;
+            // Apply position/velocity from previous frame
+            let dp = cloneVec3(physicsState.velocity);
+            mulVec3InPlace(dp, dt / 1000);
+            addVec3InPlace(physicsState.position, dp);
+            let dv = cloneVec3(physicsState.acceleration);
+            mulVec3InPlace(dv, dt / 1000);
+            addVec3InPlace(physicsState.velocity, dv);
+            // Apply friction
+            mulVec3InPlace(physicsState.velocity, (1 - (friction * dt / 1000)));
+            // Clamp position/velocity
+            if (physicsState.position.x > maxX || physicsState.position.x < minX ||
+                physicsState.position.y > maxY || physicsState.position.y < minY) {
+                mulVec3InPlace(physicsState.velocity, 0);
+                mulVec3InPlace(physicsState.acceleration, 0);
+            }
+            physicsState.position.x = Math.min(maxX, Math.max(minX, physicsState.position.x));
+            physicsState.position.y = Math.min(maxY, Math.max(minY, physicsState.position.y));
+            limitVec2InPlace(physicsState.velocity, maxVelocity);
+            // Update acceleration
+            physicsState.acceleration.x = 0;
+            physicsState.acceleration.y = 0;
+            let centerOffset = cloneVec3(desiredPosition);
+            subVec3InPlace(centerOffset, physicsState.position);
+            let centerDistance2 = getVec2Mag2(centerOffset);
+            let desiredRadius2 = desiredRadius * desiredRadius;
+            if (centerDistance2 > desiredRadius2) {
+                let maxCenterOffset = cloneVec3(centerOffset);
+                limitVec2InPlace(maxCenterOffset, desiredRadius);
+                let aRadius = cloneVec3(centerOffset);
+                subVec3InPlace(aRadius, maxCenterOffset);
+                mulVec3InPlace(aRadius, kRadius);
+                addVec3InPlace(physicsState.acceleration, aRadius);
+            }
+            let desiredPersonalSpace2 = desiredPersonalSpace * desiredPersonalSpace;
+            for (let i = 0; i < users.length; i = i + 1) {
+                let user = users[i];
+                if (isClient(user)) {
+                    continue;
+                }
+                let neighborDistance2 = getVec2Distance2(physicsState.position, user.position);
+                if (neighborDistance2 > desiredPersonalSpace2) {
+                    continue;
+                }
+                let clientFromNeighbor = cloneVec3(physicsState.position);
+                subVec3InPlace(clientFromNeighbor, user.position);
+                let ratio2 = desiredPersonalSpace2 / (neighborDistance2 + 0.01 * desiredPersonalSpace2);
+                let ratio = Math.sqrt(ratio2);
+                let idealDistance = cloneVec3(clientFromNeighbor);
+                mulVec3InPlace(idealDistance, ratio);
+                let aPersonalSpace = cloneVec3(idealDistance);
+                subVec3InPlace(aPersonalSpace, clientFromNeighbor);
+                mulVec3InPlace(aPersonalSpace, kPersonalSpace);
+                addVec3InPlace(physicsState.acceleration, aPersonalSpace);
+            }
+            // Clamp acceleration
+            limitVec2InPlace(physicsState.acceleration, maxAcceleration);
+            // Only request update if update actually occurred on a server-related property
+            let needsUpdate = lastPosition.x != physicsState.position.x ||
+                lastPosition.y != physicsState.position.y ||
+                lastPosition.z != physicsState.position.z;
+            return needsUpdate;
+        }
+        var lastT = 0;
+        function updateFrameLoop(t) {
+            let dt = Math.max(0, t - lastT);
+            lastT = t;
+            if (REGION_INFO.regions) {
+                let region = getCurrentRegion(REGION_INFO, PHYSICS_STATE.position);
+                if (region) {
+                    let usersInRegion = getUsersInRegion(REGION_INFO, region, allUserDataFromServer);
+
+                    let smallerDimension = Math.min(window.innerWidth, window.innerHeight);
+                    let largerDimension = Math.max(window.innerWidth, window.innerHeight);
+                    let margin = Math.round((largerDimension - smallerDimension) * 0.5);
+                    let marginStyle = ""
+                    if (smallerDimension == window.innerWidth) {
+                        marginStyle = `top: ${margin}px;`;
+                    } else {
+                        marginStyle = `left: ${margin}px;`;
+                    }
+                    CANVAS.style = `width: ${smallerDimension}px; height: ${smallerDimension}px; ${marginStyle}`;
+                    CANVAS.width = smallerDimension;
+                    CANVAS.height = smallerDimension;
+                    doDraw(dt, usersInRegion);
+
+                    let oldPosition = new HighFidelityAudio.Point3D({
+                        x: PHYSICS_STATE.position.x,
+                        y: PHYSICS_STATE.position.y,
+                        z: PHYSICS_STATE.position.z
+                    })
+                    let needsUpdate = updateClientPhysics(dt, region, REGION_INFO, PHYSICS_STATE, usersInRegion);
+                    if (isNaN(PHYSICS_STATE.position.x) || isNaN(PHYSICS_STATE.position.y) || isNaN(PHYSICS_STATE.position.z)) {
+                        console.log("ERROR: Unable to update client physics. Keeping old position: " + JSON.stringify(oldPosition))
+                        PHYSICS_STATE.position = oldPosition;
+                    }
+                    if (needsUpdate) {
+                        updateAndTransmit();
+                    }
+                }
+            }
+            window.requestAnimationFrame(updateFrameLoop);
+        }
+
+        // End of utility functions. Initialization code begins below
+
+        // Start animation/physics
+        updateFrameLoop();
+    </script>
+</body>
+
+</html>
