@@ -34,7 +34,7 @@ logoFile="examplemod.png" #optional
 authors="Seth Alves, Sabrina Shanman" #optional
 # The description text for the mod (multi line!) (#mandatory)
 description='''
-A Minecraft mod demonstrating client-side voice chat using High Fidelity Spatial Audio API
+A Minecraft mod demonstrating client-side voice chat using High Fidelity's Spatial Audio API
 '''
 # A dependency - use the . to indicate dependency for a specific modid. Dependencies are optional.
 [[dependencies.examplemod]] #optional

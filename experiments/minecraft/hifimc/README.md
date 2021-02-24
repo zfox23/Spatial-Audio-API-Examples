@@ -48,7 +48,7 @@ This simple Minecraft mod allows you to experience High Fidelity's spatial audio
 
 ## Limitations/Caveats
 
-- As the High Fidelity API currently does not support streaming audio in the Java programming language, you will need to have a web browser tab open to send and receive audio. Please see [this list](https://www.highfidelity.com/knowledge/what-devices-are-compatible) of currently supported web browsers.
+- As High Fidelity's API currently does not support streaming audio in the Java programming language, you will need to have a web browser tab open to send and receive audio. Please see [this list](https://www.highfidelity.com/knowledge/what-devices-are-compatible) of currently supported web browsers.
 - As the JWT is configured on startup, you will use the same audio space regardless of which world or dimension you are in.
 - This mod is only suitable for use on the Minecraft client and does not need to be installed on a Minecraft server.
 
