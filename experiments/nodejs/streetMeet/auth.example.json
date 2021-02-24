@@ -1,0 +1,11 @@
+{
+    "HIFI_APP_ID": "",
+    "HIFI_APP_SECRET": "",
+
+    "GOOGLE_API_KEY": "",
+
+    "TWILIO_ROOM_NAME": "",
+    "TWILIO_ACCOUNT_SID": "",
+    "TWILIO_API_KEY_SID": "",
+    "TWILIO_API_KEY_SECRET": ""
+}
