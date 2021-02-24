@@ -31,7 +31,7 @@
                 initialHiFiAudioAPIData: initialHiFiAudioAPIData
             });
             await hifiCommunicator.setInputAudioMediaStream(audioMediaStream);
-            const HIFI_AUDIO_JWT = "##HIFI_JWT##"; // "##HIFI_JWT##" will be replaced here with the value set in [instance folder]/config/hifimc-client.toml
+            const HIFI_AUDIO_JWT = "##HIFI_JWT##"; // The string will be replaced here with the value set in [instance folder]/config/hifimc-client.toml
             try {
                 await hifiCommunicator.connectToHiFiAudioAPIServer(HIFI_AUDIO_JWT);
             } catch (e) {
