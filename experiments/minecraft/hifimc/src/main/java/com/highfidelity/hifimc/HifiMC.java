@@ -53,11 +53,7 @@ public class HifiMC {
     }
 
     private void doClientStuff(final FMLClientSetupEvent event) {
-        // do something that can only be done on the client
-        // LOGGER.info("Got game settings {}", event.getMinecraftSupplier().get().gameSettings);
-
         String webhostname = "localhost";
-        // String webhostname = "0.0.0.0";
         int webport = 7777;
         int maxconnections = 5;
 
@@ -86,7 +82,6 @@ public class HifiMC {
 
         try {
             webServer.start();
-            // webServer.join();
         } catch (Exception e) {
         	LOGGER.error("------------------------ caught webServer exception", e);
         }
