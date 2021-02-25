@@ -106,7 +106,7 @@ async function generateZones(stack, jwt, space) {
     }
 
     // create all of the zone attenuation objects
-    let za_order = 1;
+    let za_offset = 1;
     let set_zone = async function (source, listener, coefficient) {
         await fetch(space_url('/zone_attenuations/create'), {
             method: 'POST',
@@ -116,7 +116,7 @@ async function generateZones(stack, jwt, space) {
             body: JSON.stringify({
                 'source-zone-id': zone_to_id[source],
                 'listener-zone-id': zone_to_id[listener],
-                'za-order': za_order++,
+                'za-offset': za_offset++,
                 'attenuation': coefficient
         })});
     }
@@ -159,18 +159,15 @@ const argv = yargs
     })
     .options('j', {
         describe: 'JWT',
-        type: 'string',
-        default: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcHBfaWQiOiI0ZDI1Njk1Zi0wNzU3LTQ4ODQtYTZhOC1hYzI3YjhiMTNiZTgiLCJ1c2VyX2lkIjoiYWRtaW4xIiwiYWRtaW4iOnRydWUsImRldmVsb3Blcl9pZCI6ImQ3MzM3NzA4LTliYmQtNDRiZC04OTIzLWE4Y2U2ZDc3ODVlMCIsInN0YWNrIjoiYXVkaW9uZXQtbWl4ZXItYXVkaW9uZXQtcy1yb3gtMSJ9.ORH0miS1uY_OwbJt3Oe4ywvaDXT8zYBtIZLqkFpSCJ8'
+        type: 'string'
     })
     .options('stack', {
         describe: 'Stack',
-        type: 'string',
-        default: 'audionet-s-rox-1'
+        type: 'string'
     })
     .options('s', {
         describe: 'Space ID',
-        type: 'string',
-        default: '5265b115-339a-4424-8917-94e6f5cef9f3'
+        type: 'string'
     })
     .options('o', {
         describe: 'Output file',
@@ -185,6 +182,9 @@ loadMap(argv.map);
 if (argv.c) {
     generateClientFile(argv.o);
 } else if (argv.z) {
+    if (!argv.j && ~argv.s) {
+        console.log('Must pass in jwt (j) and space id (s)');
+    }
     generateZones(argv.stack, argv.j, argv.s);
 } else {
     console.log('Must pass c or z');

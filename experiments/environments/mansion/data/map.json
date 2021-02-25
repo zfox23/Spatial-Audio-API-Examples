@@ -23,7 +23,7 @@
              "max_time": 60
          },
          {
-             "filename": "wind.mp3",
+             "filename": "wind_cc.mp3",
              "loop": true,
              "x_start": 0.0,
              "y_start": 10.0,
@@ -33,7 +33,7 @@
              "max_time": 0
          },
          {
-             "filename": "music.mp3",
+             "filename": "music_cc.mp3",
              "loop": true,
              "x_start": -4.0,
              "y_start": 7.0,
@@ -83,7 +83,7 @@
              "max_time": 60
          },
          {
-             "filename": "bear.mp3",
+             "filename": "growl_cc.mp3",
              "loop": true,
              "x_start": 10.0,
              "y_start": 1.0,
