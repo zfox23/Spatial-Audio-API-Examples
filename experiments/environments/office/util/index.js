@@ -74,7 +74,7 @@ async function generateZones(stack, jwt, space) {
             'Content-type': 'application/json; charset=UTF-8' // Indicates the content 
         },        
         body: JSON.stringify({
-            'global-attenuation': 0.5
+            'global-attenuation': 1.0
         })
     });
     
@@ -131,7 +131,7 @@ async function generateZones(stack, jwt, space) {
         // all 'self' zones and zones not specified.
         for (const zone of zones) {
             if (room !== zone) {
-                await set_zone(room, zone, 0.95);
+                await set_zone(room, zone, 1.0);
             } else {
                 await set_zone(room, zone, 0.5);               
             }

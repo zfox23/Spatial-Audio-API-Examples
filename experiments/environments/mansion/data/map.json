@@ -101,8 +101,6 @@
              "y_max": 3.0,
              "z_min": -1.0,
              "z_max": 17.0,
-             "reverb_time": 0.1,
-             "wet_level": 0.0,
              "attenuation_coefficients": {
                 "hallway1": 0.75,
                 "greathall": 0.90
@@ -162,8 +160,6 @@
              "y_max": 3.0,
              "z_min": 4.0,
              "z_max": 5.5,
-             "reverb_time": 0.1,
-             "wet_level": 0.0,
              "attenuation_coefficients": {
                 "greathall": 0.90,
                 "hallway0": 0.75
@@ -203,8 +199,6 @@
              "y_max": 3.0,
              "z_min": 0.0,
              "z_max": 10.0,
-             "reverb_time": 0.0,
-             "wet_level": 0.0,
              "attenuation_coefficients": {
                 "kitchen": 0.95,
                 "hallway0": 0.95,
@@ -245,8 +239,6 @@
              "y_max": 3.0,
              "z_min": 10.0,
              "z_max": 14.0,
-             "reverb_time": 0.1,
-             "wet_level": 0.0,
              "attenuation_coefficients": {
                 "greathall": 0.90,
                 "hallway0": 0.90,
@@ -277,8 +269,6 @@
              "y_max": 3.0,
              "z_min": 14.0,
              "z_max": 17.0,
-             "reverb_time": 0.1,
-             "wet_level": 0.0,
              "attenuation_coefficients": {
                 "kitchen": 0.90
              },              
@@ -297,8 +287,6 @@
              "y_max": 3.0,
              "z_min": 14.0,
              "z_max": 17.0,
-             "reverb_time": 0.1,
-             "wet_level": 0.0,
              "attenuation_coefficients": {
                 "hallway0": 0.75,
                 "hallway1": 0.85
@@ -318,8 +306,6 @@
              "y_max": 3.0,
              "z_min": 0.0,
              "z_max": 4.0,
-             "reverb_time": 0.1,
-             "wet_level": 0.0,
              "attenuation_coefficients": {
                 "hallway0": 0.90,
                 "hallway1": 0.90
@@ -344,8 +330,6 @@
              "y_max": 3.0,
              "z_min": 5.5,
              "z_max": 10.0,
-             "reverb_time": 0.1,
-             "wet_level": 0.0,
              "attenuation_coefficients": {
                 "hallway0": 0.90,
                 "hallway1": 0.90
@@ -370,8 +354,6 @@
              "y_max": 3.0,
              "z_min": 0.0,
              "z_max": 4.0,
-             "reverb_time": 0.1,
-             "wet_level": 0.0,
              "attenuation_coefficients": {
                 "hallway0": 0.95,
                 "hallway1": 0.90
@@ -391,8 +373,6 @@
              "y_max": 3.0,
              "z_min": 5.5,
              "z_max": 10.0,
-             "reverb_time": 0.1,
-             "wet_level": 0.0,
              "attenuation_coefficients": {
                 "hallway0": 0.95,
                 "hallway1": 0.90

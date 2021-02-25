@@ -1,8 +1,8 @@
 # Hifi-Spatial-API-Example-Mansion
 
-!["Hifi Spatial API Example Mansion" Example Screenshot](./readme.png)
+!["Hifi Spatial API Example Office" Example Screenshot](./readme.png)
 
-Hifi Spatial API Example Mansion - a spooky audio environment featuring:
+Hifi Spatial API Example Office - a spooky audio environment featuring:
 - The High Fidelity web spatial audio api
 - The High Fidelity nodejs spatial audio api
 - The High Fidelity RESTful audio environment management api
@@ -28,9 +28,6 @@ This installs attenuation zones for each room by using the High Fidelity RESTful
 1. Go into the `utils` directory.
 2. Type `npm run update:zones -- -s <your space id> -j <your admin JWT>`
 
-### Run the workers
-1. go into the `workers` directory.
-2. Type `npm run start -- -j <your worker JWT> -n 5`
 
 ### Connect and Play
 1. Go to the URL to which you deployed the `client` directory.  For example, (http://localhost:8080/)
