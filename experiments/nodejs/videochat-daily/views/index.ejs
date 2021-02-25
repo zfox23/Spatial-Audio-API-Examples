@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <title>High Fidelity - Spatial Audio with Video Chat from Agora</title>
+    <title>High Fidelity - Spatial Audio with Video Chat from Daily</title>
 
     <style>
         body {
@@ -52,7 +52,9 @@
             position: absolute !important;
         }
 
-        .videoContainer video {
+        .videoContainer>div>video {
+            width: 100%;
+            height: 100%;
             transform: rotateY(180deg);
         }
     </style>
@@ -62,10 +64,10 @@
     <div id="videoContainer" class="videoContainer"></div>
     <div class="controlsContainer">
         <div>
-            <p>HiFi Spatial Audio with Agora Video Chat</p>
+            <p>HiFi Spatial Audio with Daily Video Chat</p>
             <p>(ID: <%- providedUserID %>) (Space: <%- spaceName %>)</p>
         </div>
-        <button class="connectDisconnectButton" disabled="true">Click to Connect</button>
+        <button class="connectDisconnectButton" disabled="true">Connect</button>
         <button class="toggleInputMuteButton" disabled="true">Toggle Mic Mute (currently unmuted)</button>
         <button class="toggleOutputMuteButton">Toggle Output Mute (currently unmuted)</button>
         <audio autoplay class="outputAudioEl"></audio>
@@ -76,7 +78,6 @@
 <script>
     let connectDisconnectButton = document.querySelector('.connectDisconnectButton');
     connectDisconnectButton.addEventListener("click", connectToHiFiAndVideoService);
-    connectDisconnectButton.disabled = false;
     let toggleInputMuteButton = document.querySelector('.toggleInputMuteButton');
     toggleInputMuteButton.addEventListener("click", toggleInputMute);
     let outputAudioEl = document.querySelector(`.outputAudioEl`);
@@ -150,8 +151,6 @@
         }
 
         let myPosition = possiblePositions[myIndex];
-        console.log(`Possible positions:\n${JSON.stringify(possiblePositions, null, 4)}`);
-        console.log(`Number of possible positions:\n${possiblePositions.length}`);
         console.log(`My position:\n${JSON.stringify(myPosition)}`);
 
         console.log(hifiCommunicator.updateUserDataAndTransmit({
@@ -167,7 +166,7 @@
             "height": `${100 / numRows}%`,
         };
 
-        providedUserIDsToVideoElementsMap.forEach((value, key, map) => {
+        providedUserIDsToVideoContainersMap.forEach((value, key, map) => {
             let idx = currentParticipantProvidedUserIDs.indexOf(key);
             if (idx === -1) {
                 console.error(`Couldn't find \`providedUserID\` \`${key}\` in \`currentParticipantProvidedUserIDs\`!`);
@@ -207,7 +206,7 @@
                 currentParticipantProvidedUserIDs.push(currentProvidedVisitID);
             }
         }
-        
+
         if (newUserReceived) {
             updatePositions();
         }
@@ -251,7 +250,7 @@
         await hifiCommunicator.setInputAudioMediaStream(audioMediaStream);
 
         currentParticipantProvidedUserIDs = [];
-        providedUserIDsToVideoElementsMap.clear();
+        providedUserIDsToVideoContainersMap.clear();
 
         // Connect to the HiFi Audio API server!
         try {
@@ -309,8 +308,8 @@
         toggleOutputMuteButton.innerHTML = `Toggle Output Mute (currently ${outputAudioEl.muted ? "muted" : "unmuted"})`;
     }
 
-    async function disconnectFromHiFiAndVideoService() {
-        await disconnectFromVideoService();
+    function disconnectFromHiFiAndVideoService() {
+        disconnectFromVideoService();
         disconnectFromHiFi();
     }
 
@@ -335,86 +334,111 @@
     window.onbeforeunload = disconnectFromHiFiAndVideoService;
 </script>
 
-<script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.3.0.js"></script>
+<script crossorigin src="https://unpkg.com/@daily-co/daily-js"></script>
 <script>
-    // This script contains code specific to using Agora as a video service provider.
-    let rtc = {
-        // For the local client.
-        client: AgoraRTC.createClient({ mode: "rtc", codec: "vp8" }),
-        localVideoTrack: null,
-    };
+    // This script contains code specific to using Daily as a video service provider.
 
-    rtc.client.on("user-published", async (user, mediaType) => {
-        // Subscribe to a remote user.
-        await rtc.client.subscribe(user, mediaType);
-        console.log("subscribe success");
-
-        // If the subscribed track is video.
-        if (mediaType === "video") {
-            // Get `RemoteVideoTrack` in the `user` object.
-            const remoteVideoTrack = user.videoTrack;
-            // Dynamically create a container in the form of a DIV element for playing the remote video track.
-            const playerContainer = document.createElement("div");
-            // Specify the ID of the DIV container. You can use the `uid` of the remote user.
-            playerContainer.id = user.uid.toString();
-            providedUserIDsToVideoElementsMap.set(user.uid, videoContainer.appendChild(playerContainer));
-            updatePositions();
-            remoteVideoTrack.play(playerContainer, {fit: 'contain'});
-        }
-    });
-
-    rtc.client.on("user-unpublished", user => {
-        document.getElementById(user.uid).remove();
-
-        providedUserIDsToVideoElementsMap.delete(user.uid);
-        let idx = currentParticipantProvidedUserIDs.indexOf(user.uid);
-        if (idx > -1) {
-            currentParticipantProvidedUserIDs.splice(idx, 1);
-        }
-        updatePositions();
-    });
-
-    let localVideoTrack;
-    let providedUserIDsToVideoElementsMap = new Map();
+    let providedUserIDsToVideoContainersMap = new Map();
+    let myDailyCallObject;
     async function connectToVideoService() {
-        let options = {
-            agoraAppID: '<%- agoraAppID %>',
-            spaceName: '<%- spaceName %>',
-            agoraToken: '<%- agoraToken %>'
-        };
-        const uid = await rtc.client.join(options.agoraAppID, options.spaceName, options.agoraToken, '<%- providedUserID %>');
-        rtc.localVideoTrack = await AgoraRTC.createCameraVideoTrack({mirror: false});
-        await rtc.client.publish([rtc.localVideoTrack]);
+        try {
+            myDailyCallObject = DailyIframe.createCallObject();
+            await myDailyCallObject.join({
+                url: 'https://zfox23.daily.co/hifi-videochat-daily-test-room',
+                token: '<%- dailyJWT %>'
+            });
+        } catch (e) {
+            myDailyCallObject = undefined;
+            console.error(`Error when creating Daily Call Object:\n${JSON.stringify(e, null, 4)}`);
+            return;
+        }
 
-        const playerContainer = document.createElement("div");
-        playerContainer.id = myProvidedUserID;
-        rtc.localVideoTrack.play(playerContainer, {fit: 'contain'});
-        providedUserIDsToVideoElementsMap.set(myProvidedUserID, videoContainer.appendChild(playerContainer));
-        updatePositions();
+        console.log(myDailyCallObject.participants())
+
+        participantConnected(myDailyCallObject.participants().local);
+        for (const [key, value] of Object.entries(myDailyCallObject.participants())) {
+            if (key === "local") {
+                continue;
+            }
+            participantConnected(value);
+        }
+
+        myDailyCallObject.on("participant-joined", participantConnected);
+        myDailyCallObject.on("participant-left", participantDisconnected);
+
+        function participantConnected(participant) {
+            if (participant.participant) {
+                participant = participant.participant;
+            }
+
+            console.log(`Participant connected! Adding:\n${JSON.stringify(participant)}`);
+
+            const div = document.createElement('div');
+            div.id = participant.user_name;
+
+            let participantVideo = document.createElement("video");
+            let interval = setInterval(() => {
+                let participants = myDailyCallObject.participants();
+                let videoTrack = participant.videoTrack || (participants && participants[participant.session_id] && myDailyCallObject.participants()[participant.session_id].videoTrack);
+                if (videoTrack) {
+                    let participantVideoMediaStream = new MediaStream([videoTrack]);
+                    participantVideo.autoplay = true;
+                    participantVideo.muted = true;
+                    participantVideo.playsInline = true;
+                    participantVideo.srcObject = participantVideoMediaStream;
+                    clearInterval(interval);
+                } else {
+                    console.log(`Waiting for video track for \`${participant.user_name}\`...`);
+                    console.log(myDailyCallObject.participants()[participant.session_id].videoTrack)
+                }
+            }, 1000);
+
+            div.appendChild(participantVideo);
+            videoContainer.appendChild(div);
+
+            providedUserIDsToVideoContainersMap.set(participant.user_name, div);
+            updatePositions();
+        }
+
+        function participantDisconnected(participant) {
+            if (participant.participant) {
+                participant = participant.participant;
+            }
+            console.log(`Participant disconnected:\n${JSON.stringify(participant)}`)
+            document.getElementById(participant.user_name).remove();
+
+            providedUserIDsToVideoContainersMap.delete(participant.user_name);
+            let idx = currentParticipantProvidedUserIDs.indexOf(participant.user_name);
+            if (idx > -1) {
+                currentParticipantProvidedUserIDs.splice(idx, 1);
+            }
+            updatePositions();
+        }
     }
 
-    async function disconnectFromVideoService() {
-        providedUserIDsToVideoElementsMap.delete(myProvidedUserID);
+    function disconnectFromVideoService() {
+        let videoElements = Array.from(videoContainer.getElementsByTagName("video"));
+        videoElements.forEach((element) => {
+            element.parentNode.remove();
+        });
+
+        providedUserIDsToVideoContainersMap.delete(myProvidedUserID);
         myProvidedUserIDIdx = currentParticipantProvidedUserIDs.indexOf(myProvidedUserID);
         if (myProvidedUserIDIdx > -1) {
             currentParticipantProvidedUserIDs.splice(myProvidedUserIDIdx, 1);
         }
 
-
-        if (rtc.localVideoTrack) {
-            rtc.localVideoTrack.close();
-            rtc.localVideoTrack = null;
+        if (!myDailyCallObject) {
+            return;
         }
 
-        rtc.client.remoteUsers.forEach(user => {
-            // Destroy the dynamically created DIV container.
-            const playerContainer = document.getElementById(user.uid);
-            playerContainer && playerContainer.remove();
-        });
-
-        console.log(`Disconnecting from Agora...`);
-        await rtc.client.leave();
+        console.log(`Disconnecting from Daily...`);
+        myDailyCallObject.leave();
+        myDailyCallObject = null;
     }
+    
+    // Make the last thing we do enable the "connectDisconnectButton", so people can't click on that button before we're ready.
+    connectDisconnectButton.disabled = false;
 </script>
 
 </html>
