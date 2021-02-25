@@ -93,7 +93,7 @@ public class HifiMC {
     }
 
     @SubscribeEvent
-    public void onLivingUpdateEvent(RenderTickEvent event) {
+    public void onRenderTickEvent(RenderTickEvent event) {
     	if (event.phase != TickEvent.Phase.START) {
     		return;
     	}
