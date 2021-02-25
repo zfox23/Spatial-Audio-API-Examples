@@ -6,7 +6,7 @@ These example projects augment the API walkthrough guides you can find at [highf
 **We would love your contributions!** If you're interested in submitting an example application of your own, open a pull request against this repository.
 
 # The `examples` Directory
-😎 The `examples` directory of this repository contains complete, commented, tested, hopefully-working example projects that import the High Fidelity Spatial Audio Client Library.
+😎 The `examples` directory of this repository contains complete, commented, tested example projects that import the High Fidelity Spatial Audio Client Library.
 
 ## Plain HTML/JS Examples
 ### [bots](./examples/web/bots/)
