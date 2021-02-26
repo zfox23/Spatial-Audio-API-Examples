@@ -1,4 +1,4 @@
-# Hifi-Spatial-API-Example-Mansion
+# Hifi-Spatial-API-Example-Office
 
 !["Hifi Spatial API Example Office" Example Screenshot](./readme.png)
 
