@@ -14,17 +14,15 @@ Hifi Spatial API Example Office - a spooky audio environment featuring:
 2. Install [npm](https://docs.npmjs.com/getting-started/configuring-your-local-environment)
     - MacOS: If you encounter admin priviledge errors, add `prefix=/Users/yourusername/.npm-global` to your `~/.npmrc` (or another prefix)
 3. Run `npm install` in the `utils` directory
-4. Run `npm install` in the `worker` directory
-5. Create your space on the [High Fidelity's Spatial Audio API Developer Console](https://account.highfidelity.com/dev/account)
-6. Create a JWT in that space with the username `worker`.
-7. Create a JWT in that space with the username `mansion`.
-7. Create an admin JWT in that space.
-8. Edit `client\index.html` to set `HIFI_AUDIO_JWT` to the JWT you created for the username `mansion`.
-9. Deploy the `client` directory to your webserver of choice.
+4. Create your space on the [High Fidelity's Spatial Audio API Developer Console](https://account.highfidelity.com/dev/account)
+5. Create a JWT in that space.
+6. Create an admin JWT in that space.
+7. Edit `client\index.html` to set `HIFI_AUDIO_JWT` to the client (non-admin) JWT.
+8. Deploy the `client` directory to your webserver of choice.
     - For example, to use the node webserver, change to the `client` directory, type `npm install -g http-server`, then type `http-server`
 
 ### Install the audio environment
-This installs attenuation zones for each room by using the High Fidelity RESTful audionment management api
+This installs attenuation zones for each room by using the High Fidelity RESTful audio environment management api
 1. Go into the `utils` directory.
 2. Type `npm run update:zones -- -s <your space id> -j <your admin JWT>`
 
