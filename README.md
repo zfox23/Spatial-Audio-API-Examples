@@ -6,15 +6,15 @@ These example projects augment the API walkthrough guides you can find at [highf
 **We would love your contributions!** If you're interested in submitting an example application of your own, open a pull request against this repository.
 
 # The `examples` Directory
-😎 The `examples` directory of this repository contains complete, commented, tested, hopefully-working example projects that import the High Fidelity Spatial Audio Client Library.
+😎 The `examples` directory of this repository contains complete, commented, tested example projects that import the High Fidelity Spatial Audio Client Library.
 
 ## Plain HTML/JS Examples
 ### [bots](./examples/web/bots/)
 Listen to a simulated conversation between bots as they walk around you in this virtual space.
+### [complex](./examples/web/complex/)
+A more complicated version of [the simple Web App](./examples/web/simple/), with more user controls and UI.
 ### [dots](./examples/web/dots/)
 A basic, but complete, 2D multi-user spatialized sound demo, in less than 600 lines of code.
-### [complex](./examples/web/complex/)
-A more complicated version of [the simple Web App](./examples/web/simple/), with more user controls and UI..
 ### [simple](./examples/web/simple/)
 Corresponds to the "Build a Simple Web App" guide at [highfidelity.com/api/guides/web/simple](https://www.highfidelity.com/api/guides/web/simple).
 ### [simple-with-device-selection](./examples/web/simple-with-device-selection/)
@@ -40,18 +40,22 @@ Corresponds to the "Get a JWT" guide at [highfidelity.com/api/guides/misc/getAJW
 Experience High Fidelity Spatial Audio with 2D video chat powered by TokBox.
 
 ## NodeJS Experiments
+### [3D Dots](./experiments/web/dots3d)
+Move around as dots in a 3D space with spatial audio.
+### [Plaza](./experiments/nodejs/plaza)
+Explore various environments connected in a grid with spatial audio between them.
+### [StreetMeet](./experiments/nodejs/streetMeet)
+Discover the entire world in 3D with others with High Fidelity Spatial Audio, Twilio and Google Street View.
+### [Haunted Mansion Envrionment](./experiments/environments/mansion)
+Explore a 3d auditory experience with your friends.
+### [Office Envrionment](./experiments/environments/office)
+Virtual office with walls and private rooms.
 ### [Video Chat - Agora](./experiments/nodejs/videochat-agora)
 Experience High Fidelity Spatial Audio with 2D video chat powered by Agora.
 ### [Video Chat - Daily](./experiments/nodejs/videochat-daily)
 Experience High Fidelity Spatial Audio with 2D video chat powered by Daily.
 ### [Video Chat - Twilio](./experiments/nodejs/videochat-twilio)
 Experience High Fidelity Spatial Audio with 2D video chat powered by Twilio.
-### [3D Dots](./experiments/web/dots3d)
-Move around as dots in a 3d space with spatial audio.
-### [Plaza](./experiments/nodejs/plaza)
-Explore various environments connected in a grid with spatial audio between them.
-### [Haunted Mansion Envrionment](./experiments/environments/mansion)
-Explore a 3d auditory experience with your friends.
 
 # Live Demos
 This repository employs GitHub Pages, which means that you can look at some of these example applications live by browsing [this page](https://highfidelity.github.io/Spatial-Audio-API-Examples/).

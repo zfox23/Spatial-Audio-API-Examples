@@ -346,6 +346,7 @@
     let myTwilioRoom;
     let localVideoTrack;
     let providedUserIDsToVideoElementsMap = new Map();
+    var dataTrack;
     async function connectToVideoService() {
         let localTracks = await Video.createLocalTracks({
             audio: false,
@@ -359,8 +360,10 @@
         providedUserIDsToVideoElementsMap.set(myProvidedUserID, videoContainer.appendChild(div));
         updatePositions();
 
+        dataTrack = new Video.LocalDataTrack();
+
         Video.connect('<%- twilioJWT %>', {
-            name: 'hifi-videochat-twilio-test-room',
+            name: 'hifi-videochat-twilio-test-room-' + Math.floor(Math.random() * 100),
             tracks: localTracks,
         }).then(twilioRoom => {
             myTwilioRoom = twilioRoom;
@@ -380,7 +383,13 @@
 
             const div = document.createElement('div');
             div.id = participant.sid;
-
+            participant.on('trackAdded', track => {
+                if (track.kind === 'data') {
+                    track.on('message', data => {
+                        console.log("Message from track:" + data);
+                    });
+                }
+            });
             participant.on('trackSubscribed', track => trackSubscribed(div, track));
             participant.on('trackUnsubscribed', trackUnsubscribed);
 
