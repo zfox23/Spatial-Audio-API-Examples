@@ -48,7 +48,7 @@ Seth Alves, Sabrina Shanman
     #Visit localhost:7777 in a web browser when the mod is loaded to connect to the space.
     hifiJwt = "MY_HIFI_JWT"
 ```
-4. Start your Minecraft client, connecting to a Minecraft server, and open (or refresh) a tab in a [supported browser](https://www.highfidelity.com/knowledge/what-devices-are-compatible) to `localhost:7777` to have spatial audio while playing Minecraft.
+4. Start your Minecraft client, connecting to a Minecraft server, and open (or refresh) a tab in a [supported browser](https://caniuse.com/?search=webrtc) to `localhost:7777` to have spatial audio while playing Minecraft.
 
 ## Limitations/Caveats
 
