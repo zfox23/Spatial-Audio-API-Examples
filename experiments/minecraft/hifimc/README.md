@@ -48,11 +48,11 @@ Seth Alves, Sabrina Shanman
     #Visit localhost:7777 in a web browser when the mod is loaded to connect to the space.
     hifiJwt = "MY_HIFI_JWT"
 ```
-4. Start your Minecraft client, connecting to a Minecraft server, and open (or refresh) a tab in a [supported browser](https://www.highfidelity.com/knowledge/what-devices-are-compatible) to `localhost:7777` to have spatial audio while playing Minecraft.
+4. Start your Minecraft client, connecting to a Minecraft server, and open (or refresh) a tab in a [supported browser](https://caniuse.com/?search=webrtc) to `localhost:7777` to have spatial audio while playing Minecraft.
 
 ## Limitations/Caveats
 
-- As High Fidelity's API currently does not support streaming audio in the Java programming language, you will need to have a web browser tab open to send and receive audio. Please see [this list](https://www.highfidelity.com/knowledge/what-devices-are-compatible) of currently supported web browsers.
+- As High Fidelity's API currently does not support streaming audio in the Java programming language, you will need to have a web browser tab open to send and receive audio.
 - As the JWT is configured on startup, you will use the same audio space regardless of which world or dimension you are in.
 - This mod is only suitable for use on the Minecraft client and does not need to be installed on a Minecraft server.
 
