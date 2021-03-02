@@ -6,21 +6,31 @@
     <meta charset="utf-8">
     <title>HiFi Audio API Example: Player</title>
     <link rel="shortcut icon" type="image/x-icon" href="images/favicon.ico"/>
+    <link rel="stylesheet" href="./css/style.css">
 </head>
 
-<body style="width: 100%; height: 100%; margin: 0; padding: 0;">
-    <div class="console" style="z-index: 1; background-color: #efefef; padding: 10px; position: fixed; left: 0; top: 60px; width: 260px; font-family: monospace; font-size: 12px;">
-        <div class="console-log" style="margin:2px; border-radius: 5px; padding: 5px; border: 2px solid transparent; display: block; width: fit-content;"></div>
+<body>
+    <div class="controlContainer">
+        <div class="controlBar">
+            <button class="triggerButton"></button>
+            <p class="example-description">Click the connect button to setup the player node.<br>Drag the player around and talk to others<br>Right click to change orientation</p>
+            <div class="muteButton muteButton--disabled mic-on"></div>
+        </div>
+        <div class="console">
+            <div class="console-log"></div>
+        </div>
     </div>
-    <canvas class="thecanvas" tabindex="1" style="position:fixed; right: 0; top: 0;"></canvas>
-    <p class="example-description" style="position: fixed; left: 0; width: 100%; text-align: center;">Click the connect button to setup the player node.<br>Drag the player around and talk to others<br>Right click to change orientation</p>
-    <button class="triggerButton" style="cursor: pointer; font-size: 18px; background-color: #000000; color: white; width: 280px; top: 0; left: 0; height: 60px; margin: 0; position: fixed;"></button>
+
+
+    <canvas class="thecanvas" tabindex="1"></canvas>
+    
     <script src="https://hifi-spatial-audio-api.s3-us-west-2.amazonaws.com/releases/latest/HighFidelityAudio-latest.js"></script>
     <script src="https://hifi-spatial-audio-api.s3-us-west-2.amazonaws.com/releases/latest/HighFidelityControls-latest.js"></script>
+
     <script>
         const RADIANS_TO_DEGREES = 57.2958;
         // This is the JWT associated with "luis-2 stack space".
-        const HIFI_AUDIO_JWT = "";
+        const HIFI_AUDIO_JWT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcHBfaWQiOiIzZTFlYmZkZi1kNzkzLTQwMTQtOGM2Mi05ZGM5NjVlYWU4MDEiLCJzcGFjZV9pZCI6IjEwZGEyNGVmLTRjNGMtNDc3NC04ZWU4LWNiNzcwNmI3MjZiYyIsInN0YWNrIjoiYXVkaW9uZXQtbWl4ZXItYXBpLWFscGhhLTAxIn0.TTpMBtlEYoHMReWuQIJF13TDp4ZF9xViulWMV1vN8QU";
         
         const SoundNodeType = {
             NODE: 0, // Basic node
@@ -94,6 +104,63 @@
                 }        
             }
         }
+
+
+        class Camera2D {
+            constructor(canvas) {
+                this.canvas = canvas;
+                this.context = this.canvas.getContext("2d");
+                this.worldPosition = { x: 0, y: 0, z: 0};
+                this.canvasPosition = { x: 0.5 * this.canvas.width, y: 0.5 * this.canvas.height };
+                this.orientation = 0;
+                this.zoom = 0.008;
+                this.targetZoom = 0.008;
+            }
+            updatePhysics(deltaTime) {
+                // Interpolate zoom
+                if (this.targetZoom !== this.zoom) {
+                    this.zoom = this.zoom + (this.targetZoom - this.zoom) * 0.1;
+                }
+            }
+            // World coordenates to canvas conversion
+            worldToCanvasCoords(coords) {
+                let relPos = { x: coords.x - this.worldPosition.x, y: coords.y - this.worldPosition.y };
+                // Rotate vector
+                let rotRelPos = { 
+                    x: relPos.x * Math.cos(this.orientation) - relPos.y * Math.sin(this.orientation), 
+                    y: relPos.x * Math.sin(this.orientation) + relPos.y * Math.cos(this.orientation)
+                };
+                let canvasPos = { 
+                    x: this.canvasPosition.x - rotRelPos.x / this.zoom, 
+                    y: this.canvasPosition.y - rotRelPos.y / this.zoom 
+                };
+                return canvasPos;
+            }
+            // Canvas coordenates to world conversion
+            canvasToWorldCoords(coords) {
+                let relPos = { x: (this.canvasPosition.x - coords.x) * this.zoom, y: (this.canvasPosition.y - coords.y) * this.zoom };
+                let rotRelPos = { 
+                    x: relPos.x * Math.cos(-this.orientation) - relPos.y * Math.sin(-this.orientation), 
+                    y: relPos.x * Math.sin(-this.orientation) + relPos.y * Math.cos(-this.orientation)
+                };
+                let worldPosition = {
+                    x: this.worldPosition.x + rotRelPos.x,
+                    y: this.worldPosition.y + rotRelPos.y
+                }
+                return worldPosition;
+            }
+            
+            onResizeCanvas() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+                this.zoom = 0.0045 * 1280 / (Math.min(this.canvas.height, this.canvas.width));
+                this.canvasPosition = { x: 0.5 * this.canvas.width, y: 0.5 * this.canvas.height };
+            }
+
+            isVisible(point, radius) {
+                return (point.x > -radius && point.y > -radius && point.x < this.canvas.width + radius && point.y < this.canvas.height + radius);
+            }
+        }
         
         // Some helper functions to simplify drawing calls and changes in coordenates
         class CanvasHelper {
@@ -123,30 +190,34 @@
                 ctx.fillStyle = color;
                 ctx.fillText(text, x, y);
             }
-            // World coordenates to canvas conversion
-            static worldToCanvasCoords(canvasWidth, canvasHeight, coords, offset, zoom) {
-                let relPos = { x: coords.x - offset.x, y: coords.y - offset.y };
-                let canvasPos = { x: 0.5 * canvasWidth - relPos.x / zoom, y: 0.5 * canvasHeight - relPos.y / zoom };
-                return canvasPos;
-            }
-            // Canvas coordenates to world conversion
-            static canvasToWorldCoords(canvasWidth, canvasHeight, coords, offset, zoom) {
-                let newLocPos = { x: (coords.x - 0.5 * canvasWidth) * zoom, y: (coords.y - 0.5 * canvasHeight) * zoom, z: 0.0 };
-                let npos = { x: offset.x - newLocPos.x, y: offset.y - newLocPos.y, z: offset.z - newLocPos.z };
-                return npos;
-            }
         }
-        
-        // Root class with the node's physical attributes needed to display it  
-        class Renderable2D {
+
+        class Physical2D {
             constructor(config) {
                 this.position = Object.assign({}, config.position);
                 this.orientation = config.orientation; // radians
                 this.radius = config.radius;
+                this.acceleration = {x: 0, y: 0};
+                this.velocity = {x: 0, y: 0};
+            }
+            applyControlForce(vector, amount) {
+                let force = {x: vector.x * amount, y: vector.y * amount };
+                this.position.x += force.x;
+                this.position.y += force.y;
+            }
+        }
+        
+        // Root class with the node's physical attributes needed to display it  
+        class Renderable2D extends Physical2D {
+            constructor(config) {
+                super(config);
                 this.name = config.name;
                 this.color = config.color;
                 this.selected = false;
-                this.hover = false;                
+                this.hover = false;
+                this.isVisible = false;
+                this.positionPX = 0;
+                this.radiusPX = 0;         
             }
             // Simple point-circle collision detection for node selection.
             isPointInside(worldPoint) {
@@ -165,26 +236,31 @@
                 return Math.atan2(dir.y, dir.x) - 0.5 * Math.PI;
             }
             // Render loop. Child classes can implement their own method
-            render(canvas, ctx, offset, zoom) {
-                let canvasPos = CanvasHelper.worldToCanvasCoords(canvas.scrollWidth, canvas.scrollHeight, this.position, offset, zoom);
-                // Apply transform
-                ctx.translate(canvasPos.x, canvasPos.y);
-                ctx.rotate(this.orientation)
-                if (this.hover || this.selected) { // Render the selection/hover effect
-                    this.renderSelect(ctx, canvasPos, zoom);
+            render(camera) {
+                this.positionPX = camera.worldToCanvasCoords(this.position);
+                this.radiusPX = this.radius / camera.zoom;
+                this.isVisible = camera.isVisible(this.positionPX, this.radiusPX);
+                if (this.isVisible) {
+                    // Apply transform
+                    camera.context.translate(this.positionPX.x, this.positionPX.y);
+                    camera.context.rotate(this.orientation + camera.orientation);
+                    if (this.hover || this.selected) { // Render the selection/hover effect
+                        this.renderSelect(camera);
+                    }
+                    this.renderNode(camera); // Call the renderNode function
+                    // Undo transform
+                    camera.context.rotate(-(this.orientation + camera.orientation));
+                    camera.context.translate(-this.positionPX.x, -this.positionPX.y);
                 }
-                this.renderNode(ctx, canvasPos, zoom); // Call the renderNode function
-                // Undo transform
-                ctx.rotate(-this.orientation);
-                ctx.translate(-canvasPos.x, -canvasPos.y);
+
             }
             // Default method to render basic nodes
-            renderNode(ctx, position, zoom) {
+            renderNode(camera) {
                 // CanvasHelper.renderCircle(ctx, 0, 0, this.radius / zoom, 0, 2.0 * Math.PI, this.color );
             }
             // Default method to render selection/hover effect
-            renderSelect(ctx, position, zoom) {
-                CanvasHelper.renderCircle(ctx, 0, 0, (this.radius / zoom) + 4, 0, 2.0 * Math.PI, this.selected ? '#FF0000' : '#CCCCCC', 4);
+            renderSelect(camera) {
+                CanvasHelper.renderCircle(camera.context, 0, 0, this.radiusPX + 4, 0, 2.0 * Math.PI, this.selected ? '#FF0000' : '#CCCCCC', 4);
             }
         }
         
@@ -211,7 +287,10 @@
                 this.mixerPosition.x = -this.position.x;
                 this.mixerPosition.y = this.position.z;
                 this.mixerPosition.z = -this.position.y;
-                this.mixerOrientation.yawDegrees = -RADIANS_TO_DEGREES * this.orientation;
+                let ang = RADIANS_TO_DEGREES * this.orientation;
+                ang = ang < 0 ? 360 + ang : ang;
+                // console.log("Sending angle: " + ang);
+                this.mixerOrientation.yawDegrees = this.translateOrientationYaw(ang);
                 this.sendUpdatedData();
             }
             // Send the converted position and orientation to the mixer
@@ -232,7 +311,10 @@
                     this.position.y = data.position.z !== null ? -data.position.z : this.position.z;
                 }
                 if (data.orientationEuler !== null) {
-                    this.orientation = -data.orientationEuler.yawDegrees / RADIANS_TO_DEGREES;
+                    // console.log("Received angle: " + data.orientationEuler.yawDegrees);
+                    let yawDegrees = this.translateOrientationYaw(data.orientationEuler.yawDegrees, true);
+                    let ang = yawDegrees / RADIANS_TO_DEGREES;
+                    this.orientation = ang;
                 }
             }
             // Notify connection changes for debugging
@@ -270,6 +352,21 @@
                 this.connectResponse = null;
                 console.log(`Disconnected status for ${this.name} : ${disconnectStatus}`);
             }
+            // Mute the input stream
+            async setMute(muted) {
+                if (this.hifiCommunicator) {
+                    return await this.hifiCommunicator.setInputAudioMuted(muted);
+                }
+                return false;
+            }
+            // We need this conversion until the server returns the correct value
+            translateOrientationYaw(orientation, fromServer) {
+                if (fromServer) {
+                    return 2.0 * (orientation + 90);
+                } else {
+                    return (0.5 * orientation) - 90.0;
+                }
+            }
         }
         
         // SoundNode with output stream only. Establish a connection just for listening
@@ -280,18 +377,16 @@
                 this.onDataReceived = onDataReceived ? onDataReceived : () => {};
             }
             // Custom render method. 
-            renderNode(ctx, position, zoom) {
+            renderNode(camera) {
                 // Create a sound cone pointing forward
-                CanvasHelper.renderPolygon(ctx, [[0, 0], [1000, -1000], [-1000, -1000]], "#FAFAFFAA");
+                CanvasHelper.renderPolygon(camera.context, [[0, 0], [1000, -1000], [-1000, -1000]], "#FAFAFFAA");
                 // Render first 10 circles around the receiver every meter. Undo rotation first.
-                ctx.rotate(-this.orientation);
                 for (let i = 1; i < 11; i++) {
-                    let radius = i / zoom;
-                    CanvasHelper.renderCircle(ctx, 0, 0, radius, 0, 2.0 * Math.PI, this.color + "AA", 1);
-                    CanvasHelper.renderText(ctx, radius, 0, `${i}m`, this.color, 15);
+                    let radius = i / camera.zoom;
+                    CanvasHelper.renderCircle(camera.context, 0, 0, radius, 0, 2.0 * Math.PI, this.color + "AA", 1);
+                    CanvasHelper.renderText(camera.context, radius, 0, `${i}m`, this.color, 15);
                 }
-                ctx.rotate(this.orientation);
-                super.renderNode(ctx, position, zoom);
+                super.renderNode(camera);
             }
             // Custom connection method. After successfully connected we setup the output audio to play the server mix locally.
             async connect() {
@@ -313,7 +408,7 @@
                 return false;
             }
         }
-        
+
         // A SoundEmitter with some functions to handle actions and custom rendering
         class Player extends SoundReceiver {
             constructor(config, onDataReceived) {
@@ -330,38 +425,35 @@
                 }
                 await this.hifiCommunicator.setInputAudioMediaStream(this.stream);
             }
-            render(canvas, ctx, offset, zoom) {
+            render(camera) {
+                super.render(camera);
+            }
+            updatePhysics() {
+                // Interpolate position before rendering
                 const MIN_DELTA = 0.001;
                 const TAU = 0.1;
-                if (!this.isMyPlayer) {
-                    // Interpolate position before rendering
-                    let delta = {
-                        x: this.targetPosition.x - this.position.x, 
-                        y: this.targetPosition.y - this.position.y, 
-                        z: this.targetPosition.z - this.position.z
-                    };
-                    this.position.x = Math.abs(delta.x) > MIN_DELTA ? this.position.x + (delta.x) * TAU : this.targetPosition.x;
-                    this.position.y = Math.abs(delta.y) > MIN_DELTA ? this.position.y + (delta.y) * TAU : this.targetPosition.y;
-                    this.position.z = Math.abs(delta.z) > MIN_DELTA ? this.position.z + (delta.z) * TAU : this.targetPosition.z;
-                }
-                super.render(canvas, ctx, offset, zoom);
+                let delta = {
+                    x: this.targetPosition.x - this.position.x, 
+                    y: this.targetPosition.y - this.position.y, 
+                    z: this.targetPosition.z - this.position.z
+                };
+                this.position.x = Math.abs(delta.x) > MIN_DELTA ? this.position.x + (delta.x) * TAU : this.targetPosition.x;
+                this.position.y = Math.abs(delta.y) > MIN_DELTA ? this.position.y + (delta.y) * TAU : this.targetPosition.y;
+                this.position.z = Math.abs(delta.z) > MIN_DELTA ? this.position.z + (delta.z) * TAU : this.targetPosition.z;
             }
             // Custom rendering method for bots 
-            renderNode(ctx, position, zoom) {
-                if (this.isMyPlayer) {
-                    super.renderNode(ctx, position, zoom);
-                }
+            renderNode(camera) {
                 // Compute volume ratio
                 let volumeRatio = ((this.volume ? this.volume : -120.0) + 120.0) / 120.0;
-                let radius = (this.radius / zoom);
+                let radius = (this.radius / camera.zoom);
                 // Render a semi-transparent circular area for the bot's visor 
-                CanvasHelper.renderCircle(ctx, 0, 0, 0.95 * radius, 0, 2.0 * Math.PI, "#00000015");
+                CanvasHelper.renderCircle(camera.context, 0, 0, 0.95 * radius, 0, 2.0 * Math.PI, "#00000015");
                 // Render a circular area that represents volume bubble
-                CanvasHelper.renderCircle(ctx, 0, 0, volumeRatio * 1.2 * radius, 0, 2.0 * Math.PI, "#FF00FF88");
+                CanvasHelper.renderCircle(camera.context, 0, 0, volumeRatio * 1.2 * radius, 0, 2.0 * Math.PI, "#FF00FF88");
                 // Render a partial, thick arc for the main body 
-                CanvasHelper.renderCircle(ctx, 0, 0, 0.4 * radius, -0.35, Math.PI + 0.35, this.color + "EE", radius);
+                CanvasHelper.renderCircle(camera.context, 0, 0, 0.4 * radius, -0.35, Math.PI + 0.35, this.color + "EE", radius);
                 // Close the gap with a smaller circular area
-                CanvasHelper.renderCircle(ctx, 0, 0, 0.55 * radius, 0, 2.0 * Math.PI, this.color);
+                CanvasHelper.renderCircle(camera.context, 0, 0, 0.55 * radius, 0, 2.0 * Math.PI, this.color);
             }
             updateReceivedData(data) { 
                 if (data.position) {
@@ -376,6 +468,16 @@
                 }
                 super.updateReceivedData(newData);
             }
+            isConnected() {
+                return this.connectResponse && this.connectResponse.success;
+            }
+        }
+
+        let ForceDirectionVector = {
+            FRONT: { x: 0, y: -10.0 },
+            BACK: { x: 0, y: 10.0 },
+            LEFT: { x: -10.0, y: 0.0 },
+            RIGHT: { x: 10.0, y: 0.0 },
         }
 
         // A SoundEmitter with some functions to handle actions and custom rendering
@@ -385,6 +487,128 @@
                 this.color = "#FF00FF";
                 this.isMyPlayer = true; // Render guides
             }
+            updatePhysics() {
+                // Do nothing for the moment
+            }
+            render(camera) {
+                super.render(camera);
+            }
+        }
+
+        class World {
+            constructor(canvas, size, ori) {
+                this.size = size;
+                this.origin = ori;
+                this.players = {};
+                this.myPlayer = null;
+                this.camera = new Camera2D(canvas);
+                this.grid = [];
+            }
+
+            drawBackground() {
+                this.camera.context.clearRect(0, 0, this.camera.canvas.width,this.camera.canvas.height);
+                let initQuad;
+                let quadSizePX = 1 / this.camera.zoom;
+                let level;
+                for (level = 1; level < 100; level = level * 2) {
+                    if (quadSizePX * 10 * level > Math.max(this.camera.canvas.width, this.camera.canvas.height)) {
+                        quadSizePX = level / this.camera.zoom;
+                        initQuad = { x: level * Math.floor(this.camera.worldPosition.x / level), y: level * Math.floor(this.camera.worldPosition.y / level) }
+                        break;
+                    }
+                }
+                let corners = [ {x: 1, y: 0}, {x: 1, y: 1}, {x: 0, y: 1}]
+                for (let i = -10; i < 10; i++) {
+                    for (let j = -10; j < 10; j++) {
+                        let quad = { x: initQuad.x + i * level , y: initQuad.y + j * level };
+                        let quadCenter = { x: quad.x + 0.5 * level, y: quad.y + 0.5 * level};
+                        let quadCenterPX = this.camera.worldToCanvasCoords(quadCenter);
+                        if (this.camera.isVisible(quadCenterPX, quadSizePX)) {
+                            let quadPointsPX = [];
+                            for (let k = 0; k < corners.length; k++) {
+                                let quadPointPX = this.camera.worldToCanvasCoords({x: quad.x + corners[k].x * level, y: quad.y + corners[k].y * level});
+                                quadPointsPX.push([quadPointPX.x, quadPointPX.y]);
+                            }
+                            CanvasHelper.renderPolygon(this.camera.context, quadPointsPX, "#CCC", 1);
+                        }
+                    }
+                }
+
+            }
+            render() {
+                this.drawBackground();
+                for (let [id, player] of Object.entries(this.players)) {
+                    player.render(this.camera);                 
+                }
+            }
+            updatePhysics(deltaTime) {
+                if (this.myPlayer) {
+                    this.camera.orientation = -this.myPlayer.orientation;
+                    Object.assign(this.camera.worldPosition, this.myPlayer.position);
+                    this.camera.updatePhysics(deltaTime);
+                    this.myPlayer.updateData();
+                    for (let [id, player] of Object.entries(this.players)) {
+                        player.updatePhysics();
+                    }
+                }                
+            }
+            addPlayer(player) {
+                if (player.isMyPlayer) {
+                    this.myPlayer = player;
+                    // Player and camera data
+                    Object.assign(this.camera.worldPosition, this.myPlayer.position);
+                    this.camera.orientation = this.myPlayer.orientation;
+                }
+                this.players[player.getId()] = player;
+            }
+            // When the receiver gets data from the server we update nodes 
+            onDataReceived(dataArray) {
+                dataArray.forEach(data => {
+                    if (this.myPlayer && data.hashedVisitID !== this.myPlayer.getId()) {
+                        let player = this.players[data.hashedVisitID];
+                        if (!this.players[data.hashedVisitID]) {
+                            let playerCount = Object.keys(this.players).length;
+                            let playerConfig = { name: `Player_ ${Object.keys(this.players).length}`, radius: 0.2, color: "#AFAAFF" };
+                            this.players[data.hashedVisitID] = new Player(playerConfig);
+                        }
+                        this.players[data.hashedVisitID].updateReceivedData(data);
+                    }
+                });
+            }
+            async connect(config) {
+                // Create, connect and add myPlayer, then add it to the world
+                let myPlayer = new MyPlayer(config, this.onDataReceived.bind(this));
+                if (await myPlayer.connect()) {
+                    this.addPlayer(myPlayer);
+                    await myPlayer.prepareInputStream();
+                    return true;
+                }
+                return false;
+            }
+            async disconnect() {
+                if (this.myPlayer && this.myPlayer.isConnected()) {
+                    await this.myPlayer.disconnect();
+                }
+                this.myPlayer = null;
+                this.players = {};
+            }
+
+            // Find the first node that intersects with a point in the canvas
+            findNodeOnPoint(point, isSelection) {
+                // Compute world position based on the canvas point and search for a node
+                let worldPoint = this.camera.canvasToWorldCoords(point);
+                for (let [id, player] of Object.entries(this.players)) {
+                    if (player.isVisible && player.isPointInside(worldPoint)) {
+                        return id;
+                    }
+                }
+            }
+            getTargetZoom() {
+                return this.camera.targetZoom;
+            }
+            setTargetZoom(zoom) {
+                this.camera.targetZoom = zoom;
+            }
         }
 
         // Class will create the listener and bots and it will manage its behaviour
@@ -392,38 +616,30 @@
             constructor(config) {
                 this.config = config;
                 this.physicsLoop = new PhysicsLoop();
-                this.soundNodes = {};
-                this.foundNodes = {};
-                this.playerId = null;
-                this.zoomAmount = 0.01; // Define the scale for how the world is displayed on the canvas
+                this.world = null;
                 this.selectedNodeId = null;
                 this.hoveredNodeId = null;
-                this.canvas = null;
                 this.triggerButton = null;
                 this.consoleElement = null;
-                // Subscribe to the physics loop for render
-                this.physicsLoop.addOnStepCback("drawCanvas", () => {
-                    if (this.soundNodes[this.playerId]) {
-                        this.soundNodes[this.playerId].updateData();
-                    }
-                    this.redraw();
-                });
                 // To add/remove event listener propertly and with the right context we need to bind them first into variables
-                this.connectNodesBinded = this.connectNodes.bind(this);
-                this.disconnectNodesBinded = this.disconnectNodes.bind(this);
+                this.connectMyPlayerBinded = this.connectMyPlayer.bind(this);
+                this.disconnectMyPlayerBinded = this.disconnectMyPlayer.bind(this);
             }
             // Connect the UI elements that trigger the example and and display information
-            setupUI(canvas, triggerButton, consoleElement) {
+            setupUI(canvas, triggerButton, consoleElement, muteButton) {
                 this.canvas = canvas;
+                this.world = new World(canvas, this.config.WORLD_SIZE, this.config.SPAWN_POINT);
                 this.triggerButton = triggerButton;
                 this.consoleElement = consoleElement;
+                this.muteButton = muteButton;
                 // Configure the triggerButton
-                this.triggerButton.addEventListener("click", this.connectNodesBinded, false);
+                this.triggerButton.addEventListener("click", this.connectMyPlayerBinded, false);
                 this.triggerButton.innerHTML = `Click to Connect`;
+                this.muteButton.addEventListener("click", this.onMute.bind(this), false);
                 window.addEventListener('resize', this.onResizeCanvas.bind(this), false);
                 window.addEventListener('load', this.onResizeCanvas.bind(this), false);
                 // Setup the canvas to receive control events
-                let hifiControls = new HighFidelityControls.HiFiControls({ mainAppElement: this.canvas });
+                let hifiControls = new HighFidelityControls.HiFiControls({ mainAppElement: canvas });
                 hifiControls.onLeftDrag = this.onLeftDrag.bind(this);
                 hifiControls.onRightDrag = this.onRightDrag.bind(this);
                 hifiControls.onCanvasMove = this.onCanvasMove.bind(this);
@@ -434,86 +650,65 @@
                 hifiControls.onMoveBackwardKeyDown = this.onMoveBackwardKeyDown.bind(this);
                 hifiControls.onStrafeLeftKeyDown = this.onStrafeLeftKeyDown.bind(this);
                 hifiControls.onStrafeRightKeyDown = this.onStrafeRightKeyDown.bind(this);
-                hifiControls.onTurnLeftKeyUp = this.onTurnLeftKeyUp.bind(this);
-                hifiControls.onTurnRightKeyUp = this.onTurnRightKeyUp.bind(this);
-                hifiControls.onMoveForwardKeyUp = this.onMoveForwardKeyUp.bind(this);
-                hifiControls.onMoveBackwardKeyUp = this.onMoveBackwardKeyUp.bind(this);
-                hifiControls.onStrafeLeftKeyUp = this.onStrafeLeftKeyUp.bind(this);
-                hifiControls.onStrafeRightKeyUp = this.onStrafeRightKeyUp.bind(this);
 
                 this.forceCanvasKeyEvent();
+
+                // Subscribe to the physics loop for render
+                this.physicsLoop.addOnStepCback("updateTask", (deltaTime) => {
+                    this.world.updatePhysics(deltaTime);
+                    this.world.render();                 
+                }); 
                 // Start the physics loop
                 this.physicsLoop.start();
+
+                this.canvas.addEventListener("wheel", (e) => {
+                    let zoomSign = e.deltaY / Math.abs(e.deltaY);
+                    this.world.setTargetZoom(this.world.getTargetZoom() + 0.001 * zoomSign);
+                    console.log("New zoom: " + this.world.camera.zoom);
+                });
             }
 
-            async connectNodes() {
+            async connectMyPlayer() {
                 // Clear console
                 this.displayLog("");
                 // Data configuration for all nodes base on type
-                let myPlayerConfig = {name: "Player", radius: this.config.PLAYER_RADIUS, color: "#AFAAFF", position: this.config.SPAWN_POINT};
+                let myPlayerConfig = {name: "MyPlayer", radius: 0.2, color: "#AFAAFF", position: this.config.SPAWN_POINT, orientation: 0};
                 
                 // Clear the console log and reset trigger button status
                 this.displayLog("", true);
                 this.triggerButton.disabled = true;
                 this.triggerButton.innerHTML = `wait...`;
 
-                let node = new MyPlayer(myPlayerConfig, this.onDataReceived.bind(this));
-                if (await node.connect()) {
-                    let nodeId = node.getId();
-                    this.displayLog(`Node "${node.name}" connected.`, `${nodeId}`, (e) => {
-                        this.selectNode(e.target.dataset.log);
-                    });
-                    this.soundNodes[nodeId] = node;
-                    this.playerId = nodeId;
-                    await node.prepareInputStream();
+                if (await this.world.connect(myPlayerConfig)) {
+                    this.displayLog(`${myPlayerConfig.name} connected`, true);
+                    // Reset trigger button status
+                    this.triggerButton.disabled = false;
+                    this.triggerButton.innerHTML = `Disconnect`;
+                    this.triggerButton.removeEventListener('click', this.connectMyPlayerBinded, false);
+                    this.triggerButton.addEventListener('click', this.disconnectMyPlayerBinded, false);
+                    this.muteButton.classList.remove("muteButton--disabled");
+                    this.displayLog(`MyPlayer is ready`);
                 } else {
-                    this.displayLog(`Node "${node.name}" error connecting.`);
+                    this.triggerButton.disabled = false;
+                    this.triggerButton.innerHTML = `Reconnect`;
+                    this.displayLog(`${myPlayerConfig.name} failed`, true);
                 }
-
-                // Reset trigger button status
-                this.triggerButton.disabled = false;
-                this.triggerButton.innerHTML = `Disconnect`;
-                this.triggerButton.removeEventListener('click', this.connectNodesBinded, false);
-                this.triggerButton.addEventListener('click', this.disconnectNodesBinded, false);
-                this.displayLog(`Ready Player 1`);
             }
 
-            async disconnectNodes() {
+            async disconnectMyPlayer() {
                 this.triggerButton.disabled = true;
                 this.triggerButton.innerHTML = `wait...`;
-                let ids = Object.keys(this.soundNodes);
-                for (let i = 0; i < ids.length; i++) {
-                    let id = ids[i];
-                    if (id === this.playerId) {
-                        this.playerId = null;
-                    }
-                    await this.soundNodes[id].disconnect();
-                    this.displayLog(`Node "${this.soundNodes[id].name}" disconnected.`);
-                    delete this.soundNodes[id];
-                };
-                this.physicsLoop.removeOnStepCback("updateTask");
+                await this.world.disconnect();
                 // Reset triggerButton
                 this.triggerButton.disabled = false;
                 this.triggerButton.innerHTML = `Connect`;
-                this.triggerButton.removeEventListener('click', this.disconnectNodesBinded, false);
-                this.triggerButton.addEventListener('click', this.connectNodesBinded, false);
-            }
-
-            
-            // When the receiver gets data from the server we update nodes 
-            onDataReceived(dataArray) {
-                dataArray.forEach(data => {
-                    if (data.hashedVisitID !== this.playerId) {
-                        if (!this.foundNodes[data.hashedVisitID]) {
-                            let playerCount = Object.keys(this.foundNodes).length;
-                            let playerConfig = {name: "Player_" + playerCount + 1, radius: this.config.PLAYER_RADIUS, color: "#AFAAFF", position: this.config.SPAWN_POINT, orientation: 0, type: SoundNodeType.PLAYER};
-                            this.foundNodes[data.hashedVisitID] = new Player(playerConfig);
-                        }
-                        this.foundNodes[data.hashedVisitID].updateReceivedData(data);
-                    }
-                });
-            }
-            
+                this.triggerButton.removeEventListener('click', this.disconnectMyPlayerBinded, false);
+                this.triggerButton.addEventListener('click', this.connectMyPlayerBinded, false);
+                // Reset mute button
+                this.muteButton.classList.remove("mic-off");
+                this.muteButton.classList.add("mic-on");
+                this.muteButton.classList.add("muteButton--disabled");
+            }            
 
             // Add log entries to the console log UI element
             displayLog(text, data, onclick) {
@@ -530,26 +725,12 @@
                 }
                 this.consoleElement.appendChild(newLog);
             }
-
-            redraw() {
-                let ctx = this.canvas.getContext('2d');
-                ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-                // Call render method for all nodes
-                if (this.playerId) {
-                    this.soundNodes[this.playerId].render(this.canvas, ctx, this.config.SPAWN_POINT, this.zoomAmount);
-                }
-                Object.keys(this.foundNodes).forEach(id => {
-                    if (id !== this.playerId) {
-                        this.foundNodes[id].render(this.canvas, ctx, this.config.SPAWN_POINT, this.zoomAmount);
-                    }
-                });
-            }
             // Hover node using id
             hoverNode(id) {
                 if (this.hoveredNodeId !== id) {
                     this.hoveredNodeId = id;
-                    Object.keys(this.soundNodes).forEach(nodeId => {
-                        this.soundNodes[nodeId].hover = nodeId === id;
+                    Object.keys(this.world.players).forEach(nodeId => {
+                        this.world.players[nodeId].hover = nodeId === id;
                     });
                     this.canvas.style.cursor = this.hoveredNodeId ? "pointer" : "default";
                 }
@@ -558,66 +739,65 @@
             selectNode(id) {
                 if (this.selectedNodeId !== id) {
                     this.selectedNodeId = id;
-                    Object.keys(this.soundNodes).forEach(nodeId => {
-                        this.soundNodes[nodeId].selected = nodeId === id;
+                    Object.keys(this.world.players).forEach(nodeId => {
+                        this.world.players[nodeId].selected = nodeId === id;
                         let logEntry = this.consoleElement.querySelector(`[data-log="${nodeId}"]`);
-                        logEntry.style.borderColor = nodeId === id ? "#FF0000" : "transparent";
+                        if (logEntry) {
+                            logEntry.style.borderColor = nodeId === id ? "#FF0000" : "transparent";
+                        }
                     });
                 }
             }
-            // Find the first node that intersects with a point in the canvas
-            findNodeOnCanvas(point, isSelection) {
-                // Compute world position based on the canvas point and search for a node
-                let worldPoint = CanvasHelper.canvasToWorldCoords(this.canvas.scrollWidth, this.canvas.scrollHeight, point, this.config.SPAWN_POINT, this.zoomAmount);
-                for (let [id, node] of Object.entries(this.soundNodes)) {
-                    if (node.isPointInside(worldPoint)) {
-                        return id;
+
+            onMute() {
+                let isMuted = this.muteButton.classList.contains("mic-off");
+                if (this.world.myPlayer && this.world.myPlayer.setMute(!isMuted)) {
+                    if (isMuted) {
+                        this.muteButton.classList.remove("mic-off");
+                        this.muteButton.classList.add("mic-on");
+                    } else {
+                        this.muteButton.classList.remove("mic-on");
+                        this.muteButton.classList.add("mic-off");
                     }
                 }
             }
             // Move the selected node with a left drag
             onLeftDrag(e) {
                 // Compute the world position based on the control event
-                let worldPos = CanvasHelper.canvasToWorldCoords(this.canvas.scrollWidth, this.canvas.scrollHeight, {x: e.clientX, y: e.clientY}, this.config.SPAWN_POINT, this.zoomAmount);
-                if (this.selectedNodeId && this.soundNodes[this.selectedNodeId]) {
-                    let selectedNode = this.soundNodes[this.selectedNodeId];
-                    // Update listener position
-                    if (selectedNode.type === SoundNodeType.PLAYER) {
-                        selectedNode.position = worldPos;
-                    }
+                let worldPos = this.world.camera.canvasToWorldCoords({x: e.offsetX, y: e.offsetY});
+                if (this.selectedNodeId && this.world.myPlayer && this.world.myPlayer.getId() === this.selectedNodeId) {
+                    this.world.myPlayer.position = worldPos;
                 }
             }
             //Rotate the selected node with a right drag
-            onRightDrag(e) { 
-                if (this.soundNodes[this.playerId]) {
-                    // Compute the world position based on the control event
-                    let worldPos = CanvasHelper.canvasToWorldCoords(this.canvas.scrollWidth, this.canvas.scrollHeight, {x: e.clientX, y: e.clientY}, this.config.SPAWN_POINT, this.zoomAmount);
-                    this.soundNodes[this.playerId].orientation = this.soundNodes[this.playerId].getLookAtAngle(worldPos);
+            onRightDrag(e, data) { 
+                if (this.world.myPlayer) {
+                    this.world.myPlayer.orientation = (this.world.myPlayer.orientation + 0.01 * data.delta);
                 }
             }
             // Compute hover on all nodes
             onCanvasMove(e) {
-                let nodeId = this.findNodeOnCanvas({x: e.clientX, y: e.clientY});
+                let nodeId = this.world.findNodeOnPoint({x: e.offsetX, y: e.offsetY});
                 this.hoverNode(nodeId);
             }
             // Select a node with a left click or rotate the listener with a right click
             onCanvasDown(e) {
                 const MOUSE_RIGHT_BUTTON = 2;
                 if (e.button != MOUSE_RIGHT_BUTTON) {
-                    let nodeId = this.findNodeOnCanvas({x: e.clientX, y: e.clientY});
+                    let nodeId = this.world.findNodeOnPoint({x: e.offsetX, y: e.offsetY});
                     this.selectNode(nodeId);
                 } else {
-                    if (this.selectedNodeId && this.soundNodes[this.selectedNodeId] && this.soundNodes[this.selectedNodeId].type === SoundNodeType.RECEIVER) {
-                        let targetPos = CanvasHelper.canvasToWorldCoords(this.canvas.scrollWidth, this.canvas.scrollHeight, {x: e.clientX, y: e.clientY}, this.config.SPAWN_POINT, this.zoomAmount);
-                        this.soundNodes[this.selectedNodeId].orientation = this.soundNodes[this.selectedNodeId].getLookAtAngle(targetPos);
+                    if (this.selectedNodeId && this.world.players[this.selectedNodeId] && this.world.players[this.selectedNodeId].type === SoundNodeType.RECEIVER) {
+                        let targetPos = this.world.camera.canvasToWorldCoords({x: e.offsetX, y: e.offsetY});
+                        this.world.players[this.selectedNodeId].orientation = this.world.players[this.selectedNodeId].getLookAtAngle(targetPos);
                     }
                 }
             }
             // Set the zoom according to the window size
             onResizeCanvas() {
-                this.canvas.width = window.innerWidth;
-                this.canvas.height = window.innerHeight;
-                this.zoomAmount = 0.0045 * 1280 / (Math.min(this.canvas.height, this.canvas.width));
+                if (this.world) {
+                    this.world.camera.onResizeCanvas();
+                }
             }
 
             // Key Controls Bindings
@@ -633,53 +813,50 @@
                 });
             }
 
+            getControlForceFromVector(vector) {
+                let canvasPosition = {x: this.world.camera.canvasPosition.x + vector.x, y: this.world.camera.canvasPosition.y + vector.y};
+                let worldPosition = this.world.camera.canvasToWorldCoords(canvasPosition);
+                let controlForceVector = {x: worldPosition.x - this.world.camera.worldPosition.x, y: worldPosition.y - this.world.camera.worldPosition.y};
+                let vectorLength = Math.sqrt(controlForceVector.x * controlForceVector.x + controlForceVector.y * controlForceVector.y);
+                return { x: controlForceVector.x / vectorLength, y: controlForceVector.y / vectorLength };
+            }
+            onTurnLeftKeyDown(e) {
+                
+            }
             onTurnRightKeyDown(e) {
-                console.log("onTurnRightKeyDown");
+
             }
             onMoveForwardKeyDown(e) {
-                console.log("onMoveForwardKeyDown");
+                let controlForceVector = this.getControlForceFromVector(ForceDirectionVector.FRONT);
+                this.world.myPlayer.applyControlForce(controlForceVector, 0.1);
             }
             onMoveBackwardKeyDown(e) {
-                console.log("onMoveBackwardKeyDown");
+                let controlForceVector = this.getControlForceFromVector(ForceDirectionVector.BACK);
+                this.world.myPlayer.applyControlForce(controlForceVector, 0.1);
             }
             onStrafeLeftKeyDown(e) {
-                console.log("onStrafeLeftKeyDown");
+                let controlForceVector = this.getControlForceFromVector(ForceDirectionVector.LEFT);
+                this.world.myPlayer.applyControlForce(controlForceVector, 0.1);
             }
             onStrafeRightKeyDown(e) {
-                console.log("onStrafeRightKeyDown");
-            }
-            onTurnLeftKeyUp(e) {
-                console.log("onTurnLeftKeyUp");
-            }
-            onTurnRightKeyUp(e) {
-                console.log("onTurnRightKeyUp");
-            }
-            onMoveForwardKeyUp(e) {
-                console.log("onMoveForwardKeyUp");
-            }
-            onMoveBackwardKeyUp(e) {
-                console.log("onMoveBackwardKeyUp");
-            }
-            onStrafeLeftKeyUp(e) {
-                console.log("onStrafeLeftKeyUp");
-            }
-            onStrafeRightKeyUp(e) {
-                console.log("onStrafeRightKeyUp");
+                let controlForceVector = this.getControlForceFromVector(ForceDirectionVector.RIGHT);
+                this.world.myPlayer.applyControlForce(controlForceVector, 0.1);
             }
         }
 
         HighFidelityAudio.HiFiLogger.setHiFiLogLevel(HighFidelityAudio.HiFiLogLevel.Debug);
-        let SPAWN_POINT = {x: 0, y: 0, z: 0};
+        let SPAWN_POINT = {x: 220, y: 220, z: 220};
 
         let APP_CONFIG = {
-            SPAWN_POINT : SPAWN_POINT, // Initial position for the receiver
-            PLAYER_RADIUS: 0.2 // Radius of the listener
+            SPAWN_POINT: SPAWN_POINT, // Initial position for the receiver
+            WORLD_SIZE: {x: 2000, y: 2000} 
         }
         let app = new App(APP_CONFIG);
         let canvasElement = document.querySelector('.thecanvas');
         let triggerButton = document.querySelector(`.triggerButton`);
         let consoleElement = document.querySelector(".console");
-        app.setupUI(canvasElement, triggerButton, consoleElement);
+        let muteButton = document.querySelector(".muteButton");
+        app.setupUI(canvasElement, triggerButton, consoleElement, muteButton);
 
     </script>
 </body>
