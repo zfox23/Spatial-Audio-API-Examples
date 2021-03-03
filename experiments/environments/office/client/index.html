@@ -129,7 +129,7 @@
                     orientationEuler: this.orientationEuler
                 });                
             }
-        };
+        }
         
         function drawMap() {
             let ctx = mapCanvas.getContext('2d');
@@ -163,7 +163,6 @@
             ctx.restore();            
         }
 
-        
         function drawPlayer(color, position, orientationEuler) {
             let ctx = mapCanvas.getContext('2d');
             ctx.save();
@@ -210,7 +209,6 @@
                 }
             }
         }
-
         
         function drawInstructions() {
             let ctx = mapCanvas.getContext('2d');
@@ -275,6 +273,7 @@
                 request.send();
             });
         }
+
         function loadMap(url) {
             return new Promise(function (resolve, reject) {
            
@@ -313,6 +312,7 @@
                 let hifiCommunicator = new HighFidelityAudio.HiFiCommunicator({
                     initialHiFiAudioAPIData: initialHiFiAudioAPIData,
                     onUsersDisconnected: onUsersDisconnected,
+                    onConnectionStateChanged: onConnectionStateChanged,
                     userDataStreamingScope: HighFidelityAudio.HiFiUserDataStreamingScopes.Peers
                 });
                 
@@ -344,7 +344,22 @@
                     });
                 });
             });
-        };
+        }
+        
+        function onConnectionStateChanged(connectionState) {
+            switch (connectionState) {
+                case HighFidelityAudio.HiFiConnectionStates.Connected:
+                    break;
+                case HighFidelityAudio.HiFiConnectionStates.Disconnected:
+                case HighFidelityAudio.HiFiConnectionStates.Failed:
+                        statusDisplay.innerHTML = 'Disconnected';
+                        connectButton.disabled = false;
+                        connectButton.innerHTML = 'Connect';
+                        connectDialogue.style.visibility = 'visible';
+                        peers = {};
+                break;
+            }
+        }
         
         function onUserKeyDown(keyEvent) {
             if (keyEvent.repeat) {
@@ -389,6 +404,7 @@
                     break;
             }
         }
+
         function onUserKeyUp(keyEvent) {
             let checkStopSteps = function() {
                 if (player.motionKeys.has(keyEvent.code)) {
@@ -515,9 +531,9 @@
                 mainLoop(hifiCommunicator);
             }, 50);
         }
-      function start() {
-          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-          connectStreams();	  
-      }
+        function start() {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            connectStreams();	  
+        }
     </script>
 </html>
