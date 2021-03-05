@@ -6,7 +6,7 @@
     <meta charset="utf-8">
     <title>HiFi Audio API Example: Player</title>
     <link rel="shortcut icon" type="image/x-icon" href="images/favicon.ico"/>
-    <link rel="stylesheet" href="./css/style.css">
+    <link rel="stylesheet" href="./css/style.css?v=1">
 </head>
 
 <body>
@@ -32,6 +32,7 @@
         // This is the JWT associated with "luis-2 stack space".
         const HIFI_AUDIO_JWT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcHBfaWQiOiIzZTFlYmZkZi1kNzkzLTQwMTQtOGM2Mi05ZGM5NjVlYWU4MDEiLCJzcGFjZV9pZCI6IjEwZGEyNGVmLTRjNGMtNDc3NC04ZWU4LWNiNzcwNmI3MjZiYyIsInN0YWNrIjoiYXVkaW9uZXQtbWl4ZXItYXBpLWFscGhhLTAxIn0.TTpMBtlEYoHMReWuQIJF13TDp4ZF9xViulWMV1vN8QU";
         
+        
         const SoundNodeType = {
             NODE: 0, // Basic node
             EMITTER: 1, // Sends a stream from a audio file
@@ -40,25 +41,52 @@
             PLAYER: 4 // PLAYER receiver with input stream from mic
         }
 
-        const ActionType = {
-            DEFAULT: 0,
-            LOOKAT: 1, // Look at a point on the canvas
-            TALK: 2, // Play an audio file with "someone talking"
-            MOTION: 3  // Motion between two points
-        };
-
-        const MotionType = {
-            LINEAR: 0,
-            EASE_IN: 1,
-            EASE_OUT: 2,
-            EASE_IN_OUT: 3
-        };
-
-        const TaskType = {
-            ACTION: 0, // Task with lookat, talk or motion action data
-            CALLBACK: 1 // Task that calls a function
-        };
-
+        class Vector2D {
+            constructor(x, y) {
+                this.x = x !== undefined ? x : 0;
+                this.y = y !== undefined ? y : 0;
+            }
+            set(x, y) {
+                this.x = x;
+                this.y = y;
+            }
+            add(vector) {
+                this.x += vector.x;
+                this.y += vector.y;
+                return this;
+            }
+            subtract(vector) {
+                this.x -= vector.x;
+                this.y -= vector.y;
+                return this;
+            }
+            multiplyBy(amount) {
+                this.x *= amount;
+                this.y *= amount;
+                return this;
+            }
+            length() {
+                return Math.sqrt(this.x * this.x + this.y * this.y);
+            }
+            clone() {
+                return new Vector2D(this.x, this.y);
+            }
+            rotate(angle) {
+                let x = this.x * Math.cos(angle) - this.y * Math.sin(angle);
+                let y = this.x * Math.sin(angle) + this.y * Math.cos(angle);
+                this.set(x, y);
+                return this;
+            }
+            normalize() {
+                let length = this.length();
+                this.x = length > 0 ? this.x / length : 0;
+                this.y = length > 0 ? this.y / length : 0;
+                return this;
+            }
+            isEqualTo(vector) {
+                return this.x === vector.x && this.y === vector.y;
+            }
+        }
         // Class that manages the physics loop
         // Steps are based on the system's requestAnimationFrame
         class PhysicsLoop {
@@ -107,11 +135,12 @@
 
 
         class Camera2D {
-            constructor(canvas) {
+            constructor(canvas, offset) {
                 this.canvas = canvas;
                 this.context = this.canvas.getContext("2d");
-                this.worldPosition = { x: 0, y: 0, z: 0};
-                this.canvasPosition = { x: 0.5 * this.canvas.width, y: 0.5 * this.canvas.height };
+                this.offset = offset;
+                this.position = new Vector2D();
+                this.positionPX = new Vector2D(this.offset.x * this.canvas.width, this.offset.y * this.canvas.height);
                 this.orientation = 0;
                 this.zoom = 0.008;
                 this.targetZoom = 0.008;
@@ -124,41 +153,30 @@
             }
             // World coordenates to canvas conversion
             worldToCanvasCoords(coords) {
-                let relPos = { x: coords.x - this.worldPosition.x, y: coords.y - this.worldPosition.y };
-                // Rotate vector
-                let rotRelPos = { 
-                    x: relPos.x * Math.cos(this.orientation) - relPos.y * Math.sin(this.orientation), 
-                    y: relPos.x * Math.sin(this.orientation) + relPos.y * Math.cos(this.orientation)
-                };
-                let canvasPos = { 
-                    x: this.canvasPosition.x - rotRelPos.x / this.zoom, 
-                    y: this.canvasPosition.y - rotRelPos.y / this.zoom 
-                };
-                return canvasPos;
+                let relPos = coords.clone().subtract(this.position).rotate(this.orientation).multiplyBy(1.0 / this.zoom);
+                return this.positionPX.clone().subtract(relPos);
             }
             // Canvas coordenates to world conversion
             canvasToWorldCoords(coords) {
-                let relPos = { x: (this.canvasPosition.x - coords.x) * this.zoom, y: (this.canvasPosition.y - coords.y) * this.zoom };
-                let rotRelPos = { 
-                    x: relPos.x * Math.cos(-this.orientation) - relPos.y * Math.sin(-this.orientation), 
-                    y: relPos.x * Math.sin(-this.orientation) + relPos.y * Math.cos(-this.orientation)
-                };
-                let worldPosition = {
-                    x: this.worldPosition.x + rotRelPos.x,
-                    y: this.worldPosition.y + rotRelPos.y
-                }
-                return worldPosition;
+                let relPos = this.positionPX.clone().subtract(coords).multiplyBy(this.zoom).rotate(-this.orientation);
+                return this.position.clone().add(relPos);
             }
             
             onResizeCanvas() {
                 this.canvas.width = window.innerWidth;
                 this.canvas.height = window.innerHeight;
                 this.zoom = 0.0045 * 1280 / (Math.min(this.canvas.height, this.canvas.width));
-                this.canvasPosition = { x: 0.5 * this.canvas.width, y: 0.5 * this.canvas.height };
+                this.positionPX.set(this.offset.x * this.canvas.width, this.offset.y * this.canvas.height);
             }
 
             isVisible(point, radius) {
                 return (point.x > -radius && point.y > -radius && point.x < this.canvas.width + radius && point.y < this.canvas.height + radius);
+            }
+
+            deltaZoom(delta, amount) {
+                let zoomSign = delta / Math.abs(delta);
+                this.targetZoom = Math.min(0.12, Math.max(0.0005, this.targetZoom  + this.targetZoom * amount * zoomSign));
+                // console.log("New zoom: " + this.targetZoom);
             }
         }
         
@@ -194,16 +212,21 @@
 
         class Physical2D {
             constructor(config) {
-                this.position = Object.assign({}, config.position);
+                this.position = config.position ? config.position.clone() : new Vector2D();
+                this.targetPosition = this.position.clone();
                 this.orientation = config.orientation; // radians
                 this.radius = config.radius;
-                this.acceleration = {x: 0, y: 0};
-                this.velocity = {x: 0, y: 0};
+                this.acceleration = new Vector2D();
+                this.velocity = new Vector2D();
+                this.needsUpdate = false;
             }
-            applyControlForce(vector, amount) {
-                let force = {x: vector.x * amount, y: vector.y * amount };
-                this.position.x += force.x;
-                this.position.y += force.y;
+            updatePhysics() {
+                // Interpolate position before rendering
+                const MIN_DELTA = 0.001;
+                const TAU = 0.1;
+                let delta = this.targetPosition.clone().subtract(this.position);
+                this.position.x = Math.abs(delta.x) > MIN_DELTA ? this.position.x + (delta.x) * TAU : this.targetPosition.x;
+                this.position.y = Math.abs(delta.y) > MIN_DELTA ? this.position.y + (delta.y) * TAU : this.targetPosition.y;
             }
         }
         
@@ -221,26 +244,14 @@
             }
             // Simple point-circle collision detection for node selection.
             isPointInside(worldPoint) {
-                let distVec = { x: worldPoint.x - this.position.x, y: worldPoint.y - this.position.y };
-                let distance = Math.sqrt(distVec.x * distVec.x + distVec.y * distVec.y);
-                return distance < this.radius;
-            }
-            // Get a point located one unit in front of node.
-            getLookingAtPoint() {
-                let angle = this.orientation - 0.5 * Math.PI;
-                return { x: this.position.x - Math.cos(angle), y: this.position.y - Math.sin(angle) };
-            }
-            // Get the absolute lookat angle for a point in the plane
-            getLookAtAngle(targetPos) {
-                let dir = { x: targetPos.x - this.position.x, y: targetPos.y - this.position.y };
-                return Math.atan2(dir.y, dir.x) - 0.5 * Math.PI;
+                return worldPoint.clone().subtract(this.position).length() < this.radius;
             }
             // Render loop. Child classes can implement their own method
             render(camera) {
                 this.positionPX = camera.worldToCanvasCoords(this.position);
                 this.radiusPX = this.radius / camera.zoom;
                 this.isVisible = camera.isVisible(this.positionPX, this.radiusPX);
-                if (this.isVisible) {
+                //if (this.isVisible) {
                     // Apply transform
                     camera.context.translate(this.positionPX.x, this.positionPX.y);
                     camera.context.rotate(this.orientation + camera.orientation);
@@ -251,7 +262,7 @@
                     // Undo transform
                     camera.context.rotate(-(this.orientation + camera.orientation));
                     camera.context.translate(-this.positionPX.x, -this.positionPX.y);
-                }
+                //}
 
             }
             // Default method to render basic nodes
@@ -269,7 +280,8 @@
             constructor(config) {
                 super(config);
                 // Create the API's position and orientation objects that will be sent to the mixer
-                this.mixerPosition = new HighFidelityAudio.Point3D({ x: -this.position.x, y: this.position.z, z: -this.position.y });
+                this.mixerPosition = new HighFidelityAudio.Point3D({ x: -this.position.x, y: 0.0, z: -this.position.y });
+                // Send a valid angle
                 this.mixerOrientation = new HighFidelityAudio.OrientationEuler3D({ "pitchDegrees": 0, "yawDegrees": -RADIANS_TO_DEGREES * this.orientation, "rollDegrees": 0 });
                 this.hifiCommunicator = null; // HighFidelityAudio.HiFiCommunicator
                 this.stream = null; // Input or output stream
@@ -285,12 +297,11 @@
             updateData() {
                 // We need to convert the position sent to the mixer
                 this.mixerPosition.x = -this.position.x;
-                this.mixerPosition.y = this.position.z;
+                this.mixerPosition.y = 0.0;
                 this.mixerPosition.z = -this.position.y;
-                let ang = RADIANS_TO_DEGREES * this.orientation;
-                ang = ang < 0 ? 360 + ang : ang;
-                // console.log("Sending angle: " + ang);
-                this.mixerOrientation.yawDegrees = this.translateOrientationYaw(ang);
+                let orientation = -RADIANS_TO_DEGREES * this.orientation;
+                orientation %= 360;
+                this.mixerOrientation.yawDegrees = orientation;
                 this.sendUpdatedData();
             }
             // Send the converted position and orientation to the mixer
@@ -306,15 +317,10 @@
             updateReceivedData(data) {
                 this.volume = data.volumeDecibels !== null ? data.volumeDecibels : this.volume;
                 if (data.position !== null) {
-                    this.position.x = data.position.x !== null ? -data.position.x : this.position.x;
-                    this.position.z = data.position.y !== null ? data.position.y : this.position.y;
-                    this.position.y = data.position.z !== null ? -data.position.z : this.position.z;
+                    this.position.set(-data.position.x, -data.position.z);
                 }
                 if (data.orientationEuler !== null) {
-                    // console.log("Received angle: " + data.orientationEuler.yawDegrees);
-                    let yawDegrees = this.translateOrientationYaw(data.orientationEuler.yawDegrees, true);
-                    let ang = yawDegrees / RADIANS_TO_DEGREES;
-                    this.orientation = ang;
+                    this.orientation = -data.orientationEuler.yawDegrees / RADIANS_TO_DEGREES;
                 }
             }
             // Notify connection changes for debugging
@@ -358,14 +364,6 @@
                     return await this.hifiCommunicator.setInputAudioMuted(muted);
                 }
                 return false;
-            }
-            // We need this conversion until the server returns the correct value
-            translateOrientationYaw(orientation, fromServer) {
-                if (fromServer) {
-                    return 2.0 * (orientation + 90);
-                } else {
-                    return (0.5 * orientation) - 90.0;
-                }
             }
         }
         
@@ -414,7 +412,6 @@
             constructor(config, onDataReceived) {
                 super(config, onDataReceived); // config : {position, orientation, name, radius, color}
                 this.type = SoundNodeType.PLAYER;
-                this.targetPosition = Object.assign({}, config.position);
             }
             async prepareInputStream() {
                 // Get the audio media stream associated with the user's default audio input device.
@@ -428,19 +425,7 @@
             render(camera) {
                 super.render(camera);
             }
-            updatePhysics() {
-                // Interpolate position before rendering
-                const MIN_DELTA = 0.001;
-                const TAU = 0.1;
-                let delta = {
-                    x: this.targetPosition.x - this.position.x, 
-                    y: this.targetPosition.y - this.position.y, 
-                    z: this.targetPosition.z - this.position.z
-                };
-                this.position.x = Math.abs(delta.x) > MIN_DELTA ? this.position.x + (delta.x) * TAU : this.targetPosition.x;
-                this.position.y = Math.abs(delta.y) > MIN_DELTA ? this.position.y + (delta.y) * TAU : this.targetPosition.y;
-                this.position.z = Math.abs(delta.z) > MIN_DELTA ? this.position.z + (delta.z) * TAU : this.targetPosition.z;
-            }
+
             // Custom rendering method for bots 
             renderNode(camera) {
                 // Compute volume ratio
@@ -456,10 +441,8 @@
                 CanvasHelper.renderCircle(camera.context, 0, 0, 0.55 * radius, 0, 2.0 * Math.PI, this.color);
             }
             updateReceivedData(data) { 
-                if (data.position) {
-                    this.targetPosition.x = data.position.x !== null ? -data.position.x : this.targetPosition.x;
-                    this.targetPosition.z = data.position.y !== null ? data.position.y : this.targetPosition.y;
-                    this.targetPosition.y = data.position.z !== null ? -data.position.z : this.targetPosition.z;
+                if (data.position !== null) {
+                    this.targetPosition.set(-data.position.x, -data.position.z);
                 }
                 let newData = { 
                     position: null, 
@@ -473,35 +456,105 @@
             }
         }
 
-        let ForceDirectionVector = {
-            FRONT: { x: 0, y: -10.0 },
-            BACK: { x: 0, y: 10.0 },
-            LEFT: { x: -10.0, y: 0.0 },
-            RIGHT: { x: 10.0, y: 0.0 },
+        class MyPlayerControls {
+            constructor(config, hifiControls) {
+                this.config = config;
+                this.moveActions = { FORWARD: false, BACKWARD: false, LEFT: false, RIGHT: false, JOYSTICK: false };
+                this.moveDirections = { FORWARD: new Vector2D(0,-1), BACKWARD: new Vector2D(0, 1), LEFT: new Vector2D(-1, 0), RIGHT: new Vector2D(1, 0), JOYSTICK: new Vector2D()};
+                this.turnActions = { LEFT: false, RIGHT: false };
+                this.turnDirections = { LEFT: -1, RIGHT: 1 };
+                this.cameraActions = { FOLLOW: false };
+                this.moveActionNames = Object.keys(this.moveActions);
+                this.turnActionNames = Object.keys(this.turnActions);
+                this.cameraActionNames = Object.keys(this.cameraActions);
+                this.joystickBase = new Vector2D();
+                this.linearVelocity = this.config.PLAYER_VELOCITY.LINEAR_UNITS_PER_SECOND;
+                this.angularVelocity = this.config.PLAYER_VELOCITY.ANGULAR_RADIANS_PER_SECOND;
+                this.setupControls(hifiControls);
+            }
+            setupControls(hifiControls) {
+                hifiControls.onTurnRightKeyDown = () => { this.setTurnAction("RIGHT", true); };
+                hifiControls.onTurnLeftKeyDown = () => { this.setTurnAction("LEFT", true); };
+                hifiControls.onMoveForwardKeyDown = () => { this.setMoveAction("FORWARD", true); };
+                hifiControls.onMoveBackwardKeyDown = () => { this.setMoveAction("BACKWARD", true); };
+                hifiControls.onStrafeLeftKeyDown = () => { this.setMoveAction("LEFT", true); };
+                hifiControls.onStrafeRightKeyDown = () => { this.setMoveAction("RIGHT", true); };
+
+                hifiControls.onTurnRightKeyUp = () => { this.setTurnAction("RIGHT", false); };
+                hifiControls.onTurnLeftKeyUp = () => { this.setTurnAction("LEFT", false); };
+                hifiControls.onMoveForwardKeyUp = () => { this.setMoveAction("FORWARD", false); };
+                hifiControls.onMoveBackwardKeyUp = () => { this.setMoveAction("BACKWARD", false); };
+                hifiControls.onStrafeLeftKeyUp = () => { this.setMoveAction("LEFT", false); };
+                hifiControls.onStrafeRightKeyUp = () => { this.setMoveAction("RIGHT", false); };
+            }
+            setJoystickAction(active, lookAtPoint) {
+                let vector = lookAtPoint ? lookAtPoint.clone().subtract(this.joystickBase) : new Vector2D();
+                this.moveActions["JOYSTICK"] = active;
+                this.moveDirections["JOYSTICK"] = vector;
+            }
+            setMoveAction(action, active) {
+                this.moveActions[action] = active;
+            }
+            setTurnAction(action, active) {
+                this.turnActions[action] = active;
+            }
+            setCameraAction(action, active) {
+                this.cameraActions[action] = active;
+            }
+            getForceFromLocalVector(camera, vector, amount) {
+                let positionPX = camera.positionPX.clone().add(vector);
+                let position = camera.canvasToWorldCoords(positionPX);
+                return position.clone().subtract(camera.position).normalize().multiplyBy(amount);
+            }
+            computeForceFromActions(camera, player, deltaTime) {
+                this.moveActionNames.forEach((name) => {
+                    if (this.moveActions[name]) {
+                        let delta = this.getForceFromLocalVector(camera, this.moveDirections[name], this.linearVelocity * deltaTime);
+                        player.targetPosition.add(delta);
+                    }
+                });
+                this.turnActionNames.forEach((name) => {
+                    if (this.turnActions[name]) {
+                        player.orientation += this.turnDirections[name] * this.angularVelocity * deltaTime;
+                    }
+                });
+            }
         }
 
         // A SoundEmitter with some functions to handle actions and custom rendering
         class MyPlayer extends Player {
-            constructor(config, onDataReceived) {
+            constructor(config, hifiControls, onDataReceived) {
                 super(config, onDataReceived); // config : {position, orientation, name, radius, color}
                 this.color = "#FF00FF";
                 this.isMyPlayer = true; // Render guides
+                this.controls = null;
+            }
+            setupControls(config, hifiControls) {
+                this.controls = new MyPlayerControls(config, hifiControls);
             }
             updatePhysics() {
-                // Do nothing for the moment
+                super.updatePhysics();
             }
             render(camera) {
                 super.render(camera);
             }
+            updateControls(camera, deltaTime) {
+                // Do nothing for the moment
+                if (this.controls) {
+                    this.controls.computeForceFromActions(camera, this, deltaTime);
+                }
+            }
         }
 
         class World {
-            constructor(canvas, size, ori) {
-                this.size = size;
-                this.origin = ori;
+            constructor(canvas, config) {
+                this.config = config;
+                this.size = config.WORLD_SIZE;
+                this.origin = config.SPAWN_POINT;
                 this.players = {};
                 this.myPlayer = null;
-                this.camera = new Camera2D(canvas);
+                this.camera = new Camera2D(canvas, config.PLAYER_ONSCREEN_OFFSET);
+                this.hifiControls = new HighFidelityControls.HiFiControls({ mainAppElement: canvas });
                 this.grid = [];
             }
 
@@ -510,10 +563,10 @@
                 let initQuad;
                 let quadSizePX = 1 / this.camera.zoom;
                 let level;
-                for (level = 1; level < 100; level = level * 2) {
+                for (level = 2; level < 100; level = level * 2) {
                     if (quadSizePX * 10 * level > Math.max(this.camera.canvas.width, this.camera.canvas.height)) {
                         quadSizePX = level / this.camera.zoom;
-                        initQuad = { x: level * Math.floor(this.camera.worldPosition.x / level), y: level * Math.floor(this.camera.worldPosition.y / level) }
+                        initQuad = { x: level * Math.floor(this.camera.position.x / level), y: level * Math.floor(this.camera.position.y / level) }
                         break;
                     }
                 }
@@ -522,20 +575,28 @@
                     for (let j = -10; j < 10; j++) {
                         let quad = { x: initQuad.x + i * level , y: initQuad.y + j * level };
                         let quadCenter = { x: quad.x + 0.5 * level, y: quad.y + 0.5 * level};
-                        let quadCenterPX = this.camera.worldToCanvasCoords(quadCenter);
+                        let quadCenterPX = this.camera.worldToCanvasCoords(new Vector2D(quadCenter.x, quadCenter.y));
                         if (this.camera.isVisible(quadCenterPX, quadSizePX)) {
                             let quadPointsPX = [];
                             for (let k = 0; k < corners.length; k++) {
-                                let quadPointPX = this.camera.worldToCanvasCoords({x: quad.x + corners[k].x * level, y: quad.y + corners[k].y * level});
+                                let quadPointPX = this.camera.worldToCanvasCoords(new Vector2D(quad.x + corners[k].x * level, quad.y + corners[k].y * level));
                                 quadPointsPX.push([quadPointPX.x, quadPointPX.y]);
                             }
                             CanvasHelper.renderPolygon(this.camera.context, quadPointsPX, "#CCC", 1);
+                            this.camera.context.translate(quadPointsPX[0][0], quadPointsPX[0][1]);
+                            let textAngle = this.camera.orientation + (Math.cos(this.camera.orientation) < 0.0 ? Math.PI : 0.0);
+                            this.camera.context.rotate(textAngle);
+                            CanvasHelper.renderText(this.camera.context, 0, 0, `x:${quad.x}, y:${quad.y}`, "#AAA", level * 0.05 / this.camera.zoom);
+                            this.camera.context.rotate(-textAngle);
+                            this.camera.context.translate(-quadPointsPX[0][0], -quadPointsPX[0][1]);
                         }
                     }
                 }
 
             }
+            
             render() {
+                this.camera.context.clearRect(0, 0, this.camera.canvas.width,this.camera.canvas.height);
                 this.drawBackground();
                 for (let [id, player] of Object.entries(this.players)) {
                     player.render(this.camera);                 
@@ -543,27 +604,31 @@
             }
             updatePhysics(deltaTime) {
                 if (this.myPlayer) {
-                    this.camera.orientation = -this.myPlayer.orientation;
-                    Object.assign(this.camera.worldPosition, this.myPlayer.position);
+                    // Update camera zoom
                     this.camera.updatePhysics(deltaTime);
                     this.myPlayer.updateData();
+                    this.myPlayer.updateControls(this.camera, deltaTime);
                     for (let [id, player] of Object.entries(this.players)) {
-                        player.updatePhysics();
+                        player.updatePhysics(deltaTime);
                     }
+                    // Make the camera align with player
+                    this.camera.orientation = -this.myPlayer.orientation;
+                    Object.assign(this.camera.position, this.myPlayer.position);
                 }                
             }
             addPlayer(player) {
                 if (player.isMyPlayer) {
                     this.myPlayer = player;
+                    this.myPlayer.setupControls(this.config, this.hifiControls);
                     // Player and camera data
-                    Object.assign(this.camera.worldPosition, this.myPlayer.position);
+                    Object.assign(this.camera.position, this.myPlayer.position);
                     this.camera.orientation = this.myPlayer.orientation;
                 }
                 this.players[player.getId()] = player;
             }
             // When the receiver gets data from the server we update nodes 
             onDataReceived(dataArray) {
-                dataArray.forEach(data => {
+                dataArray.forEach((data, idx) => {
                     if (this.myPlayer && data.hashedVisitID !== this.myPlayer.getId()) {
                         let player = this.players[data.hashedVisitID];
                         if (!this.players[data.hashedVisitID]) {
@@ -572,12 +637,15 @@
                             this.players[data.hashedVisitID] = new Player(playerConfig);
                         }
                         this.players[data.hashedVisitID].updateReceivedData(data);
+                        if (data.position && idx === 3) {
+                            console.log(JSON.stringify(data.position));
+                        }
                     }
                 });
             }
             async connect(config) {
                 // Create, connect and add myPlayer, then add it to the world
-                let myPlayer = new MyPlayer(config, this.onDataReceived.bind(this));
+                let myPlayer = new MyPlayer(config, this.hifiControls, this.onDataReceived.bind(this));
                 if (await myPlayer.connect()) {
                     this.addPlayer(myPlayer);
                     await myPlayer.prepareInputStream();
@@ -603,12 +671,6 @@
                     }
                 }
             }
-            getTargetZoom() {
-                return this.camera.targetZoom;
-            }
-            setTargetZoom(zoom) {
-                this.camera.targetZoom = zoom;
-            }
         }
 
         // Class will create the listener and bots and it will manage its behaviour
@@ -628,7 +690,7 @@
             // Connect the UI elements that trigger the example and and display information
             setupUI(canvas, triggerButton, consoleElement, muteButton) {
                 this.canvas = canvas;
-                this.world = new World(canvas, this.config.WORLD_SIZE, this.config.SPAWN_POINT);
+                this.world = new World(canvas, this.config);
                 this.triggerButton = triggerButton;
                 this.consoleElement = consoleElement;
                 this.muteButton = muteButton;
@@ -639,17 +701,22 @@
                 window.addEventListener('resize', this.onResizeCanvas.bind(this), false);
                 window.addEventListener('load', this.onResizeCanvas.bind(this), false);
                 // Setup the canvas to receive control events
-                let hifiControls = new HighFidelityControls.HiFiControls({ mainAppElement: canvas });
-                hifiControls.onLeftDrag = this.onLeftDrag.bind(this);
-                hifiControls.onRightDrag = this.onRightDrag.bind(this);
-                hifiControls.onCanvasMove = this.onCanvasMove.bind(this);
-                hifiControls.onCanvasDown = this.onCanvasDown.bind(this);
-
-                hifiControls.onTurnRightKeyDown = this.onTurnRightKeyDown.bind(this);
-                hifiControls.onMoveForwardKeyDown = this.onMoveForwardKeyDown.bind(this);
-                hifiControls.onMoveBackwardKeyDown = this.onMoveBackwardKeyDown.bind(this);
-                hifiControls.onStrafeLeftKeyDown = this.onStrafeLeftKeyDown.bind(this);
-                hifiControls.onStrafeRightKeyDown = this.onStrafeRightKeyDown.bind(this);
+                
+                this.world.hifiControls.onRightDrag = (e, data) => {
+                    data.delta *= 0.005;
+                    this.onRotate(e, data);
+                };
+                this.world.hifiControls.onRotate = this.onRotate.bind(this);
+                this.world.hifiControls.onCanvasMove = this.onCanvasMove.bind(this);
+                this.world.hifiControls.onCanvasDown = this.onCanvasDown.bind(this);
+                this.world.hifiControls.onClick = this.onCanvasUp.bind(this);
+                this.world.hifiControls.onLeftDrag = this.onLeftDrag.bind(this);
+                this.world.hifiControls.onPinch = (e, data) => {
+                    this.world.camera.deltaZoom(-data.delta, 0.01 *  Math.abs(data.delta));
+                };
+                this.canvas.addEventListener("wheel", (e) => {
+                    this.world.camera.deltaZoom(e.deltaY, 0.1);
+                });
 
                 this.forceCanvasKeyEvent();
 
@@ -660,12 +727,6 @@
                 }); 
                 // Start the physics loop
                 this.physicsLoop.start();
-
-                this.canvas.addEventListener("wheel", (e) => {
-                    let zoomSign = e.deltaY / Math.abs(e.deltaY);
-                    this.world.setTargetZoom(this.world.getTargetZoom() + 0.001 * zoomSign);
-                    console.log("New zoom: " + this.world.camera.zoom);
-                });
             }
 
             async connectMyPlayer() {
@@ -761,36 +822,31 @@
                     }
                 }
             }
-            // Move the selected node with a left drag
-            onLeftDrag(e) {
-                // Compute the world position based on the control event
-                let worldPos = this.world.camera.canvasToWorldCoords({x: e.offsetX, y: e.offsetY});
-                if (this.selectedNodeId && this.world.myPlayer && this.world.myPlayer.getId() === this.selectedNodeId) {
-                    this.world.myPlayer.position = worldPos;
-                }
-            }
             //Rotate the selected node with a right drag
-            onRightDrag(e, data) { 
+            onRotate(e, data) { 
+                //document.querySelector(".example-description").innerHTML = "Rotating: ";
                 if (this.world.myPlayer) {
-                    this.world.myPlayer.orientation = (this.world.myPlayer.orientation + 0.01 * data.delta);
+                    this.world.myPlayer.orientation = (this.world.myPlayer.orientation + data.delta);
                 }
             }
             // Compute hover on all nodes
             onCanvasMove(e) {
-                let nodeId = this.world.findNodeOnPoint({x: e.offsetX, y: e.offsetY});
+                let nodeId = this.world.findNodeOnPoint(new Vector2D(e.offsetX, e.offsetY));
                 this.hoverNode(nodeId);
+            }
+            onCanvasUp(e) {
+                this.world.myPlayer.controls.setJoystickAction(false);
+            }
+            onLeftDrag(e, data) {
+                this.world.myPlayer.controls.setJoystickAction(true, new Vector2D(e.offsetX, e.offsetY));
             }
             // Select a node with a left click or rotate the listener with a right click
             onCanvasDown(e) {
                 const MOUSE_RIGHT_BUTTON = 2;
                 if (e.button != MOUSE_RIGHT_BUTTON) {
-                    let nodeId = this.world.findNodeOnPoint({x: e.offsetX, y: e.offsetY});
+                    let nodeId = this.world.findNodeOnPoint(new Vector2D(e.offsetX, e.offsetY));
                     this.selectNode(nodeId);
-                } else {
-                    if (this.selectedNodeId && this.world.players[this.selectedNodeId] && this.world.players[this.selectedNodeId].type === SoundNodeType.RECEIVER) {
-                        let targetPos = this.world.camera.canvasToWorldCoords({x: e.offsetX, y: e.offsetY});
-                        this.world.players[this.selectedNodeId].orientation = this.world.players[this.selectedNodeId].getLookAtAngle(targetPos);
-                    }
+                    this.world.myPlayer.controls.joystickBase.set(e.offsetX, e.offsetY);
                 }
             }
             // Set the zoom according to the window size
@@ -812,44 +868,19 @@
                     });
                 });
             }
-
-            getControlForceFromVector(vector) {
-                let canvasPosition = {x: this.world.camera.canvasPosition.x + vector.x, y: this.world.camera.canvasPosition.y + vector.y};
-                let worldPosition = this.world.camera.canvasToWorldCoords(canvasPosition);
-                let controlForceVector = {x: worldPosition.x - this.world.camera.worldPosition.x, y: worldPosition.y - this.world.camera.worldPosition.y};
-                let vectorLength = Math.sqrt(controlForceVector.x * controlForceVector.x + controlForceVector.y * controlForceVector.y);
-                return { x: controlForceVector.x / vectorLength, y: controlForceVector.y / vectorLength };
-            }
-            onTurnLeftKeyDown(e) {
-                
-            }
-            onTurnRightKeyDown(e) {
-
-            }
-            onMoveForwardKeyDown(e) {
-                let controlForceVector = this.getControlForceFromVector(ForceDirectionVector.FRONT);
-                this.world.myPlayer.applyControlForce(controlForceVector, 0.1);
-            }
-            onMoveBackwardKeyDown(e) {
-                let controlForceVector = this.getControlForceFromVector(ForceDirectionVector.BACK);
-                this.world.myPlayer.applyControlForce(controlForceVector, 0.1);
-            }
-            onStrafeLeftKeyDown(e) {
-                let controlForceVector = this.getControlForceFromVector(ForceDirectionVector.LEFT);
-                this.world.myPlayer.applyControlForce(controlForceVector, 0.1);
-            }
-            onStrafeRightKeyDown(e) {
-                let controlForceVector = this.getControlForceFromVector(ForceDirectionVector.RIGHT);
-                this.world.myPlayer.applyControlForce(controlForceVector, 0.1);
-            }
         }
 
         HighFidelityAudio.HiFiLogger.setHiFiLogLevel(HighFidelityAudio.HiFiLogLevel.Debug);
-        let SPAWN_POINT = {x: 220, y: 220, z: 220};
+        let SPAWN_POINT = new Vector2D(120, 120);
 
         let APP_CONFIG = {
             SPAWN_POINT: SPAWN_POINT, // Initial position for the receiver
-            WORLD_SIZE: {x: 2000, y: 2000} 
+            WORLD_SIZE: new Vector2D(200, 200),
+            PLAYER_VELOCITY: {
+                LINEAR_UNITS_PER_SECOND: 2.0,
+                ANGULAR_RADIANS_PER_SECOND: 0.8
+            },
+            PLAYER_ONSCREEN_OFFSET: new Vector2D(0.5, 0.65)
         }
         let app = new App(APP_CONFIG);
         let canvasElement = document.querySelector('.thecanvas');

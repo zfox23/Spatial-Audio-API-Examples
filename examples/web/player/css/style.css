@@ -27,7 +27,7 @@ body {
 .example-description { 
     text-align: center;
     color: white;
-    width: calc(100vw - 304px);
+    width: calc(100vw - 314px);
 }
 
 .console-log {
