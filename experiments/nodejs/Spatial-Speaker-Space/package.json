@@ -1,0 +1,25 @@
+{
+  "name": "spatial-speaker-space",
+  "version": "1.0.0",
+  "description": "A comfortable virtual 3D audio environment for speakers and an audience that makes use of the High Fidelity Spatial Audio API.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zfox23/Spatial-Speaker-Space.git"
+  },
+  "author": "Zach Fox",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/zfox23/Spatial-Speaker-Space/issues"
+  },
+  "homepage": "https://github.com/zfox23/Spatial-Speaker-Space#readme",
+  "dependencies": {
+    "ejs": "^3.1.6",
+    "express": "^4.17.1",
+    "jose": "^3.6.2",
+    "socket.io": "^3.1.2"
+  }
+}
