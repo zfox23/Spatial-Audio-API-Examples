@@ -1,0 +1,473 @@
+<% if (isSpeaker) { %>
+<script>
+    const IS_SPEAKER = true;
+</script>
+<%} else { %>
+<script>
+    const IS_SPEAKER = false;
+</script>
+<% } %>
+
+<script>
+    const MY_CONNECTION_TIMESTAMP = parseInt('<%- JSON.stringify(connectionTimestamp) %>');
+
+    let connectDisconnectButton = document.querySelector('.connectDisconnectButton');
+    connectDisconnectButton.addEventListener("click", connectToHiFi);
+    connectDisconnectButton.disabled = false;
+    let toggleInputMuteButton = document.querySelector('.toggleInputMuteButton');
+    let outputAudioEl = document.querySelector(`.outputAudioEl`);
+    outputAudioEl.addEventListener('canplay', (e) => { setOutputMute(false); } );
+
+    function updateMyPositionAndOrientation(targetPosition, targetYawOrientationDegrees) {
+        if (!hifiCommunicator || !myUserData) {
+            return;
+        }
+
+        let dataToTransmit = {};
+
+        if (!myUserData.position) {
+            myUserData.position = {};
+        }
+
+        if (!myUserData.orientationQuat) {
+            myUserData.orientationQuat = new HighFidelityAudio.OrientationQuat3D();
+        }
+
+        if (targetPosition) {
+            Object.assign(myUserData.position, targetPosition);
+            dataToTransmit["position"] = {};
+            Object.assign(dataToTransmit["position"], myUserData.position);
+
+            canvasRotationDegrees = Math.atan2(myUserData.position.x, -myUserData.position.z) * 180 / Math.PI;
+        }
+
+        if (typeof (targetYawOrientationDegrees) === "number") {
+            myUserData.yawOrientationDegrees = targetYawOrientationDegrees;
+            let threeQuat = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, myUserData.yawOrientationDegrees * Math.PI / 180, 0, THREE_EULER_ORDER));
+            myUserData.orientationQuat.w = threeQuat._w;
+            myUserData.orientationQuat.x = threeQuat._x;
+            myUserData.orientationQuat.y = threeQuat._y;
+            myUserData.orientationQuat.z = threeQuat._z;
+            dataToTransmit["orientationQuat"] = {};
+            Object.assign(dataToTransmit["orientationQuat"], myUserData.orientationQuat);
+        }
+
+        hifiCommunicator.updateUserDataAndTransmit(dataToTransmit);
+    }
+
+    function positionSelfInCrowd() {
+        console.log(`${allLocalUserData.length} user(s) present, including ourselves.\n${speakerCount} speaker(s).\n${audienceCount} audience member(s).`);
+
+        let foundOpenSpot = false;
+        let currentCircleDivisions = 1;
+        let positionsChecked = [];
+        let circleRadius = IS_SPEAKER ? SPEAKER_RADIUS_M : AUDIENCE_RADIUS_M;
+        if (circleRadius === 0) {
+            let currentPotentialPosition = {
+                "x": 0,
+                "z": 0
+            };
+            console.log(`Found an open spot at ${JSON.stringify(currentPotentialPosition)}.`);
+            updateMyPositionAndOrientation(currentPotentialPosition, 0);
+        } else {
+            while (!foundOpenSpot) {
+                for (let theta = 0; theta < 2 * Math.PI; theta += ((2 * Math.PI) / currentCircleDivisions)) {
+                    let currentPotentialPosition = {
+                        "x": (circleRadius) * Math.cos(theta),
+                        "z": (circleRadius) * Math.sin(theta)
+                    };
+
+                    currentPotentialPosition.x = Math.round((currentPotentialPosition.x + Number.EPSILON) * 100) / 100;
+                    currentPotentialPosition.z = Math.round((currentPotentialPosition.z + Number.EPSILON) * 100) / 100;
+
+                    if (positionsChecked.find((position) => { return currentPotentialPosition.x === position.x && currentPotentialPosition.z === position.z; })) {
+                        continue;
+                    }
+                    
+                    let occupied = allLocalUserData.find((element) => { return element.position && Math.abs(element.position.x - currentPotentialPosition.x) < CLOSE_ENOUGH_M && Math.abs(element.position.z - currentPotentialPosition.z) < CLOSE_ENOUGH_M; });
+
+                    if (!occupied) {
+                        let orientationYawRadians = Math.atan2(-currentPotentialPosition.x, -currentPotentialPosition.z);
+                        let orientationYawDegrees = orientationYawRadians * 180 / Math.PI;
+                        if (orientationYawDegrees < 0) {
+                            orientationYawDegrees += 360;
+                        }
+                        let computedYawOrientationDegrees = Math.round((orientationYawDegrees + Number.EPSILON) * 100) / 100;
+                        console.log(`Found an open spot at ${JSON.stringify(currentPotentialPosition)} with yaw orientation ${JSON.stringify(computedYawOrientationDegrees)} degrees.`);
+                        updateMyPositionAndOrientation(currentPotentialPosition, computedYawOrientationDegrees);
+                        foundOpenSpot = true;
+                        break;
+                    } else {
+                        positionsChecked.push(currentPotentialPosition);
+                    }
+                }
+
+                currentCircleDivisions *= 2;
+            }
+        }
+    }
+
+    const numParticipants = document.querySelector('.numParticipants');
+    function recomputeSpeakerAndAudienceCount() {
+        let speakers = allLocalUserData.filter((localUserData) => { return localUserData.isSpeaker === true; })
+        speakerCount = speakers.length;
+
+        let audience = allLocalUserData.filter((localUserData) => { return localUserData.isSpeaker === false; })
+        audienceCount = audience.length;
+
+        numParticipants.innerHTML = audienceCount + speakerCount;
+        updateParticipantsContainerInnerHTML();
+    }
+
+    function resetParticipantsCount() {
+        audienceCount = 0;
+        speakerCount = 0;
+        numParticipants.innerHTML = audienceCount + speakerCount;
+        updateParticipantsContainerInnerHTML();
+    }
+
+    function updateParticipantsContainerInnerHTML() {
+        participantsContainer.innerHTML = ``;
+
+        let speakersContainer = document.createElement('div');
+        speakersContainer.innerHTML = `<h3 class="speakersHeader">Speakers (${speakerCount})</h3>`;
+
+        let audienceContainer = document.createElement('div');
+        audienceContainer.innerHTML = `<h3 class="audienceHeader">Audience (${audienceCount})</h3>`;
+
+        for (const userData of allLocalUserData) {
+            let participant = document.createElement('p');
+            participant.style.color = userData.colorHex;
+            participant.innerHTML = userData.displayName;
+            if (userData.isSpeaker === true) {
+                speakersContainer.appendChild(participant);
+            } else if (userData.isSpeaker === false) {
+                audienceContainer.appendChild(participant);
+            }
+        }
+
+        participantsContainer.appendChild(speakersContainer);
+        participantsContainer.appendChild(audienceContainer);
+    }
+
+    async function onNewHiFiUserDataReceived(receivedHiFiAudioAPIDataArray) {
+        for (let i = 0; i < receivedHiFiAudioAPIDataArray.length; i++) {
+            let currentDataFromServer = receivedHiFiAudioAPIDataArray[i];
+            let currentVisitIDHash = currentDataFromServer.hashedVisitID;
+            let currentLocalUserData = allLocalUserData.find((element) => { return element.visitIDHash === currentVisitIDHash; })
+            let isMine = currentVisitIDHash === myVisitIDHash;
+
+            if (currentLocalUserData) {
+                if (currentDataFromServer.position && !isMine) {
+                    if (!currentLocalUserData.position) {
+                        currentLocalUserData.position = new HighFidelityAudio.Point3D();
+                    }
+
+                    if (typeof (currentDataFromServer.position.x) === "number") {
+                        currentLocalUserData.position.x = currentDataFromServer.position.x;
+                        mustUpdateCanvas = true;
+                    }
+                    if (typeof (currentDataFromServer.position.y) === "number") {
+                        currentLocalUserData.position.y = currentDataFromServer.position.y;
+                        mustUpdateCanvas = true;
+                    }
+                    if (typeof (currentDataFromServer.position.z) === "number") {
+                        currentLocalUserData.position.z = currentDataFromServer.position.z;
+                        mustUpdateCanvas = true;
+                    }
+                }
+                
+                if (currentDataFromServer.orientationQuat && !isMine) {
+                    if (!currentLocalUserData.orientationQuat) {
+                        currentLocalUserData.orientationQuat = new HighFidelityAudio.OrientationQuat3D();
+                    }
+
+                    let updatedQuat = false;
+
+                    if (typeof (currentDataFromServer.orientationQuat.w) === "number") {
+                        currentLocalUserData.orientationQuat.w = currentDataFromServer.orientationQuat.w;
+                        updatedQuat = true;
+                    }
+
+                    if (typeof (currentDataFromServer.orientationQuat.x) === "number") {
+                        currentLocalUserData.orientationQuat.x = currentDataFromServer.orientationQuat.x;
+                        updatedQuat = true;
+                    }
+
+                    if (typeof (currentDataFromServer.orientationQuat.y) === "number") {
+                        currentLocalUserData.orientationQuat.y = currentDataFromServer.orientationQuat.y;
+                        updatedQuat = true;
+                    }
+
+                    if (typeof (currentDataFromServer.orientationQuat.z) === "number") {
+                        currentLocalUserData.orientationQuat.z = currentDataFromServer.orientationQuat.z;
+                        updatedQuat = true;
+                    }
+
+                    if (updatedQuat) {
+                        let yawOrientationDegrees = getYawOrientationDegreesFromQuat(currentLocalUserData.orientationQuat);
+                        if (isMine && typeof (currentLocalUserData.yawOrientationDegrees) === "number" && currentLocalUserData.yawOrientationDegrees !== yawOrientationDegrees) {
+                            console.warn(`We supplied a \`yawOrientationDegrees\` of ${currentLocalUserData.yawOrientationDegrees} degrees, but the server gave us ${yawOrientationDegrees} degrees!`);
+                        }
+                        currentLocalUserData.yawOrientationDegrees = yawOrientationDegrees;
+
+                        mustUpdateCanvas = true;
+                    }
+                }
+
+                // Only update volume data for speakers, not audience members.
+                if (currentLocalUserData.isSpeaker && typeof (currentDataFromServer.volumeDecibels) === "number") {
+                    currentLocalUserData.volumeDecibels = currentDataFromServer.volumeDecibels;
+                    mustUpdateCanvas = true;
+                }
+            } else {
+                let orientationQuat = currentDataFromServer.orientationQuat;
+                let yawOrientationDegrees;
+                if (orientationQuat) {
+                    yawOrientationDegrees = getYawOrientationDegreesFromQuat(orientationQuat);
+                }
+                allLocalUserData.push(new SpeakerSpaceUserData({
+                    visitIDHash: currentVisitIDHash,
+                    position: currentDataFromServer.position,
+                    orientationQuat: orientationQuat,
+                    yawOrientationDegrees: yawOrientationDegrees,
+                    volumeDecibels: currentDataFromServer.volumeDecibels,
+                }));
+            }
+        }
+
+        let allAlone = false;
+        if (!receivedInitialOtherUserDataFromHiFi && receivedHiFiAudioAPIDataArray.length === 1 && receivedHiFiAudioAPIDataArray[0].visitIDHash === myVisitIDHash) {
+            console.log("We're the only one here!");
+            allAlone = true;
+            receivedInitialOtherUserDataFromHiFi = true;
+        }
+
+        let usersSittingInMySeat = [];
+        // Everyone can sit at (0, 0), so we don't want to check for collisions in that case.
+        if (myUserData && myUserData.position && myUserData.position.x !== 0 && myUserData.position.z !== 0) {
+            usersSittingInMySeat = allLocalUserData.filter((userData) => {
+                return myUserData &&
+                    myUserData.position &&
+                    userData.position &&
+                    userData.visitIDHash !== myVisitIDHash &&
+                    Math.abs(myUserData.position.x - userData.position.x) < CLOSE_ENOUGH_M &&
+                    Math.abs(myUserData.position.z - userData.position.z) < CLOSE_ENOUGH_M;
+            });
+        } else {
+            mustUpdateCanvas = true;
+        }
+        let mustReposition = false;
+        if (usersSittingInMySeat.length > 0 || !receivedInitialOtherUserDataFromHiFi || allAlone) {
+            if (usersSittingInMySeat.length > 0) {
+                console.warn(`There's another user in our seat! Checking to see if we were here first...`);
+                let olderConnectionTimestamp;
+                let timestampValid = false;
+                for (userInMySeat of usersSittingInMySeat) {
+                    let otherConnectionTimestamp;
+                    if (userInMySeat.connectionTimestamp) {
+                        otherConnectionTimestamp = userInMySeat.connectionTimestamp
+                    } else {
+                        try {
+                            otherConnectionTimestamp = await fetch(`/spatial-speaker-space/get-connection-age?providedUserID=${userData.providedUserID}&spaceName=${spaceName}`);
+                        } catch (e) {
+                            continue;
+                        }
+                        try {
+                            otherConnectionTimestamp = await otherConnectionTimestamp.json().connectionTimestamp;
+                            userInMySeat.connectionTimestamp = otherConnectionTimestamp;
+                        } catch (e) {
+                            continue;
+                        }
+                    }
+                    if (otherConnectionTimestamp && otherConnectionTimestamp < MY_CONNECTION_TIMESTAMP) {
+                        olderConnectionTimestamp = otherConnectionTimestamp;
+                        timestampValid = true;
+                        break;
+                    }
+                }
+                if (olderConnectionTimestamp && timestampValid) {
+                    console.warn(`Someone else with an older connection was sitting in our seat!\nTheir timestamp: ${olderConnectionTimestamp}\nOur timestamp  : ${MY_CONNECTION_TIMESTAMP}\nLet's recompute our position.`);
+                    mustReposition = true;
+                } else if (timestampValid) {
+                    console.warn(`We were here first, so we're staying put.`);
+                }
+            }
+            if (!receivedInitialOtherUserDataFromHiFi) {
+                receivedInitialOtherUserDataFromHiFi = true;
+                mustReposition = true;
+            }
+
+            if (allAlone || mustReposition) {
+                positionSelfInCrowd();
+            }
+        }
+
+        if (!webSocketStuffInitialized) {
+            initWebSocketStuff();
+        }
+    }
+
+    class SpeakerSpaceUserData {
+        constructor(data) {
+            this.visitIDHash = data.visitIDHash;
+            this.displayName = data.displayName;
+            this.colorHex = data.colorHex || hexColorFromString(this.visitIDHash);
+            this.position = data.position;
+            this.yawOrientationDegrees = data.yawOrientationDegrees;
+            this.orientationQuat = data.orientationQuat;
+            this.isSpeaker = data.isSpeaker;
+            this.volumeDecibels = data.volumeDecibels;
+            this.hiFiGain = data.hiFiGain || 1.0;
+        }
+    }
+
+    let muteButtonHookedUp = false;
+    async function connectToHiFi() {
+        // Disable the Connect button after the user clicks it so we don't double-connect.
+        connectDisconnectButton.disabled = true;
+        connectDisconnectButton.innerHTML = `Connecting...`;
+        toggleInputMuteButton.classList.add("toggleInputMuteButton--disabled");
+        hiFiGainSlider.disabled = true;
+
+        // Get the audio media stream associated with the user's default audio input device.
+        let audioMediaStream;
+        if (IS_SPEAKER) {
+            try {
+                audioMediaStream = await navigator.mediaDevices.getUserMedia({ audio: HighFidelityAudio.getBestAudioConstraints(), video: false });
+            } catch (e) {
+                return;
+            }
+        }
+
+        HighFidelityAudio.HiFiLogger.setHiFiLogLevel(HighFidelityAudio.HiFiLogLevel.Debug);
+
+        // Set up our `HiFiCommunicator` object, supplying our media stream and initial user data.
+        hifiCommunicator = new HighFidelityAudio.HiFiCommunicator({
+            transmitRateLimitTimeoutMS: 10,
+            onUsersDisconnected: onUsersDisconnected,
+            userDataStreamingScope: HighFidelityAudio.HiFiUserDataStreamingScopes.All
+        });
+
+        // Set up a new User Data Subscription to get User Data updates from the server.
+        let newUserDataSubscription = new HighFidelityAudio.UserDataSubscription({
+            // Setting `providedUserID` to `null` (or omitting it) means we will get data updates from **all** connected Users, including ourselves.
+            "providedUserID": null,
+            // There are other components we could subscribe to here, but we're only subscribing to Volume data updates.
+            "components": [
+                HighFidelityAudio.AvailableUserDataSubscriptionComponents.Position,
+                HighFidelityAudio.AvailableUserDataSubscriptionComponents.OrientationQuat,
+                HighFidelityAudio.AvailableUserDataSubscriptionComponents.VolumeDecibels
+            ],
+            // See above for the definition of `onNewHiFiUserDataReceived`.
+            "callback": onNewHiFiUserDataReceived
+        });
+        // Actually add the newly-constructed Data Subscription to the list of our Data Subscriptions on our `HiFiCommunicator`.
+        hifiCommunicator.addUserDataSubscription(newUserDataSubscription);
+
+        allLocalUserData = [];
+        receivedInitialOtherUserDataFromHiFi = false;
+        speakerCount = 0;
+        audienceCount = 0;
+        resetParticipantsCount();
+
+        // Connect to the HiFi Audio API server!
+        try {
+            let response = await hifiCommunicator.connectToHiFiAudioAPIServer('<%- hiFiJWT %>');
+
+            myProvidedUserID = response.audionetInitResponse.user_id;
+            document.querySelector(".displayNameInput").innerHTML = myProvidedUserID;
+            myVisitIDHash = response.audionetInitResponse.visit_id_hash;
+            allLocalUserData.push(new SpeakerSpaceUserData({
+                "providedUserID": myProvidedUserID,
+                "visitIDHash": myVisitIDHash,
+                "isSpeaker": IS_SPEAKER
+            }));
+            updateMyUserData();
+            onMyDisplayNameChanged();
+            if (IS_SPEAKER) {
+                await hifiCommunicator.setInputAudioMediaStream(audioMediaStream);
+                if (!muteButtonHookedUp) {                    
+                    toggleInputMuteButton.addEventListener("click", toggleInputMute);
+                    muteButtonHookedUp = true;
+                }
+                toggleInputMuteButton.classList.remove("toggleInputMuteButton--disabled");
+            } else {
+                setInputMute(true);
+                toggleInputMuteButton.classList.add("toggleInputMuteButton--disabled");
+            }
+            recomputeSpeakerAndAudienceCount();
+            console.log(`My Visit ID Hash: ${myVisitIDHash}`);
+        } catch (e) {
+            console.error(`Error connecting to High Fidelity:\n${JSON.stringify(e)}`);
+            connectDisconnectButton.disabled = false;
+            toggleInputMuteButton.classList.add("toggleInputMuteButton--disabled");
+            connectDisconnectButton.innerHTML = `Connection error. Retry?`;
+            hiFiGainSlider.disabled = true;
+            return;
+        }
+
+        // Show the user that we're connected by changing the text on the button.
+        connectDisconnectButton.removeEventListener("click", connectToHiFi);
+        connectDisconnectButton.addEventListener("click", disconnectFromHiFi);
+        connectDisconnectButton.innerHTML = `Disconnect`;
+        connectDisconnectButton.disabled = false;
+        hiFiGainSlider.disabled = false;
+
+        // Set the `srcObject` on our `audio` DOM element to the final, mixed audio stream from the High Fidelity Audio API Server.
+        outputAudioEl.srcObject = hifiCommunicator.getOutputAudioMediaStream();
+        setOutputMute(false);
+    }
+
+    function disconnectFromHiFi() {
+        console.log(`Disconnecting from High Fidelity Audio API Servers...`);
+
+        connectDisconnectButton.removeEventListener("click", disconnectFromHiFi);
+        connectDisconnectButton.addEventListener("click", connectToHiFi);
+        connectDisconnectButton.disabled = false;
+        connectDisconnectButton.innerHTML = `Connect`;
+        hiFiGainSlider.disabled = true;
+
+        toggleInputMuteButton.classList.add("toggleInputMuteButton--disabled");
+        isMuted = false;
+
+        stopWebSocketStuff();
+
+        if (hifiCommunicator) {
+            hifiCommunicator.disconnectFromHiFiAudioAPIServer();
+        }
+        hifiCommunicator = null;
+        allLocalUserData = [];
+        resetParticipantsCount();
+    }
+
+    function onUsersDisconnected(allDisconnectedUserData) {
+        for (const disconnectedUserData of allDisconnectedUserData) {
+            console.log(`HiFi User left: ${JSON.stringify(disconnectedUserData)}`);
+            allLocalUserData = allLocalUserData.filter((localUserData) => {
+                return localUserData.visitIDHash !== disconnectedUserData.hashedVisitID;
+            });
+        }
+        recomputeSpeakerAndAudienceCount();
+    }
+
+    let particleController = new ParticleController();
+    let lastNow = performance.now();
+    function physicsLoop() {
+        let now = performance.now();
+        let dt = now - lastNow;
+        lastNow = now;
+
+        particleController.updateAllParticles(now, dt);
+    }
+    setInterval(physicsLoop, PHYSICS.PHYSICS_TICKRATE_MS);
+
+    function drawLoop(timestamp) {
+        updateCanvas();
+        window.requestAnimationFrame(drawLoop);
+    }
+    window.requestAnimationFrame(drawLoop);
+
+    window.onresize = updateCanvasDimensions;
+    window.onbeforeunload = disconnectFromHiFi;
+</script>

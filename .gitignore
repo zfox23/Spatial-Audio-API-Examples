@@ -102,3 +102,12 @@ dist
 
 # TernJS port file
 .tern-port
+
+# Eclipse workspace folder
+.metadata/
+
+# jenv
+.java-version
+
+# MacOS
+.DS_Store

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <% if (isSpeaker) { %>
+    <title>Spatial Speaker Space - Speaker</title>
+    <%} else { %>
+    <title>Spatial Speaker Space - Audience</title>
+    <% } %>
+
+    <link rel="stylesheet" href="./css/index.css">
+</head>
+
+<body>
+    <canvas class="mainCanvas"></canvas>
+    <div class="controlsContainer">
+        <div class="description">
+            <p>@<input class="displayNameInput" type="text" placeholder="Display Name" value="<%- providedUserID %>"> in <%- spaceName %></p>
+        </div>
+        <button class="connectDisconnectButton" disabled="true">Connect</button>
+        <div class="toggleInputMuteButton toggleInputMuteButton--disabled"></div>
+        <div class="toggleOutputMuteButton"></div>
+        
+        <audio autoplay class="outputAudioEl"></audio>
+        <audio autoplay class="miscLocalAudio1"></audio>
+        <audio autoplay class="miscLocalAudio2"></audio>
+    </div>
+    <div class="signalButtonContainer"><button class="signalButton signalButton--positive" aria-label="Positive Signal"></button><button class="signalButton signalButton--negative" aria-label="Negative Signal"></button></div>
+    <div class="participantsContainer displayNone"></div>
+    <div class="participantsFAB">
+        <p class="numParticipants">0</p>
+    </div>
+
+    <p class="currentHiFiGainValue">Input Gain: 1.0</p>
+    <input class="hiFiGainSlider" disabled="true" type="range" min="1" max="21" value="11" step="1">
+</body>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.1.1/socket.io.js"></script>
+<%- include('globals', { spaceName }); %>
+<script src="/spatial-speaker-space/js/constants.js"></script>
+<script src="/spatial-speaker-space/js/particles.js"></script>
+<script src="/spatial-speaker-space/js/SignalsController.js"></script>
+<script src="/spatial-speaker-space/js/three.min.js"></script>
+<script src="/spatial-speaker-space/js/utilities.js"></script>
+<script src="/spatial-speaker-space/js/canvas.js"></script>
+<script src="/spatial-speaker-space/js/HighFidelityAudio-latest.js"></script>
+<!-- <script src="https://hifi-spatial-audio-api.s3.amazonaws.com/releases/latest/HighFidelityAudio-latest.js"></script> -->
+<%- include('mainScript', { hiFiJWT, connectionTimestamp}); %>
+<script src="/spatial-speaker-space/js/websocketStuff.js"></script>
+<script src="/spatial-speaker-space/js/controls.js"></script>
+
+</html>

@@ -1,0 +1,220 @@
+body {
+    background-color: #222222;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+}
+
+p {
+    color: white;
+    margin: 0;
+}
+
+.mainCanvas {
+    position: fixed;
+    top: 60px;
+    z-index: 2;
+}
+
+.mainCanvas--positiveCursor {
+    cursor: url('/spatial-speaker-space/images/signalStar.png') 10 10, auto;
+}
+
+.mainCanvas--negativeCursor {
+    cursor: url('/spatial-speaker-space/images/signalLine.png') 10 10, auto;
+}
+
+.controlsContainer {
+    position: fixed;
+    width: 100%;
+    height: 40px;
+    padding: 10px;
+    left: 0;
+    top: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+    background-color: #111111;
+    z-index: 100;
+}
+
+.controlsContainer>div {
+    display: flex;
+    flex-direction: column;
+}
+
+.description {
+    margin: 0 12px;
+}
+
+.connectDisconnectButton {
+    width: 200px;
+    height: 100%;
+    margin: 0 12px;
+}
+
+.toggleInputMuteButton,
+.toggleOutputMuteButton {
+    width: 40px;
+    height: 40px;
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: center center;
+    margin: 0 12px;
+}
+
+.toggleInputMuteButton:hover,
+.toggleOutputMuteButton:hover {
+    cursor: pointer;
+}
+
+.toggleInputMuteButton {
+    background-image: url('/spatial-speaker-space/images/white-mic.svg');
+}
+
+.toggleInputMuteButton--muted {
+    background-image: url('/spatial-speaker-space/images/red-mic-with-cross.svg');
+}
+
+.toggleInputMuteButton--disabled {
+    background-image: url('/spatial-speaker-space/images/grey-mic.svg');
+}
+
+.toggleOutputMuteButton {
+    background-image: url('/spatial-speaker-space/images/white-headphones.svg');
+}
+
+.toggleOutputMuteButton--muted {
+    background-image: url('/spatial-speaker-space/images/red-headphones-with-x.svg');
+}
+
+.participantsFAB {
+    display: flex;
+    position: fixed;
+    bottom: 12px;
+    right: 12px;
+    width: 56px;
+    height: 56px;
+    border-radius: 56px;
+    background-repeat: no-repeat;
+    background-size: 32px 32px;
+    background-position: center center;
+    background-color: #000000BB;
+    background-image: url('/spatial-speaker-space/images/people.svg');
+    justify-content: center;
+    align-items: flex-end;
+    z-index: 100;
+}
+
+.participantsFAB:hover {
+    cursor: pointer;
+}
+
+.numParticipants {
+    width: 100%;
+    text-align: center;
+    color: #FFFFFF;
+    user-select: none;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 18px;
+    line-height: 20px;
+    background-color: #000000;
+    border-radius: 20px;
+    height: 20px;
+    position: relative;
+    top: 8px;
+}
+
+.participantsContainer {
+    width: 200px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    bottom: 80px;
+    right: 12px;
+    background-color: #030303BB;
+    color: white;
+    padding: 12px;
+    border-radius: 4px;
+    z-index: 110;
+}
+
+.hiFiGainSlider {
+    position: fixed;
+    bottom: 12px;
+    left: 12px;
+    width: 200px;
+    max-width: 75%;
+    z-index: 100;
+}
+
+.currentHiFiGainValue {
+    position: fixed;
+    bottom: 36px;
+    left: 12px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 18px;
+    line-height: 20px;
+    color: #FFFFFF;
+}
+
+.speakersHeader {
+    margin: 0 0 12px 0;
+}
+
+.audienceHeader {
+    margin: 12px 0 12px 0;
+}
+
+.signalButtonContainer {
+    position: fixed;
+    top: 72px;
+    right: 0px;
+    margin: 10px;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    -ms-box-sizing: border-box;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+}
+
+.signalButton {
+    border: none;
+    cursor: pointer;
+    pointer-events: all;
+    width: 50px;
+    height: 50px;
+}
+
+.signalButton:focus {
+    outline: none;
+}
+
+.signalButton:focus-visible {
+    border: 2px solid rgb(255, 255, 255, 0.1);
+    border-radius: 4px;
+    outline: none;
+}
+
+.signalButton--positive {
+    background: url('/spatial-speaker-space/images/starBubble.png') transparent no-repeat center center;
+}
+
+.signalButton--negative {
+    background: url('/spatial-speaker-space/images/redLineBubble.png') transparent no-repeat center center;
+}
+
+.signalButton--active {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+}
+
+.displayNone {
+    display: none;
+}

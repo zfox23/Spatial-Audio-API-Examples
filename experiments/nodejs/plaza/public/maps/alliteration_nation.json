@@ -1,0 +1,53 @@
+{
+    "regionSize": 5,
+    "regions": [
+        {
+            "x": -1,
+            "y": 0,
+            "name": "Awesome Area",
+            "imageUrl": "./images/levon-vardanyan-phYeAlPwHrg-unsplash_800.jpg"
+        },
+        {
+            "x": -1,
+            "y": -1,
+            "name": "Frigid Frolic",
+            "imageUrl": "./images/pexels-eberhard-grossgasteiger-858115.jpg"
+        },
+        {
+            "x": 0,
+            "y": 0,
+            "name": "Peaceful Pond",
+            "imageUrl": "./images/eugene-kuznetsov-qBJmwk9m4z0-unsplash_800.jpg"
+        },
+        {
+            "x": 0,
+            "y": -1,
+            "name": "Zen Zeppelin Port",
+            "imageUrl": "./images/jason-lam-78aCYD_pQgg-unsplash_800.jpg"
+        },
+        {
+            "x": 0,
+            "y": 1,
+            "name": "Verdant Valley",
+            "imageUrl": "./images/pexels-trace-hudson-2896668.jpg"
+        },
+        {
+            "x": 1,
+            "y": 0,
+            "name": "Fanciful Forest",
+            "imageUrl": "./images/jocelyne-yvonne-MCpBIwisljo-unsplash_800.jpg"
+        },
+        {
+            "x": 1,
+            "y": 1,
+            "name": "Arid Air Balloons",
+            "imageUrl": "./images/pexels-francesco-ungaro-2325447.jpg"
+        },
+        {
+            "x": 1,
+            "y": -1,
+            "name": "Maroon Mountain",
+            "imageUrl": "./images/pexels-roman-odintsov-4555537.jpg"
+        }
+    ]
+}
