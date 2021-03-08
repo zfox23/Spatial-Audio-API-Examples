@@ -110,13 +110,15 @@ class Avatar extends Client {
         if (typeof(v) !== 'number') return;
         const Min_displayed_dB = -50,
               Max_displayed_dB = 30,
-              Range = Max_displayed_dB - Min_displayed_dB,
-              Max_pixel_expansion = 30;
+              Range = Max_displayed_dB - Min_displayed_dB;
         let clampedV = Math.max(Min_displayed_dB, Math.min(Max_displayed_dB, v)),
-            positiveV = clampedV - Min_displayed_dB,
-            fractionOfRange = positiveV / Range,
-            addendum = fractionOfRange * Max_pixel_expansion,
-            radius = this.constructor.baseRadius + addendum;
+            positiveV = clampedV - Min_displayed_dB;
+        this.showVolumeFraction(positiveV / Range);
+    }
+    showVolumeFraction(fractionOfRange) {
+        const Max_pixel_expansion = 30,
+              addendum = fractionOfRange * Max_pixel_expansion,
+              radius = this.constructor.baseRadius + addendum;
         this.domVolume.style.width = this.domVolume.style.height = (radius * 2) + 'px';
     }
     enableSelfLabel(isEnabled) {
@@ -237,12 +239,32 @@ class MyAvatar extends Avatar {
         this.makeDraggable();
         this.domButton.classList.remove('disabled');
         this.startAudio();
+        this.segments = Array.from(document.getElementsByTagName('segment')).reverse();
+        let micInput = document.querySelector('micControls input'),
+            mute = document.querySelector('micControls button.mute'),
+            unmute = document.querySelector('micControls button.unmute');
+        mute.onclick = event => {
+            mute.parentElement.classList.add('muted');
+            this.stream.getAudioTracks().forEach(track => track.enabled = false);
+        }
+        unmute.onclick = event => {
+            unmute.parentElement.classList.remove('muted');
+            this.stream.getAudioTracks().forEach(track => track.enabled = true);
+        }
+        micInput.onchange = event => 
+        this.communicator.updateUserDataAndTransmit(new HighFidelityAudio.HiFiAudioAPIData({hiFiGain: micInput.valueAsNumber}));
+    }
+    showVolumeFraction(fractionOfRange) {
+        super.showVolumeFraction(fractionOfRange);
+        let highestSegmentIndex = fractionOfRange * 10;
+        this.segments.forEach((segment, index) => segment.style.opacity = (index < highestSegmentIndex) ? 1 : 0.5);
     }
     startAudio() {
         if (this.gotInputAudio) return;
         let bestAudioConstraints = HighFidelityAudio.getBestAudioConstraints();
         navigator.mediaDevices.getUserMedia({ audio: bestAudioConstraints, video: false })
             .then(stream => {
+                this.stream = stream;
                 this.setInputAudio(stream);
                 this.canPickFile(".mp3,.jpg,.jpeg,.png,image/*,audio/*");
             })
@@ -436,7 +458,7 @@ class RoomRecord extends Record {
         this.hifiRoomId = options.roomId;
         this.avatars = new Map(); // sessionAvatarIds to AvatarRecords of those currently in the room. // FIXME: Map => Object.
         this.availableColors = ['AliceBlue', 'AntiqueWhite', 'Aqua', 'Aquamarine', 'Azure', 'Beige', 'Bisque', 'Black', 'BlanchedAlmond', 'Blue', 'BlueViolet', 'Brown', 'BurlyWood', 'CadetBlue', 'Chartreuse', 'Chocolate', 'Coral', 'CornflowerBlue', 'Cornsilk', 'Crimson', 'Cyan', 'DarkBlue', 'DarkCyan', 'DarkGoldenRod', 'DarkGrey', 'DarkGreen', 'DarkKhaki', 'DarkMagenta', 'DarkOliveGreen', 'DarkOrange', 'DarkOrchid', 'DarkRed', 'DarkSalmon', 'DarkSeaGreen', 'DarkSlateBlue', 'DarkSlateGrey', 'DarkTurquoise', 'DarkViolet', 'DeepPink', 'DeepSkyBlue', 'DimGrey', 'DodgerBlue', 'FireBrick', 'FloralWhite', 'ForestGreen', 'Fuchsia', 'Gainsboro', 'GhostWhite', 'Gold', 'GoldenRod', 'Grey', 'Green', 'GreenYellow', 'HoneyDew', 'HotPink', 'IndianRed', 'Indigo', 'Ivory', 'Khaki', 'Lavender', 'LavenderBlush', 'LawnGreen', 'LemonChiffon', 'LightBlue', 'LightCoral', 'LightCyan', 'LightGoldenRodYellow', 'LightGrey', 'LightGreen', 'LightPink', 'LightSalmon', 'LightSeaGreen', 'LightSkyBlue', 'LightSlateGrey', 'LightSteelBlue', 'LightYellow', 'Lime', 'LimeGreen', 'Linen', 'Magenta', 'Maroon', 'MediumAquaMarine', 'MediumBlue', 'MediumOrchid', 'MediumPurple', 'MediumSeaGreen', 'MediumSlateBlue', 'MediumSpringGreen', 'MediumTurquoise', 'MediumVioletRed', 'MidnightBlue', 'MintCream', 'MistyRose', 'Moccasin', 'NavajoWhite', 'Navy', 'OldLace', 'Olive', 'OliveDrab', 'Orange', 'OrangeRed', 'Orchid', 'PaleGoldenRod', 'PaleGreen', 'PaleTurquoise', 'PaleVioletRed', 'PapayaWhip', 'PeachPuff', 'Peru', 'Pink', 'Plum', 'PowderBlue', 'Purple', 'RebeccaPurple', 'Red', 'RosyBrown', 'RoyalBlue', 'SaddleBrown', 'Salmon', 'SandyBrown', 'SeaGreen', 'SeaShell', 'Sienna', 'Silver', 'SkyBlue', 'SlateBlue', 'SlateGrey', 'Snow', 'SpringGreen', 'SteelBlue', 'Tan', 'Teal', 'Thistle', 'Tomato', 'Turquoise', 'Violet', 'Wheat', 'White', 'WhiteSmoke', 'Yellow', 'YellowGreen'];
-        this.availableNames = ['Nile', 'Amazon', 'Yangtze ', 'Mississippi', 'Yenisei', 'Ob', 'Congo', 'Amur', 'Lena', 'Mekong', 'Mackenzie', 'Brahmaputra', 'Murray', 'Tocantins', 'Volg', 'Indus', 'Euphrates', 'Madeira', 'Purús', 'Yukon', 'Salween', 'Tunguska', 'Danube', 'Zambezi', 'Vilyuy', 'Araguaia', 'Ganges', 'Japurá', 'Nelson', 'Paraguay', 'Kolyma', 'Pilcomayo', 'Ishim', 'Juruá', 'Ural', 'Arkansas', 'Colorado', 'Olenyok', 'Dniepe', 'Aldan', 'Ubangi', 'Negro', 'Columbia', 'Pearl', 'Ayeyarwady', 'Kasai', 'Ohio', 'Orinoco', 'Tarim', 'Xingu', 'Salado', 'Vitim', 'Tigris', 'Songhua', 'Tapajós', 'Don', 'Pechora', 'Kama', 'Limpopo', 'Chulym', 'Guaporé', 'Indigirka', 'Snake','Senegal', 'Uruguay', 'Churchill', 'Khatanga', 'Okavango', 'Volta', 'Beni', 'Platte', 'Tobol', 'Alazeya', 'Jubba', 'Içá', 'Magdalena', 'Han', 'Kura', 'Oka', 'Murray', 'Guaviare', 'Pecos', 'Murrumbidgee', 'Yenisei', 'Godavari', 'Belaya', 'Cooper', 'Marañón', 'Dniester', 'Benue', 'Ili', 'Warburton', 'Sutlej', 'Yamuna', 'Vyatka', 'Fraser', 'Brazos', 'Liao', 'Lachlan', 'Yalong', 'Iguaçu', 'Olyokma', 'Dvina', 'Krishna', 'Iriri', 'Narmada', 'Lomami', 'Ottawa', 'Lerma', 'Elbe', 'Zeya', 'Juruena', 'Rhine', 'Athabasca', 'Canadian', 'Saskatchewan', 'Vistula', 'Vaal', 'Shire', 'Ogooué', 'NenKızıl', 'Markha', 'Green', 'Milk', 'Chindwin', 'Sankuru', 'Wu', 'James', 'Kapuas', 'Desna', 'Helmand', 'Tietê', 'Vychegda', 'Sepik', 'Cimarron', 'Anadyr', 'Jialing', 'Liard', 'Cumberland', 'Huallaga', 'Kwango', 'Draa', 'Gambia', 'Tyung', 'Chenab', 'Yellowstone', 'Ghaghara', 'Huai', 'Aras', 'Chu', 'Bermejo', 'Fly', 'Kuskokwim', 'Tennessee', 'Oder', 'Aruwimi', 'Daugava', 'Gila', 'Loire', 'Essequibo', 'Khoper', 'Tagus', 'Flinders'];
+        this.availableNames = ['Nile', 'Amazon', 'Yangtze ', 'Mississippi', 'Yenisei', 'Ob', 'Congo', 'Amur', 'Lena', 'Mekong', 'Mackenzie', 'Brahmaputra', 'Murray', 'Tocantins', 'Volg', 'Indus', 'Euphrates', 'Madeira', 'Purús', 'Yukon', 'Salween', 'Tunguska', 'Danube', 'Zambezi', 'Vilyuy', 'Araguaia', 'Ganges', 'Japurá', 'Nelson', 'Paraguay', 'Kolyma', 'Pilcomayo', 'Ishim', 'Juruá', 'Ural', 'Arkansas', 'Colorado', 'Olenyok', 'Dniepe', 'Aldan', 'Ubangi', 'Negro', 'Columbia', 'Pearl', 'Ayeyarwady', 'Kasai', 'Ohio', 'Orinoco', 'Tarim', 'Xingu', 'Salado', 'Vitim', 'Tigris', 'Songhua', 'Tapajós', 'Don', 'Pechora', 'Kama', 'Limpopo', 'Chulym', 'Guaporé', 'Indigirka', 'Snake','Senegal', 'Uruguay', 'Churchill', 'Khatanga', 'Okavango', 'Volta', 'Beni', 'Platte', 'Tobol', 'Alazeya', 'Jubba', 'Içá', 'Magdalena', 'Han', 'Kura', 'Oka', 'Murray', 'Guaviare', 'Pecos', 'Murrumbidgee', 'Yenisei', 'Godavari', 'Belaya', 'Cooper', 'Marañón', 'Dniester', 'Benue', 'Ili', 'Warburton', 'Sutlej', 'Yamuna', 'Vyatka', 'Fraser', 'Brazos', 'Liao', 'Lachlan', 'Yalong', 'Iguaçu', 'Olyokma', 'Dvina', 'Krishna', 'Iriri', 'Narmada', 'Lomami', 'Ottawa', 'Lerma', 'Elbe', 'Zeya', 'Juruena', 'Rhine', 'Athabasca', 'Canadian', 'Saskatchewan', 'Vistula', 'Vaal', 'Shire', 'Ogooué', 'Nene', 'Markha', 'Green', 'Milk', 'Chindwin', 'Sankuru', 'Wu', 'James', 'Kapuas', 'Desna', 'Helmand', 'Tietê', 'Vychegda', 'Sepik', 'Cimarron', 'Anadyr', 'Jialing', 'Liard', 'Cumberland', 'Huallaga', 'Kwango', 'Draa', 'Gambia', 'Tyung', 'Chenab', 'Yellowstone', 'Ghaghara', 'Huai', 'Aras', 'Chu', 'Bermejo', 'Fly', 'Kuskokwim', 'Tennessee', 'Oder', 'Aruwimi', 'Daugava', 'Gila', 'Loire', 'Essequibo', 'Khoper', 'Tagus', 'Flinders'];
         this.subscribeToMessages(['view-join', 'view-exit', 'addAvatarRecord', 'storeImage'], this.sessionId);
     }
     storeImage(url) {

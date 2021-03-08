@@ -50,6 +50,23 @@
     <template id="mapTemplate">
       <map>
         <h2>Space...</h2>
+        <micControls>
+          <button class="mute"><i class="material-icons">mic</i></button>
+          <button class="unmute"><i class="material-icons">mic_off</i></button>
+          <volumeMeter>
+            <segment class="v10"></segment>
+            <segment class="v9"></segment>
+            <segment class="v8"></segment>
+            <segment class="v7"></segment>
+            <segment class="v6"></segment>
+            <segment class="v5"></segment>
+            <segment class="v4"></segment>
+            <segment class="v3"></segment>
+            <segment class="v2"></segment>
+            <segment class="v1"></segment>
+          </volumeMeter>
+          <input type="range" step="0.1" value="1" min="0" max="4">
+        </micControls>
       </map>
     </template>
     <template id="avatarTemplate">
