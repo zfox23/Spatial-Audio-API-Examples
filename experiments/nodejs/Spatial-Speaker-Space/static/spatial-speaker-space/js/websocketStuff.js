@@ -8,6 +8,7 @@ function initWebSocketStuff() {
     webSocketStuffInitialized = true;
     spatialSpeakerSpaceSocket.emit("addParticipant", { visitIDHash: myVisitIDHash, displayName: myUserData.displayName, colorHex: myUserData.colorHex, isSpeaker: IS_SPEAKER, spaceName });
     spatialMicrophoneSocket.emit("userConnected", { spaceName, visitIDHash: myVisitIDHash, position: myUserData.position });
+    spatialMicrophoneSocket.emit("startRecording", { spaceName, visitIDHash: myVisitIDHash });
 }
 
 function updateRemoteParticipant() {
@@ -50,4 +51,8 @@ spatialSpeakerSpaceSocket.on("requestParticleAdd", ({ visitIDHash, spaceName, pa
         console.log(`"${visitIDHash}" added a signal particle!`);
         signalsController.addSignal(particleParams);
     }
+});
+
+spatialMicrophoneSocket.on("recordingFinished", ({ recordingFilename } = {}) => {
+    console.log(`The server finished a recording and placed it on the server's filesystem at:\n${recordingFilename}`);
 });
