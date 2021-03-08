@@ -6,10 +6,11 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build:web": "node index.js -c -o ../client/data/map.json",
-    "update:zones": "node index.js -z"
+    "update:zones": "node index.js -z",
+    "delete:zones": "node index.js -d"
   },
   "author": "Roxanne Skelly",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "hifi-spatial-audio": "^0.2.8",
     "node-fetch": "^2.6.1",

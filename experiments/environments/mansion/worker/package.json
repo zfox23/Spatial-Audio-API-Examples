@@ -8,7 +8,7 @@
     "start": "node index.js"
   },
   "author": "Roxanne Skelly",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "audio-decode": "^1.4.0",
     "audio-format": "^2.3.2",

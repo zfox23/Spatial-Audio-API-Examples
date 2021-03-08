@@ -9,7 +9,7 @@
     "update:zones": "node index.js -z"
   },
   "author": "Roxanne Skelly",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "hifi-spatial-audio": "^0.2.8",
     "node-fetch": "^2.6.1",
