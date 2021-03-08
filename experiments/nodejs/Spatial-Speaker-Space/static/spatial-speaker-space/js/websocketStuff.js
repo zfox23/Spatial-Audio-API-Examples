@@ -1,9 +1,13 @@
-const socket = io('', { path: '/spatial-speaker-space/socket.io' });
+const spatialSpeakerSpaceSocket = io('', { path: '/spatial-speaker-space/socket.io' });
+// This Experiment plays nicely with the Spatial Microphone example found elsewhere in this repository! :)
+// But, if you aren't running that example, that's OK; Spatial-Speaker-Space will still work.
+const spatialMicrophoneSocket = io(':8125', { path: '/spatial-microphone/socket.io', reconnectionAttempts: 1 });
 let webSocketStuffInitialized = false;
 
 function initWebSocketStuff() {
     webSocketStuffInitialized = true;
-    socket.emit("addParticipant", { visitIDHash: myVisitIDHash, displayName: myUserData.displayName, colorHex: myUserData.colorHex, isSpeaker: IS_SPEAKER, spaceName });
+    spatialSpeakerSpaceSocket.emit("addParticipant", { visitIDHash: myVisitIDHash, displayName: myUserData.displayName, colorHex: myUserData.colorHex, isSpeaker: IS_SPEAKER, spaceName });
+    spatialMicrophoneSocket.emit("userConnected", { spaceName, visitIDHash: myVisitIDHash, position: myUserData.position });
 }
 
 function updateRemoteParticipant() {
@@ -12,15 +16,16 @@ function updateRemoteParticipant() {
     }
     let dataToUpdate = { visitIDHash: myVisitIDHash, displayName: myUserData.displayName, colorHex: myUserData.colorHex, spaceName };
     console.log(`Updating data about me on server:\n${JSON.stringify(dataToUpdate)}`);
-    socket.emit("editParticipant", dataToUpdate);
+    spatialSpeakerSpaceSocket.emit("editParticipant", dataToUpdate);
 }
 
 function stopWebSocketStuff() {
-    socket.emit("removeParticipant", { visitIDHash: myVisitIDHash, spaceName });
+    spatialSpeakerSpaceSocket.emit("removeParticipant", { visitIDHash: myVisitIDHash, spaceName });
+    spatialMicrophoneSocket.emit("userDisconnected", { spaceName, visitIDHash: myVisitIDHash });
     webSocketStuffInitialized = false;
 }
 
-socket.on("onParticipantAdded", (participantArray) => {
+spatialSpeakerSpaceSocket.on("onParticipantAdded", (participantArray) => {
     console.log(`Retrieved information about ${participantArray.length} participants from the server:\n${JSON.stringify(participantArray)}`);
     participantArray.forEach((participant) => {
         let { visitIDHash, displayName, colorHex, isSpeaker } = participant;
@@ -38,7 +43,7 @@ socket.on("onParticipantAdded", (participantArray) => {
     });
 });
 
-socket.on("requestParticleAdd", ({ visitIDHash, spaceName, particleData } = {}) => {
+spatialSpeakerSpaceSocket.on("requestParticleAdd", ({ visitIDHash, spaceName, particleData } = {}) => {
     let particleParams = JSON.parse(particleData);
 
     if (particleParams.signalName) {
