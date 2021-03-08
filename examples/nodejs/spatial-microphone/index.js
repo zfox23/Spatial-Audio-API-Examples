@@ -62,7 +62,7 @@ class SpatialMicrophone {
         });
         // Set up the HiFiCommunicator used to communicate with the Spatial Audio API.
         this.communicator = new Communicator({ initialHiFiAudioAPIData: this.audioAPIData });
-        this.monoSamples = new Int16Array();
+        this.stereoSamples = new Int16Array();
         this.startRecordTime = undefined;
     }
 
@@ -89,15 +89,6 @@ class SpatialMicrophone {
         this.outputAudioMediaStreamTrack = null;
     }
 
-    downmixStereoToMono(samples) {
-        let outputInt16Array = new Int16Array(samples.length / 2);
-        for (let i = 0; i < outputInt16Array.length; i++) {
-            outputInt16Array[i] = samples[i * 2] / 2 + samples[i * 2 + 1] / 2;
-        }
-
-        return outputInt16Array;
-    }
-
     startRecording() {
         console.log(`Starting to record from spatial microphone in \`${this.spaceName}\`...`);
 
@@ -105,15 +96,15 @@ class SpatialMicrophone {
 
         this.rtcAudioSink = new RTCAudioSink(this.outputAudioMediaStreamTrack);
         this.rtcAudioSink.ondata = (data) => {
-            if (this.monoSamples.length === 0) {
+            if (this.stereoSamples.length === 0) {
                 console.log(`\`rtcAudioSink\` received initial audio data!`);
             }
 
-            let newMonoSamples = this.downmixStereoToMono(data.samples);
-            let temp = new Int16Array(this.monoSamples.length + newMonoSamples.length);
-            temp.set(this.monoSamples, 0);
-            temp.set(newMonoSamples, this.monoSamples.length);
-            this.monoSamples = temp;
+            let newStereoSamples = data.samples;
+            let temp = new Int16Array(this.stereoSamples.length + newStereoSamples.length);
+            temp.set(this.stereoSamples, 0);
+            temp.set(newStereoSamples, this.stereoSamples.length);
+            this.stereoSamples = temp;
         };
     }
 
@@ -121,13 +112,13 @@ class SpatialMicrophone {
         console.log(`Stopping the recording from spatial microphone in \`${this.spaceName}\`...`);
         console.log(`Recording length: ${(Date.now() - this.startRecordTime) / 1000}s`);
 
-        const finalBuffer = Buffer.from(this.monoSamples.buffer);
+        const finalBuffer = Buffer.from(this.stereoSamples.buffer);
 
         if (!filetype || filetype === "wav") {
             const filename = `./output/${Date.now()}.wav`;
             const writer = new wav.FileWriter(filename, {
                 sampleRate: 48000,
-                channels: 1,
+                channels: 2,
                 bitDepth: 16,
             });
             writer.write(finalBuffer);
@@ -139,7 +130,7 @@ class SpatialMicrophone {
                 "raw": true,
                 "bitwidth": 16,
                 "sfreq": 48,
-                "mode": "m",
+                "mode": "s",
                 "signed": true,
                 "unsigned": false,
                 "little-endian": true,
@@ -151,11 +142,11 @@ class SpatialMicrophone {
             this.encoder.encode()
                 .then(() => {
                     console.log(`Successfully encoded \`${filename}\`!`);
-                    this.monoSamples = null;
+                    this.stereoSamples = null;
                 })
                 .catch((error) => {
                     console.error(`Couldn't encode samples from Spatial Microphone! Error:\n${error}`)
-                    this.monoSamples = null;
+                    this.stereoSamples = null;
                 });
         }
 
@@ -213,7 +204,7 @@ io.on("connection", (socket) => {
 
         if (spaceInformation[spaceName].participants.length === 0) {
             console.log(`In \`${spaceName}\`, all users disconnected. Stopping the Spatial Microphone...`);
-            spaceInformation[spaceName].spatialMicrophone.finishRecording("mp3");
+            spaceInformation[spaceName].spatialMicrophone.finishRecording("wav");
             spaceInformation[spaceName].spatialMicrophone.deinit();
             if (spaceInformation[spaceName].spatialMicrophone.communicator) {
                 spaceInformation[spaceName].spatialMicrophone.communicator.disconnectFromHiFiAudioAPIServer();
