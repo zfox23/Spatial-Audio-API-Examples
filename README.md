@@ -52,10 +52,15 @@ Experience High Fidelity Spatial Audio with 2D video chat powered by Agora.
 Experience High Fidelity Spatial Audio with 2D video chat powered by Daily.
 ### [Video Chat - Twilio](./experiments/nodejs/videochat-twilio)
 Experience High Fidelity Spatial Audio with 2D video chat powered by Twilio.
-
 ## Minecraft Experiments
 ### [Minecraft Mod Example](./experiments/minecraft/hifimc)
 Experience High Fidelity's spatial audio while playing Minecraft: Java Edition with others.
+## Audio Environments
+Featuring a combination of HTML/JS and NodeJS
+### [Haunted Mansion Envrionment](./experiments/environments/mansion)
+Explore a 3d auditory experience with your friends.
+### [Office Envrionment](./experiments/environments/office)
+Virtual office with walls and private rooms.
 
 # Live Demos
 This repository employs GitHub Pages, which means that you can look at some of these example applications live by browsing [this page](https://highfidelity.github.io/Spatial-Audio-API-Examples/).
