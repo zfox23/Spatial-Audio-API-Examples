@@ -36,18 +36,19 @@ class Avatar extends Client {
         if (streamingAvatar || model.sessionAvatarId === this.viewId) {
             let initialHiFiAudioAPIData = this.hifiData(this.model.x, this.model.y);
             this.communicator = new HighFidelityAudio.HiFiCommunicator({initialHiFiAudioAPIData});
-            this.connect();
-        }
-        if (streamingAvatar) {
-            streamingAvatar.audioAvatars[model.sessionAvatarId] = this;
-            this.makeDraggable();
-            this.canPickFile("image/*");
-            this.domButton.classList.remove('disabled');
-            let source = this.audioSource;
-            if (source) {
-                source.source.start(0);
-                this.setInputAudio(source.stream, source.isStereo);
-            }
+            this.connect().then(() => {
+                if (streamingAvatar) {
+                    streamingAvatar.audioAvatars[model.sessionAvatarId] = this;
+                    this.makeDraggable();
+                    this.canPickFile("image/*");
+                    this.domButton.classList.remove('disabled');
+                    let source = this.audioSource;
+                    if (source) {
+                        source.source.start(0);
+                        this.setInputAudio(source.stream, source.isStereo);
+                    }
+                }
+            });
         }
         this.subscribeToMessages(['exit', 'redraw', 'setKickState', 'setImage']);
     }
@@ -56,7 +57,7 @@ class Avatar extends Client {
         const PixelsToMeters = 1/40;
         return new HighFidelityAudio.HiFiAudioAPIData({
             position: new HighFidelityAudio.Point3D({x: x * PixelsToMeters, y:0, z: y * PixelsToMeters}),
-            orientationEuler: new HighFidelityAudio.OrientationEuler3D({ "pitchDegrees": 0, "yawDegrees": rotation, "rollDegrees": 0 })
+            orientationEuler: new HighFidelityAudio.OrientationEuler3D({pitchDegrees: 0, yawDegrees: 180 - rotation, rollDegrees: 0 })
         });
     }
     setInputAudio(stream, stereo = false) {
@@ -88,7 +89,7 @@ class Avatar extends Client {
     }
     async connect() {
         let jwt = await this.makeJWT(this.hifiUserId);
-        this.communicator.connectToHiFiAudioAPIServer(jwt).then(response => this.connected(response));
+        await this.communicator.connectToHiFiAudioAPIServer(jwt).then(response => this.connected(response));
     }
     connected(response) { console.info('HiFidelityAudio connect response', response); }
     redraw({x = this.model.x, y = this.model.y, rotation = this.model.rotation, sourceId} = {}) { // after x/y change
@@ -266,14 +267,13 @@ class MyAvatar extends Avatar {
             .then(stream => {
                 this.stream = stream;
                 this.setInputAudio(stream);
-                this.canPickFile(".mp3,.jpg,.jpeg,.png,image/*,audio/*");
+                this.canPickFile(".mp3,.jpg,.jpeg,.png,image,audio");
             })
             .catch(console.error); // No harm. User can try again.
     }
     connected(response) { // Connect the communicator output to the player.
         super.connected(response);
         player.srcObject = this.communicator.getOutputAudioMediaStream();
-        player.play();
         let subscription = new HighFidelityAudio.UserDataSubscription({
             "components": [
                 HighFidelityAudio.AvailableUserDataSubscriptionComponents.VolumeDecibels
@@ -336,6 +336,7 @@ class MyAvatar extends Avatar {
                 destination = context.createMediaStreamDestination(); // has destination.stream property
             audioSource.buffer = buffer;
             audioSource.connect(destination);
+            audioSource.loop = true;
             let ourId = this.model.sessionAvatarId,
                 sessionAvatarId = Object.keys(this.audioSources).length + 'm' + ourId,
                 name = `${this.model.name}'s ${file.name.replace('.mp3', '')}`;
@@ -458,7 +459,7 @@ class RoomRecord extends Record {
         this.hifiRoomId = options.roomId;
         this.avatars = new Map(); // sessionAvatarIds to AvatarRecords of those currently in the room. // FIXME: Map => Object.
         this.availableColors = ['AliceBlue', 'AntiqueWhite', 'Aqua', 'Aquamarine', 'Azure', 'Beige', 'Bisque', 'Black', 'BlanchedAlmond', 'Blue', 'BlueViolet', 'Brown', 'BurlyWood', 'CadetBlue', 'Chartreuse', 'Chocolate', 'Coral', 'CornflowerBlue', 'Cornsilk', 'Crimson', 'Cyan', 'DarkBlue', 'DarkCyan', 'DarkGoldenRod', 'DarkGrey', 'DarkGreen', 'DarkKhaki', 'DarkMagenta', 'DarkOliveGreen', 'DarkOrange', 'DarkOrchid', 'DarkRed', 'DarkSalmon', 'DarkSeaGreen', 'DarkSlateBlue', 'DarkSlateGrey', 'DarkTurquoise', 'DarkViolet', 'DeepPink', 'DeepSkyBlue', 'DimGrey', 'DodgerBlue', 'FireBrick', 'FloralWhite', 'ForestGreen', 'Fuchsia', 'Gainsboro', 'GhostWhite', 'Gold', 'GoldenRod', 'Grey', 'Green', 'GreenYellow', 'HoneyDew', 'HotPink', 'IndianRed', 'Indigo', 'Ivory', 'Khaki', 'Lavender', 'LavenderBlush', 'LawnGreen', 'LemonChiffon', 'LightBlue', 'LightCoral', 'LightCyan', 'LightGoldenRodYellow', 'LightGrey', 'LightGreen', 'LightPink', 'LightSalmon', 'LightSeaGreen', 'LightSkyBlue', 'LightSlateGrey', 'LightSteelBlue', 'LightYellow', 'Lime', 'LimeGreen', 'Linen', 'Magenta', 'Maroon', 'MediumAquaMarine', 'MediumBlue', 'MediumOrchid', 'MediumPurple', 'MediumSeaGreen', 'MediumSlateBlue', 'MediumSpringGreen', 'MediumTurquoise', 'MediumVioletRed', 'MidnightBlue', 'MintCream', 'MistyRose', 'Moccasin', 'NavajoWhite', 'Navy', 'OldLace', 'Olive', 'OliveDrab', 'Orange', 'OrangeRed', 'Orchid', 'PaleGoldenRod', 'PaleGreen', 'PaleTurquoise', 'PaleVioletRed', 'PapayaWhip', 'PeachPuff', 'Peru', 'Pink', 'Plum', 'PowderBlue', 'Purple', 'RebeccaPurple', 'Red', 'RosyBrown', 'RoyalBlue', 'SaddleBrown', 'Salmon', 'SandyBrown', 'SeaGreen', 'SeaShell', 'Sienna', 'Silver', 'SkyBlue', 'SlateBlue', 'SlateGrey', 'Snow', 'SpringGreen', 'SteelBlue', 'Tan', 'Teal', 'Thistle', 'Tomato', 'Turquoise', 'Violet', 'Wheat', 'White', 'WhiteSmoke', 'Yellow', 'YellowGreen'];
-        this.availableNames = ['Nile', 'Amazon', 'Yangtze ', 'Mississippi', 'Yenisei', 'Ob', 'Congo', 'Amur', 'Lena', 'Mekong', 'Mackenzie', 'Brahmaputra', 'Murray', 'Tocantins', 'Volg', 'Indus', 'Euphrates', 'Madeira', 'Purús', 'Yukon', 'Salween', 'Tunguska', 'Danube', 'Zambezi', 'Vilyuy', 'Araguaia', 'Ganges', 'Japurá', 'Nelson', 'Paraguay', 'Kolyma', 'Pilcomayo', 'Ishim', 'Juruá', 'Ural', 'Arkansas', 'Colorado', 'Olenyok', 'Dniepe', 'Aldan', 'Ubangi', 'Negro', 'Columbia', 'Pearl', 'Ayeyarwady', 'Kasai', 'Ohio', 'Orinoco', 'Tarim', 'Xingu', 'Salado', 'Vitim', 'Tigris', 'Songhua', 'Tapajós', 'Don', 'Pechora', 'Kama', 'Limpopo', 'Chulym', 'Guaporé', 'Indigirka', 'Snake','Senegal', 'Uruguay', 'Churchill', 'Khatanga', 'Okavango', 'Volta', 'Beni', 'Platte', 'Tobol', 'Alazeya', 'Jubba', 'Içá', 'Magdalena', 'Han', 'Kura', 'Oka', 'Murray', 'Guaviare', 'Pecos', 'Murrumbidgee', 'Yenisei', 'Godavari', 'Belaya', 'Cooper', 'Marañón', 'Dniester', 'Benue', 'Ili', 'Warburton', 'Sutlej', 'Yamuna', 'Vyatka', 'Fraser', 'Brazos', 'Liao', 'Lachlan', 'Yalong', 'Iguaçu', 'Olyokma', 'Dvina', 'Krishna', 'Iriri', 'Narmada', 'Lomami', 'Ottawa', 'Lerma', 'Elbe', 'Zeya', 'Juruena', 'Rhine', 'Athabasca', 'Canadian', 'Saskatchewan', 'Vistula', 'Vaal', 'Shire', 'Ogooué', 'Nene', 'Markha', 'Green', 'Milk', 'Chindwin', 'Sankuru', 'Wu', 'James', 'Kapuas', 'Desna', 'Helmand', 'Tietê', 'Vychegda', 'Sepik', 'Cimarron', 'Anadyr', 'Jialing', 'Liard', 'Cumberland', 'Huallaga', 'Kwango', 'Draa', 'Gambia', 'Tyung', 'Chenab', 'Yellowstone', 'Ghaghara', 'Huai', 'Aras', 'Chu', 'Bermejo', 'Fly', 'Kuskokwim', 'Tennessee', 'Oder', 'Aruwimi', 'Daugava', 'Gila', 'Loire', 'Essequibo', 'Khoper', 'Tagus', 'Flinders'];
+        this.availableNames = ['Nile', 'Amazon', 'Yangtze ', 'Mississippi', 'Yenisei', 'Ob', 'Congo', 'Amur', 'Lena', 'Mekong', 'Mackenzie', 'Brahmaputra', 'Murray', 'Tocantins', 'Volga', 'Indus', 'Euphrates', 'Madeira', 'Purús', 'Yukon', 'Salween', 'Tunguska', 'Danube', 'Zambezi', 'Vilyuy', 'Araguaia', 'Ganges', 'Japurá', 'Nelson', 'Paraguay', 'Kolyma', 'Pilcomayo', 'Ishim', 'Juruá', 'Ural', 'Arkansas', 'Colorado', 'Olenyok', 'Dniepe', 'Aldan', 'Ubangi', 'Negro', 'Columbia', 'Pearl', 'Ayeyarwady', 'Kasai', 'Ohio', 'Orinoco', 'Tarim', 'Xingu', 'Salado', 'Vitim', 'Tigris', 'Songhua', 'Tapajós', 'Don', 'Pechora', 'Kama', 'Limpopo', 'Chulym', 'Guaporé', 'Indigirka', 'Snake','Senegal', 'Uruguay', 'Churchill', 'Khatanga', 'Okavango', 'Volta', 'Beni', 'Platte', 'Tobol', 'Alazeya', 'Jubba', 'Içá', 'Magdalena', 'Han', 'Kura', 'Oka', 'Murray', 'Guaviare', 'Pecos', 'Murrumbidgee', 'Yenisei', 'Godavari', 'Belaya', 'Cooper', 'Marañón', 'Dniester', 'Benue', 'Ili', 'Warburton', 'Sutlej', 'Yamuna', 'Vyatka', 'Fraser', 'Brazos', 'Liao', 'Lachlan', 'Yalong', 'Iguaçu', 'Olyokma', 'Dvina', 'Krishna', 'Iriri', 'Narmada', 'Lomami', 'Ottawa', 'Lerma', 'Elbe', 'Zeya', 'Juruena', 'Rhine', 'Athabasca', 'Canadian', 'Saskatchewan', 'Vistula', 'Vaal', 'Shire', 'Ogooué', 'Nene', 'Markha', 'Green', 'Milk', 'Chindwin', 'Sankuru', 'Wu', 'James', 'Kapuas', 'Desna', 'Helmand', 'Tietê', 'Vychegda', 'Sepik', 'Cimarron', 'Anadyr', 'Jialing', 'Liard', 'Cumberland', 'Huallaga', 'Kwango', 'Draa', 'Gambia', 'Tyung', 'Chenab', 'Yellowstone', 'Ghaghara', 'Huai', 'Aras', 'Chu', 'Bermejo', 'Fly', 'Kuskokwim', 'Tennessee', 'Oder', 'Aruwimi', 'Daugava', 'Gila', 'Loire', 'Essequibo', 'Khoper', 'Tagus', 'Flinders'];
         this.subscribeToMessages(['view-join', 'view-exit', 'addAvatarRecord', 'storeImage'], this.sessionId);
     }
     storeImage(url) {
