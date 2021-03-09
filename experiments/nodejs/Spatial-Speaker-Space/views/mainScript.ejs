@@ -1,4 +1,4 @@
-<% if (isSpeaker) { %>
+<% if (participantType === "speaker") { %>
 <script>
     const IS_SPEAKER = true;
 </script>
@@ -56,7 +56,7 @@
     }
 
     function positionSelfInCrowd() {
-        console.log(`${allLocalUserData.length} user(s) present, including ourselves.\n${speakerCount} speaker(s).\n${audienceCount} audience member(s).`);
+        console.log(`${allLocalUserData.length} user(s) present, including ourselves.\n${speakerCount} speaker(s).\n${audienceCount} audience member(s).\n${spatialMicrophoneCount} spatial microphone(s).`);
 
         let foundOpenSpot = false;
         let currentCircleDivisions = 1;
@@ -109,20 +109,24 @@
 
     const numParticipants = document.querySelector('.numParticipants');
     function recomputeSpeakerAndAudienceCount() {
-        let speakers = allLocalUserData.filter((localUserData) => { return localUserData.isSpeaker === true; })
+        let speakers = allLocalUserData.filter((localUserData) => { return localUserData.participantType === "speaker"; })
         speakerCount = speakers.length;
 
-        let audience = allLocalUserData.filter((localUserData) => { return localUserData.isSpeaker === false; })
+        let audience = allLocalUserData.filter((localUserData) => { return localUserData.participantType === "audience"; })
         audienceCount = audience.length;
 
-        numParticipants.innerHTML = audienceCount + speakerCount;
+        let spatialMicrophones = allLocalUserData.filter((localUserData) => { return localUserData.participantType === "spatialMicrophone"; })
+        spatialMicrophoneCount = spatialMicrophones.length;
+
+        numParticipants.innerHTML = audienceCount + speakerCount + spatialMicrophoneCount;
         updateParticipantsContainerInnerHTML();
     }
 
     function resetParticipantsCount() {
         audienceCount = 0;
         speakerCount = 0;
-        numParticipants.innerHTML = audienceCount + speakerCount;
+        spatialMicrophoneCount = 0;
+        numParticipants.innerHTML = 0;
         updateParticipantsContainerInnerHTML();
     }
 
@@ -135,19 +139,33 @@
         let audienceContainer = document.createElement('div');
         audienceContainer.innerHTML = `<h3 class="audienceHeader">Audience (${audienceCount})</h3>`;
 
+        let spatialMicrophonesContainer = document.createElement('div');
+        spatialMicrophonesContainer.innerHTML = `<h3 class="spatialMicrophonesHeader">Spatial Mics (${spatialMicrophoneCount})</h3>`;
+
         for (const userData of allLocalUserData) {
             let participant = document.createElement('p');
             participant.style.color = userData.colorHex;
+            participant.setAttribute('data-visit-id-hash', userData.visitIDHash);
             participant.innerHTML = userData.displayName;
-            if (userData.isSpeaker === true) {
+            if (userData.participantType === "speaker") {
                 speakersContainer.appendChild(participant);
-            } else if (userData.isSpeaker === false) {
+            } else if (userData.participantType === "audience") {
                 audienceContainer.appendChild(participant);
+            } else if (userData.participantType === "spatialMicrophone") {
+                participant.classList.add("spatialMicrophoneParticipant");
+                if (userData.isRecording) {
+                    participant.innerHTML += " (recording)";
+                }
+                spatialMicrophonesContainer.appendChild(participant);
+                participant.addEventListener("click", (e) => {
+                    spatialMicrophoneSocket.emit("toggleRecording", { spaceName });
+                });
             }
         }
 
         participantsContainer.appendChild(speakersContainer);
         participantsContainer.appendChild(audienceContainer);
+        participantsContainer.appendChild(spatialMicrophonesContainer);
     }
 
     async function onNewHiFiUserDataReceived(receivedHiFiAudioAPIDataArray) {
@@ -215,8 +233,8 @@
                     }
                 }
 
-                // Only update volume data for speakers, not audience members.
-                if (currentLocalUserData.isSpeaker && typeof (currentDataFromServer.volumeDecibels) === "number") {
+                // Only update volume data for speakers.
+                if (currentLocalUserData.participantType === "speaker" && typeof (currentDataFromServer.volumeDecibels) === "number") {
                     currentLocalUserData.volumeDecibels = currentDataFromServer.volumeDecibels;
                     mustUpdateCanvas = true;
                 }
@@ -316,7 +334,8 @@
             this.position = data.position;
             this.yawOrientationDegrees = data.yawOrientationDegrees;
             this.orientationQuat = data.orientationQuat;
-            this.isSpeaker = data.isSpeaker;
+            this.participantType = data.participantType;
+            this.isRecording = data.isRecording || false;
             this.volumeDecibels = data.volumeDecibels;
             this.hiFiGain = data.hiFiGain || 1.0;
         }
@@ -367,8 +386,6 @@
 
         allLocalUserData = [];
         receivedInitialOtherUserDataFromHiFi = false;
-        speakerCount = 0;
-        audienceCount = 0;
         resetParticipantsCount();
 
         // Connect to the HiFi Audio API server!
@@ -381,7 +398,7 @@
             allLocalUserData.push(new SpeakerSpaceUserData({
                 "providedUserID": myProvidedUserID,
                 "visitIDHash": myVisitIDHash,
-                "isSpeaker": IS_SPEAKER
+                "participantType": IS_SPEAKER ? "speaker" : "audience"
             }));
             updateMyUserData();
             onMyDisplayNameChanged();

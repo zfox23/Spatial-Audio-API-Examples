@@ -35,7 +35,7 @@ function maybeDrawScaleArcs() {
 }
 
 function drawAvatarBase({ isMine, userData, avatarRadiusM, positionInCanvasSpace }) {
-    if (typeof (userData.isSpeaker) !== "boolean") {
+    if (typeof (userData.participantType) !== "string") {
         return;
     }
 
@@ -44,7 +44,7 @@ function drawAvatarBase({ isMine, userData, avatarRadiusM, positionInCanvasSpace
     ctx.rotate(amtToRotate);
 
     // Don't show orientation visualization if user is an audience member.
-    if (userData.isSpeaker) {
+    if (userData.participantType === "speaker") {
         ctx.beginPath();
         ctx.arc(0, -avatarRadiusM * DIRECTION_CLOUD_RADIUS_MULTIPLIER * pxPerM, avatarRadiusM * DIRECTION_CLOUD_RADIUS_MULTIPLIER * pxPerM, 0, Math.PI, false);
         let grad = ctx.createLinearGradient(0, 0, 0, -avatarRadiusM * DIRECTION_CLOUD_RADIUS_MULTIPLIER * pxPerM);
@@ -56,7 +56,11 @@ function drawAvatarBase({ isMine, userData, avatarRadiusM, positionInCanvasSpace
     }
 
     ctx.lineWidth = AVATAR_STROKE_WIDTH_PX;
-    ctx.fillStyle = userData.colorHex;
+    if (userData.isRecording) {
+        ctx.fillStyle = RECORDING_AVATAR_HEX;
+    } else {
+        ctx.fillStyle = userData.colorHex;
+    }
     ctx.beginPath();
     ctx.arc(0, 0, avatarRadiusM * pxPerM, 0, 2 * Math.PI);
     if (isMine) {
@@ -107,7 +111,7 @@ function drawVolumeBubble({ userData, avatarRadiusM, positionInCanvasSpace }) {
 }
 
 function drawAvatar({ userData }) {
-    if (!userData || !userData.position || typeof (userData.position.x) !== "number" || typeof (userData.position.z) !== "number" || typeof (userData.isSpeaker) !== "boolean") {
+    if (!userData || !userData.position || typeof (userData.position.x) !== "number" || typeof (userData.position.z) !== "number" || typeof (userData.participantType) !== "string") {
         return;
     }
 
@@ -122,9 +126,9 @@ function drawAvatar({ userData }) {
     let isMine = userData.visitIDHash === myVisitIDHash;
 
     let avatarRadiusM;
-    if (userData.isSpeaker === true) {
+    if (userData.participantType === "speaker") {
         avatarRadiusM = SPEAKER_AVATAR_RADIUS_M;
-    } else if (userData.isSpeaker === false) {
+    } else {
         avatarRadiusM = AUDIENCE_AVATAR_RADIUS_M;
     }
 
@@ -139,7 +143,7 @@ function drawParticles() {
     if (particleController.activeParticles.length === 0) {
         return;
     }
-    
+
     ctx.translate(-mainCanvas.width / 2, -mainCanvas.height / 2);
 
     particleController.activeParticles.forEach((particle) => {
@@ -172,7 +176,7 @@ function drawParticles() {
         ctx.rotate(-amtToRotateParticle);
         ctx.translate(-positionInCanvasSpace.x, -positionInCanvasSpace.y);
     });
-    
+
     ctx.translate(mainCanvas.width / 2, mainCanvas.height / 2);
 }
 
@@ -185,7 +189,8 @@ function updateCanvas() {
     }
 
     updateMyUserData();
-    let allOtherUserData = allLocalUserData.filter((element) => { return element.visitIDHash !== myVisitIDHash; });
+    let allOtherUserData = allLocalUserData.filter((element) => { return element.visitIDHash !== myVisitIDHash && element.participantType !== "spatialMicrophone"; });
+    let spatialMics = allLocalUserData.filter((element) => { return element.visitIDHash !== myVisitIDHash && element.participantType === "spatialMicrophone"; })
 
     updatePixelsPerMeter();
 
@@ -193,6 +198,10 @@ function updateCanvas() {
     ctx.rotate(canvasRotationDegrees * Math.PI / 180);
 
     for (const userData of allOtherUserData) {
+        drawAvatar({ userData });
+    }
+
+    for (const userData of spatialMics) {
         drawAvatar({ userData });
     }
 

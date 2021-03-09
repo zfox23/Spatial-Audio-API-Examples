@@ -42,6 +42,10 @@ function hexColorFromString(string) {
 }
 
 function hexToRGB(colorHex) {
+    if (!colorHex) {
+        colorHex = "#FFFFFF";
+    }
+
     colorHex = colorHex.slice(1);
     const hexBaseValue = 16;
     let splitHexValues = colorHex.match(/^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i);

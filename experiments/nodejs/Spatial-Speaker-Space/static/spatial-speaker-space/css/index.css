@@ -166,8 +166,13 @@ p {
     margin: 0 0 12px 0;
 }
 
-.audienceHeader {
+.audienceHeader,
+.spatialMicrophonesHeader {
     margin: 12px 0 12px 0;
+}
+
+.spatialMicrophoneParticipant:hover {
+    cursor: pointer;
 }
 
 .signalButtonContainer {

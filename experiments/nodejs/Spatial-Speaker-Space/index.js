@@ -61,7 +61,7 @@ app.get('/spatial-speaker-space/speaker', async (req, res) => {
 
     console.log(`${timestamp}: Speaker \`${providedUserID}\` connected to the HiFi Space \`${spaceName}\`.`);
 
-    res.render('index', { connectionTimestamp: Date.now(), providedUserID, hiFiJWT, spaceName, isSpeaker: true });
+    res.render('index', { connectionTimestamp: Date.now(), providedUserID, hiFiJWT, spaceName, participantType: "speaker" });
 });
 
 app.get('/spatial-speaker-space/audience', async (req, res) => {
@@ -77,7 +77,7 @@ app.get('/spatial-speaker-space/audience', async (req, res) => {
 
     console.log(`${timestamp}: Audience member \`${providedUserID}\` connected to the HiFi Space \`${spaceName}\`.`);
 
-    res.render('index', { connectionTimestamp: timestamp, providedUserID, hiFiJWT, spaceName, isSpeaker: false });
+    res.render('index', { connectionTimestamp: timestamp, providedUserID, hiFiJWT, spaceName, participantType: "audience" });
 });
 
 app.get('/spatial-speaker-space/get-connection-age', (req, res) => {
@@ -122,24 +122,25 @@ class ServerSpaceInfo {
 }
 
 class Participant {
-    constructor({ visitIDHash, displayName, colorHex, isSpeaker } = {}) {
+    constructor({ visitIDHash, displayName, colorHex, participantType, isRecording } = {}) {
         this.visitIDHash = visitIDHash;
         this.displayName = displayName;
         this.colorHex = colorHex;
-        this.isSpeaker = isSpeaker;
+        this.participantType = participantType;
+        this.isRecording = isRecording;
     }
 }
 
 let spaceInformation = {};
 io.on("connection", (socket) => {
-    socket.on("addParticipant", ({ visitIDHash, displayName, colorHex, isSpeaker, spaceName } = {}) => {
-        console.log(`In ${spaceName}, adding participant:\nHashed Visit ID: \`${visitIDHash}\`\nDisplay Name: \`${displayName}\`\nColor: ${colorHex}\nisSpeaker: ${isSpeaker}\n`);
+    socket.on("addParticipant", ({ visitIDHash, displayName, colorHex, participantType, isRecording, spaceName } = {}) => {
+        console.log(`In ${spaceName}, adding participant:\nHashed Visit ID: \`${visitIDHash}\`\nDisplay Name: \`${displayName}\`\nColor: ${colorHex}\nparticipantType: ${participantType}\n`);
 
         if (!spaceInformation[spaceName]) {
             spaceInformation[spaceName] = new ServerSpaceInfo({ spaceName });
         }
 
-        let me = new Participant({ visitIDHash, displayName, colorHex, isSpeaker });
+        let me = new Participant({ visitIDHash, displayName, colorHex, participantType, isRecording });
 
         spaceInformation[spaceName].participants.push(me);
 
@@ -149,14 +150,21 @@ io.on("connection", (socket) => {
         socket.emit("onParticipantAdded", spaceInformation[spaceName].participants.filter((participant) => { return participant.visitIDHash !== visitIDHash; }));
     });
 
-    socket.on("editParticipant", ({ visitIDHash, displayName, colorHex, spaceName } = {}) => {
+    socket.on("editParticipant", ({ visitIDHash, displayName, colorHex, isRecording, spaceName } = {}) => {
         let participantToEdit = spaceInformation[spaceName].participants.find((participant) => {
             return participant.visitIDHash === visitIDHash;
         });
 
         if (participantToEdit) {
-            participantToEdit.displayName = displayName;
-            participantToEdit.colorHex = colorHex;
+            if (typeof (displayName) === "string") {
+                participantToEdit.displayName = displayName;
+            }
+            if (typeof (colorHex) === "boolean") {
+                participantToEdit.colorHex = colorHex;
+            }
+            if (typeof (isRecording) === "boolean") {
+                participantToEdit.isRecording = isRecording;
+            }
 
             socket.to(spaceName).emit("onParticipantAdded", [participantToEdit]);
         }

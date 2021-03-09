@@ -66,6 +66,7 @@ class SpatialMicrophone {
         this.startRecordTime = undefined;
         this.initialized = false;
         this.wantedToImmediatelyStartRecording = false;
+        this.isRecording = false;
     }
 
     async init() {
@@ -79,13 +80,16 @@ class SpatialMicrophone {
         // Connect to our High Fidelity Space.
         try {
             let connectResponse = await this.communicator.connectToHiFiAudioAPIServer(hiFiJWT);
+            this.visitIDHash = connectResponse.audionetInitResponse.visit_id_hash;
         } catch (e) {
             console.error(`Call to \`connectToHiFiAudioAPIServer()\` failed! Error:\n${JSON.stringify(e)}`);
             return;
         }
-        this.outputAudioMediaStreamTrack = this.communicator.getOutputAudioMediaStream().getTracks()[0];
         console.log(`Spatial microphone is connected to Space named \`${this.spaceName}\` at ${JSON.stringify(this.audioAPIData.position)}!`);
+        this.outputAudioMediaStreamTrack = this.communicator.getOutputAudioMediaStream().getTracks()[0];
         this.initialized = true;
+        
+        spatialSpeakerSpaceSocket.emit("addParticipant", { visitIDHash: this.visitIDHash, displayName: "🎤 Mic", participantType: "spatialMicrophone", spaceName: this.spaceName, isRecording: this.isRecording });
 
         if (this.wantedToImmediatelyStartRecording) {
             this.startRecording();
@@ -94,12 +98,26 @@ class SpatialMicrophone {
     }
 
     deinit() {
+        console.log("De-initializing Spatial Microphone...");
+        this.finishRecording(this.spaceName);
+        spatialSpeakerSpaceSocket.emit("removeParticipant", { visitIDHash: this.visitIDHash, spaceName: this.spaceName });
         this.outputAudioMediaStreamTrack = null;
+    }
+
+    disconnect() {
+        console.log("Disconnecting Spatial Microphone...");
+        this.deinit();
+        if (this.communicator) {
+            this.communicator.disconnectFromHiFiAudioAPIServer();
+        }
+        this.communicator = null;
     }
 
     startRecording() {
         console.log(`Starting to record from spatial microphone in \`${this.spaceName}\`...`);
 
+        this.isRecording = true;
+        spatialSpeakerSpaceSocket.emit("editParticipant", { visitIDHash: this.visitIDHash, spaceName: this.spaceName, isRecording: this.isRecording });
         this.startRecordTime = Date.now();
 
         this.rtcAudioSink = new RTCAudioSink(this.outputAudioMediaStreamTrack);
@@ -117,8 +135,15 @@ class SpatialMicrophone {
     }
 
     async finishRecording(filetype) {
+        if (!this.isRecording) {
+            return;
+        }
+        
         console.log(`Stopping the recording from spatial microphone in \`${this.spaceName}\`...`);
         console.log(`Recording length: ${(Date.now() - this.startRecordTime) / 1000}s`);
+
+        this.isRecording = false;
+        spatialSpeakerSpaceSocket.emit("editParticipant", { visitIDHash: this.visitIDHash, spaceName: this.spaceName, isRecording: this.isRecording });
 
         if (this.rtcAudioSink) {
             this.rtcAudioSink.stop();
@@ -185,15 +210,49 @@ io.on("error", (e) => {
 });
 
 let spaceInformation = {};
+
+function startRecording(socket, spaceName) {
+    if (!spaceName || !spaceInformation[spaceName] || !spaceInformation[spaceName].spatialMicrophone) {
+        return;
+    }
+
+    if (spaceInformation[spaceName].spatialMicrophone.initialized) {
+        spaceInformation[spaceName].spatialMicrophone.startRecording();
+        socket.to(spaceName).emit("recordingStarted");
+    } else {
+        spaceInformation[spaceName].spatialMicrophone.wantedToImmediatelyStartRecording = true;
+    }
+}
+
+async function finishRecording(socket, spaceName) {
+    if (!spaceName || !spaceInformation[spaceName] || !spaceInformation[spaceName].spatialMicrophone) {
+        return;
+    }
+    
+    const recordingFilename = await spaceInformation[spaceName].spatialMicrophone.finishRecording("wav");
+    socket.to(spaceName).emit("recordingFinished", { recordingFilename });
+}
+
+async function toggleRecording(socket, spaceName) {
+    if (!spaceName || !spaceInformation[spaceName] || !spaceInformation[spaceName].spatialMicrophone) {
+        return;
+    }
+
+    if (spaceInformation[spaceName].spatialMicrophone.isRecording) {
+        await finishRecording(socket, spaceName);
+    } else {
+        startRecording(socket, spaceName);
+    }
+}
 io.on("connection", (socket) => {
     socket.on("userConnected", async ({ spaceName, visitIDHash, position } = {}) => {
         console.log(`In ${spaceName}, user connected:\nHashed Visit ID: \`${visitIDHash}\``);
 
         if (!spaceInformation[spaceName]) {
             console.log(`In \`${spaceName}\`, creating a new Spatial Microphone...`);
-            let spatialMicrophone = new SpatialMicrophone({ spaceName, position: new Point3D({ x: 0, y: 0, z: 0 }) });
-            await spatialMicrophone.init();
+            let spatialMicrophone = new SpatialMicrophone({ spaceName, position: position || new Point3D({ x: 0, y: 0, z: 0 }) });
             spaceInformation[spaceName] = new ServerSpaceInfo({ spaceName, spatialMicrophone });
+            await spatialMicrophone.init();
         }
 
         let me = new Participant({ visitIDHash });
@@ -215,40 +274,42 @@ io.on("connection", (socket) => {
 
         if (spaceInformation[spaceName].participants.length === 0) {
             console.log(`In \`${spaceName}\`, all users disconnected. Stopping the Spatial Microphone...`);
-            const recordingFilename = await spaceInformation[spaceName].spatialMicrophone.finishRecording("wav");
-            socket.to(spaceName).emit("recordingFinished", { recordingFilename });
-            spaceInformation[spaceName].spatialMicrophone.deinit();
-            if (spaceInformation[spaceName].spatialMicrophone.communicator) {
-                spaceInformation[spaceName].spatialMicrophone.communicator.disconnectFromHiFiAudioAPIServer();
-            }
-            spaceInformation[spaceName].spatialMicrophone.communicator = null;
+            spaceInformation[spaceName].spatialMicrophone.disconnect();
             delete spaceInformation[spaceName];
         }
     });
 
-    socket.on("startRecording", async ({ spaceName } = {}) => {
-        if (!spaceName || !spaceInformation[spaceName] || !spaceInformation[spaceName].spatialMicrophone) {
-            return;
-        }
-
-        if (spaceInformation[spaceName].spatialMicrophone.initialized) {
-            spaceInformation[spaceName].spatialMicrophone.startRecording();
-        } else {
-            spaceInformation[spaceName].spatialMicrophone.wantedToImmediatelyStartRecording = true;
-        }
+    socket.on("startRecording", ({ spaceName } = {}) => {
+        startRecording(socket, spaceName);
     });
 
     socket.on("finishRecording", async ({ spaceName } = {}) => {
-        if (!spaceName || !spaceInformation[spaceName] || !spaceInformation[spaceName].spatialMicrophone) {
-            return;
-        }
-        
-        const recordingFilename = await spaceInformation[spaceName].spatialMicrophone.finishRecording("wav");
-        socket.to(spaceName).emit("recordingFinished", { recordingFilename });
+        await finishRecording(socket, spaceName);
+    });
+
+    socket.on("toggleRecording", async ({ spaceName } = {}) => {
+        await toggleRecording(socket, spaceName);
     });
 });
 
 const PORT = 8125;
 httpServer.listen(PORT, async () => {
     console.log(`Spatial Microphone is ready and listening at http://localhost:${PORT}`)
+});
+
+const spatialSpeakerSpaceSocket = require("socket.io-client").connect('http://localhost:8123', { path: '/spatial-speaker-space/socket.io' });
+spatialSpeakerSpaceSocket.on('connect', (socket) => {
+    console.log('Connected to Spatial Speaker Space!');
+});
+
+process.on('SIGINT', () => {    
+    let keys = Object.keys(spaceInformation);
+    for (let i = 0; i < keys.length; i++) {
+        let mic = spaceInformation[keys[i]].spatialMicrophone;
+        if (mic) {
+            mic.disconnect();
+        }
+    }
+
+    process.exit();
 });

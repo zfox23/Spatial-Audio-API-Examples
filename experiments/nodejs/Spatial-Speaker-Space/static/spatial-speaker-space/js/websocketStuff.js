@@ -1,14 +1,13 @@
-const spatialSpeakerSpaceSocket = io('', { path: '/spatial-speaker-space/socket.io' });
+const spatialSpeakerSpaceSocket = io(':8123', { path: '/spatial-speaker-space/socket.io' });
 // This Experiment plays nicely with the Spatial Microphone example found elsewhere in this repository! :)
 // But, if you aren't running that example, that's OK; Spatial-Speaker-Space will still work.
-const spatialMicrophoneSocket = io(':8125', { path: '/spatial-microphone/socket.io', reconnectionAttempts: 1 });
+const spatialMicrophoneSocket = io(':8125', { path: '/spatial-microphone/socket.io', reconnectionAttempts: 3 });
 let webSocketStuffInitialized = false;
 
 function initWebSocketStuff() {
     webSocketStuffInitialized = true;
-    spatialSpeakerSpaceSocket.emit("addParticipant", { visitIDHash: myVisitIDHash, displayName: myUserData.displayName, colorHex: myUserData.colorHex, isSpeaker: IS_SPEAKER, spaceName });
-    spatialMicrophoneSocket.emit("userConnected", { spaceName, visitIDHash: myVisitIDHash, position: myUserData.position });
-    spatialMicrophoneSocket.emit("startRecording", { spaceName, visitIDHash: myVisitIDHash });
+    spatialSpeakerSpaceSocket.emit("addParticipant", { visitIDHash: myVisitIDHash, displayName: myUserData.displayName, colorHex: myUserData.colorHex, participantType: IS_SPEAKER ? "speaker" : "audience", spaceName });
+    spatialMicrophoneSocket.emit("userConnected", { spaceName, visitIDHash: myVisitIDHash });
 }
 
 function updateRemoteParticipant() {
@@ -29,15 +28,24 @@ function stopWebSocketStuff() {
 spatialSpeakerSpaceSocket.on("onParticipantAdded", (participantArray) => {
     console.log(`Retrieved information about ${participantArray.length} participants from the server:\n${JSON.stringify(participantArray)}`);
     participantArray.forEach((participant) => {
-        let { visitIDHash, displayName, colorHex, isSpeaker } = participant;
+        let { visitIDHash, displayName, colorHex, participantType, isRecording } = participant;
         let localUserData = allLocalUserData.find((participant) => { return participant.visitIDHash === visitIDHash; });
         if (localUserData) {
-            console.log(`Updating participant with hash \`${localUserData.visitIDHash}\`:\nDisplay Name: \`${displayName}\`\nColor: ${colorHex}\nisSpeaker: ${isSpeaker}`)
-            localUserData.displayName = displayName;
-            localUserData.colorHex = colorHex;
-            localUserData.isSpeaker = isSpeaker;
+            console.log(`Updating participant with hash \`${localUserData.visitIDHash}\`:\nDisplay Name: \`${displayName}\`\nColor: ${colorHex}\nparticipantType: ${participantType}`)
+            if (typeof (displayName) === "string") {
+                localUserData.displayName = displayName;
+            }
+            if (typeof (colorHex) === "string") {
+                localUserData.colorHex = colorHex;
+            }
+            if (typeof (participantType) === "string") {
+                localUserData.participantType = participantType;
+            }
+            if (typeof (isRecording) === "boolean") {
+                localUserData.isRecording = isRecording;
+            }
         } else if (visitIDHash && displayName) {
-            allLocalUserData.push(new SpeakerSpaceUserData({ visitIDHash, displayName, colorHex, isSpeaker }));
+            allLocalUserData.push(new SpeakerSpaceUserData({ visitIDHash, displayName, colorHex, participantType, isRecording }));
         }
 
         recomputeSpeakerAndAudienceCount();
