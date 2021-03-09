@@ -10,9 +10,10 @@ const wav = require('wav');
 const APP_ID = auth.HIFI_APP_ID;
 // This is the "App Secret" as obtained from the High Fidelity Audio API Developer Console. Do not share this string.
 const APP_SECRET = auth.HIFI_APP_SECRET;
+const SPACE_NAME = auth.HIFI_SPACE_NAME;
 const SECRET_KEY_FOR_SIGNING = crypto.createSecretKey(Buffer.from(APP_SECRET, "utf8"));
 
-async function generateHiFiJWT(userID, spaceName, isAdmin) {
+async function generateHiFiJWT(userID, isAdmin) {
     let hiFiJWT;
     try {
         let jwtArgs = {
@@ -20,9 +21,7 @@ async function generateHiFiJWT(userID, spaceName, isAdmin) {
             "app_id": APP_ID
         };
 
-        if (spaceName) {
-            jwtArgs["space_name"] = spaceName;
-        }
+        jwtArgs["space_name"] = SPACE_NAME;
 
         if (isAdmin) {
             jwtArgs["admin"] = true;
@@ -36,20 +35,6 @@ async function generateHiFiJWT(userID, spaceName, isAdmin) {
     } catch (error) {
         console.error(`Couldn't create JWT! Error:${error}`);
         return;
-    }
-}
-
-class ServerSpaceInfo {
-    constructor({ spaceName, spatialMicrophone } = {}) {
-        this.spaceName = spaceName;
-        this.spatialMicrophone = spatialMicrophone;
-        this.participants = [];
-    }
-}
-
-class Participant {
-    constructor({ visitIDHash } = {}) {
-        this.visitIDHash = visitIDHash;
     }
 }
 
@@ -120,6 +105,8 @@ class SpatialMicrophone {
         spatialSpeakerSpaceSocket.emit("editParticipant", { visitIDHash: this.visitIDHash, spaceName: this.spaceName, isRecording: this.isRecording });
         this.startRecordTime = Date.now();
 
+        this.stereoSamples = new Int16Array();
+
         this.rtcAudioSink = new RTCAudioSink(this.outputAudioMediaStreamTrack);
         this.rtcAudioSink.ondata = (data) => {
             if (this.stereoSamples.length === 0) {
@@ -162,6 +149,7 @@ class SpatialMicrophone {
             });
             writer.write(finalBuffer);
             writer.end();
+            this.stereoSamples = new Int16Array();
             console.log(`Successfully wrote recording to \`${filename}\`!`);
             return filename;
         } else if (filetype === "mp3") {
@@ -183,17 +171,21 @@ class SpatialMicrophone {
             this.encoder.encode()
                 .then(() => {
                     console.log(`Successfully wrote recording to \`${filename}\`!`);
-                    this.stereoSamples = null;
+                    this.stereoSamples = new Int16Array();
                     return filename;
                 })
                 .catch((error) => {
-                    console.error(`Couldn't encode samples from Spatial Microphone! Error:\n${error}`)
-                    this.stereoSamples = null;
+                    console.error(`Couldn't encode samples from Spatial Microphone! Error:\n${error}`);
+                    this.stereoSamples = new Int16Array();
                     return null;
                 });
         }
     }
 }
+
+console.log(`In \`${SPACE_NAME}\`, creating a new Spatial Microphone...`);
+let spatialMicrophone = new SpatialMicrophone({ spaceName: SPACE_NAME, position: new Point3D({ x: 0, y: 0, z: 0 }) });
+spatialMicrophone.init();
 
 const httpServer = require("http").createServer();
 
@@ -209,86 +201,50 @@ io.on("error", (e) => {
     console.error(e);
 });
 
-let spaceInformation = {};
-
-function startRecording(socket, spaceName) {
-    if (!spaceName || !spaceInformation[spaceName] || !spaceInformation[spaceName].spatialMicrophone) {
+function startRecording(socket) {
+    if (!spatialMicrophone) {
         return;
     }
 
-    if (spaceInformation[spaceName].spatialMicrophone.initialized) {
-        spaceInformation[spaceName].spatialMicrophone.startRecording();
-        socket.to(spaceName).emit("recordingStarted");
+    if (spatialMicrophone.initialized) {
+        spatialMicrophone.startRecording();
+        socket.emit("recordingStarted");
     } else {
-        spaceInformation[spaceName].spatialMicrophone.wantedToImmediatelyStartRecording = true;
+        spatialMicrophone.wantedToImmediatelyStartRecording = true;
     }
 }
 
-async function finishRecording(socket, spaceName) {
-    if (!spaceName || !spaceInformation[spaceName] || !spaceInformation[spaceName].spatialMicrophone) {
+async function finishRecording(socket) {
+    if (!spatialMicrophone) {
         return;
     }
     
-    const recordingFilename = await spaceInformation[spaceName].spatialMicrophone.finishRecording("wav");
-    socket.to(spaceName).emit("recordingFinished", { recordingFilename });
+    const recordingFilename = await spatialMicrophone.finishRecording("wav");
+    socket.emit("recordingFinished", { recordingFilename });
 }
 
-async function toggleRecording(socket, spaceName) {
-    if (!spaceName || !spaceInformation[spaceName] || !spaceInformation[spaceName].spatialMicrophone) {
+async function toggleRecording(socket) {
+    if (!spatialMicrophone) {
         return;
     }
 
-    if (spaceInformation[spaceName].spatialMicrophone.isRecording) {
-        await finishRecording(socket, spaceName);
+    if (spatialMicrophone.isRecording) {
+        await finishRecording(socket);
     } else {
-        startRecording(socket, spaceName);
+        startRecording(socket);
     }
 }
 io.on("connection", (socket) => {
-    socket.on("userConnected", async ({ spaceName, visitIDHash, position } = {}) => {
-        console.log(`In ${spaceName}, user connected:\nHashed Visit ID: \`${visitIDHash}\``);
-
-        if (!spaceInformation[spaceName]) {
-            console.log(`In \`${spaceName}\`, creating a new Spatial Microphone...`);
-            let spatialMicrophone = new SpatialMicrophone({ spaceName, position: position || new Point3D({ x: 0, y: 0, z: 0 }) });
-            spaceInformation[spaceName] = new ServerSpaceInfo({ spaceName, spatialMicrophone });
-            await spatialMicrophone.init();
-        }
-
-        let me = new Participant({ visitIDHash });
-
-        spaceInformation[spaceName].participants.push(me);
-
-        socket.join(spaceName);
-
-        socket.to(spaceName).emit("onParticipantAdded", [me]);
-        socket.emit("onParticipantAdded", spaceInformation[spaceName].participants.filter((participant) => { return participant.visitIDHash !== visitIDHash; }));
+    socket.on("startRecording", () => {
+        startRecording(socket);
     });
 
-    socket.on("userDisconnected", async ({ spaceName, visitIDHash } = {}) => {
-        if (!spaceInformation[spaceName]) {
-            return;
-        }
-
-        spaceInformation[spaceName].participants = spaceInformation[spaceName].participants.filter((participant) => { return participant.visitIDHash !== visitIDHash; });
-
-        if (spaceInformation[spaceName].participants.length === 0) {
-            console.log(`In \`${spaceName}\`, all users disconnected. Stopping the Spatial Microphone...`);
-            spaceInformation[spaceName].spatialMicrophone.disconnect();
-            delete spaceInformation[spaceName];
-        }
+    socket.on("finishRecording", async () => {
+        await finishRecording(socket);
     });
 
-    socket.on("startRecording", ({ spaceName } = {}) => {
-        startRecording(socket, spaceName);
-    });
-
-    socket.on("finishRecording", async ({ spaceName } = {}) => {
-        await finishRecording(socket, spaceName);
-    });
-
-    socket.on("toggleRecording", async ({ spaceName } = {}) => {
-        await toggleRecording(socket, spaceName);
+    socket.on("toggleRecording", async () => {
+        await toggleRecording(socket);
     });
 });
 
@@ -303,12 +259,8 @@ spatialSpeakerSpaceSocket.on('connect', (socket) => {
 });
 
 process.on('SIGINT', () => {    
-    let keys = Object.keys(spaceInformation);
-    for (let i = 0; i < keys.length; i++) {
-        let mic = spaceInformation[keys[i]].spatialMicrophone;
-        if (mic) {
-            mic.disconnect();
-        }
+    if (spatialMicrophone) {
+        spatialMicrophone.disconnect();
     }
 
     process.exit();

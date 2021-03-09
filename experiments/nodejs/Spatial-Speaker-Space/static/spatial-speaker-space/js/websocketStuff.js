@@ -7,7 +7,6 @@ let webSocketStuffInitialized = false;
 function initWebSocketStuff() {
     webSocketStuffInitialized = true;
     spatialSpeakerSpaceSocket.emit("addParticipant", { visitIDHash: myVisitIDHash, displayName: myUserData.displayName, colorHex: myUserData.colorHex, participantType: IS_SPEAKER ? "speaker" : "audience", spaceName });
-    spatialMicrophoneSocket.emit("userConnected", { spaceName, visitIDHash: myVisitIDHash });
 }
 
 function updateRemoteParticipant() {
@@ -21,7 +20,6 @@ function updateRemoteParticipant() {
 
 function stopWebSocketStuff() {
     spatialSpeakerSpaceSocket.emit("removeParticipant", { visitIDHash: myVisitIDHash, spaceName });
-    spatialMicrophoneSocket.emit("userDisconnected", { spaceName, visitIDHash: myVisitIDHash });
     webSocketStuffInitialized = false;
 }
 
