@@ -1,0 +1,6 @@
+auth.json
+
+node_modules
+
+output/*.mp3
+output/*.wav
