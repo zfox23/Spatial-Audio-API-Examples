@@ -1,5 +1,7 @@
 # "Player" Example
 
+![Player Example GIF](./screenshot.png)
+
 ## Author
 Luis Cuenca
 
@@ -10,8 +12,7 @@ Luis Cuenca
 - Click the connect button. The Player Node should connect.
 - The Player node (you) should be situated on the center of the canvas.
 - Received nodes should be rendered on the canvas.
-- Select the Player with a mouse click.
-- Move the Player with a mouse left drag.
-- Rotate the Player with a mouse right drag or click.
-- Others can't be moved or rotated.
+- A grid should be renderer with colored square that indicate where others are.
+- Select any Player with a mouse click to display their name.
+- Use the WASD or arrow keys to control the player.
 - Talk to others, and experience spatialized audio.
