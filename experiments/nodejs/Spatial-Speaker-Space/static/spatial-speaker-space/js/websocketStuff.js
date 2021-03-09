@@ -1,16 +1,19 @@
 const spatialSpeakerSpaceSocket = io(':8123', { path: '/spatial-speaker-space/socket.io' });
-// This Experiment plays nicely with the Spatial Microphone example found elsewhere in this repository! :)
-// But, if you aren't running that example, that's OK; Spatial-Speaker-Space will still work.
-const spatialMicrophoneSocket = io(':8124', { path: '/spatial-microphone/socket.io', reconnectionAttempts: 3 });
-let webSocketStuffInitialized = false;
+let readyToSendWebSocketData = false;
 
-function initWebSocketStuff() {
-    webSocketStuffInitialized = true;
+spatialSpeakerSpaceSocket.on("connect", (socket) => {
+    maybeSendInitialWebSocketData();
+});
+
+function maybeSendInitialWebSocketData() {
+    if (!readyToSendWebSocketData) {
+        return;
+    }
     spatialSpeakerSpaceSocket.emit("addParticipant", { visitIDHash: myVisitIDHash, displayName: myUserData.displayName, colorHex: myUserData.colorHex, participantType: IS_SPEAKER ? "speaker" : "audience", spaceName });
 }
 
 function updateRemoteParticipant() {
-    if (!webSocketStuffInitialized) {
+    if (!readyToSendWebSocketData) {
         return;
     }
     let dataToUpdate = { visitIDHash: myVisitIDHash, displayName: myUserData.displayName, colorHex: myUserData.colorHex, spaceName };
@@ -20,7 +23,7 @@ function updateRemoteParticipant() {
 
 function stopWebSocketStuff() {
     spatialSpeakerSpaceSocket.emit("removeParticipant", { visitIDHash: myVisitIDHash, spaceName });
-    webSocketStuffInitialized = false;
+    readyToSendWebSocketData = false;
 }
 
 spatialSpeakerSpaceSocket.on("onParticipantAdded", (participantArray) => {
@@ -57,8 +60,4 @@ spatialSpeakerSpaceSocket.on("requestParticleAdd", ({ visitIDHash, spaceName, pa
         console.log(`"${visitIDHash}" added a signal particle!`);
         signalsController.addSignal(particleParams);
     }
-});
-
-spatialMicrophoneSocket.on("recordingFinished", ({ recordingFilename } = {}) => {
-    console.log(`The server finished a recording and placed it on the server's filesystem at:\n${recordingFilename}`);
 });

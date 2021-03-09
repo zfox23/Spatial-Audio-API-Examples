@@ -171,7 +171,9 @@
                 }
                 spatialMicrophonesContainer.appendChild(participant);
                 participant.addEventListener("click", (e) => {
-                    spatialMicrophoneSocket.emit("toggleRecording", { spaceName });
+                    fetch(`${location.protocol}//${location.hostname}:8124/spatial-microphone/toggle-recording`)
+                        .then(response => response.json())
+                        .then(data => console.log(data));
                 });
             }
             participant.addEventListener("mouseenter", (e) => {
@@ -313,8 +315,9 @@
             }
         }
 
-        if (!webSocketStuffInitialized) {
-            initWebSocketStuff();
+        if (!readyToSendWebSocketData) {
+            readyToSendWebSocketData = true;
+            maybeSendInitialWebSocketData();
         }
     }
 

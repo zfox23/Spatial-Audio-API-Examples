@@ -2,5 +2,5 @@ auth.json
 
 node_modules
 
-output/*.mp3
-output/*.wav
+output/spatial-microphone/*.mp3
+output/spatial-microphone/*.wav

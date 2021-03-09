@@ -1,4 +1,6 @@
 const { default: SignJWT } = require('jose/jwt/sign');
+const express = require('express');
+const cors = require('cors');
 const crypto = require('crypto');
 const auth = require('./auth.json');
 const { Point3D, AudioAPIData, Communicator } = require("hifi-spatial-audio"); // Used to interface with the High Fidelity Spatial Audio API.
@@ -55,6 +57,7 @@ class SpatialMicrophone {
         this.initialized = false;
         this.wantedToImmediatelyStartRecording = false;
         this.isRecording = false;
+        this.readyToSendWebsocketData = false;
     }
 
     async init() {
@@ -76,12 +79,19 @@ class SpatialMicrophone {
         console.log(`Spatial microphone is connected to Space named \`${this.spaceName}\` at ${JSON.stringify(this.audioAPIData.position)}!`);
         this.outputAudioMediaStreamTrack = this.communicator.getOutputAudioMediaStream().getTracks()[0];
         this.initialized = true;
-        
-        spatialSpeakerSpaceSocket.emit("addParticipant", { visitIDHash: this.visitIDHash, displayName: "🎤 Mic", participantType: "spatialMicrophone", spaceName: this.spaceName, isRecording: this.isRecording, colorHex: this.isRecording ? RECORDING_COLOR_HEX : NOT_RECORDING_COLOR_HEX });
+        this.readyToSendWebsocketData = true;
+        this.maybeSendWebSocketData();
 
         if (this.wantedToImmediatelyStartRecording) {
             this.startRecording();
             this.wantedToImmediatelyStartRecording = false;
+        }
+    }
+
+    maybeSendWebSocketData() {
+        if (this.readyToSendWebsocketData && spatialSpeakerSpaceSocket.connected) {
+            console.log(`Sending "addParticipant" over \`spatialSpeakerSpaceSocket\`...`);
+            spatialSpeakerSpaceSocket.emit("addParticipant", { visitIDHash: this.visitIDHash, displayName: "🎤 Mic", participantType: "spatialMicrophone", spaceName: this.spaceName, isRecording: this.isRecording, colorHex: this.isRecording ? RECORDING_COLOR_HEX : NOT_RECORDING_COLOR_HEX });
         }
     }
 
@@ -90,6 +100,7 @@ class SpatialMicrophone {
         this.finishRecording(this.spaceName);
         spatialSpeakerSpaceSocket.emit("removeParticipant", { visitIDHash: this.visitIDHash, spaceName: this.spaceName });
         this.outputAudioMediaStreamTrack = null;
+        this.readyToSendWebsocketData = false;
     }
 
     disconnect() {
@@ -144,7 +155,7 @@ class SpatialMicrophone {
         const finalBuffer = Buffer.from(this.stereoSamples.buffer);
 
         if (!filetype || filetype === "wav") {
-            const filename = `./output/${Date.now()}.wav`;
+            const filename = `./output/spatial-microphone/${Date.now()}.wav`;
             const writer = new wav.FileWriter(filename, {
                 sampleRate: 48000,
                 channels: 2,
@@ -156,7 +167,7 @@ class SpatialMicrophone {
             console.log(`Successfully wrote recording to \`${filename}\`!`);
             return filename;
         } else if (filetype === "mp3") {
-            const filename = `./output/${Date.now()}.mp3`;
+            const filename = `./output/spatial-microphone/${Date.now()}.mp3`;
             this.encoder = new Lame({
                 "output": filename,
                 "raw": true,
@@ -190,68 +201,64 @@ console.log(`In \`${SPACE_NAME}\`, creating a new Spatial Microphone...`);
 let spatialMicrophone = new SpatialMicrophone({ spaceName: SPACE_NAME, position: new Point3D({ x: 0, y: 0, z: 0 }) });
 spatialMicrophone.init();
 
-const httpServer = require("http").createServer();
-
-const io = require("socket.io")(httpServer, {
-    path: '/spatial-microphone/socket.io',
-    cors: {
-        origin: `*`,
-        methods: ["GET", "POST"]
-    }
-});
-
-io.on("error", (e) => {
-    console.error(e);
-});
-
-function startRecording(socket) {
+function startRecording() {
     if (!spatialMicrophone) {
         return;
     }
 
     if (spatialMicrophone.initialized) {
         spatialMicrophone.startRecording();
-        socket.emit("recordingStarted");
     } else {
         spatialMicrophone.wantedToImmediatelyStartRecording = true;
     }
 }
 
-async function finishRecording(socket) {
+async function finishRecording() {
     if (!spatialMicrophone) {
         return;
     }
     
-    const recordingFilename = await spatialMicrophone.finishRecording("wav");
-    socket.emit("recordingFinished", { recordingFilename });
+    return await spatialMicrophone.finishRecording("wav");
 }
 
-async function toggleRecording(socket) {
+async function toggleRecording() {
     if (!spatialMicrophone) {
         return;
     }
 
     if (spatialMicrophone.isRecording) {
-        await finishRecording(socket);
+        return await finishRecording();
     } else {
-        startRecording(socket);
+        return startRecording();
     }
 }
-io.on("connection", (socket) => {
-    socket.on("startRecording", () => {
-        startRecording(socket);
-    });
 
-    socket.on("finishRecording", async () => {
-        await finishRecording(socket);
-    });
+const app = express();
+app.use(cors());
+app.use(express.static('output'));
+app.get('/spatial-microphone/start-recording', (req, res) => {
+    startRecording();
+    res.json({ endpoint: "start-recording", status: "success" });
+});
 
-    socket.on("toggleRecording", async () => {
-        await toggleRecording(socket);
-    });
+app.get('/spatial-microphone/finish-recording', async (req, res) => {
+    let filename = await finishRecording();
+    filename = filename.replace('./output/', `${req.headers.host}/`); // To conform to Express
+    res.json({ endpoint: "toggle-recording", status: "success", recordingPath: filename });
+});
+
+app.get('/spatial-microphone/toggle-recording', async (req, res) => {
+    let retval = await toggleRecording();
+    if (retval) {
+        retval = retval.replace('./output/', `${req.headers.host}/`); // To conform to Express
+        res.json({ endpoint: "toggle-recording", action: "finish-recording", status: "success", recordingPath: retval });
+    } else {
+        res.json({ endpoint: "toggle-recording", action: "start-recording", status: "success" });
+    }
 });
 
 const PORT = 8124;
+const httpServer = require("http").createServer(app);
 httpServer.listen(PORT, async () => {
     console.log(`Spatial Microphone is ready and listening at http://localhost:${PORT}`)
 });
@@ -259,12 +266,12 @@ httpServer.listen(PORT, async () => {
 const spatialSpeakerSpaceSocket = require("socket.io-client").connect('http://localhost:8123', { path: '/spatial-speaker-space/socket.io' });
 spatialSpeakerSpaceSocket.on('connect', (socket) => {
     console.log('Connected to Spatial Speaker Space!');
+    spatialMicrophone.maybeSendWebSocketData();
 });
 
 process.on('SIGINT', () => {    
     if (spatialMicrophone) {
         spatialMicrophone.disconnect();
     }
-
     process.exit();
 });

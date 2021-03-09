@@ -134,11 +134,17 @@ class Participant {
 let spaceInformation = {};
 io.on("connection", (socket) => {
     socket.on("addParticipant", ({ visitIDHash, displayName, colorHex, participantType, isRecording, spaceName } = {}) => {
-        console.log(`In ${spaceName}, adding participant:\nHashed Visit ID: \`${visitIDHash}\`\nDisplay Name: \`${displayName}\`\nColor: ${colorHex}\nparticipantType: ${participantType}\n`);
 
         if (!spaceInformation[spaceName]) {
             spaceInformation[spaceName] = new ServerSpaceInfo({ spaceName });
         }
+
+        if (spaceInformation[spaceName].participants.find((participant) => { return participant.visitIDHash === visitIDHash; })) {
+            // Already had info about this participant.
+            return;
+        }
+
+        console.log(`In ${spaceName}, adding participant:\nHashed Visit ID: \`${visitIDHash}\`\nDisplay Name: \`${displayName}\`\nColor: ${colorHex}\nparticipantType: ${participantType}\n`);
 
         let me = new Participant({ visitIDHash, displayName, colorHex, participantType, isRecording });
 

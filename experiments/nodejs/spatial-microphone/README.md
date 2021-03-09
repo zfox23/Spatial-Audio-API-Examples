@@ -16,14 +16,18 @@ Zach Fox
     - Obtain `HIFI_*` credentials from the [High Fidelity Spatial Audio API Developer Console](https://account.highfidelity.com/dev/account)
 5. Run `npm run start`
 
-### Manually Starting and Stopping Recording
-Make one of the following WebSocket requests to `http://localhost:8124/spatial-microphone/socket.io`:
-- `"startRecording"`
+### Starting and Stopping Recording using the Spatial Microphone REST API
+Make an HTTP `GET` request to `http://localhost:8124/spatial-microphone/<request>`, replacing `<request>` with one of the options below:
+- `start-recording`
     - Starts recording audio.
-- `"finishRecording"`
+- `finish-recording`
     - Stops recording audio and saves the current recording to disk.
-- `"toggleRecording"`
+    - The JSON response contains the path to the saved audio file. 
+- `toggle-recording`
     - If currently recording audio, stops recording audio. Otherwise, starts recording audio.
+    - If finishing a recording, the JSON response will contain the path to the saved audio file. 
+
+The server will respond to each of the above requests with JSON.
 
 ### Programmatically Starting and Stopping Recording with Spatial Speaker Space
 1. Start up the [Spatial Speaker Space Experiment](../Spatial-Speaker-Space) using the instructions found underneath that Experiment.
