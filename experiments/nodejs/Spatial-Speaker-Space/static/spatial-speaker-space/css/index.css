@@ -46,6 +46,16 @@ p {
     flex-direction: column;
 }
 
+.colorHexInput {
+    width: 21px;
+    height: 21px;
+    border: none;
+    padding: 0;
+    background-color: transparent;
+    position: relative;
+    top: 1px;
+}
+
 .description {
     margin: 0 12px;
 }
@@ -119,11 +129,11 @@ p {
     color: #FFFFFF;
     user-select: none;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    font-size: 18px;
-    line-height: 20px;
+    font-size: 16px;
     background-color: #000000;
     border-radius: 20px;
     height: 20px;
+    line-height: 20px;
     position: relative;
     top: 8px;
 }

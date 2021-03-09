@@ -20,6 +20,7 @@ function onUserKeyDown(event) {
 
     switch (keyboardEventCache[0].code) {
         case M_KEY_CODE:
+            toggleInputMute();
             break;
         case SPACE_KEY_CODE:
             if (isMuted) {
@@ -48,9 +49,6 @@ function onUserKeyUp(event) {
     }
 
     switch (event.code) {
-        case M_KEY_CODE:
-            toggleInputMute();
-            break;
         case SPACE_KEY_CODE:
             if (wasMutedBeforePTT) {
                 setInputMute(true);
@@ -66,12 +64,7 @@ function onUserKeyUp(event) {
 document.addEventListener('keyup', onUserKeyUp, false);
 
 function onUserClick(e) {
-    if (!myUserData || !canvasRotationDegrees) {
-        return;
-    }
-
-    if (e.offsetY < 60) {
-        // Didn't click on canvas.
+    if (!myUserData) {
         return;
     }
 
@@ -147,8 +140,7 @@ function handleGestureOnCanvasMove(event) {
         lastDistanceBetweenRightClickEvents = newDistance;
 
         if (myUserData) {
-            let newYawOrientationDegrees = myUserData.yawOrientationDegrees + deltaDistance * RIGHT_CLICK_ROTATION_SENSITIVITY;
-            updateMyPositionAndOrientation(undefined, newYawOrientationDegrees);
+            updateMyPositionAndOrientation(undefined, myUserData.orientationEuler.yawDegrees + deltaDistance * RIGHT_CLICK_ROTATION_SENSITIVITY);
         }
     }
 }
@@ -299,4 +291,25 @@ if (localStorage.getItem('myDisplayName')) {
     onMyDisplayNameChanged(localStorage.getItem('myDisplayName'));
 } else {
     onMyDisplayNameChanged(displayNameInput.value);
+}
+
+function onMyColorHexChanged(newColorHex) {
+    newColorHex = typeof (newColorHex) === "string" ? newColorHex : colorHexInput.value;
+    localStorage.setItem('myColorHex', newColorHex);
+    colorHexInput.value = newColorHex;
+    if (!myUserData) {
+        return;
+    }
+    myUserData.colorHex = newColorHex;
+    updateRemoteParticipant();
+    updateParticipantsContainerInnerHTML();
+}
+const colorHexInput = document.querySelector('.colorHexInput');
+colorHexInput.addEventListener('input', (e) => {
+    onMyColorHexChanged(e.target.value);
+});
+if (localStorage.getItem('myColorHex')) {
+    onMyColorHexChanged(localStorage.getItem('myColorHex'));
+} else {
+    onMyColorHexChanged(colorHexInput.value);
 }

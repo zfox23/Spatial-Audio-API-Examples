@@ -13,6 +13,9 @@ const APP_SECRET = auth.HIFI_APP_SECRET;
 const SPACE_NAME = auth.HIFI_SPACE_NAME;
 const SECRET_KEY_FOR_SIGNING = crypto.createSecretKey(Buffer.from(APP_SECRET, "utf8"));
 
+const RECORDING_COLOR_HEX = "#FF0000";
+const NOT_RECORDING_COLOR_HEX = "#525252";
+
 async function generateHiFiJWT(userID, isAdmin) {
     let hiFiJWT;
     try {
@@ -74,7 +77,7 @@ class SpatialMicrophone {
         this.outputAudioMediaStreamTrack = this.communicator.getOutputAudioMediaStream().getTracks()[0];
         this.initialized = true;
         
-        spatialSpeakerSpaceSocket.emit("addParticipant", { visitIDHash: this.visitIDHash, displayName: "🎤 Mic", participantType: "spatialMicrophone", spaceName: this.spaceName, isRecording: this.isRecording });
+        spatialSpeakerSpaceSocket.emit("addParticipant", { visitIDHash: this.visitIDHash, displayName: "🎤 Mic", participantType: "spatialMicrophone", spaceName: this.spaceName, isRecording: this.isRecording, colorHex: this.isRecording ? RECORDING_COLOR_HEX : NOT_RECORDING_COLOR_HEX });
 
         if (this.wantedToImmediatelyStartRecording) {
             this.startRecording();
@@ -102,7 +105,7 @@ class SpatialMicrophone {
         console.log(`Starting to record from spatial microphone in \`${this.spaceName}\`...`);
 
         this.isRecording = true;
-        spatialSpeakerSpaceSocket.emit("editParticipant", { visitIDHash: this.visitIDHash, spaceName: this.spaceName, isRecording: this.isRecording });
+        spatialSpeakerSpaceSocket.emit("editParticipant", { visitIDHash: this.visitIDHash, spaceName: this.spaceName, isRecording: this.isRecording, colorHex: RECORDING_COLOR_HEX });
         this.startRecordTime = Date.now();
 
         this.stereoSamples = new Int16Array();
@@ -130,7 +133,7 @@ class SpatialMicrophone {
         console.log(`Recording length: ${(Date.now() - this.startRecordTime) / 1000}s`);
 
         this.isRecording = false;
-        spatialSpeakerSpaceSocket.emit("editParticipant", { visitIDHash: this.visitIDHash, spaceName: this.spaceName, isRecording: this.isRecording });
+        spatialSpeakerSpaceSocket.emit("editParticipant", { visitIDHash: this.visitIDHash, spaceName: this.spaceName, isRecording: this.isRecording, colorHex: NOT_RECORDING_COLOR_HEX });
 
         if (this.rtcAudioSink) {
             this.rtcAudioSink.stop();

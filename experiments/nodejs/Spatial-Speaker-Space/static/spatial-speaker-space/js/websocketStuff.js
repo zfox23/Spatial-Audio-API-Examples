@@ -24,7 +24,7 @@ function stopWebSocketStuff() {
 }
 
 spatialSpeakerSpaceSocket.on("onParticipantAdded", (participantArray) => {
-    console.log(`Retrieved information about ${participantArray.length} participants from the server:\n${JSON.stringify(participantArray)}`);
+    console.log(`Retrieved information about ${participantArray.length} participant(s) from the server:\n${JSON.stringify(participantArray)}`);
     participantArray.forEach((participant) => {
         let { visitIDHash, displayName, colorHex, participantType, isRecording } = participant;
         let localUserData = allLocalUserData.find((participant) => { return participant.visitIDHash === visitIDHash; });

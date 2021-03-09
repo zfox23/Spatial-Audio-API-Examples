@@ -97,12 +97,6 @@ function getInitials(name) {
     return textWords.join("").toUpperCase();
 }
 
-function getYawOrientationDegreesFromQuat(hiFiQuat) {
-    let threeEuler = new THREE.Euler().setFromQuaternion(new THREE.Quaternion(hiFiQuat.x, hiFiQuat.y, hiFiQuat.z, hiFiQuat.w), THREE_EULER_ORDER);
-    let yawOrientationDegrees = threeEuler.y * 180 / Math.PI;
-    return yawOrientationDegrees;
-}
-
 function easeInOutQuart(progressFraction) {
     return progressFraction < 0.5 ? 8 * progressFraction * progressFraction * progressFraction * progressFraction : 1 - Math.pow(-2 * progressFraction + 2, 4) / 2;
 }

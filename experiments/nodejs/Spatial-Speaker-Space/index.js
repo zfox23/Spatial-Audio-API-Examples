@@ -159,7 +159,7 @@ io.on("connection", (socket) => {
             if (typeof (displayName) === "string") {
                 participantToEdit.displayName = displayName;
             }
-            if (typeof (colorHex) === "boolean") {
+            if (typeof (colorHex) === "string") {
                 participantToEdit.colorHex = colorHex;
             }
             if (typeof (isRecording) === "boolean") {

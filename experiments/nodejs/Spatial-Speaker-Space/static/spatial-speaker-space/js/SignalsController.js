@@ -158,8 +158,8 @@ class SignalsController {
 
         this.addSignal(particleParams, true);
 
-        if (socket) {
-            socket.emit("addParticle", { visitIDHash: myVisitIDHash, spaceName, particleData: JSON.stringify(particleParams)} );
+        if (spatialSpeakerSpaceSocket) {
+            spatialSpeakerSpaceSocket.emit("addParticle", { visitIDHash: myVisitIDHash, spaceName, particleData: JSON.stringify(particleParams)} );
         }
     }
 }
