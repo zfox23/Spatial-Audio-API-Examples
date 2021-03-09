@@ -18,12 +18,12 @@ Zach Fox
 
 ### Manually Starting and Stopping Recording
 Make one of the following WebSocket requests to `http://localhost:8124/spatial-microphone/socket.io`:
-    - `"startRecording"`
-        - Starts recording audio.
-    - `"finishRecording"`
-        - Stops recording audio and saves the current recording to disk.
-    - `"toggleRecording"`
-        - If currently recording audio, stops recording audio. Otherwise, starts recording audio.
+- `"startRecording"`
+    - Starts recording audio.
+- `"finishRecording"`
+    - Stops recording audio and saves the current recording to disk.
+- `"toggleRecording"`
+    - If currently recording audio, stops recording audio. Otherwise, starts recording audio.
 
 ### Programmatically Starting and Stopping Recording with Spatial Speaker Space
 1. Start up the [Spatial Speaker Space Experiment](../Spatial-Speaker-Space) using the instructions found underneath that Experiment.
