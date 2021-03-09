@@ -1,4 +1,4 @@
-const spatialSpeakerSpaceSocket = io(':8123', { path: '/spatial-speaker-space/socket.io' });
+const spatialSpeakerSpaceSocket = io('', { path: '/spatial-speaker-space/socket.io' });
 let readyToSendWebSocketData = false;
 
 spatialSpeakerSpaceSocket.on("connect", (socket) => {
