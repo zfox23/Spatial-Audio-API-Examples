@@ -154,7 +154,9 @@
             } else if (userData.participantType === "spatialMicrophone") {
                 participant.classList.add("spatialMicrophoneParticipant");
                 if (userData.isRecording) {
-                    participant.innerHTML += " (recording)";
+                    participant.innerHTML += " (recording; click to stop)";
+                } else {
+                    participant.innerHTML += " (not recording; click to record)";
                 }
                 spatialMicrophonesContainer.appendChild(participant);
                 participant.addEventListener("click", (e) => {
