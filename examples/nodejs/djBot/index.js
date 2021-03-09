@@ -8,7 +8,7 @@ const path = require('path'); // Used to verify that the specified audio file is
 const decode = require('audio-decode'); // Used to decode the audio file present on your local disk.
 const format = require('audio-format'); // Allows us to retrieve available format properties from an audio-like object, such as our `AudioBuffer`.
 const convert = require('pcm-convert'); // Allows us to convert our `AudioBuffer` into the proper `int16` format.
-const { Point3D, HiFiAudioAPIData, HiFiCommunicator, preciseInterval } = require("hifi-spatial-audio"); // Used to interface with the High Fidelity Spatial Audio API.
+const { Point3D, HiFiAudioAPIData, HiFiCommunicator, preciseInterval } = require("hifi-spatial-audio"); // Used to interface with the Spatial Audio API.
 
 async function generateJWT() {
     // This is your "App ID" as obtained from the High Fidelity Audio API Developer Console.
