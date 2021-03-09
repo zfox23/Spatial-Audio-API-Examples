@@ -48,6 +48,8 @@ Explore various environments connected in a grid with spatial audio between them
 Drop the Spatial Microphone in a High Fidelity Spatial Audio Space to record the audio in that Space from coordinates `(0, 0, 0)`. The Spatial Microphone saves audio recordings in `.wav` format by default.
 ### [Spatial Speaker Space](./experiments/nodejs/Spatial-Speaker-Space)
 A comfortable virtual 3D audio environment for speakers and an audience that makes use advanced of High Fidelity's Spatial Audio API.
+### [Spatial Watch Party](./experiments/nodejs/Spatial-Watch-Party)
+A Web application that lets users watch synced YouTube videos together while chatting in a virtual 3D environment using High Fidelity's spatial audio technology.
 ### [StreetMeet](./experiments/nodejs/streetMeet)
 Discover the entire world in 3D with others with High Fidelity Spatial Audio, Twilio and Google Street View.
 ### [Video Chat - Agora](./experiments/nodejs/videochat-agora)
