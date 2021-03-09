@@ -248,7 +248,7 @@ io.on("connection", (socket) => {
     });
 });
 
-const PORT = 8125;
+const PORT = 8124;
 httpServer.listen(PORT, async () => {
     console.log(`Spatial Microphone is ready and listening at http://localhost:${PORT}`)
 });

@@ -1,7 +1,7 @@
 const spatialSpeakerSpaceSocket = io(':8123', { path: '/spatial-speaker-space/socket.io' });
 // This Experiment plays nicely with the Spatial Microphone example found elsewhere in this repository! :)
 // But, if you aren't running that example, that's OK; Spatial-Speaker-Space will still work.
-const spatialMicrophoneSocket = io(':8125', { path: '/spatial-microphone/socket.io', reconnectionAttempts: 3 });
+const spatialMicrophoneSocket = io(':8124', { path: '/spatial-microphone/socket.io', reconnectionAttempts: 3 });
 let webSocketStuffInitialized = false;
 
 function initWebSocketStuff() {
