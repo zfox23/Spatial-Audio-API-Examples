@@ -103,6 +103,9 @@ function drawAvatarLabel({ isMine, userData, avatarRadiusM, positionInCanvasSpac
 }
 
 function drawVolumeBubble({ userData, avatarRadiusM, positionInCanvasSpace }) {
+    if (userData.volumeDecibels < userData.volumeThreshold) {
+        return;
+    }
     ctx.beginPath();
     ctx.arc(positionInCanvasSpace.x, positionInCanvasSpace.y, linearScale(userData.volumeDecibels, MIN_VOLUME_DB, MAX_VOLUME_DB, avatarRadiusM, avatarRadiusM * MAX_VOLUME_DB_AVATAR_RADIUS_MULTIPLIER) * pxPerM, 0, 2 * Math.PI);
     ctx.fillStyle = userData.colorHex;

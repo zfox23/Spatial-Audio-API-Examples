@@ -32,8 +32,16 @@
         <p class="numParticipants">0</p>
     </div>
 
-    <p class="currentHiFiGainValue">Input Gain: 1.0</p>
-    <input class="hiFiGainSlider" disabled="true" type="range" min="1" max="21" value="11" step="1">
+    <div class="hiFiGainContainer">
+        <p class="currentHiFiGainValue">Input Gain: 1.0</p>
+        <input class="hiFiGainSlider" disabled="true" type="range" min="1" max="21" value="11" step="1">
+    </div>
+
+    <div class="volumeThresholdContainer">
+        <p class="currentVolumeThresholdValue">Volume Threshold: -60 dB</p>
+        <div class="volumeThresholdSliderBackground"></div>
+        <input class="volumeThresholdSlider" disabled="true" type="range" min="-90" max="0" value="-60" step="2">
+    </div>
 </body>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.1.1/socket.io.js"></script>

@@ -261,13 +261,45 @@ function onHiFiGainChanged() {
     currentHiFiGainValue.innerHTML = `Input Gain: ${myUserData.hiFiGain.toFixed(2)}`;
     console.log(`User changed their HiFiGain to ${myUserData.hiFiGain}`);
 
-    console.log(hifiCommunicator.updateUserDataAndTransmit({
+    hifiCommunicator.updateUserDataAndTransmit({
         hiFiGain: myUserData.hiFiGain,
-    }));
+    });
 }
 const hiFiGainSlider = document.querySelector('.hiFiGainSlider');
 hiFiGainSlider.disabled = true;
 hiFiGainSlider.addEventListener('input', onHiFiGainChanged);
+
+
+const currentVolumeThresholdValue = document.querySelector('.currentVolumeThresholdValue');
+function onVolumeThresholdChanged() {
+    localStorage.setItem('myVolumeThreshold', volumeThresholdSlider.value);
+
+    currentVolumeThresholdValue.innerHTML = `Volume Threshold: ${volumeThresholdSlider.value} dB`;
+
+    let percentage = linearScale(volumeThresholdSlider.value, -90, 0, 0, 100);
+    volumeThresholdSlider.style.background = `linear-gradient(to right, #ad983b88, #ad983b88 ${percentage}%, #3d8a3488 ${percentage}%, #3d8a3488 100%)`;
+
+    if (!hifiCommunicator || !myUserData) {
+        return;
+    }
+
+    myUserData.volumeThreshold = parseInt(volumeThresholdSlider.value);
+
+    console.log(`User changed their Volume Threshold to ${myUserData.volumeThreshold}`);
+
+    hifiCommunicator.updateUserDataAndTransmit({
+        volumeThreshold: myUserData.volumeThreshold,
+    });
+}
+const volumeThresholdSliderBackground = document.querySelector('.volumeThresholdSliderBackground');
+const volumeThresholdSlider = document.querySelector('.volumeThresholdSlider');
+volumeThresholdSlider.disabled = true;
+volumeThresholdSlider.addEventListener('input', onVolumeThresholdChanged);
+if (localStorage.getItem('myVolumeThreshold')) {
+    volumeThresholdSlider.value = localStorage.getItem('myVolumeThreshold');
+}
+onVolumeThresholdChanged();
+
 
 const participantsContainer = document.querySelector('.participantsContainer');
 participantsContainer.addEventListener('click', (e) => { e.stopPropagation(); });

@@ -220,7 +220,7 @@
                     if (typeof (currentDataFromServer.orientationEuler.yawDegrees) === "number") {
                         currentLocalUserData.orientationEuler.yawDegrees = currentDataFromServer.orientationEuler.yawDegrees;
                         // For proper visual representation.
-                // TODO: Talk to Sam or Luis and figure out why this (and the other related code) is necessary.
+                        // TODO: Talk to Sam or Luis and figure out why this (and the other related code) is necessary.
                         currentLocalUserData.orientationEuler.yawDegrees -= 180;
                         currentLocalUserData.orientationEuler.yawDegrees %= 360;
                         mustUpdateCanvas = true;
@@ -230,6 +230,12 @@
                 // Only update volume data for speakers.
                 if (currentLocalUserData.participantType === "speaker" && typeof (currentDataFromServer.volumeDecibels) === "number") {
                     currentLocalUserData.volumeDecibels = currentDataFromServer.volumeDecibels;
+
+                    if (isMine) {
+                        let percentage = linearScale(currentLocalUserData.volumeDecibels, -90, 0, 0, 100);
+                        volumeThresholdSliderBackground.style.background = `linear-gradient(to right, #c2c2c2, #ad983b ${percentage}%, #00000000 ${percentage}%, #00000000 100%)`;
+                    }
+
                     mustUpdateCanvas = true;
                 }
             } else {
@@ -332,6 +338,7 @@
             this.isRecording = data.isRecording || false;
             this.volumeDecibels = data.volumeDecibels;
             this.hiFiGain = data.hiFiGain || 1.0;
+            this.volumeThreshold = data.volumeThreshold || -60;
         }
     }
 
@@ -397,6 +404,7 @@
             updateMyUserData();
             onMyDisplayNameChanged();
             onMyColorHexChanged();
+            onVolumeThresholdChanged();
             if (IS_SPEAKER) {
                 await hifiCommunicator.setInputAudioMediaStream(audioMediaStream);
                 if (!muteButtonHookedUp) {                    
@@ -425,6 +433,7 @@
         connectDisconnectButton.innerHTML = `Disconnect`;
         connectDisconnectButton.disabled = false;
         hiFiGainSlider.disabled = false;
+        volumeThresholdSlider.disabled = false;
 
         // Set the `srcObject` on our `audio` DOM element to the final, mixed audio stream from the High Fidelity Audio API Server.
         outputAudioEl.srcObject = hifiCommunicator.getOutputAudioMediaStream();
