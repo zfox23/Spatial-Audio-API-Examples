@@ -30,6 +30,13 @@
             EMITTER: 1, // Sends a stream from a audio file
             RECEIVER: 2 // Receives the mix and play locally
         }
+
+        function getURLParam(param) {
+            let urlString = window.location.href;
+            let url = new URL(urlString);
+            let value = url.searchParams.get(param);
+            return value;
+        }
         
         // Some helper functions to simplify drawing calls and changes in coordenates
         class CanvasHelper {
@@ -182,7 +189,8 @@
                     await this.hifiCommunicator.setInputAudioMediaStream(this.stream, false);
                 }
                 try {
-                    this.connectResponse = await this.hifiCommunicator.connectToHiFiAudioAPIServer(HIFI_AUDIO_JWT);
+                    let stackURLOverride = getURLParam("stack") ? getURLParam("stack") : null;
+                    this.connectResponse = await this.hifiCommunicator.connectToHiFiAudioAPIServer(HIFI_AUDIO_JWT, stackURLOverride);
                     console.log(`Call to \`connectToHiFiAudioAPIServer()\` for: ${this.name} succeeded! Response:\n${JSON.stringify(this.connectResponse)}`);
                     return this.connectResponse.success;
                 } catch (e) {

@@ -290,6 +290,13 @@
             }
         }
 
+        function getURLParam(param) {
+            let urlString = window.location.href;
+            let url = new URL(urlString);
+            let value = url.searchParams.get(param);
+            return value;
+        }
+
         async function connectToHiFiAudio(inputAudioMediaStream) {
             console.log(`Connecting to High Fidelity Audio API Servers...`);
 
@@ -311,7 +318,8 @@
             const HIFI_AUDIO_JWT = "";
             let connectResponse;
             try {
-                connectResponse = await hifiCommunicator.connectToHiFiAudioAPIServer(HIFI_AUDIO_JWT);
+                let stackURLOverride = getURLParam("stack") ? getURLParam("stack") : null;
+                connectResponse = await hifiCommunicator.connectToHiFiAudioAPIServer(HIFI_AUDIO_JWT, stackURLOverride);
             } catch (e) {
                 console.error(`Call to \`connectToHiFiAudioAPIServer()\` failed! Error:\n${JSON.stringify(e)}`);
                 connectDisconnectButton.disabled = false;
