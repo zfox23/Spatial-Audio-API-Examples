@@ -171,7 +171,13 @@
                 }
                 spatialMicrophonesContainer.appendChild(participant);
                 participant.addEventListener("click", (e) => {
-                    fetch(`${location.protocol}//${location.hostname}:8124/spatial-microphone/toggle-recording`)
+                    let spatialMicAPIPath;
+                    if (location.hostname === "localhost") {
+                        spatialMicAPIPath = `${location.protocol}//${location.hostname}:8124/spatial-microphone/toggle-recording`;
+                    } else {
+                        spatialMicAPIPath = `${location.protocol}//${location.hostname}/spatial-microphone/toggle-recording`;
+                    }
+                    fetch(spatialMicAPIPath)
                         .then(response => response.json())
                         .then(data => console.log(data));
                 });
