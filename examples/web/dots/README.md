@@ -1,11 +1,10 @@
 # Dots: A basic, but complete, 2D multi-user spatialized sound demo.
 
 Everything is drag and drop:
-- Drag your dot to move.
+- Drag your dot to move. You face in the direction that you drag.
 - Drag on an mp3 to play it from that position, and anyone can drag it around afterwords. Gets deleted when you leave. (Opens a second connection to the mixer.)
 - Drag an image to be the background (for everyone).
 -  Drag an image onto yourself or any music to be the image. 
-- ~~Change direction to face direction of drag.~~
 
 Start in anteroom/lobby, showing how many in each room. Join the one you want.
 
