@@ -311,7 +311,8 @@
             const HIFI_AUDIO_JWT = "";
             let connectResponse;
             try {
-                connectResponse = await hifiCommunicator.connectToHiFiAudioAPIServer(HIFI_AUDIO_JWT);
+                let stackURLOverride = new URLSearchParams(location.search).get("stack");
+                connectResponse = await hifiCommunicator.connectToHiFiAudioAPIServer(HIFI_AUDIO_JWT, stackURLOverride);
             } catch (e) {
                 console.error(`Call to \`connectToHiFiAudioAPIServer()\` failed! Error:\n${JSON.stringify(e)}`);
                 connectDisconnectButton.disabled = false;
