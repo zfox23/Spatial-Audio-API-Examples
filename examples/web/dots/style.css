@@ -1,6 +1,6 @@
 body {
   height: 95vh;
-  width: 95%; /* Don't wiggle on mobile when moving around */
+  width: 100vw; /* Don't wiggle on mobile when moving around */
 }
 map {
     height: 100%;
@@ -88,8 +88,8 @@ micControls {
     height: 130px;
     display: block;
     position: fixed;
-    left: 10px;
-    bottom: 15px;
+    right: 10px;
+    top: 15px;
 }
 micControls button {
     display: block;

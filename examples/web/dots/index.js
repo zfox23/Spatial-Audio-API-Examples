@@ -1,4 +1,4 @@
-const Version = "g.1.20";
+const Version = "g.1.22";
 // Provide publish/subscribe communications with others. This could be to a server, p2p, etc.
 // Using a pub/sub discipline is up to the application, but it happens to work well here.
 class Client extends Croquet.View {
@@ -80,8 +80,8 @@ class Avatar extends Client {
         return KJUR.jws.JWS.sign("HS256", JSON.stringify(header), JSON.stringify(payload), secret);
         */
         // That's the easiest thing for running your own demo, but, of course, anyone who looked at the source could connect at your expense.
-        // Below, we contact a server that only responds to this demo. 
-        let response = await fetch('https://lit-inlet-37897.herokuapp.com?payload=' + JSON.stringify(payload));
+        // Below, we contact a server that only responds to this demo.
+        let response = await fetch('https://lit-inlet-37897.herokuapp.com?payload=' + encodeURIComponent(JSON.stringify(payload)));
         return await response.json();
     }
     get hifiUserId() {  // Could be anything unique, such as this.model.sessionAvatarId.
@@ -201,6 +201,7 @@ class Avatar extends Client {
         }
     }
     drag(event) { // On each move, update position.
+        event.preventDefault();
         this.didDrag = true;
         let {x, y} = this; // From startDrag.
         x += this.updateDimension(event, 'clientX');
@@ -430,12 +431,12 @@ class CircularBuffer {
         if (optionalValue === undefined) return buffer[wrapped];
         buffer[wrapped] = optionalValue;
     }
-    averaged(index, window) {
+    averaged(index, windowSize) {
         let average = 0;
-        for (let count = 0; count < window; count++) {
+        for (let count = 0; count < windowSize; count++) {
             average += this.at(count + index + this.buffer.length);
         }
-        return average / window;
+        return average / windowSize;
     }
     exchange(newValue) { // Set a value and get the size+1 back.
         this.at(this.index++, newValue);
@@ -604,3 +605,5 @@ Croquet.Session.join({  // Join the lobby session, which we will be part of the 
     console.log('HighFidelityAudio example Dots', Version);
     Array.from(document.getElementsByTagName('a')).forEach(e => e.onclick = (event => LobbySession.view.enterRoom(event.target.parentElement.id)));
 });
+
+document.addEventListener('touchmove', e => e.preventDefault(), { passive:false });
