@@ -16,13 +16,6 @@
         // We use this to change the text of the "Connect" button to "Connected", and to disable that button after clicking it.
         let connectButton = document.querySelector('.connectButton');
 
-        function getURLParam(param) {
-            let urlString = window.location.href;
-            let url = new URL(urlString);
-            let value = url.searchParams.get(param);
-            return value;
-        }
-
         async function connectToHiFiAudio(stream) {
             // Disable the Connect button after the user clicks it so we don't double-connect.
             connectButton.disabled = true;
@@ -54,7 +47,7 @@
             // If you don't need a guide, obtain JWT credentials after signing up for a developer account at https://account.highfidelity.com/dev/account
             const HIFI_AUDIO_JWT = "";
             try {
-                let stackURLOverride = getURLParam("stack") ? getURLParam("stack") : null;
+                let stackURLOverride = new URLSearchParams(location.search).get("stack");
                 await hifiCommunicator.connectToHiFiAudioAPIServer(HIFI_AUDIO_JWT, stackURLOverride);
             } catch (e) {
                 console.error(`Error connecting to High Fidelity:\n${e}`);
