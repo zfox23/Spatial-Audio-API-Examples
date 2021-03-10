@@ -1,4 +1,4 @@
-const Version = "g.1.20";
+const Version = "g.1.22";
 // Provide publish/subscribe communications with others. This could be to a server, p2p, etc.
 // Using a pub/sub discipline is up to the application, but it happens to work well here.
 class Client extends Croquet.View {
@@ -13,7 +13,7 @@ class Avatar extends Client {
             streamingAvatar = room.avatars[streamingAvatarId],
             fragment = avatarTemplate.content.cloneNode(true);
         // Capture a bunch of named elements within the cloned fragment.
-        ['Avatar', 'Picture', 'Volume', 'Button', 'NameDisplay', 'Self', 'Countdown']
+        ['Avatar', 'Picture', 'Volume', 'Button', 'NameDisplay', 'Self', 'Countdown', 'Arms', 'Reach']
             .forEach(tagName => this['dom' + tagName] = fragment.querySelector(tagName));
         Object.assign(this, {
             room, model, streamingAvatar,
@@ -22,8 +22,11 @@ class Avatar extends Client {
         });
         this.domNameDisplay.innerText = model.name;
         this.domVolume.style.backgroundColor = model.color;
+        this.domReach.style.background = `linear-gradient(to bottom, ${model.color}, transparent 45%)`;
         this.domButton.onclick = event => this.kick(event);
         this.constructor.domAvatars.set(this.domAvatar, this);
+        this.trailingX = new CircularBuffer(10);
+        this.trailingY = new CircularBuffer(10);
         this.redraw();
         map.append(this.domAvatar);
         if (Avatar.mine && Avatar.mine.model.canKickOthers) {
@@ -33,27 +36,28 @@ class Avatar extends Client {
         if (streamingAvatar || model.sessionAvatarId === this.viewId) {
             let initialHiFiAudioAPIData = this.hifiData(this.model.x, this.model.y);
             this.communicator = new HighFidelityAudio.HiFiCommunicator({initialHiFiAudioAPIData});
-            this.connect();
-        }
-        if (streamingAvatar) {
-            streamingAvatar.audioAvatars[model.sessionAvatarId] = this;
-            this.makeDraggable();
-            this.canPickFile("image/*");
-            this.domButton.classList.remove('disabled');
-            let source = this.audioSource;
-            if (source) {
-                source.source.start(0);
-                this.setInputAudio(source.stream, source.isStereo);
-            }
+            this.connect().then(() => {
+                if (streamingAvatar) {
+                    streamingAvatar.audioAvatars[model.sessionAvatarId] = this;
+                    this.makeDraggable();
+                    this.canPickFile("image/*");
+                    this.domButton.classList.remove('disabled');
+                    let source = this.audioSource;
+                    if (source) {
+                        source.source.start(0);
+                        this.setInputAudio(source.stream, source.isStereo);
+                    }
+                }
+            });
         }
         this.subscribeToMessages(['exit', 'redraw', 'setKickState', 'setImage']);
     }
     get audioSource() { return this.streamingAvatar && this.streamingAvatar.audioSources[this.model.sessionAvatarId]; }
-    hifiData(x, y) {
+    hifiData(x, y, rotation = 0) {
         const PixelsToMeters = 1/40;
         return new HighFidelityAudio.HiFiAudioAPIData({
             position: new HighFidelityAudio.Point3D({x: x * PixelsToMeters, y:0, z: y * PixelsToMeters}),
-            orientationEuler: new HighFidelityAudio.OrientationEuler3D({ "pitchDegrees": 0, "yawDegrees": 0, "rollDegrees": 0 })
+            orientationEuler: new HighFidelityAudio.OrientationEuler3D({pitchDegrees: 0, yawDegrees: 180 - rotation, rollDegrees: 0 })
         });
     }
     setInputAudio(stream, stereo = false) {
@@ -76,8 +80,8 @@ class Avatar extends Client {
         return KJUR.jws.JWS.sign("HS256", JSON.stringify(header), JSON.stringify(payload), secret);
         */
         // That's the easiest thing for running your own demo, but, of course, anyone who looked at the source could connect at your expense.
-        // Below, we contact a server that only responds to this demo. 
-        let response = await fetch('https://lit-inlet-37897.herokuapp.com?payload=' + JSON.stringify(payload));
+        // Below, we contact a server that only responds to this demo.
+        let response = await fetch('https://lit-inlet-37897.herokuapp.com?payload=' + encodeURIComponent(JSON.stringify(payload)));
         return await response.json();
     }
     get hifiUserId() {  // Could be anything unique, such as this.model.sessionAvatarId.
@@ -85,14 +89,15 @@ class Avatar extends Client {
     }
     async connect() {
         let jwt = await this.makeJWT(this.hifiUserId);
-        this.communicator.connectToHiFiAudioAPIServer(jwt).then(response => this.connected(response));
+        await this.communicator.connectToHiFiAudioAPIServer(jwt).then(response => this.connected(response));
     }
     connected(response) { console.info('HiFidelityAudio connect response', response); }
-    redraw({x = this.model.x, y = this.model.y, sourceId} = {}) { // after x/y change
+    redraw({x = this.model.x, y = this.model.y, rotation = this.model.rotation, sourceId} = {}) { // after x/y change
         if (sourceId === this.viewId) return; // We've already done it.
-        if (this.communicator) this.communicator.updateUserDataAndTransmit(this.hifiData(x, y));
+        if (this.communicator) this.communicator.updateUserDataAndTransmit(this.hifiData(x, y, rotation));
         this.domAvatar.style.left = (x - this.constructor.baseRadius) + 'px';
         this.domAvatar.style.top = (y - this.constructor.baseRadius) + 'px';
+        this.domArms.style.transform = `rotate(${rotation}deg) translate(0, 50%)`;
     }
     setKickState(state) {
         this.domCountdown.className = state === 0 ? '' : 'counting';
@@ -106,13 +111,15 @@ class Avatar extends Client {
         if (typeof(v) !== 'number') return;
         const Min_displayed_dB = -50,
               Max_displayed_dB = 30,
-              Range = Max_displayed_dB - Min_displayed_dB,
-              Max_pixel_expansion = 30;
+              Range = Max_displayed_dB - Min_displayed_dB;
         let clampedV = Math.max(Min_displayed_dB, Math.min(Max_displayed_dB, v)),
-            positiveV = clampedV - Min_displayed_dB,
-            fractionOfRange = positiveV / Range,
-            addendum = fractionOfRange * Max_pixel_expansion,
-            radius = this.constructor.baseRadius + addendum;
+            positiveV = clampedV - Min_displayed_dB;
+        this.showVolumeFraction(positiveV / Range);
+    }
+    showVolumeFraction(fractionOfRange) {
+        const Max_pixel_expansion = 30,
+              addendum = fractionOfRange * Max_pixel_expansion,
+              radius = this.constructor.baseRadius + addendum;
         this.domVolume.style.width = this.domVolume.style.height = (radius * 2) + 'px';
     }
     enableSelfLabel(isEnabled) {
@@ -181,8 +188,11 @@ class Avatar extends Client {
         this.captureEventPosition(event, 'clientX');
         this.captureEventPosition(event, 'clientY');
         this.didDrag = false; // So that we can distinguish clicks.
+        this.trailingX.init(this.model.x);
+        this.trailingY.init(this.model.y);
         this.x = this.model.x;
         this.y = this.model.y;
+        this.rotation = this.model.rotation;
         // Define move/end on whole document, in case user moves faster than the domAvatar.
         document.onmousemove = document.ontouchmove = event => this.drag(event);
         document.onmouseup = document.ontouchend = event => this.stopDrag(event);
@@ -191,11 +201,22 @@ class Avatar extends Client {
         }
     }
     drag(event) { // On each move, update position.
+        event.preventDefault();
         this.didDrag = true;
         let {x, y} = this; // From startDrag.
         x += this.updateDimension(event, 'clientX');
         y += this.updateDimension(event, 'clientY');
-        let data = {x, y};
+        function smoothedDelta(buffer, value) {
+            // Conceptually, this is the amount added to x or y, above.
+            // However, each drag event is likely to be just one pixel change in
+            // x or y, so we create a keep a circular buffer for each and
+            // take a delta of a windowed average.
+            let trailing = buffer.exchange(value);
+            return buffer.averaged(buffer.index - 3, 3) - trailing;
+        }
+        let rotation = (-180 / Math.PI) * Math.atan2(smoothedDelta(this.trailingX, x),
+                                                     smoothedDelta(this.trailingY, y));
+        let data = {x, y, rotation};
         Object.assign(this, data);
         this.redraw(data); // local
         // Now tell everyone.
@@ -220,21 +241,40 @@ class MyAvatar extends Avatar {
         this.makeDraggable();
         this.domButton.classList.remove('disabled');
         this.startAudio();
+        this.segments = Array.from(document.getElementsByTagName('segment')).reverse();
+        let micInput = document.querySelector('micControls input'),
+            mute = document.querySelector('micControls button.mute'),
+            unmute = document.querySelector('micControls button.unmute');
+        mute.onclick = event => {
+            mute.parentElement.classList.add('muted');
+            this.stream.getAudioTracks().forEach(track => track.enabled = false);
+        }
+        unmute.onclick = event => {
+            unmute.parentElement.classList.remove('muted');
+            this.stream.getAudioTracks().forEach(track => track.enabled = true);
+        }
+        micInput.onchange = event => 
+        this.communicator.updateUserDataAndTransmit(new HighFidelityAudio.HiFiAudioAPIData({hiFiGain: micInput.valueAsNumber}));
+    }
+    showVolumeFraction(fractionOfRange) {
+        super.showVolumeFraction(fractionOfRange);
+        let highestSegmentIndex = fractionOfRange * 10;
+        this.segments.forEach((segment, index) => segment.style.opacity = (index < highestSegmentIndex) ? 1 : 0.5);
     }
     startAudio() {
         if (this.gotInputAudio) return;
         let bestAudioConstraints = HighFidelityAudio.getBestAudioConstraints();
         navigator.mediaDevices.getUserMedia({ audio: bestAudioConstraints, video: false })
             .then(stream => {
+                this.stream = stream;
                 this.setInputAudio(stream);
-                this.canPickFile(".mp3,.jpg,.jpeg,.png,image/*,audio/*");
+                this.canPickFile(".mp3,.jpg,.jpeg,.png,image,audio");
             })
             .catch(console.error); // No harm. User can try again.
     }
     connected(response) { // Connect the communicator output to the player.
         super.connected(response);
         player.srcObject = this.communicator.getOutputAudioMediaStream();
-        player.play();
         let subscription = new HighFidelityAudio.UserDataSubscription({
             "components": [
                 HighFidelityAudio.AvailableUserDataSubscriptionComponents.VolumeDecibels
@@ -297,6 +337,7 @@ class MyAvatar extends Avatar {
                 destination = context.createMediaStreamDestination(); // has destination.stream property
             audioSource.buffer = buffer;
             audioSource.connect(destination);
+            audioSource.loop = true;
             let ourId = this.model.sessionAvatarId,
                 sessionAvatarId = Object.keys(this.audioSources).length + 'm' + ourId,
                 name = `${this.model.name}'s ${file.name.replace('.mp3', '')}`;
@@ -376,6 +417,33 @@ class Room extends Client {
     }
 }
 
+class CircularBuffer {
+    constructor(size) {  // How many exchanges before it repeats.
+        this.buffer = new Array(size + 1);
+    }
+    init(initialValue) { // Start anew with the initialValue for all.
+        this.buffer.fill(initialValue);
+        this.index = 0;
+
+    }
+    at(index, optionalValue) {
+        let buffer = this.buffer, wrapped = index % this.buffer.length;
+        if (optionalValue === undefined) return buffer[wrapped];
+        buffer[wrapped] = optionalValue;
+    }
+    averaged(index, windowSize) {
+        let average = 0;
+        for (let count = 0; count < windowSize; count++) {
+            average += this.at(count + index + this.buffer.length);
+        }
+        return average / windowSize;
+    }
+    exchange(newValue) { // Set a value and get the size+1 back.
+        this.at(this.index++, newValue);
+        return this.averaged(this.index + 10, 5);
+    }
+}
+
 // Provides the synchronized data, shared identically among all users.
 // You can think of this as the communciations to a database record on the server combined with business logic,
 // or as the model in a model-view system. In any case, all the data here is serializable over the wire - simple
@@ -392,7 +460,7 @@ class RoomRecord extends Record {
         this.hifiRoomId = options.roomId;
         this.avatars = new Map(); // sessionAvatarIds to AvatarRecords of those currently in the room. // FIXME: Map => Object.
         this.availableColors = ['AliceBlue', 'AntiqueWhite', 'Aqua', 'Aquamarine', 'Azure', 'Beige', 'Bisque', 'Black', 'BlanchedAlmond', 'Blue', 'BlueViolet', 'Brown', 'BurlyWood', 'CadetBlue', 'Chartreuse', 'Chocolate', 'Coral', 'CornflowerBlue', 'Cornsilk', 'Crimson', 'Cyan', 'DarkBlue', 'DarkCyan', 'DarkGoldenRod', 'DarkGrey', 'DarkGreen', 'DarkKhaki', 'DarkMagenta', 'DarkOliveGreen', 'DarkOrange', 'DarkOrchid', 'DarkRed', 'DarkSalmon', 'DarkSeaGreen', 'DarkSlateBlue', 'DarkSlateGrey', 'DarkTurquoise', 'DarkViolet', 'DeepPink', 'DeepSkyBlue', 'DimGrey', 'DodgerBlue', 'FireBrick', 'FloralWhite', 'ForestGreen', 'Fuchsia', 'Gainsboro', 'GhostWhite', 'Gold', 'GoldenRod', 'Grey', 'Green', 'GreenYellow', 'HoneyDew', 'HotPink', 'IndianRed', 'Indigo', 'Ivory', 'Khaki', 'Lavender', 'LavenderBlush', 'LawnGreen', 'LemonChiffon', 'LightBlue', 'LightCoral', 'LightCyan', 'LightGoldenRodYellow', 'LightGrey', 'LightGreen', 'LightPink', 'LightSalmon', 'LightSeaGreen', 'LightSkyBlue', 'LightSlateGrey', 'LightSteelBlue', 'LightYellow', 'Lime', 'LimeGreen', 'Linen', 'Magenta', 'Maroon', 'MediumAquaMarine', 'MediumBlue', 'MediumOrchid', 'MediumPurple', 'MediumSeaGreen', 'MediumSlateBlue', 'MediumSpringGreen', 'MediumTurquoise', 'MediumVioletRed', 'MidnightBlue', 'MintCream', 'MistyRose', 'Moccasin', 'NavajoWhite', 'Navy', 'OldLace', 'Olive', 'OliveDrab', 'Orange', 'OrangeRed', 'Orchid', 'PaleGoldenRod', 'PaleGreen', 'PaleTurquoise', 'PaleVioletRed', 'PapayaWhip', 'PeachPuff', 'Peru', 'Pink', 'Plum', 'PowderBlue', 'Purple', 'RebeccaPurple', 'Red', 'RosyBrown', 'RoyalBlue', 'SaddleBrown', 'Salmon', 'SandyBrown', 'SeaGreen', 'SeaShell', 'Sienna', 'Silver', 'SkyBlue', 'SlateBlue', 'SlateGrey', 'Snow', 'SpringGreen', 'SteelBlue', 'Tan', 'Teal', 'Thistle', 'Tomato', 'Turquoise', 'Violet', 'Wheat', 'White', 'WhiteSmoke', 'Yellow', 'YellowGreen'];
-        this.availableNames = ['Nile', 'Amazon', 'Yangtze ', 'Mississippi', 'Yenisei', 'Ob', 'Congo', 'Amur', 'Lena', 'Mekong', 'Mackenzie', 'Brahmaputra', 'Murray', 'Tocantins', 'Volg', 'Indus', 'Euphrates', 'Madeira', 'Purús', 'Yukon', 'Salween', 'Tunguska', 'Danube', 'Zambezi', 'Vilyuy', 'Araguaia', 'Ganges', 'Japurá', 'Nelson', 'Paraguay', 'Kolyma', 'Pilcomayo', 'Ishim', 'Juruá', 'Ural', 'Arkansa', 'Colorado', 'Olenyok', 'Dniepe', 'Aldan', 'Ubangi', 'Negro', 'Columbia', 'Pearl', 'Ayeyarwady', 'Kasai', 'Ohio', 'Orinoco', 'Tarim', 'Xingu', 'Salado', 'Vitim', 'Tigris', 'Songhua', 'Tapajós', 'Don', 'Pechora', 'Kama', 'Limpopo', 'Chulym', 'Guaporé', 'Indigirka', 'Snake','Senegal', 'Uruguay', 'Churchill', 'Khatanga', 'Okavango', 'Volta', 'Beni', 'Platte', 'Tobol', 'Alazeya', 'Jubba', 'Içá', 'Magdalena', 'Han', 'Kura', 'Oka', 'Murray', 'Guaviare', 'Pecos', 'Murrumbidgee', 'Yenisei', 'Godavari', 'Belaya', 'Cooper', 'Marañón', 'Dniester', 'Benue', 'Ili', 'Warburton', 'Sutlej', 'Yamuna', 'Vyatka', 'Fraser', 'Brazos', 'Liao', 'Lachlan', 'Yalong', 'Iguaçu', 'Olyokma', 'Dvina', 'Krishna', 'Iriri', 'Narmada', 'Lomami', 'Ottawa', 'Lerma', 'Elbe', 'Zeya', 'Juruena', 'Rhine', 'Athabasca', 'Canadian', 'Saskatchewan', 'Vistula', 'Vaal', 'Shire', 'Ogooué', 'NenKızıl', 'Markha', 'Green', 'Milk', 'Chindwin', 'Sankuru', 'Wu', 'James', 'Kapuas', 'Desna', 'Helmand', 'Tietê', 'Vychegda', 'Sepik', 'Cimarron', 'Anadyr', 'Jialing', 'Liard', 'Cumberland', 'Huallaga', 'Kwango', 'Draa', 'Gambia', 'Tyung', 'Chenab', 'Yellowstone', 'Ghaghara', 'Huai', 'Aras', 'Chu', 'Bermejo', 'Fly', 'Kuskokwim', 'Tennessee', 'Oder', 'Aruwimi', 'Daugava', 'Gila', 'Loire', 'Essequibo', 'Khoper', 'Tagus', 'Flinders'];
+        this.availableNames = ['Nile', 'Amazon', 'Yangtze ', 'Mississippi', 'Yenisei', 'Ob', 'Congo', 'Amur', 'Lena', 'Mekong', 'Mackenzie', 'Brahmaputra', 'Murray', 'Tocantins', 'Volga', 'Indus', 'Euphrates', 'Madeira', 'Purús', 'Yukon', 'Salween', 'Tunguska', 'Danube', 'Zambezi', 'Vilyuy', 'Araguaia', 'Ganges', 'Japurá', 'Nelson', 'Paraguay', 'Kolyma', 'Pilcomayo', 'Ishim', 'Juruá', 'Ural', 'Arkansas', 'Colorado', 'Olenyok', 'Dniepe', 'Aldan', 'Ubangi', 'Negro', 'Columbia', 'Pearl', 'Ayeyarwady', 'Kasai', 'Ohio', 'Orinoco', 'Tarim', 'Xingu', 'Salado', 'Vitim', 'Tigris', 'Songhua', 'Tapajós', 'Don', 'Pechora', 'Kama', 'Limpopo', 'Chulym', 'Guaporé', 'Indigirka', 'Snake','Senegal', 'Uruguay', 'Churchill', 'Khatanga', 'Okavango', 'Volta', 'Beni', 'Platte', 'Tobol', 'Alazeya', 'Jubba', 'Içá', 'Magdalena', 'Han', 'Kura', 'Oka', 'Murray', 'Guaviare', 'Pecos', 'Murrumbidgee', 'Yenisei', 'Godavari', 'Belaya', 'Cooper', 'Marañón', 'Dniester', 'Benue', 'Ili', 'Warburton', 'Sutlej', 'Yamuna', 'Vyatka', 'Fraser', 'Brazos', 'Liao', 'Lachlan', 'Yalong', 'Iguaçu', 'Olyokma', 'Dvina', 'Krishna', 'Iriri', 'Narmada', 'Lomami', 'Ottawa', 'Lerma', 'Elbe', 'Zeya', 'Juruena', 'Rhine', 'Athabasca', 'Canadian', 'Saskatchewan', 'Vistula', 'Vaal', 'Shire', 'Ogooué', 'Nene', 'Markha', 'Green', 'Milk', 'Chindwin', 'Sankuru', 'Wu', 'James', 'Kapuas', 'Desna', 'Helmand', 'Tietê', 'Vychegda', 'Sepik', 'Cimarron', 'Anadyr', 'Jialing', 'Liard', 'Cumberland', 'Huallaga', 'Kwango', 'Draa', 'Gambia', 'Tyung', 'Chenab', 'Yellowstone', 'Ghaghara', 'Huai', 'Aras', 'Chu', 'Bermejo', 'Fly', 'Kuskokwim', 'Tennessee', 'Oder', 'Aruwimi', 'Daugava', 'Gila', 'Loire', 'Essequibo', 'Khoper', 'Tagus', 'Flinders'];
         this.subscribeToMessages(['view-join', 'view-exit', 'addAvatarRecord', 'storeImage'], this.sessionId);
     }
     storeImage(url) {
@@ -427,17 +495,17 @@ class RoomRecord extends Record {
     }
 }
 class AvatarRecord extends Record {
-    init({sessionAvatarId, name, color, x, y, streamingAvatarId, ...options}) {
+    init({sessionAvatarId, name, color, x, y, rotation = 0, streamingAvatarId, ...options}) {
         super.init(options);
-        Object.assign(this, {sessionAvatarId, name, color, x, y, streamingAvatarId});
+        Object.assign(this, {sessionAvatarId, name, color, x, y, rotation, streamingAvatarId});
         this.subscribeToMessages(['setPosition', 'setKickState', 'storeImage']);
     }
     storeImage(url) {
         this.image = url;
         this.publish(this.sessionAvatarId, 'setImage');
     }
-    setPosition({x, y, sourceId}) {
-        Object.assign(this, {x, y});
+    setPosition({x, y, rotation = this.rotation, sourceId}) {
+        Object.assign(this, {x, y, rotation});
         this.publish(this.sessionAvatarId, 'redraw', {sourceId});
     }
     setKickState(state) {
@@ -537,3 +605,5 @@ Croquet.Session.join({  // Join the lobby session, which we will be part of the 
     console.log('HighFidelityAudio example Dots', Version);
     Array.from(document.getElementsByTagName('a')).forEach(e => e.onclick = (event => LobbySession.view.enterRoom(event.target.parentElement.id)));
 });
+
+document.addEventListener('touchmove', e => e.preventDefault(), { passive:false });

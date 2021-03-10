@@ -35,26 +35,43 @@
       <p>You will be asked to allow this app to use your microphone, which is the whole point.</p>
       <p>When you get there, everything is drag and drop:
         <ul>
-          <li>Drag your dot to move.</li>
+          <li>Drag your dot to move. You face in the direction that you drag.</li>
           <li>Drag in an mp3 to play it from that position, and anyone can drag it around afterwords. Gets deleted when you leave.</li>
           <li>Drag an image to be the background (for everyone).</li>
           <li>Drag an image onto yourself or anyone's music to be the image.</li>
-          <li><strike>Twist/arrows to change your direction.</strike></li>
         </ul>
         (You can also select an audio or image file by clicking your dot, without dragging.)
       </p>
       <p>
         Beginning several seconds after you speak in a room, you can kick out anyone in that room. You get kicked back here to the lobby (where there is no speaking), and you can rejoin the room, but beware that people can kick you before you have a chance to disrupt.
       </p>
-      <p>This is all done in less than 500 lines of pure Javascript, with no frameworks, and is inspectable in this codepen.</p>
+      <p>This is all done in less about 600 lines of pure Javascript, with no frameworks, and is inspectable in this codepen.</p>
     </div>
     <template id="mapTemplate">
       <map>
         <h2>Space...</h2>
+        <micControls>
+          <button class="mute"><i class="material-icons">mic</i></button>
+          <button class="unmute"><i class="material-icons">mic_off</i></button>
+          <volumeMeter>
+            <segment class="v10"></segment>
+            <segment class="v9"></segment>
+            <segment class="v8"></segment>
+            <segment class="v7"></segment>
+            <segment class="v6"></segment>
+            <segment class="v5"></segment>
+            <segment class="v4"></segment>
+            <segment class="v3"></segment>
+            <segment class="v2"></segment>
+            <segment class="v1"></segment>
+          </volumeMeter>
+          <input type="range" step="0.1" value="1" min="0" max="4">
+        </micControls>
       </map>
     </template>
     <template id="avatarTemplate">
       <avatar>
+        <arms><reach></reach></arms>
         <volume></volume>
         <picture>
           <nameDisplay></nameDisplay>

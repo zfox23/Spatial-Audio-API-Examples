@@ -1,11 +1,10 @@
 # Dots: A basic, but complete, 2D multi-user spatialized sound demo.
 
 Everything is drag and drop:
-- Drag your dot to move.
+- Drag your dot to move. You face in the direction that you drag.
 - Drag on an mp3 to play it from that position, and anyone can drag it around afterwords. Gets deleted when you leave. (Opens a second connection to the mixer.)
 - Drag an image to be the background (for everyone).
 -  Drag an image onto yourself or any music to be the image. 
-- ~~Change direction to face direction of drag.~~
 
 Start in anteroom/lobby, showing how many in each room. Join the one you want.
 
@@ -17,7 +16,7 @@ I don't want people to guess as to what is happening on the server, without bein
 
 # Demo
 
-You can try this out directly [here](https://highfidelity.github.io/Spatial-Audio-API-Examples/examples/web/dots).
+You can try this out directly [here](https://highfidelity.github.io/Spatial-Audio-API-Examples/examples/web/dots) or on [codepen](https://codepen.io/howard-stearns/full/YzpQvxv)
 
 # Run your own
 
@@ -31,14 +30,11 @@ To make your own version:
 # Further Work
 
 Ideas for further work, in addition to the ~~not-implemented~~ above:
-- Mute.
-- Allow users to change their gain.
 - Persist your color/name for several minutes, so that people will recognize you after you refresh.
 - Don't allow speaking for five seconds on joining.
 - Persist your avatar image (indefinitely?), but then how do you remove it?
 - Too easy to click instead of drag, bringing up file picker. Maybe instead have have a context menu by right-mouse/touch-hold?
 - Something wacky with iphone dark-mode/invert-colors/text-shadows that doesn't differentiate kick enabled/disabled very well
-- Forgot to make audio loop.
 - Video: select a person to show their video. Select anyone who is sharing, but only one shown at a time to imit "Zoom fatigue".
 - Zoom or limit travels? (relates to mobile screen size issues)
 - QR code to share the "full screen" view with someone. But who is face2face any more?
