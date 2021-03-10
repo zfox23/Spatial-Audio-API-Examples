@@ -1,44 +1,59 @@
-const socket = io('', { path: '/spatial-speaker-space/socket.io' });
-let webSocketStuffInitialized = false;
+const spatialSpeakerSpaceSocket = io('', { path: '/spatial-speaker-space/socket.io' });
+let readyToSendWebSocketData = false;
 
-function initWebSocketStuff() {
-    webSocketStuffInitialized = true;
-    socket.emit("addParticipant", { visitIDHash: myVisitIDHash, displayName: myUserData.displayName, colorHex: myUserData.colorHex, isSpeaker: IS_SPEAKER, spaceName });
+spatialSpeakerSpaceSocket.on("connect", (socket) => {
+    maybeSendInitialWebSocketData();
+});
+
+function maybeSendInitialWebSocketData() {
+    if (!readyToSendWebSocketData) {
+        return;
+    }
+    spatialSpeakerSpaceSocket.emit("addParticipant", { visitIDHash: myVisitIDHash, displayName: myUserData.displayName, colorHex: myUserData.colorHex, participantType: IS_SPEAKER ? "speaker" : "audience", spaceName });
 }
 
 function updateRemoteParticipant() {
-    if (!webSocketStuffInitialized) {
+    if (!readyToSendWebSocketData) {
         return;
     }
     let dataToUpdate = { visitIDHash: myVisitIDHash, displayName: myUserData.displayName, colorHex: myUserData.colorHex, spaceName };
     console.log(`Updating data about me on server:\n${JSON.stringify(dataToUpdate)}`);
-    socket.emit("editParticipant", dataToUpdate);
+    spatialSpeakerSpaceSocket.emit("editParticipant", dataToUpdate);
 }
 
 function stopWebSocketStuff() {
-    socket.emit("removeParticipant", { visitIDHash: myVisitIDHash, spaceName });
-    webSocketStuffInitialized = false;
+    spatialSpeakerSpaceSocket.emit("removeParticipant", { visitIDHash: myVisitIDHash, spaceName });
+    readyToSendWebSocketData = false;
 }
 
-socket.on("onParticipantAdded", (participantArray) => {
-    console.log(`Retrieved information about ${participantArray.length} participants from the server:\n${JSON.stringify(participantArray)}`);
+spatialSpeakerSpaceSocket.on("onParticipantAdded", (participantArray) => {
+    console.log(`Retrieved information about ${participantArray.length} participant(s) from the server:\n${JSON.stringify(participantArray)}`);
     participantArray.forEach((participant) => {
-        let { visitIDHash, displayName, colorHex, isSpeaker } = participant;
+        let { visitIDHash, displayName, colorHex, participantType, isRecording } = participant;
         let localUserData = allLocalUserData.find((participant) => { return participant.visitIDHash === visitIDHash; });
         if (localUserData) {
-            console.log(`Updating participant with hash \`${localUserData.visitIDHash}\`:\nDisplay Name: \`${displayName}\`\nColor: ${colorHex}\nisSpeaker: ${isSpeaker}`)
-            localUserData.displayName = displayName;
-            localUserData.colorHex = colorHex;
-            localUserData.isSpeaker = isSpeaker;
+            console.log(`Updating participant with hash \`${localUserData.visitIDHash}\`:\nDisplay Name: \`${displayName}\`\nColor: ${colorHex}\nparticipantType: ${participantType}`)
+            if (typeof (displayName) === "string") {
+                localUserData.displayName = displayName;
+            }
+            if (typeof (colorHex) === "string") {
+                localUserData.colorHex = colorHex;
+            }
+            if (typeof (participantType) === "string") {
+                localUserData.participantType = participantType;
+            }
+            if (typeof (isRecording) === "boolean") {
+                localUserData.isRecording = isRecording;
+            }
         } else if (visitIDHash && displayName) {
-            allLocalUserData.push(new SpeakerSpaceUserData({ visitIDHash, displayName, colorHex, isSpeaker }));
+            allLocalUserData.push(new SpeakerSpaceUserData({ visitIDHash, displayName, colorHex, participantType, isRecording }));
         }
 
         recomputeSpeakerAndAudienceCount();
     });
 });
 
-socket.on("requestParticleAdd", ({ visitIDHash, spaceName, particleData } = {}) => {
+spatialSpeakerSpaceSocket.on("requestParticleAdd", ({ visitIDHash, spaceName, particleData } = {}) => {
     let particleParams = JSON.parse(particleData);
 
     if (particleParams.signalName) {

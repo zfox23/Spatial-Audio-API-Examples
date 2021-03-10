@@ -3,7 +3,7 @@ let ctx = mainCanvas.getContext("2d");
 
 let pxPerM;
 function updatePixelsPerMeter() {
-    pxPerM = Math.round(Math.min(mainCanvas.width, mainCanvas.height) / VIRTUAL_SPACE_DIMENSIONS_PER_SIDE_M);
+    pxPerM = Math.min(mainCanvas.width, mainCanvas.height) / VIRTUAL_SPACE_DIMENSIONS_PER_SIDE_M;
 }
 
 function maybeDrawScaleArcs() {
@@ -35,25 +35,30 @@ function maybeDrawScaleArcs() {
 }
 
 function drawAvatarBase({ isMine, userData, avatarRadiusM, positionInCanvasSpace }) {
-    if (typeof (userData.isSpeaker) !== "boolean") {
+    if (typeof (userData.participantType) !== "string") {
         return;
     }
 
     ctx.translate(positionInCanvasSpace.x, positionInCanvasSpace.y);
-    let amtToRotate = (userData.yawOrientationDegrees || 0) * Math.PI / 180;
+    let amtToRotate = ((userData.orientationEuler && userData.orientationEuler.yawDegrees) || 0) * Math.PI / 180;
     ctx.rotate(amtToRotate);
 
-    // Don't show orientation visualization if user is an audience member.
-    if (userData.isSpeaker) {
+    if (currentlyHoveringOverVisitIDHash === userData.visitIDHash) {
+        ctx.fillStyle = "#FFFFFF";
         ctx.beginPath();
-        ctx.arc(0, -avatarRadiusM * DIRECTION_CLOUD_RADIUS_MULTIPLIER * pxPerM, avatarRadiusM * DIRECTION_CLOUD_RADIUS_MULTIPLIER * pxPerM, 0, Math.PI, false);
-        let grad = ctx.createLinearGradient(0, 0, 0, -avatarRadiusM * DIRECTION_CLOUD_RADIUS_MULTIPLIER * pxPerM);
-        grad.addColorStop(0.0, userData.colorHex);
-        grad.addColorStop(1.0, userData.colorHex + "00");
-        ctx.fillStyle = grad;
+        ctx.arc(0, 0, (avatarRadiusM + AVATAR_HOVER_HIGHLIGHT_RADIUS_ADDITION_M) * pxPerM, 0, 2 * Math.PI);
         ctx.fill();
         ctx.closePath();
     }
+
+    ctx.beginPath();
+    ctx.arc(0, -avatarRadiusM * DIRECTION_CLOUD_RADIUS_MULTIPLIER * pxPerM, avatarRadiusM * DIRECTION_CLOUD_RADIUS_MULTIPLIER * pxPerM, 0, Math.PI, false);
+    let grad = ctx.createLinearGradient(0, 0, 0, -avatarRadiusM * DIRECTION_CLOUD_RADIUS_MULTIPLIER * pxPerM);
+    grad.addColorStop(0.0, userData.colorHex);
+    grad.addColorStop(1.0, userData.colorHex + "00");
+    ctx.fillStyle = grad;
+    ctx.fill();
+    ctx.closePath();
 
     ctx.lineWidth = AVATAR_STROKE_WIDTH_PX;
     ctx.fillStyle = userData.colorHex;
@@ -76,7 +81,7 @@ function drawAvatarBase({ isMine, userData, avatarRadiusM, positionInCanvasSpace
 }
 
 function drawAvatarLabel({ isMine, userData, avatarRadiusM, positionInCanvasSpace }) {
-    ctx.translate(positionInCanvasSpace.x, positionInCanvasSpace.y + MY_AVATAR_LABEL_Y_OFFSET_PX);
+    ctx.translate(positionInCanvasSpace.x, positionInCanvasSpace.y);
     let amtToRotateLabel = -canvasRotationDegrees * Math.PI / 180;
     ctx.rotate(amtToRotateLabel);
 
@@ -84,7 +89,6 @@ function drawAvatarLabel({ isMine, userData, avatarRadiusM, positionInCanvasSpac
     ctx.fillStyle = getConstrastingTextColor(hexToRGB(userData.colorHex));
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-
 
     let textToDraw = userData.displayName;
     let textMetrics = ctx.measureText(textToDraw);
@@ -95,7 +99,7 @@ function drawAvatarLabel({ isMine, userData, avatarRadiusM, positionInCanvasSpac
 
     ctx.fillText(textToDraw, 0, 0);
     ctx.rotate(-amtToRotateLabel);
-    ctx.translate(-positionInCanvasSpace.x, -(positionInCanvasSpace.y + MY_AVATAR_LABEL_Y_OFFSET_PX));
+    ctx.translate(-positionInCanvasSpace.x, -(positionInCanvasSpace.y));
 }
 
 function drawVolumeBubble({ userData, avatarRadiusM, positionInCanvasSpace }) {
@@ -106,8 +110,9 @@ function drawVolumeBubble({ userData, avatarRadiusM, positionInCanvasSpace }) {
     ctx.closePath();
 }
 
+let currentlyHoveringOverVisitIDHash = undefined;
 function drawAvatar({ userData }) {
-    if (!userData || !userData.position || typeof (userData.position.x) !== "number" || typeof (userData.position.z) !== "number" || typeof (userData.isSpeaker) !== "boolean") {
+    if (!userData || !userData.position || typeof (userData.position.x) !== "number" || typeof (userData.position.z) !== "number" || typeof (userData.participantType) !== "string") {
         return;
     }
 
@@ -122,9 +127,9 @@ function drawAvatar({ userData }) {
     let isMine = userData.visitIDHash === myVisitIDHash;
 
     let avatarRadiusM;
-    if (userData.isSpeaker === true) {
+    if (userData.participantType === "speaker") {
         avatarRadiusM = SPEAKER_AVATAR_RADIUS_M;
-    } else if (userData.isSpeaker === false) {
+    } else {
         avatarRadiusM = AUDIENCE_AVATAR_RADIUS_M;
     }
 
@@ -139,7 +144,7 @@ function drawParticles() {
     if (particleController.activeParticles.length === 0) {
         return;
     }
-    
+
     ctx.translate(-mainCanvas.width / 2, -mainCanvas.height / 2);
 
     particleController.activeParticles.forEach((particle) => {
@@ -172,7 +177,7 @@ function drawParticles() {
         ctx.rotate(-amtToRotateParticle);
         ctx.translate(-positionInCanvasSpace.x, -positionInCanvasSpace.y);
     });
-    
+
     ctx.translate(mainCanvas.width / 2, mainCanvas.height / 2);
 }
 
@@ -185,7 +190,8 @@ function updateCanvas() {
     }
 
     updateMyUserData();
-    let allOtherUserData = allLocalUserData.filter((element) => { return element.visitIDHash !== myVisitIDHash; });
+    let allOtherUserData = allLocalUserData.filter((element) => { return element.visitIDHash !== myVisitIDHash && element.participantType !== "spatialMicrophone"; });
+    let spatialMics = allLocalUserData.filter((element) => { return element.visitIDHash !== myVisitIDHash && element.participantType === "spatialMicrophone"; })
 
     updatePixelsPerMeter();
 
@@ -198,6 +204,10 @@ function updateCanvas() {
 
     drawAvatar({ userData: myUserData });
 
+    for (const userData of spatialMics) {
+        drawAvatar({ userData });
+    }
+
     drawParticles();
 
     ctx.rotate(-canvasRotationDegrees * Math.PI / 180);
@@ -205,10 +215,13 @@ function updateCanvas() {
 }
 
 function updateCanvasDimensions() {
-    mainCanvas.width = window.innerWidth;
-    mainCanvas.height = window.innerHeight - 60;
+    let dimension = Math.min(window.innerWidth, window.innerHeight - 60);
+
+    mainCanvas.width = dimension;
+    mainCanvas.height = dimension;
 
     mainCanvas.style.width = `${mainCanvas.width}px`;
     mainCanvas.style.height = `${mainCanvas.height}px`;
+    mainCanvas.style.left = `${(window.innerWidth - mainCanvas.width) / 2}px`;
 }
 updateCanvasDimensions();

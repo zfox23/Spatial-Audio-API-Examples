@@ -1,0 +1,209 @@
+body {
+    background-color: #222222;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+p {
+    color: white;
+    margin: 0;
+}
+
+.mainCanvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.controlsContainer {
+    position: fixed;
+    width: 100%;
+    height: 40px;
+    padding: 10px;
+    left: 0;
+    top: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+    background-color: #111111;
+    z-index: 100;
+}
+
+.controlsContainer > div {
+    display: flex;
+    flex-direction: column;
+}
+
+.description {
+    margin: 0 12px;
+}
+
+.connectDisconnectButton {
+    width: 200px;
+    height: 100%;
+    margin: 0 12px;
+}
+
+.toggleInputMuteButton,
+.toggleOutputMuteButton {
+    width: 40px;
+    height: 40px;
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: center center;
+    margin: 0 12px;
+}
+
+.toggleInputMuteButton:hover,
+.toggleOutputMuteButton:hover {
+    cursor: pointer;
+}
+
+.toggleInputMuteButton {
+    background-image: url('/spatial-watch-party/images/white-mic.svg');
+}
+
+.toggleInputMuteButton--muted {
+    background-image: url('/spatial-watch-party/images/red-mic-with-cross.svg');
+}
+
+.toggleInputMuteButton--disabled {
+    background-image: url('/spatial-watch-party/images/grey-mic.svg');
+}
+
+.toggleOutputMuteButton {
+    background-image: url('/spatial-watch-party/images/white-headphones.svg');
+}
+
+.toggleOutputMuteButton--muted {
+    background-image: url('/spatial-watch-party/images/red-headphones-with-x.svg');
+}
+
+.videoURLInput {
+    flex: 1 0 auto;
+    max-width: 480px;
+    height: 26px;
+    font-size: 24px;
+    line-height: 24px;
+    margin: 0 12px;
+}
+
+.allVideosContainer {
+    width: 100%;
+    height: calc(100vh - 40px - 20px);
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    z-index: 5;
+}
+
+.participantVideoContainer {
+    position: fixed !important;
+    display: flex;
+    flex-direction: column;
+    width: 216px;
+    background-color: black;
+}
+
+.participantVideoContainer--other {
+    height: 216px;
+    z-index: 10;
+}
+
+.participantVideoContainer--mine {
+    height: calc(216px + 40px);
+    z-index: 20;
+}
+
+.participantID {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    background-color: rgba(0, 0, 0, 0.3);
+    height: 24px;
+    line-height: 24px;
+    max-width: 216px;
+    padding: 0 4px;
+    color: #DDDDDD;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: fade;
+    z-index: 25;
+}
+
+.videoTitleBar {
+    width: 100%;
+    height: 40px;
+    min-height: 40px;
+    background-color: #101010;
+    display: flex;
+    flex-direction: row-reverse;
+}
+
+.videoTitleBar--YouTube {
+    background-color: #7f0000;
+}
+
+.videoTitleBar:hover {
+    cursor: move;
+}
+
+.closeStreamingVideoButton,
+.maximizeStreamingVideoButton {
+    height: 40px;
+    width: 40px;
+    line-height: 40px;
+    font-size: 20px;
+    color: white;
+    text-align: center;
+}
+
+.closeStreamingVideoButton:hover,
+.maximizeStreamingVideoButton:hover {
+    cursor: pointer;
+}
+
+.participantVideoContainer--mine:hover {
+    cursor: move;
+}
+
+.videoContainer {
+    width: 100%;
+    height: calc(256px - 40px);
+}
+
+.videoContainer>video {
+    width: 100%;
+    height: 100%;
+    transform: rotateY(180deg);
+    object-fit: cover;
+}
+
+.streamingVideoPlayerContainer {
+    position: fixed;
+    width: 512px;
+    height: calc(288px + 40px);
+    display: flex;
+    flex-direction: column;
+    background-color: black;
+    z-index: 30;
+}
+
+.streamingVideoPlayerContainer--maximized {
+    top: 60px !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: calc(100% - 60px);
+}
+
+.youTubePlayerElement {
+    width: 100%;
+    height: 100%;
+}
+
+.displayNone {
+    display: none;
+}

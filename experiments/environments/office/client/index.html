@@ -1,0 +1,539 @@
+
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>High Fidelity Spatial Audio API Example - Office</title>
+        <style>
+        
+.modalDialogue {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  z-index: 2;
+  background-color: rgb(0,0,0);
+  background-color: rgba(0,0,0,0.4); 
+}
+.centerContent {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  min-height: 100vh;
+}
+.gameScreen {
+  display: block;
+  width:100%;
+  height:100%;
+  position: fixed;
+}
+.mapCanvas {
+    display:block;
+    position:fixed;
+    top:0;
+    left:0;
+}
+
+        </style>
+    </head>
+    
+    <body style="width: 100%; height: 100%; margin: 0; padding: 0;">
+        <div class = "modalDialogue connectDialogue">
+          <div class="centerContent">
+            <button class="connectButton" style="width 20em; height=5em; margin:0;" onClick="start();">Connect</button>
+          </div>
+        </div>
+        <div class = "gameScreen" style="width:100%; height:100%">
+            <canvas class="mapCanvas" style="border:1px solid #000000;"></canvas>
+            <div class="statusDisplay" style="width: 40em; height: 2em; margin: 0;">Status</div>
+            <audio autoplay class="outputAudioEl" style="width: 100%; height: 75px; margin: 30px 0 0 0;"></audio>
+        </div>
+    </body>
+
+    <script src="https://hifi-spatial-audio-api.s3-us-west-2.amazonaws.com/releases/latest/HighFidelityAudio-latest.js?1"></script>
+    <script>
+        // We use this to change the text of the "Connect" button to "Connected", and to disable that button after clicking it.
+        let statusDisplay = document.querySelector('.statusDisplay');
+        let connectDialogue = document.querySelector('.connectDialogue');
+        let connectButton = document.querySelector('.connectButton');
+        let mapCanvas = document.querySelector('.mapCanvas');
+
+        let destinationStreamNode;
+        let stepsBufferNode;
+
+        let FOOTSTEPS_AUDIO = {};
+        let MAP = {};
+        
+        let MOTION_VELOCITY_M_PER_SEC = 2.0;
+        let ROTATION_VELOCITY_DEG_PER_SEC = 60.0;
+        let PIXELS_PER_METER = 40;
+        let PLAYER_RADIUS = 0.25;
+        
+        mapCanvas.width = mapCanvas.parentElement.clientWidth;
+        mapCanvas.height = mapCanvas.parentElement.clientHeight;
+
+        class PeerData {
+            constructor() {
+                this.position = new HighFidelityAudio.Point3D({ 'x': 0, 'y': 0, 'z': 0 });
+                this.orientationEuler = new HighFidelityAudio.OrientationEuler3D({ 'pitchDegrees': 0, 'yawDegrees': 0, 'rollDegrees': 0 });
+            }
+        }
+        
+        class PlayerData {
+        
+            constructor() {
+                this.position = new HighFidelityAudio.Point3D({ 'x': 0, 'y': 0, 'z': 0 });
+                this.orientationEuler = new HighFidelityAudio.OrientationEuler3D({ 'pitchDegrees': 0, 'yawDegrees': 0, 'rollDegrees': 0 });
+                this.positionVelocity = { 'lat': 0, 'long': 0 };
+                this.yawVelocity = 0;
+                this.stepsBufferNode;
+                let d = new Date();                
+                this.lastCompute = d.getTime()
+                this.motionKeys = new Set();
+            }
+
+            computeAndSend(hifiCommunicator) {
+                let d = new Date();
+                let now = d.getTime();
+                let deltaTime = (now - this.lastCompute) / 1000;
+                this.lastCompute = now;
+                this.orientationEuler.yawDegrees = this.orientationEuler.yawDegrees + deltaTime * this.yawVelocity;                     
+
+                let yawRad = this.orientationEuler.yawDegrees*Math.PI/180;
+                let XvelocityMpS = this.positionVelocity.lat * Math.cos(-yawRad) - this.positionVelocity.long * Math.sin(-yawRad);
+                let ZvelocityMpS = this.positionVelocity.lat * Math.sin(-yawRad) + this.positionVelocity.long * Math.cos(-yawRad);
+
+                let room = currentRoom();
+                let roomData = MAP.rooms[room];
+                let isInDoorway = inDoorway(roomData);
+                
+                let xNew = this.position.x + deltaTime * XvelocityMpS;
+                let zNew = this.position.z + deltaTime * ZvelocityMpS;
+                if (isInDoorway || 
+                   ((XvelocityMpS > 0) && (xNew + PLAYER_RADIUS < roomData.x_max)) ||
+                   ((XvelocityMpS < 0) && (xNew - PLAYER_RADIUS > roomData.x_min))) {
+                    this.position.x = xNew;
+                }
+                if (isInDoorway || 
+                   ((ZvelocityMpS > 0) && (zNew + PLAYER_RADIUS < roomData.z_max)) ||
+                   ((ZvelocityMpS < 0) && (zNew - PLAYER_RADIUS > roomData.z_min))) {
+                    this.position.z = zNew;
+                }
+
+                let response = hifiCommunicator.updateUserDataAndTransmit({
+                    position: this.position,
+                    orientationEuler: this.orientationEuler
+                });                
+            }
+        }
+        
+        function drawMap() {
+            let ctx = mapCanvas.getContext('2d');
+            ctx.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
+            centerX = mapCanvas.width/2;
+            centerY = mapCanvas.height/2;
+            ctx.save();
+            ctx.translate(centerX, centerY);            
+            ctx.rotate(-player.orientationEuler.yawDegrees*Math.PI/180);
+            ctx.translate(-centerX, -centerY);
+            ctx.translate(-(PIXELS_PER_METER*player.position.x), (PIXELS_PER_METER*player.position.z));            
+            ctx.strokeStyle = 'black';         
+            ctx.lineWidth = 1;
+            for (const [room, roomData] of Object.entries(MAP.rooms)) {               
+                ctx.beginPath();
+                ctx.strokeRect(centerX + PIXELS_PER_METER*roomData.x_min,
+                               centerY - PIXELS_PER_METER*roomData.z_min, 
+                               (PIXELS_PER_METER*roomData.x_max - PIXELS_PER_METER*roomData.x_min),
+                               -(PIXELS_PER_METER*roomData.z_max - PIXELS_PER_METER*roomData.z_min));
+
+            }
+            for (const [room, roomData] of Object.entries(MAP.rooms)) {               
+                for (const [door, doorData] of Object.entries(roomData.doors)) {
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(centerX + PIXELS_PER_METER*(doorData.x - doorData.r)+1,
+                               centerY - 1 - PIXELS_PER_METER*(doorData.z - doorData.r), 
+                               (PIXELS_PER_METER*doorData.r*2)-2,
+                               -(PIXELS_PER_METER*doorData.r*2)+2);
+                }
+            }
+            ctx.restore();            
+        }
+
+        function drawPlayer(color, position, orientationEuler) {
+            let ctx = mapCanvas.getContext('2d');
+            ctx.save();
+            ctx.translate(centerX, centerY);            
+            ctx.rotate(-player.orientationEuler.yawDegrees*Math.PI/180);
+            ctx.translate(-centerX, -centerY);
+            ctx.translate(-(PIXELS_PER_METER*player.position.x), (PIXELS_PER_METER*player.position.z)); 
+            
+            centerX = mapCanvas.width/2;
+            centerY = mapCanvas.height/2;
+            ctx.beginPath();
+            ctx.arc(centerX + PIXELS_PER_METER * position.x, 
+                    centerY - PIXELS_PER_METER * position.z,
+                    PLAYER_RADIUS * PIXELS_PER_METER, 0, 2 * Math.PI);
+
+            ctx.fillStyle = color;
+            ctx.fill();
+            let yawRad = (orientationEuler.yawDegrees - 90)*Math.PI/180;
+            ctx.beginPath();
+            ctx.lineWidth = PIXELS_PER_METER/2;
+            var grd = ctx.createRadialGradient(centerX + PIXELS_PER_METER * position.x, 
+                                               centerY - PIXELS_PER_METER * position.z, 
+                                               0, 
+                                               centerX + PIXELS_PER_METER * position.x, 
+                                               centerY - PIXELS_PER_METER * position.z, 
+                                               PIXELS_PER_METER);
+            grd.addColorStop(0, 'black');
+            grd.addColorStop(1, 'white');
+            ctx.strokeStyle = grd;
+            ctx.lineWidth = PIXELS_PER_METER/3;            
+            ctx.arc(centerX + PIXELS_PER_METER * position.x, 
+                    centerY - PIXELS_PER_METER * position.z,
+                    PIXELS_PER_METER/2, yawRad-0.4, yawRad+0.4);
+            ctx.strokeWidth = 0.1;
+            ctx.stroke();
+            ctx.restore();
+        }
+        
+        function drawPeers() {
+            for( const [id, peer] of Object.entries(peers)) {
+                // don't draw workers.
+                if (peer.providedUserID !== 'worker') {
+                    drawPlayer('blue', peer.position, peer.orientationEuler);
+                }
+            }
+        }
+        
+        function drawInstructions() {
+            let ctx = mapCanvas.getContext('2d');
+            ctx.beginPath();
+            ctx.font = '30px Arial';
+            ctx.fillStyle = 'black';
+            ctx.textAlign = 'center';            
+            ctx.fillText('Use your arrow keys or WASD to navigate', mapCanvas.width/2, 30);
+        }
+        
+        function currentRoom() {
+            for (const [room, roomData] of Object.entries(MAP.rooms)) {
+                if (player.position.x >= roomData.x_min &&
+                    player.position.x < roomData.x_max &&
+                    player.position.y >= roomData.y_min &&
+                    player.position.y < roomData.y_max &&
+                    player.position.z >= roomData.z_min &&
+                    player.position.z < roomData.z_max) {
+                    return room;
+                }
+            }
+            return null;
+        }
+        
+        function inDoorway(roomData) {
+            if (!roomData) {
+                return true;
+            }
+            for (const [door, doorData] of Object.entries(roomData.doors)) {
+                if ((player.position.x - PLAYER_RADIUS >= doorData.x - doorData.r) &&
+                    (player.position.x + PLAYER_RADIUS <= doorData.x + doorData.r) &&
+                    (player.position.z - PLAYER_RADIUS >= doorData.z - doorData.r) &&
+                    (player.position.z + PLAYER_RADIUS <= doorData.z + doorData.r)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        
+        function loadAudioFile(url) {
+            return new Promise(function (resolve, reject) {
+           
+                let request = new XMLHttpRequest();
+                request.open('GET', url, true);
+                request.responseType = 'arraybuffer';
+
+                request.onload = function() {
+                    let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            
+                    audioCtx.decodeAudioData(request.response)
+                    .then((buffer) => {
+                        bufferData = buffer;
+                        resolve(buffer);
+                    })
+                    .catch((e) => {
+                        reject(e);
+                    });
+                };
+                request.onerror = function() {
+                    reject('Error retrieving ' + url);
+                }
+                request.send();
+            });
+        }
+
+        function loadMap(url) {
+            return new Promise(function (resolve, reject) {
+           
+                let request = new XMLHttpRequest();
+                request.open('GET', url, true);
+
+                request.onload = function() {
+                    try {
+                        resolve(JSON.parse(request.response));
+                    } catch (e) {
+                        reject(e);
+                    }
+                };
+                request.onerror = function() {
+                    reject("Error retrieving " + url);
+                }
+                request.send();
+            });
+        }
+
+        function connectToHiFiAudio(audioMediaStream) {
+            return new Promise(function (resolve, reject) {
+                // Disable the Connect button after the user clicks it so we don't double-connect.
+                statusDisplay.innerHTML = 'Connecting...';
+                connectButton.disabled = true;
+                connectButton.innerHTML = 'Connecting...';
+
+                // Set up the initial data for our user.
+                // They'll be standing at the origin, facing "forward".
+                let initialHiFiAudioAPIData = new HighFidelityAudio.HiFiAudioAPIData({
+                    position: new HighFidelityAudio.Point3D({ 'x': 0, 'y': 0, 'z': 0 }),
+                    orientationEuler: new HighFidelityAudio.OrientationEuler3D({ 'pitch': 0, 'yaw': 0, 'roll': 0 })
+                });
+
+                // Set up our `HiFiCommunicator` object, supplying our media stream and initial user data.
+                let hifiCommunicator = new HighFidelityAudio.HiFiCommunicator({
+                    initialHiFiAudioAPIData: initialHiFiAudioAPIData,
+                    onUsersDisconnected: onUsersDisconnected,
+                    onConnectionStateChanged: onConnectionStateChanged,
+                    userDataStreamingScope: HighFidelityAudio.HiFiUserDataStreamingScopes.Peers
+                });
+                
+                hifiCommunicator.setInputAudioMediaStream(audioMediaStream).then(() => {
+
+                    // Connect to the HiFi Audio API server!
+                    // Supply your own JWT here.
+                    const HIFI_AUDIO_JWT = "";
+
+                    hifiCommunicator.connectToHiFiAudioAPIServer(HIFI_AUDIO_JWT).
+                    catch (e => {
+                        console.error(`Error connecting to High Fidelity:\n${e}`);
+                        statusDisplay.innerHTML = 'Connection error. Retry?';
+                        connectButton.disabled = false;
+                        connectButton.innerHTML = 'Retry Connect';
+                        reject (e);
+                    })
+                    .then((resp) => {
+
+                        // Show the user that we're connected by changing the text on the button.
+                        statusDisplay.innerHTML = 'Connected!';
+
+                        // Set the `srcObject` on our `audio` DOM element to the final, mixed audio stream from the High Fidelity Audio API Server.
+                        document.querySelector('.outputAudioEl').srcObject = hifiCommunicator.getOutputAudioMediaStream();
+                        // We explicitly call `play()` here because certain browsers won't play the newly-set stream automatically.
+                        document.querySelector('.outputAudioEl').play();
+                        connectDialogue.style.visibility = 'hidden';
+                        resolve(hifiCommunicator);
+                    });
+                });
+            });
+        }
+        
+        function onConnectionStateChanged(connectionState) {
+            switch (connectionState) {
+                case HighFidelityAudio.HiFiConnectionStates.Connected:
+                    break;
+                case HighFidelityAudio.HiFiConnectionStates.Disconnected:
+                case HighFidelityAudio.HiFiConnectionStates.Failed:
+                        statusDisplay.innerHTML = 'Disconnected';
+                        connectButton.disabled = false;
+                        connectButton.innerHTML = 'Connect';
+                        connectDialogue.style.visibility = 'visible';
+                        peers = {};
+                break;
+            }
+        }
+        
+        function onUserKeyDown(keyEvent) {
+            if (keyEvent.repeat) {
+                return;
+            }
+            let checkSteps = function() {
+                if (!player.motionKeys.has(keyEvent.code)) {
+                    if (!player.motionKeys.size) {
+                        startSteps();
+                    }
+                    player.motionKeys.add(keyEvent.code);
+                }            
+            };
+            switch (keyEvent.code) {
+                case 'ArrowLeft':
+                case 'KeyA':
+                    player.yawVelocity = -ROTATION_VELOCITY_DEG_PER_SEC;
+                    checkSteps();
+                    break;
+                case 'ArrowRight':
+                case 'KeyD':
+                    player.yawVelocity = ROTATION_VELOCITY_DEG_PER_SEC;
+                    checkSteps();
+                    break;
+                case 'ArrowUp':
+                case 'KeyW':
+                    player.positionVelocity.long = MOTION_VELOCITY_M_PER_SEC;
+                    checkSteps();
+                    break;
+                case 'ArrowDown':
+                case 'KeyS':
+                    player.positionVelocity.long = -MOTION_VELOCITY_M_PER_SEC;
+                    checkSteps();
+                    break;
+                case 'KeyQ':
+                    player.positionVelocity.lat = -MOTION_VELOCITY_M_PER_SEC;
+                    checkSteps();
+                    break;
+                case 'KeyE':
+                    player.positionVelocity.lat = MOTION_VELOCITY_M_PER_SEC;
+                    checkSteps();
+                    break;
+            }
+        }
+
+        function onUserKeyUp(keyEvent) {
+            let checkStopSteps = function() {
+                if (player.motionKeys.has(keyEvent.code)) {
+                    player.motionKeys.delete(keyEvent.code);
+                }
+                if (!player.motionKeys.size) {
+                    stopSteps();
+                }            
+            };
+            switch (keyEvent.code) {
+                case 'ArrowLeft':
+                case 'KeyA':
+                case 'ArrowRight':
+                case 'KeyD':
+                    player.yawVelocity = 0;
+                    checkStopSteps();
+                    break;
+                case 'ArrowUp':
+                case 'KeyW':
+                case 'ArrowDown':
+                case 'KeyS':
+                    player.positionVelocity.long = 0;
+                    checkStopSteps();
+                    break;
+                case 'KeyQ':
+                case 'KeyE':
+                    player.positionVelocity.lat = 0;
+                    checkStopSteps();
+                    break;
+            }
+        }
+        
+        // start playing steps
+        function startSteps() {
+            if(!player.stepsBufferNode) {
+                player.stepsBufferNode = audioCtx.createBufferSource();
+                player.stepsBufferNode.buffer = FOOTSTEPS_AUDIO.hard;
+                player.stepsBufferNode.loop = true;
+                player.stepsBufferNode.connect(destinationStreamNode);
+                player.stepsBufferNode.connect(audioCtx.destination);
+                player.stepsBufferNode.start();
+            }
+        }
+
+        // stop playing steps
+        function stopSteps() {
+            if (player.stepsBufferNode) {
+                player.stepsBufferNode.stop();
+                player.stepsBufferNode = null;
+            }
+        }
+        
+        function onUsersDisconnected(deleted_peers) {
+            deleted_peers.forEach(peer => {
+                delete peers[peer.hashedVisitID];
+            });
+        }
+        
+        function updatePeers(data) {       
+            data.forEach((peer) => {
+                if (!(peer.hashedVisitID in peers)) {
+                    peers[peer.hashedVisitID] = new PeerData();
+                }
+                
+                if (peer.providedUserID !== undefined) {
+                    peers[peer.hashedVisitID].providedUserID = peer.providedUserID;                
+                }
+                
+                if (peer.position !== null) {
+                    if (peer.position.x !== null) { peers[peer.hashedVisitID].position.x = peer.position.x; }
+                    if (peer.position.y !== null) { peers[peer.hashedVisitID].position.y = peer.position.y; }
+                    if (peer.position.z !== null) { peers[peer.hashedVisitID].position.z = peer.position.z; }
+                }
+                if (peer.orientationEuler !== null) {
+                    if (peer.orientationEuler.yawDegrees !== null) { peers[peer.hashedVisitID].orientationEuler.yawDegrees = peer.orientationEuler.yawDegrees; }
+                    if (peer.orientationEuler.pitchDegrees !== null) { peers[peer.hashedVisitID].orientationEuler.pitchDegrees = peer.orientationEuler.pitchDegrees; }
+                    if (peer.orientationEuler.rollDegrees !== null) { peers[peer.hashedVisitID].orientationEuler.rollDegrees = peer.orientationEuler.rollDegrees; }
+                }             
+            });
+        }
+        
+        function mainLoop(hifiCommunicator) {
+            drawMap();
+            drawPlayer('green', player.position, player.orientationEuler);
+            drawPeers();
+            drawInstructions();
+            player.computeAndSend(hifiCommunicator);
+        }
+        
+        
+        async function loadContent() {
+            FOOTSTEPS_AUDIO.hard = await loadAudioFile('./audio/walk_hard_floor.mp3');
+            FOOTSTEPS_AUDIO.soft = await loadAudioFile('./audio/walk_hard_floor.mp3');
+            MAP = await loadMap('./data/map.json');
+        }
+        
+        let player = new PlayerData();
+        let peers = {};
+        
+        
+        async function connectStreams() {
+        
+            await loadContent();
+            // Get the audio media stream associated with the user's default audio input device.
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            let microphoneStream = await navigator.mediaDevices.getUserMedia({ audio: HighFidelityAudio.getBestAudioConstraints(), video: false });
+    
+            destinationStreamNode = audioCtx.createMediaStreamDestination();            
+            audioSourceNode = audioCtx.createMediaStreamSource(microphoneStream);
+            audioSourceNode.connect(destinationStreamNode);
+    
+            let hifiCommunicator = await connectToHiFiAudio(destinationStreamNode.stream);
+            document.addEventListener('keydown', onUserKeyDown, false);        
+            document.addEventListener('keyup', onUserKeyUp, false);
+            let userDataSubscription = new HighFidelityAudio.UserDataSubscription({
+                'components': [ HighFidelityAudio.AvailableUserDataSubscriptionComponents.Position,
+                                HighFidelityAudio.AvailableUserDataSubscriptionComponents.OrientationEuler ],
+                'callback': (data) => { updatePeers(data); }
+            });
+            hifiCommunicator.addUserDataSubscription(userDataSubscription);
+
+                    
+            HighFidelityAudio.preciseInterval(() => { 
+                mainLoop(hifiCommunicator);
+            }, 50);
+        }
+        function start() {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            connectStreams();	  
+        }
+    </script>
+</html>

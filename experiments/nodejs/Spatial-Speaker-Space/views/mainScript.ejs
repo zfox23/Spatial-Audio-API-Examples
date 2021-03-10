@@ -1,4 +1,4 @@
-<% if (isSpeaker) { %>
+<% if (participantType === "speaker") { %>
 <script>
     const IS_SPEAKER = true;
 </script>
@@ -29,8 +29,21 @@
             myUserData.position = {};
         }
 
-        if (!myUserData.orientationQuat) {
-            myUserData.orientationQuat = new HighFidelityAudio.OrientationQuat3D();
+        if (!myUserData.orientationEuler) {
+            // For proper aural representation.
+            // TODO: Talk to Sam or Luis and figure out why this (and the other related code) is necessary.
+            myUserData.orientationEuler = new HighFidelityAudio.OrientationEuler3D({"pitchDegrees": 180});
+        }
+
+        if (typeof (targetYawOrientationDegrees) === "number") {
+            myUserData.orientationEuler.yawDegrees = targetYawOrientationDegrees;
+            dataToTransmit["orientationEuler"] = {};
+            Object.assign(dataToTransmit["orientationEuler"], myUserData.orientationEuler);
+
+
+            if (!IS_SPEAKER) {
+                canvasRotationDegrees = -myUserData.orientationEuler.yawDegrees;
+            }
         }
 
         if (targetPosition) {
@@ -38,25 +51,16 @@
             dataToTransmit["position"] = {};
             Object.assign(dataToTransmit["position"], myUserData.position);
 
-            canvasRotationDegrees = Math.atan2(myUserData.position.x, -myUserData.position.z) * 180 / Math.PI;
-        }
-
-        if (typeof (targetYawOrientationDegrees) === "number") {
-            myUserData.yawOrientationDegrees = targetYawOrientationDegrees;
-            let threeQuat = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, myUserData.yawOrientationDegrees * Math.PI / 180, 0, THREE_EULER_ORDER));
-            myUserData.orientationQuat.w = threeQuat._w;
-            myUserData.orientationQuat.x = threeQuat._x;
-            myUserData.orientationQuat.y = threeQuat._y;
-            myUserData.orientationQuat.z = threeQuat._z;
-            dataToTransmit["orientationQuat"] = {};
-            Object.assign(dataToTransmit["orientationQuat"], myUserData.orientationQuat);
+            if (IS_SPEAKER) {
+                canvasRotationDegrees = Math.atan2(myUserData.position.x, -myUserData.position.z) * 180 / Math.PI;
+            }
         }
 
         hifiCommunicator.updateUserDataAndTransmit(dataToTransmit);
     }
 
     function positionSelfInCrowd() {
-        console.log(`${allLocalUserData.length} user(s) present, including ourselves.\n${speakerCount} speaker(s).\n${audienceCount} audience member(s).`);
+        console.log(`${allLocalUserData.length} user(s) present, including ourselves.\n${speakerCount} speaker(s).\n${audienceCount} audience member(s).\n${spatialMicrophoneCount} spatial microphone(s).`);
 
         let foundOpenSpot = false;
         let currentCircleDivisions = 1;
@@ -89,9 +93,7 @@
                     if (!occupied) {
                         let orientationYawRadians = Math.atan2(-currentPotentialPosition.x, -currentPotentialPosition.z);
                         let orientationYawDegrees = orientationYawRadians * 180 / Math.PI;
-                        if (orientationYawDegrees < 0) {
-                            orientationYawDegrees += 360;
-                        }
+                        orientationYawDegrees %= 360;
                         let computedYawOrientationDegrees = Math.round((orientationYawDegrees + Number.EPSILON) * 100) / 100;
                         console.log(`Found an open spot at ${JSON.stringify(currentPotentialPosition)} with yaw orientation ${JSON.stringify(computedYawOrientationDegrees)} degrees.`);
                         updateMyPositionAndOrientation(currentPotentialPosition, computedYawOrientationDegrees);
@@ -109,20 +111,30 @@
 
     const numParticipants = document.querySelector('.numParticipants');
     function recomputeSpeakerAndAudienceCount() {
-        let speakers = allLocalUserData.filter((localUserData) => { return localUserData.isSpeaker === true; })
+        let speakers = allLocalUserData.filter((localUserData) => { return localUserData.participantType === "speaker"; })
         speakerCount = speakers.length;
 
-        let audience = allLocalUserData.filter((localUserData) => { return localUserData.isSpeaker === false; })
+        let audience = allLocalUserData.filter((localUserData) => { return localUserData.participantType === "audience"; })
         audienceCount = audience.length;
 
-        numParticipants.innerHTML = audienceCount + speakerCount;
+        let spatialMicrophones = allLocalUserData.filter((localUserData) => { return localUserData.participantType === "spatialMicrophone"; })
+        spatialMicrophoneCount = spatialMicrophones.length;
+
+        numParticipants.innerHTML = audienceCount + speakerCount + spatialMicrophoneCount;
+
+        const mic = allLocalUserData.find((userData) => { return userData.participantType === "spatialMicrophone"; });
+        if (mic && mic.isRecording) {
+            numParticipants.innerHTML += ` 🔴`;
+        }
+
         updateParticipantsContainerInnerHTML();
     }
 
     function resetParticipantsCount() {
         audienceCount = 0;
         speakerCount = 0;
-        numParticipants.innerHTML = audienceCount + speakerCount;
+        spatialMicrophoneCount = 0;
+        numParticipants.innerHTML = 0;
         updateParticipantsContainerInnerHTML();
     }
 
@@ -135,19 +147,46 @@
         let audienceContainer = document.createElement('div');
         audienceContainer.innerHTML = `<h3 class="audienceHeader">Audience (${audienceCount})</h3>`;
 
+        let spatialMicrophonesContainer = document.createElement('div');
+        spatialMicrophonesContainer.innerHTML = `<h3 class="spatialMicrophonesHeader">Spatial Mics (${spatialMicrophoneCount})</h3>`;
+
         for (const userData of allLocalUserData) {
             let participant = document.createElement('p');
             participant.style.color = userData.colorHex;
-            participant.innerHTML = userData.displayName;
-            if (userData.isSpeaker === true) {
-                speakersContainer.appendChild(participant);
-            } else if (userData.isSpeaker === false) {
-                audienceContainer.appendChild(participant);
+            participant.setAttribute('data-visit-id-hash', userData.visitIDHash);
+            participant.innerText = userData.displayName;
+            if (userData.visitIDHash === myVisitIDHash) {
+                participant.innerText += " (you)";
             }
+            if (userData.participantType === "speaker") {
+                speakersContainer.appendChild(participant);
+            } else if (userData.participantType === "audience") {
+                audienceContainer.appendChild(participant);
+            } else if (userData.participantType === "spatialMicrophone") {
+                participant.classList.add("spatialMicrophoneParticipant");
+                if (userData.isRecording) {
+                    participant.innerText += " (recording; click to stop)";
+                } else {
+                    participant.innerText += " (not recording; click to record)";
+                }
+                spatialMicrophonesContainer.appendChild(participant);
+                participant.addEventListener("click", (e) => {
+                    fetch(`${location.protocol}//${location.hostname}:8124/spatial-microphone/toggle-recording`)
+                        .then(response => response.json())
+                        .then(data => console.log(data));
+                });
+            }
+            participant.addEventListener("mouseenter", (e) => {
+                currentlyHoveringOverVisitIDHash = e.target.getAttribute('data-visit-id-hash');
+            });
+            participant.addEventListener("mouseleave", (e) => {
+                currentlyHoveringOverVisitIDHash = undefined;
+            });
         }
 
         participantsContainer.appendChild(speakersContainer);
         participantsContainer.appendChild(audienceContainer);
+        participantsContainer.appendChild(spatialMicrophonesContainer);
     }
 
     async function onNewHiFiUserDataReceived(receivedHiFiAudioAPIDataArray) {
@@ -167,70 +206,43 @@
                         currentLocalUserData.position.x = currentDataFromServer.position.x;
                         mustUpdateCanvas = true;
                     }
-                    if (typeof (currentDataFromServer.position.y) === "number") {
-                        currentLocalUserData.position.y = currentDataFromServer.position.y;
-                        mustUpdateCanvas = true;
-                    }
                     if (typeof (currentDataFromServer.position.z) === "number") {
                         currentLocalUserData.position.z = currentDataFromServer.position.z;
                         mustUpdateCanvas = true;
                     }
                 }
                 
-                if (currentDataFromServer.orientationQuat && !isMine) {
-                    if (!currentLocalUserData.orientationQuat) {
-                        currentLocalUserData.orientationQuat = new HighFidelityAudio.OrientationQuat3D();
+                if (currentDataFromServer.orientationEuler && !isMine) {
+                    if (!currentLocalUserData.orientationEuler) {
+                        currentLocalUserData.orientationEuler = new HighFidelityAudio.OrientationEuler3D();
                     }
 
-                    let updatedQuat = false;
-
-                    if (typeof (currentDataFromServer.orientationQuat.w) === "number") {
-                        currentLocalUserData.orientationQuat.w = currentDataFromServer.orientationQuat.w;
-                        updatedQuat = true;
-                    }
-
-                    if (typeof (currentDataFromServer.orientationQuat.x) === "number") {
-                        currentLocalUserData.orientationQuat.x = currentDataFromServer.orientationQuat.x;
-                        updatedQuat = true;
-                    }
-
-                    if (typeof (currentDataFromServer.orientationQuat.y) === "number") {
-                        currentLocalUserData.orientationQuat.y = currentDataFromServer.orientationQuat.y;
-                        updatedQuat = true;
-                    }
-
-                    if (typeof (currentDataFromServer.orientationQuat.z) === "number") {
-                        currentLocalUserData.orientationQuat.z = currentDataFromServer.orientationQuat.z;
-                        updatedQuat = true;
-                    }
-
-                    if (updatedQuat) {
-                        let yawOrientationDegrees = getYawOrientationDegreesFromQuat(currentLocalUserData.orientationQuat);
-                        if (isMine && typeof (currentLocalUserData.yawOrientationDegrees) === "number" && currentLocalUserData.yawOrientationDegrees !== yawOrientationDegrees) {
-                            console.warn(`We supplied a \`yawOrientationDegrees\` of ${currentLocalUserData.yawOrientationDegrees} degrees, but the server gave us ${yawOrientationDegrees} degrees!`);
-                        }
-                        currentLocalUserData.yawOrientationDegrees = yawOrientationDegrees;
-
+                    if (typeof (currentDataFromServer.orientationEuler.yawDegrees) === "number") {
+                        currentLocalUserData.orientationEuler.yawDegrees = currentDataFromServer.orientationEuler.yawDegrees;
+                        // For proper visual representation.
+                // TODO: Talk to Sam or Luis and figure out why this (and the other related code) is necessary.
+                        currentLocalUserData.orientationEuler.yawDegrees -= 180;
+                        currentLocalUserData.orientationEuler.yawDegrees %= 360;
                         mustUpdateCanvas = true;
                     }
                 }
 
-                // Only update volume data for speakers, not audience members.
-                if (currentLocalUserData.isSpeaker && typeof (currentDataFromServer.volumeDecibels) === "number") {
+                // Only update volume data for speakers.
+                if (currentLocalUserData.participantType === "speaker" && typeof (currentDataFromServer.volumeDecibels) === "number") {
                     currentLocalUserData.volumeDecibels = currentDataFromServer.volumeDecibels;
                     mustUpdateCanvas = true;
                 }
             } else {
-                let orientationQuat = currentDataFromServer.orientationQuat;
-                let yawOrientationDegrees;
-                if (orientationQuat) {
-                    yawOrientationDegrees = getYawOrientationDegreesFromQuat(orientationQuat);
+                // For proper visual representation.
+                // TODO: Talk to Sam or Luis and figure out why this (and the other related code) is necessary.
+                if (currentDataFromServer.orientationEuler) {
+                    currentDataFromServer.orientationEuler.yawDegrees -= 180;
+                    currentDataFromServer.orientationEuler.yawDegrees %= 360;
                 }
                 allLocalUserData.push(new SpeakerSpaceUserData({
                     visitIDHash: currentVisitIDHash,
                     position: currentDataFromServer.position,
-                    orientationQuat: orientationQuat,
-                    yawOrientationDegrees: yawOrientationDegrees,
+                    orientationEuler: currentDataFromServer.orientationEuler,
                     volumeDecibels: currentDataFromServer.volumeDecibels,
                 }));
             }
@@ -303,8 +315,9 @@
             }
         }
 
-        if (!webSocketStuffInitialized) {
-            initWebSocketStuff();
+        if (!readyToSendWebSocketData) {
+            readyToSendWebSocketData = true;
+            maybeSendInitialWebSocketData();
         }
     }
 
@@ -314,9 +327,9 @@
             this.displayName = data.displayName;
             this.colorHex = data.colorHex || hexColorFromString(this.visitIDHash);
             this.position = data.position;
-            this.yawOrientationDegrees = data.yawOrientationDegrees;
-            this.orientationQuat = data.orientationQuat;
-            this.isSpeaker = data.isSpeaker;
+            this.orientationEuler = data.orientationEuler;
+            this.participantType = data.participantType;
+            this.isRecording = data.isRecording || false;
             this.volumeDecibels = data.volumeDecibels;
             this.hiFiGain = data.hiFiGain || 1.0;
         }
@@ -356,7 +369,7 @@
             // There are other components we could subscribe to here, but we're only subscribing to Volume data updates.
             "components": [
                 HighFidelityAudio.AvailableUserDataSubscriptionComponents.Position,
-                HighFidelityAudio.AvailableUserDataSubscriptionComponents.OrientationQuat,
+                HighFidelityAudio.AvailableUserDataSubscriptionComponents.OrientationEuler,
                 HighFidelityAudio.AvailableUserDataSubscriptionComponents.VolumeDecibels
             ],
             // See above for the definition of `onNewHiFiUserDataReceived`.
@@ -367,8 +380,6 @@
 
         allLocalUserData = [];
         receivedInitialOtherUserDataFromHiFi = false;
-        speakerCount = 0;
-        audienceCount = 0;
         resetParticipantsCount();
 
         // Connect to the HiFi Audio API server!
@@ -381,10 +392,11 @@
             allLocalUserData.push(new SpeakerSpaceUserData({
                 "providedUserID": myProvidedUserID,
                 "visitIDHash": myVisitIDHash,
-                "isSpeaker": IS_SPEAKER
+                "participantType": IS_SPEAKER ? "speaker" : "audience"
             }));
             updateMyUserData();
             onMyDisplayNameChanged();
+            onMyColorHexChanged();
             if (IS_SPEAKER) {
                 await hifiCommunicator.setInputAudioMediaStream(audioMediaStream);
                 if (!muteButtonHookedUp) {                    

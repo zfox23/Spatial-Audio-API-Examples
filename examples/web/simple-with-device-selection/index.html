@@ -82,6 +82,9 @@
         selectedOutputDeviceID = outputDeviceSelect.value;
 
         // Get a list of all Audio Nodes in the DOM.
+        // This code exists within this sample app for convenience.
+        // The High Fidelity Spatial Audio Client Library doesn't dynamically create any `<audio>` elements during normal operation.
+        // Theoretically, you could modify the code below to only modify the `sinkId` of a single `<audio>` element.
         let allAudioNodes = document.querySelectorAll("audio");
         allAudioNodes.forEach((audioNode) => {
             // In order to change the output device associated with an `<audio>` element, that `<audio>` element must support

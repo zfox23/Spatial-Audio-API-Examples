@@ -1,0 +1,6 @@
+auth.json
+
+node_modules
+
+output/spatial-microphone/*.mp3
+output/spatial-microphone/*.wav

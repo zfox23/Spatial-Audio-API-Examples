@@ -23,6 +23,8 @@ Similar to the "simple" example above, except this one allows a user to select t
 This project exemplifies how to make use of [User Data Subscriptions](https://docs.highfidelity.com/latest/modules/classes_hifiuserdatasubscription.html) in projects that use the High Fidelity Spatial Audio API.
 ### [tracks](./examples/web/tracks/)
 A multi-track spatial audio demo.
+### [player](./examples/web/player/)
+Multiple users can connect simultaneously, move around and communicate using spatialized audio.
 
 ## NodeJS Examples
 ### [DJ Bot](./examples/nodejs/djBot)
@@ -44,6 +46,12 @@ Experience High Fidelity Spatial Audio with 2D video chat powered by TokBox.
 Move around as dots in a 3D space with spatial audio.
 ### [Plaza](./experiments/nodejs/plaza)
 Explore various environments connected in a grid with spatial audio between them.
+### [Spatial Microphone](./experiments/nodejs/spatial-microphone)
+Drop the Spatial Microphone in a High Fidelity Spatial Audio Space to record the audio in that Space from coordinates `(0, 0, 0)`. The Spatial Microphone saves audio recordings in `.wav` format by default.
+### [Spatial Speaker Space](./experiments/nodejs/Spatial-Speaker-Space)
+A comfortable virtual 3D audio environment for speakers and an audience that makes use advanced of High Fidelity's Spatial Audio API.
+### [Spatial Watch Party](./experiments/nodejs/Spatial-Watch-Party)
+A Web application that lets users watch synced YouTube videos together while chatting in a virtual 3D environment using High Fidelity's spatial audio technology.
 ### [StreetMeet](./experiments/nodejs/streetMeet)
 Discover the entire world in 3D with others with High Fidelity Spatial Audio, Twilio and Google Street View.
 ### [Video Chat - Agora](./experiments/nodejs/videochat-agora)
@@ -56,6 +64,13 @@ Experience High Fidelity Spatial Audio with 2D video chat powered by Twilio.
 ## Minecraft Experiments
 ### [Minecraft Mod Example](./experiments/minecraft/hifimc)
 Experience High Fidelity's spatial audio while playing Minecraft: Java Edition with others.
+
+## Audio Environments
+Featuring a combination of HTML/JS and NodeJS
+### [Haunted Mansion Envrionment](./experiments/environments/mansion)
+Explore a 3d auditory experience with your friends.
+### [Office Envrionment](./experiments/environments/office)
+Virtual office with walls and private rooms.
 
 # Live Demos
 This repository employs GitHub Pages, which means that you can look at some of these example applications live by browsing [this page](https://highfidelity.github.io/Spatial-Audio-API-Examples/).
