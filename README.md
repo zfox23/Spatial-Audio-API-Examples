@@ -23,6 +23,8 @@ Similar to the "simple" example above, except this one allows a user to select t
 This project exemplifies how to make use of [User Data Subscriptions](https://docs.highfidelity.com/latest/modules/classes_hifiuserdatasubscription.html) in projects that use the High Fidelity Spatial Audio API.
 ### [tracks](./examples/web/tracks/)
 A multi-track spatial audio demo.
+### [player](./examples/web/player/)
+Multiple users can connect simultaneously, move around and communicate using spatialized audio.
 
 ## NodeJS Examples
 ### [DJ Bot](./examples/nodejs/djBot)
