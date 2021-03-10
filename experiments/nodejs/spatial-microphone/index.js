@@ -1,4 +1,5 @@
 const { default: SignJWT } = require('jose/jwt/sign');
+const yargs = require('yargs'); // Used to make it easier to parse command-line arguments to this script.
 const express = require('express');
 const cors = require('cors');
 const crypto = require('crypto');
@@ -12,11 +13,22 @@ const wav = require('wav');
 const APP_ID = auth.HIFI_APP_ID;
 // This is the "App Secret" as obtained from the High Fidelity Audio API Developer Console. Do not share this string.
 const APP_SECRET = auth.HIFI_APP_SECRET;
-const SPACE_NAME = auth.HIFI_SPACE_NAME;
 const SECRET_KEY_FOR_SIGNING = crypto.createSecretKey(Buffer.from(APP_SECRET, "utf8"));
 
 const RECORDING_COLOR_HEX = "#FF0000";
 const NOT_RECORDING_COLOR_HEX = "#525252";
+
+const argv = yargs
+    .option('spaceName', {
+        describe: "The name of the space in which you'd like to place the Spatial Microphone",
+        type: 'string',
+        default: "default"
+    })
+    .alias('spaceName', 's')
+    .help()
+    .alias('help', 'h')
+    .argv;
+
 
 async function generateHiFiJWT(userID, isAdmin) {
     let hiFiJWT;
@@ -26,7 +38,7 @@ async function generateHiFiJWT(userID, isAdmin) {
             "app_id": APP_ID
         };
 
-        jwtArgs["space_name"] = SPACE_NAME;
+        jwtArgs["space_name"] = argv.spaceName;
 
         if (isAdmin) {
             jwtArgs["admin"] = true;
@@ -197,8 +209,8 @@ class SpatialMicrophone {
     }
 }
 
-console.log(`In \`${SPACE_NAME}\`, creating a new Spatial Microphone...`);
-let spatialMicrophone = new SpatialMicrophone({ spaceName: SPACE_NAME, position: new Point3D({ x: 0, y: 0, z: 0 }) });
+console.log(`In \`${argv.spaceName}\`, creating a new Spatial Microphone...`);
+let spatialMicrophone = new SpatialMicrophone({ spaceName: argv.spaceName, position: new Point3D({ x: 0, y: 0, z: 0 }) });
 spatialMicrophone.init();
 
 function startRecording() {

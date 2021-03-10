@@ -195,6 +195,7 @@
         participantsContainer.appendChild(spatialMicrophonesContainer);
     }
 
+    let peakTimeout = undefined;
     async function onNewHiFiUserDataReceived(receivedHiFiAudioAPIDataArray) {
         for (let i = 0; i < receivedHiFiAudioAPIDataArray.length; i++) {
             let currentDataFromServer = receivedHiFiAudioAPIDataArray[i];
@@ -238,8 +239,26 @@
                     currentLocalUserData.volumeDecibels = currentDataFromServer.volumeDecibels;
 
                     if (isMine) {
-                        let percentage = linearScale(currentLocalUserData.volumeDecibels, -90, 0, 0, 100);
-                        volumeThresholdSliderBackground.style.background = `linear-gradient(to right, #c2c2c2, #ad983b ${percentage}%, #00000000 ${percentage}%, #00000000 100%)`;
+                        let currentPeak = currentLocalUserData.volumeDecibelsPeak;
+                        let newPeak = Math.max(currentLocalUserData.volumeDecibelsPeak, currentLocalUserData.volumeDecibels);
+                        currentLocalUserData.volumeDecibelsPeak = newPeak;
+
+                        if (newPeak > currentPeak) {
+                            if (peakTimeout) {
+                                clearTimeout(peakTimeout);
+                            }
+                            peakTimeout = setTimeout(() => {
+                                currentLocalUserData.volumeDecibelsPeak = MIN_VOLUME_DB;
+                            }, PEAK_TIMEOUT_MS);
+                        }
+
+                        let currentVolumePercentage = linearScale(currentLocalUserData.volumeDecibels, MIN_VOLUME_DB, 0, 0, 100);
+                        let currentPeakPercentage = linearScale(currentLocalUserData.volumeDecibelsPeak, MIN_VOLUME_DB, 0, 0, 100);
+                        if (currentPeakPercentage <= currentVolumePercentage) {
+                            volumeThresholdSliderBackground.style.background = `linear-gradient(to right, #c2c2c2, #c2c2c2 ${currentPeakPercentage - 1}%, #ffffff ${currentPeakPercentage - 1}%, #ffffff ${currentPeakPercentage + 1}%, #c2c2c2 ${currentPeakPercentage + 1}%, #c2c2c2 ${currentVolumePercentage}%, #00000000 ${currentVolumePercentage}%, #00000000 100%)`;
+                        } else {
+                            volumeThresholdSliderBackground.style.background = `linear-gradient(to right, #c2c2c2, #c2c2c2 ${currentVolumePercentage}%, #00000000 ${currentVolumePercentage}%, #00000000 ${currentPeakPercentage - 1}%, #ffffff ${currentPeakPercentage - 1}%, #ffffff ${currentPeakPercentage + 1}%, #00000000 ${currentPeakPercentage + 1}%, #00000000 100%)`;
+                        }
                     }
 
                     mustUpdateCanvas = true;
@@ -342,7 +361,8 @@
             this.orientationEuler = data.orientationEuler;
             this.participantType = data.participantType;
             this.isRecording = data.isRecording || false;
-            this.volumeDecibels = data.volumeDecibels;
+            this.volumeDecibels = data.volumeDecibels || -96;
+            this.volumeDecibelsPeak = data.volumeDecibels || -96;
             this.hiFiGain = data.hiFiGain || 1.0;
             this.volumeThreshold = data.volumeThreshold || -60;
         }

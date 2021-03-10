@@ -274,9 +274,9 @@ const currentVolumeThresholdValue = document.querySelector('.currentVolumeThresh
 function onVolumeThresholdChanged() {
     localStorage.setItem('myVolumeThreshold', volumeThresholdSlider.value);
 
-    currentVolumeThresholdValue.innerHTML = `Volume Threshold: ${volumeThresholdSlider.value} dB`;
+    currentVolumeThresholdValue.innerHTML = `Mic Threshold: ${volumeThresholdSlider.value} dB`;
 
-    let percentage = linearScale(volumeThresholdSlider.value, -90, 0, 0, 100);
+    let percentage = linearScale(volumeThresholdSlider.value, MIN_VOLUME_DB, 0, 0, 100);
     volumeThresholdSlider.style.background = `linear-gradient(to right, #ad983b88, #ad983b88 ${percentage}%, #3d8a3488 ${percentage}%, #3d8a3488 100%)`;
 
     if (!hifiCommunicator || !myUserData) {
