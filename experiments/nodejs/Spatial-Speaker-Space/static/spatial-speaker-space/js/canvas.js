@@ -159,7 +159,7 @@ function drawParticles() {
 
         let positionInCanvasSpace = {
             "x": Math.round(linearScale(particle.currentWorldPositionM.x, -VIRTUAL_SPACE_DIMENSIONS_PER_SIDE_M / 2, VIRTUAL_SPACE_DIMENSIONS_PER_SIDE_M / 2, 0, mainCanvas.width)),
-            "y": Math.round(linearScale(particle.currentWorldPositionM.z, -VIRTUAL_SPACE_DIMENSIONS_PER_SIDE_M / 2, VIRTUAL_SPACE_DIMENSIONS_PER_SIDE_M / 2, 0, mainCanvas.height))
+            "y": Math.round(linearScale(particle.currentWorldPositionM.z, -VIRTUAL_SPACE_DIMENSIONS_PER_SIDE_M / 2, VIRTUAL_SPACE_DIMENSIONS_PER_SIDE_M / 2, mainCanvas.height, 0))
         };
 
         ctx.translate(positionInCanvasSpace.x, positionInCanvasSpace.y);
