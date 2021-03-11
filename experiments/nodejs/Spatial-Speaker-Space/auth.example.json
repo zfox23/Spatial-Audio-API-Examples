@@ -1,5 +1,6 @@
 {
     "HIFI_APP_ID": "",
     "HIFI_APP_SECRET": "",
-    "HIFI_DEFAULT_SPACE_NAME": "speaker-space"
+    "HIFI_DEFAULT_SPACE_NAME": "speaker-space",
+    "HIFI_DEFAULT_ENDPOINT_URL": "api.highfidelity.com"
 }
