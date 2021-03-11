@@ -50,7 +50,6 @@ async function generateHiFiJWT(userID, spaceName, isAdmin) {
 let providedUserIDAtSpaceNameToConnectionTimestampMap = new Map();
 app.get('/spatial-speaker-space/speaker', async (req, res) => {
     let spaceName = req.query.spaceName || auth.HIFI_DEFAULT_SPACE_NAME;
-    let endpointUrl = req.query.endpointUrl || auth.HIFI_DEFAULT_ENDPOINT_URL;
 
     let providedUserID = `${uppercaseFirstLetter(ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)])} ${uppercaseFirstLetter(NOUNS[Math.floor(Math.random() * NOUNS.length)])}`;
     providedUserID += Math.floor(Math.random() * Math.floor(1000));
@@ -62,12 +61,11 @@ app.get('/spatial-speaker-space/speaker', async (req, res) => {
 
     console.log(`${timestamp}: Speaker \`${providedUserID}\` connected to the HiFi Space \`${spaceName}\`.`);
 
-    res.render('index', { connectionTimestamp: Date.now(), providedUserID, hiFiJWT, spaceName, participantType: "speaker", endpointUrl: endpointUrl });
+    res.render('index', { connectionTimestamp: Date.now(), providedUserID, hiFiJWT, spaceName, participantType: "speaker", endpointUrl: auth.HIFI_ENDPOINT_URL});
 });
 
 app.get('/spatial-speaker-space/audience', async (req, res) => {
     let spaceName = req.query.spaceName || auth.HIFI_DEFAULT_SPACE_NAME;
-    let endpointUrl = req.query.endpointUrl || auth.HIFI_ENDPOINT_URL;
 
     let providedUserID = `${uppercaseFirstLetter(ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)])} ${uppercaseFirstLetter(NOUNS[Math.floor(Math.random() * NOUNS.length)])}`;
     providedUserID += Math.floor(Math.random() * Math.floor(1000));
@@ -79,7 +77,7 @@ app.get('/spatial-speaker-space/audience', async (req, res) => {
 
     console.log(`${timestamp}: Audience member \`${providedUserID}\` connected to the HiFi Space \`${spaceName}\`.`);
 
-    res.render('index', { connectionTimestamp: timestamp, providedUserID, hiFiJWT, spaceName, participantType: "audience", endpointUrl: endpointUrl });
+    res.render('index', { connectionTimestamp: timestamp, providedUserID, hiFiJWT, spaceName, participantType: "audience", endpointUrl: auth.HIFI_ENDPOINT_URL});
 });
 
 app.get('/spatial-speaker-space/get-connection-age', (req, res) => {
