@@ -343,5 +343,5 @@ colorHexInput.addEventListener('input', (e) => {
 if (localStorage.getItem('myColorHex')) {
     onMyColorHexChanged(localStorage.getItem('myColorHex'));
 } else {
-    onMyColorHexChanged(colorHexInput.value);
+    onMyColorHexChanged(hexColorFromString((Math.random() * 100000).toString()));
 }

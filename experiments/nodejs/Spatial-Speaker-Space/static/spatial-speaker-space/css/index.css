@@ -51,9 +51,8 @@ p {
     height: 21px;
     border: none;
     padding: 0;
-    background-color: transparent;
     position: relative;
-    top: 1px;
+    top: 2px;
 }
 
 .description {
