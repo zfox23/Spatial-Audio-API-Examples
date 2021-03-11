@@ -275,6 +275,7 @@ class MyAvatar extends Avatar {
     connected(response) { // Connect the communicator output to the player.
         super.connected(response);
         player.srcObject = this.communicator.getOutputAudioMediaStream();
+        player.play(); // Some browsers ignore autoplay, even after user interaction.
         let subscription = new HighFidelityAudio.UserDataSubscription({
             "components": [
                 HighFidelityAudio.AvailableUserDataSubscriptionComponents.VolumeDecibels
