@@ -77,7 +77,7 @@ app.get('/spatial-speaker-space/audience', async (req, res) => {
 
     console.log(`${timestamp}: Audience member \`${providedUserID}\` connected to the HiFi Space \`${spaceName}\`.`);
 
-    res.render('index', { connectionTimestamp: timestamp, providedUserID, hiFiJWT, spaceName, participantType: "audience", endpointUrl: HIFI_ENDPOINT_URL});
+    res.render('index', { connectionTimestamp: timestamp, providedUserID, hiFiJWT, spaceName, participantType: "audience", endpointUrl: auth.HIFI_ENDPOINT_URL});
 });
 
 app.get('/spatial-speaker-space/get-connection-age', (req, res) => {
