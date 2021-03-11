@@ -417,7 +417,7 @@
 
         // Connect to the HiFi Audio API server!
         try {
-            let response = await hifiCommunicator.connectToHiFiAudioAPIServer('<%- hiFiJWT %>');
+            let response = await hifiCommunicator.connectToHiFiAudioAPIServer('<%- hiFiJWT %>', endpointUrl);
 
             myProvidedUserID = response.audionetInitResponse.user_id;
             document.querySelector(".displayNameInput").innerHTML = myProvidedUserID;
