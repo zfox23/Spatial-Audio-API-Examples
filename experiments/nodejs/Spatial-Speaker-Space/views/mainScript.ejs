@@ -235,7 +235,7 @@
                 }
 
                 // Only update volume data for speakers.
-                if (currentLocalUserData.participantType === "speaker" && typeof (currentDataFromServer.volumeDecibels) === "number") {
+                if (currentLocalUserData.participantType !== "audience" && typeof (currentDataFromServer.volumeDecibels) === "number") {
                     currentLocalUserData.volumeDecibels = currentDataFromServer.volumeDecibels;
 
                     if (isMine) {
@@ -264,6 +264,7 @@
                     mustUpdateCanvas = true;
                 }
             } else {
+                console.log(`Received data about new user from Spatial Audio API: ${JSON.stringify(currentDataFromServer)}`)
                 // For proper visual representation.
                 // TODO: Talk to Sam or Luis and figure out why this (and the other related code) is necessary.
                 if (currentDataFromServer.orientationEuler) {
@@ -276,6 +277,7 @@
                     orientationEuler: currentDataFromServer.orientationEuler,
                     volumeDecibels: currentDataFromServer.volumeDecibels,
                 }));
+                recomputeSpeakerAndAudienceCount();
             }
         }
 
@@ -355,11 +357,11 @@
     class SpeakerSpaceUserData {
         constructor(data) {
             this.visitIDHash = data.visitIDHash;
-            this.displayName = data.displayName;
+            this.displayName = data.displayName || "Anonymous";
             this.colorHex = data.colorHex || hexColorFromString(this.visitIDHash);
             this.position = data.position;
             this.orientationEuler = data.orientationEuler;
-            this.participantType = data.participantType;
+            this.participantType = data.participantType || "unknown";
             this.isRecording = data.isRecording || false;
             this.volumeDecibels = data.volumeDecibels || -96;
             this.volumeDecibelsPeak = data.volumeDecibels || -96;
