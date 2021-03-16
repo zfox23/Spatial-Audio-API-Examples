@@ -1,0 +1,35 @@
+{
+  "name": "stressbot",
+  "version": "1.0.0",
+  "description": "HiFi-JS allows developers to integrate High Fidelity's spatial audio technology into their JavaScript projects. This is a NodeJS example application that implements the High Fidelity Audio API.",
+  "main": "index.js",
+  "private": true,
+  "scripts": {
+    "start": "node ./index.js",
+    "generate": "node ./generateJSON.js",
+    "build": "tsc ../../src/index.ts",
+    "clean": "find ../../src -name '*.js*' -delete",
+    "bots": "node ./integration-test.js",
+    "bandwidth": "node --unhandled-rejections=strict -- ./testBandwidth.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/highfidelity/Spatial-Audio-API-Examples.git"
+  },
+  "author": "High Fidelity",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/highfidelity/Spatial-Audio-API-Examples/issues"
+  },
+  "homepage": "https://github.com/highfidelity/Spatial-Audio-API-Examples#readme",
+  "dependencies": {
+    "audio-decode": "^1.4.0",
+    "audio-format": "^2.3.2",
+    "hifi-spatial-audio": "^0.2.2",
+    "jose": "^3.6.1",
+    "pcm-convert": "^1.6.5",
+    "make-fetch-happen": "^8.0.13",
+    "wrtc": "^0.4.7",
+    "yargs": "^16.2.0"
+  }
+}
