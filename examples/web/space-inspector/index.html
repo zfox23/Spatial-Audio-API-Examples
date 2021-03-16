@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset=utf-8>
+        <title>HiFi Audio Space Inspector</title>
+        <link rel="shortcut icon" type="image/x-icon" href="images/favicon.ico"/>
+        <link rel="preconnect" href="https://fonts.gstatic.com">
+        <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="./css/style.css?v=1">
+    </head>
+    <body oncontextMenu="return false">
+        <div class="controlContainer">
+            <div class="controlBar">
+                <button class="triggerButton"></button>
+                <p class="example-description">Click the connect button to start.</p>
+                <div class="muteButton muteButton--disabled mic-on"></div>
+            </div>
+        </div>
+    
+        <canvas class="thecanvas" tabindex="1"></canvas>
+        <div class="contextMenu"></div>
+        <script src="three/three.min.js"></script>
+        <script src="https://hifi-spatial-audio-api.s3-us-west-2.amazonaws.com/releases/latest/HighFidelityAudio-latest.js"></script>
+
+        <script>
+            const HIFI_AUDIO_JWT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcHBfaWQiOiI5MjEyZjZmNy1lNWIxLTRlYzYtYWUwNi00YTUyMzkxZTFkNmIiLCJzcGFjZV9pZCI6ImNkZjQxZmNjLWI5MmUtNDVjNy1iYzJhLTc0ZDBlOTFlMDIzNCIsInN0YWNrIjoiYXVkaW9uZXQtbWl4ZXItYXBpLWFscGhhLTAzIn0.2irihsIk0J2UD_X4ZZE_pxTjfOmldcENcVlLK1-7rEM";
+        
+            const DEG_TO_RAD = Math.PI / 180;
+            const RAD_TO_DEG = 180 / Math.PI;
+            
+            class Dot {
+
+                // Build the Dot representation in the scene
+                constructor (scene, pos, ori, col) {
+                    const geometry = new THREE.SphereGeometry(0.7, 32, 32);
+                    // MeshToonMaterial MeshPhysicalMaterial
+                    const material = new THREE.MeshToonMaterial( { color: (col ? col : '#ffff00') } );
+                    let node = new THREE.Mesh( geometry, material );
+                    if (pos) {
+                        node.position.set(pos.x, pos.y, pos.z);
+                    } 
+                    if (ori) {
+                        node.orientation.set(0, 0, 0);
+                    }
+                    // When we use Euler with THREE.js, we expect to use the same order convention as Hifi
+                    // aka Yaw(Y) Pitch(X) Roll(Z)
+                    node.rotation.order = 'YXZ';
+
+                    node.castShadow = true;
+                   // node.receiveShadow = true;
+                    scene.add( node );
+
+                   // const geometryWave = new THREE.TorusGeometry(1.0,  32, 16, 0, 2*Math.PI, 0, 0.5 * Math.PI);
+                    const geometryWave = new THREE.ConeGeometry(0.5, 1.0, 32, 16);
+                    const materialWave = new THREE.MeshToonMaterial( { color: (col ? col : '#efefef') } );
+                    let wave = new THREE.Mesh(geometryWave, materialWave);
+                    wave.rotation.order = 'YXZ';
+                    wave.rotation.x = Math.PI/ 2;
+                    wave.position.z = -0.5;
+                    wave.castShadow = true;
+
+                    this._wave = wave;
+                    node.add(wave);
+
+                    const geometryCone = new THREE.ConeGeometry(0.3, 0.5, 32, 16);
+                    const materialX = new THREE.MeshToonMaterial( { color: ('#ff0000') } );
+                    const materialY = new THREE.MeshToonMaterial( { color: ('#00ff00') } );
+                    const materialZ = new THREE.MeshToonMaterial( { color: ('#0000ff') } );
+                    const coneOffset = 1.0;
+
+                    let nodeX = new THREE.Mesh( geometryCone, materialX );
+                    nodeX.rotation.order = 'YXZ';
+                    nodeX.rotation.z = -Math.PI/ 2;
+                    nodeX.position.x = coneOffset;
+                   // nodeX.castShadow = true;
+                   // nodeX.receiveShadow = true;
+                    node.add(nodeX);
+
+                    let nodeY = new THREE.Mesh( geometryCone, materialY );
+                    nodeY.rotation.order = 'YXZ';
+                    nodeY.position.y = coneOffset;
+                   // nodeY.castShadow = true;
+                   // nodeY.receiveShadow = true;
+                    node.add(nodeY);
+
+                    let nodeZ = new THREE.Mesh( geometryCone, materialZ );
+                    nodeZ.rotation.order = 'YXZ';
+                    nodeZ.rotation.x = Math.PI/ 2;
+                    nodeZ.position.z = coneOffset;
+                   // nodeZ.castShadow = true;
+                   // nodeZ.receiveShadow = true;
+                    node.add(nodeZ);
+
+
+                   // var dotAxis = new THREE.AxesHelper(2.0);
+                  //  node.add(dotAxis);
+
+                    this._node = node;
+                }
+
+                setInputVolume(value) {
+                    let scale = 2 - Math.min(1, value / -55);
+                    this._wave.position.z = -0.5 * scale;
+                    this._wave.scale.set(scale, scale, scale);
+                }
+
+            };
+
+            class CamController {
+                constructor(camNode, orbitNode, onUpdateDelegate) {
+                    this.camNode = camNode;
+                    this.orbitNode = orbitNode;
+                    this.onUpdateDelegate = onUpdateDelegate;
+ 
+                    let obj = this.camNode;
+                    if (this.orbitNode) {
+                        obj = this.orbitNode;
+                    }
+                    this.orbitPos = new THREE.Vector3(obj.position.x, obj.position.y, obj.position.z);
+                    this.boom = 0;
+                    this.yaw = 0;
+                    this.pitch = 0;
+                    this.onMouseDownYaw = 0;
+                    this.onMouseDownPitch = 0;
+
+                    this.isMouseDown = false;
+                    this.onMouseDownPosition = {x: 0, y:0};
+
+                    document.addEventListener( 'keydown', (e) => { this.onKeyDown(e); }, false );
+                    document.addEventListener( 'keyup', (e) => { this.onKeyUp(e); }, false );
+
+                    document.addEventListener( 'mousemove', (e) => { this.onMouseMove(e); }, false );
+                    document.addEventListener( 'mousedown', (e) => { this.onMouseDown(e); }, false );
+                    document.addEventListener( 'mouseup', (e) => { this.onMouseUp(e); }, false );
+
+                    document.addEventListener( 'mousewheel', (e) => { this.onMouseWheel(e); }, false );    
+               
+                    this.update();
+                }
+
+
+                onKeyDown(event) {
+                     const Tstep = 0.2;
+                     const Rstep = 5;
+                     switch (event.key) {
+                         case 'w':
+                            this.translateYawSpace(0, 0, -Tstep);
+                            break;
+                         case 's':
+                            this.translateYawSpace(0, 0, +Tstep);
+                            break;
+                         case 'q':
+                            this.translateYawSpace(-Tstep, 0, 0);
+                            break;
+                         case 'e':
+                            this.translateYawSpace(+Tstep, 0, 0);
+                            break;
+                         case 'r':
+                            this.translateYawSpace(0, +Tstep, 0);
+                            break;
+                         case 'f':
+                            this.translateYawSpace(0, -Tstep, 0);
+                            break;
+                         case 'a':
+                            this.rotateYawSpace(+Rstep);
+                            break;
+                         case 'd':
+                            this.rotateYawSpace(-Rstep);
+                            break;                              
+                     }
+                }
+                onKeyUp(event) { 
+                }                  
+
+                onMouseDown(event) {                    
+                    this.isMouseDown = true;
+                    this.onMouseDownPosition.x = event.clientX;
+                    this.onMouseDownPosition.y = event.clientY;
+
+                    this.onMouseDownYaw = this.yaw;
+                    this.onMouseDownPitch = this.pitch;
+                }
+                onMouseMove(event) {
+                    if ( this.isMouseDown ) {
+                        this.yaw = - ( ( event.clientX - this.onMouseDownPosition.x ) * 0.5 ) + this.onMouseDownYaw;
+                        this.pitch = -( ( event.clientY - this.onMouseDownPosition.y ) * 0.5 ) + this.onMouseDownPitch;
+                        this.pitch = Math.min( 10, Math.max( -90, this.pitch ) );
+                         
+                        this.update();
+                    }
+                }
+                onMouseUp(event) {    
+				    this.isMouseDown = false;
+                    this.onMouseDownPosition.x = event.clientX - this.onMouseDownPosition.x;
+                    this.onMouseDownPosition.y = event.clientY - this.onMouseDownPosition.y;
+                }
+
+                onMouseWheel(event) {
+                    let delta = -event.wheelDeltaY / 120;
+                    const speed = 0.1;
+                    const threshold = 1.5;
+                    if (delta > 0) {
+                        this.boom = Math.min(100, (this.boom >= threshold ? this.boom * (1 + delta*speed) : threshold));     
+                    } else if (delta < 0) {
+                        this.boom = Math.max(0, (this.boom >= threshold ? this.boom : 0) * (1 + delta*speed));     
+                    }
+                    this.update();
+
+                }
+
+                rotateYawSpace(delta) {
+                    this.yaw += delta;
+                    this.update();
+                }
+
+                translateYawSpace(x, y, z) {
+                    const e = new THREE.Euler( 0, this.yaw * DEG_TO_RAD, 0, 'YXZ');
+                    const f = new THREE.Vector3( x, y, z);
+                    f.applyEuler(e);
+                    this.orbitPos.add(f);
+
+                    // keep orbitPos.y above floor
+                    this.orbitPos.y = Math.max(0, this.orbitPos.y);
+
+                    this.update();
+                }
+
+                update() { 
+                    if (this.orbitNode) {
+                        this.orbitNode.position.x = this.orbitPos.x;
+                        this.orbitNode.position.y = this.orbitPos.y;
+                        this.orbitNode.position.z = this.orbitPos.z;
+                        this.orbitNode.rotation.x = (this.boom ? 0 : (this.pitch * DEG_TO_RAD));
+                        this.orbitNode.rotation.y = (this.yaw * DEG_TO_RAD);
+                        this.orbitNode.rotation.z = 0;
+                        this.orbitNode.rotation.order = 'YXZ';
+                        this.orbitNode.updateMatrix();
+                    }
+                    if (this.camNode) {                     
+                        this.camNode.position.x = this.orbitPos.x;
+                        this.camNode.position.y = this.orbitPos.y;
+                        this.camNode.position.z = this.orbitPos.z;
+                        this.camNode.rotation.x = (this.pitch * DEG_TO_RAD);
+                        this.camNode.rotation.y = (this.yaw * DEG_TO_RAD);
+                        this.camNode.rotation.z = 0;
+                        this.camNode.rotation.order = 'YXZ';
+                        this.camNode.updateMatrix();
+                        this.camNode.translateZ(this.boom);
+                    }
+                    if (this.onUpdateDelegate) {
+                        this.onUpdateDelegate(this);
+                    }
+                }
+            };
+
+
+            class World {
+                constructor(thecanvas) {
+                    this.scene = new THREE.Scene();
+                    let scene = this.scene;
+                    scene.background = new THREE.Color( 'skyblue' );
+
+                    this.renderer = new THREE.WebGLRenderer({canvas: thecanvas, antialias:true});
+                    let renderer = this.renderer;
+
+                    renderer.shadowMap.enabled = true;
+                 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+                    this.camera = new THREE.PerspectiveCamera(60, thecanvas.innerWidth / thecanvas.innerHeight, 0.1, 20000);
+                    scene.add(this.camera);
+
+                    this.myPlayer = new MyPlayer(this.scene, new THREE.Vector3(0, 0, 0));
+                    this.controller = new CamController(this.camera, this.myPlayer._node);
+
+                    this.players = {};
+                    
+                    const flourSize = 1000;
+                    {
+                        const geometry = new THREE.PlaneGeometry( flourSize, flourSize);
+                      //  const material = new THREE.MeshLambertMaterial( {color: 0xeeeeee, side: THREE.BackSide, transparent: true, opacity: 0.15} );
+                        // const material = new THREE.ShadowMaterial( {color: 0xff0000, side: THREE.DoubleSide, opacity: 0.15} );
+                        const vShader = `
+                        varying vec3 v_world_pos;
+                        void main() {
+                            v_world_pos = (modelMatrix * vec4(position, 1.0)).xyz;
+                            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                        }`
+                      
+                        const fShader = `
+                            varying vec3 v_world_pos;
+
+                            vec3 paintStripe(vec3 value, float period, float stripe) {
+                                vec3 normalizedWidth = fwidth(value) / period;
+                                vec3 offset = vec3(0.5 * stripe);
+                                vec3 edge = vec3(stripe / period);
+
+                                vec3 x0 = ((value - offset) / period) - normalizedWidth * 0.5;
+                                vec3 x1 = x0 + normalizedWidth;
+
+                                vec3 balance = vec3(1.0) - edge;
+                                vec3 i0 = edge * floor(x0) + max(vec3(0.0), fract(x0) - balance);
+                                vec3 i1 = edge * floor(x1) + max(vec3(0.0), fract(x1) - balance);
+                                vec3 strip = (i1 - i0) / normalizedWidth;
+
+                                return clamp(strip, vec3(0.0), vec3(1.0));
+                            }
+
+                            void main() {
+                                vec3 grid = paintStripe(v_world_pos, 50.0, 0.5);
+                                vec4 color = mix( vec4(1.0, 1.0, 1.0, 0.2), vec4(vec3(1.0), 1.0), max(grid.x, grid.z));
+                                
+                                
+                                grid = paintStripe(v_world_pos, 10.0, 0.1);
+                                color = mix( color, vec4(0.0, 0.0, 0.4, 0.5), max(grid.x, grid.z));
+                                
+
+                                gl_FragColor = color;
+                            }
+                            `
+               
+               
+                        const material = new THREE.ShaderMaterial( {
+                         //   uniforms: uniforms,
+					        vertexShader: vShader,
+					        fragmentShader: fShader,
+                            side: THREE.DoubleSide,
+                            transparent: true
+				        })
+                        let plane = new THREE.Mesh( geometry, material );
+                        plane.rotation.x = Math.PI / 2;
+                        plane.receiveShadow = true;
+                        scene.add( plane );
+
+                        const materialShadow = new THREE.ShadowMaterial( {color: 0xff0000, side: THREE.DoubleSide, opacity: 0.15} );
+                        let splane = new THREE.Mesh( geometry, materialShadow );
+                         splane.receiveShadow = true;
+                         splane.position.z = 0.1;
+                         plane.add( splane );
+                    }
+                    {
+                        let dirLight = new THREE.DirectionalLight( 0xffffff );
+                        dirLight.position.set( 3, 3, 3)//.normalize();
+                        dirLight.castShadow = true;
+
+                        let size = flourSize / 8;
+
+                        dirLight.shadow.camera.left = -size;
+                        dirLight.shadow.camera.right = size;
+                        dirLight.shadow.camera.top = size;
+                        dirLight.shadow.camera.bottom = -size;
+                        dirLight.shadow.camera.near = -size;
+                        dirLight.shadow.camera.far = size;
+
+                        dirLight.shadow.mapSize.width = 1024;
+                        dirLight.shadow.mapSize.height = 1024;
+                    
+                        
+                        scene.add(dirLight);
+                        
+                        const helper = new THREE.CameraHelper( dirLight.shadow.camera );
+                       // scene.add( helper );    
+                    }
+
+
+                    this.onresize();
+                }
+
+                onresize() {
+                    let newWidth = window.innerWidth;
+                    let newHeight = window.innerHeight;
+                    this.renderer.setSize(newWidth, newHeight);
+                    this.camera.aspect = newWidth / newHeight;
+                    this.camera.updateProjectionMatrix();
+                }
+
+                
+                render() {
+                    this.controller.update();
+                    this.renderer.render( this.scene, this.camera );
+                }
+
+                animate() {
+                    requestAnimationFrame(() => { this.animate(); } );
+                    this.render();
+                }
+                
+                // When the receiver gets data from the server we update nodes 
+                onDataReceived(dataArray) {
+                    dataArray.forEach((data, idx) => {
+                        if (this.myPlayer && data.hashedVisitID !== this.myPlayer.getId()) {
+                            let player = this.players[data.hashedVisitID];
+                            if (!player) {
+                                let playerCount = Object.keys(this.players).length;
+                                player = new Player(this.scene);
+                                player.setId(data.hashedVisitID);
+                                this.players[data.hashedVisitID] = player;
+                            }
+                            player.updateReceivedData(data);
+                            if (data.position && idx === 3) {
+                                console.log(JSON.stringify(data.position));
+                            }
+                        }
+                    });
+                }
+                async connect(config) {
+                    // Create and connect myPlayer and then add it to the world
+                    let myPlayer = this.myPlayer;
+                    if (await myPlayer.connect()) {
+                        myPlayer.setId(myPlayer.getId());
+                        this.addPlayer(myPlayer);
+                        await myPlayer.setupSending();
+                        await myPlayer.setupReceiving((data) => { this.onDataReceived(data); });
+
+                        // Bind the onUPdate notifier from the controler to the myPlayer.updateData
+                        this.controller.onUpdateDelegate = () => { this.myPlayer.updateData(); };
+
+                        return true;
+                    }
+                    return false;
+                }
+                async disconnect() {
+                    if (this.myPlayer && this.myPlayer.isConnected()) {
+                        await this.myPlayer.disconnect();
+                    }
+                    this.myPlayer = null;
+                    this.players = {};
+                }
+
+                addPlayer(player) {
+                    this.players[player.getId()] = player;
+                }
+            }
+
+            class Player extends Dot {
+                constructor(scene, pos, ori, col) {
+                    super(scene, pos, ori, col);
+                    this.id = null;
+                }
+
+                getId() {
+                    return this.id;
+                }
+
+                setId(id) {
+                    this.id = id;
+                }
+
+                updateReceivedData(data) {
+                    this.volume = data.volumeDecibels !== null ? data.volumeDecibels : this.volume;
+                    this.setInputVolume(this.volume);
+
+                    if (data.position !== null) {
+                        this._node.position.set(data.position.x, data.position.y, data.position.z);
+                    }
+                    if (data.orientationQuat !== null) {
+                        this._node.quaternion.x = data.orientationQuat.x;
+                        this._node.quaternion.y = data.orientationQuat.y;
+                        this._node.quaternion.z = data.orientationQuat.z;
+                        this._node.quaternion.x = data.orientationQuat.w;
+                        this._node.updateMatrix();
+                    }
+                    if (data.orientationEuler !== null) {
+                        this._node.rotation.x = data.orientationEuler.pitchDegrees * DEG_TO_RAD;
+                        this._node.rotation.y = data.orientationEuler.yawDegrees * DEG_TO_RAD;
+                        this._node.rotation.z = data.orientationEuler.rollDegrees * DEG_TO_RAD;
+                        this._node.rotation.order = 'YXZ';
+                        this._node.updateMatrix();
+                    }
+                }
+            };
+
+            class MyPlayer extends Player {
+
+                constructor(scene, pos, ori, col) {
+                    super(scene, pos, ori, col);
+                    // Create the API's position and orientation objects that will be sent to the mixer
+                    this.mixerPosition = new HighFidelityAudio.Point3D({ x: this._node.position.x, y: this._node.position.z, z: this._node.position.y });
+                    this.mixerOrientation = new HighFidelityAudio.OrientationEuler3D({ "pitchDegrees": 0, "yawDegrees": RAD_TO_DEG * this._node.rotation.y, "rollDegrees": 0 });
+                    this.hifiCommunicator = null; // HighFidelityAudio.HiFiCommunicator
+                    this.stream = null; // Input or output stream
+                    this.volume = null; // Value with the volume from mixer in decibels.
+                    this.connectResponse = null;
+                    this.isMyPlayer = true;
+                }
+                
+                // If the node is connected, its id will be the visit id hash provided by the server
+                getId() {
+                    return this.connectResponse && this.connectResponse.success ? this.connectResponse.audionetInitResponse.visit_id_hash : null;
+                }
+
+                // This function receives position ({x, y, z}) and orientation (radians), updates the renderable2D and soundNode values and send it. 
+                updateData() {
+                    // We need to convert the position sent to the mixer
+                    this.mixerPosition.x = this._node.position.x;
+                    this.mixerPosition.y = this._node.position.y;
+                    this.mixerPosition.z = this._node.position.z;
+                    this.mixerOrientation.pitchDegrees = RAD_TO_DEG * this._node.rotation.x;
+                    this.mixerOrientation.yawDegrees = RAD_TO_DEG * this._node.rotation.y;
+                    this.mixerOrientation.rollDegrees = RAD_TO_DEG * this._node.rotation.z;
+                    this.sendUpdatedData();
+                }
+
+                // Send the converted position and orientation to the mixer
+                sendUpdatedData(name) {
+                    if (this.hifiCommunicator) {
+                        let response = this.hifiCommunicator.updateUserDataAndTransmit({
+                            position: this.mixerPosition,
+                            orientationEuler: this.mixerOrientation
+                        });
+                    }
+                }
+
+                // Notify connection changes for debugging
+                onConnectionStateChanged(newConnectionState) {
+                    console.log(`New High Fidelity connection for: ${this.name} state: ${newConnectionState}`);
+                }
+                // Connect to the server using a valid space token
+                async connect() {
+                    console.log(`Connecting Receiver: ` + this.name + ` to High Fidelity Audio API Servers...`);
+                    // Setup the communicator
+                    this.hifiCommunicator = new HighFidelityAudio.HiFiCommunicator({
+                        initialHiFiAudioAPIData: new HighFidelityAudio.HiFiAudioAPIData({
+                            position: this.mixerPosition,
+                            orientationEuler: this.mixerOrientation
+                        }),
+                        onConnectionStateChanged: this.onConnectionStateChanged.bind(this), // Subscribe to connection changes
+                    });
+                    try {
+                        this.connectResponse = await this.hifiCommunicator.connectToHiFiAudioAPIServer(HIFI_AUDIO_JWT);
+                        console.log(`Call to \`connectToHiFiAudioAPIServer()\` for: ${this.name} succeeded! Response:\n${JSON.stringify(this.connectResponse)}`);
+                        return this.connectResponse.success;
+                    } catch (e) {
+                        console.error(`Call to \`connectToHiFiAudioAPIServer()\` for: ${this.name} failed! Error:\n${e}`);
+                        this.connectResponse = null;
+                        return false;
+                    }
+                }
+                async setupSending() {
+                    // Get the audio media stream associated with the user's default audio input device.
+                    try {
+                        this.stream = await navigator.mediaDevices.getUserMedia({ audio: HighFidelityAudio.getBestAudioConstraints(), video: false });
+                        this.getVolumeFromInputStream(this.stream);
+                    } catch (e) {
+                        return;
+                    }
+                    await this.hifiCommunicator.setInputAudioMediaStream(this.stream);
+                }
+                async setupReceiving(onDataReceived) {
+                    if (this.hifiCommunicator) {
+                        let outputAudioElem = document.createElement('audio');
+                        outputAudioElem.srcObject = this.hifiCommunicator.getOutputAudioMediaStream();
+                        // We must call `play()` here because certain browsers won't autoplay this stream as we expect.
+                        outputAudioElem.play();
+                        // This will get only volume updates for all Users (including ourselves).
+                        let userDataSubscription = new HighFidelityAudio.UserDataSubscription({
+                            "components": [ HighFidelityAudio.AvailableUserDataSubscriptionComponents.VolumeDecibels,
+                                            HighFidelityAudio.AvailableUserDataSubscriptionComponents.Position,
+                                            HighFidelityAudio.AvailableUserDataSubscriptionComponents.OrientationQuat,
+                                            HighFidelityAudio.AvailableUserDataSubscriptionComponents.OrientationEuler  ],
+                            "callback": onDataReceived
+                        });
+                        this.hifiCommunicator.addUserDataSubscription(userDataSubscription);
+                        return true;
+                    }
+                    return false;
+                }
+
+                // Disconnect from the server
+                async disconnect() {
+                    console.log(`Disconnecting Emitter: ${this.name} from High Fidelity Audio API Servers...`);
+                    let disconnectStatus = await this.hifiCommunicator.disconnectFromHiFiAudioAPIServer();
+                    this.connectResponse = null;
+                    console.log(`Disconnected status for ${this.name} : ${disconnectStatus}`);
+                }
+                // Mute the input stream
+                async setMute(muted) {
+                    if (this.hifiCommunicator) {
+                        return await this.hifiCommunicator.setInputAudioMuted(muted);
+                    }
+                    return false;
+                }
+
+                getVolumeFromInputStream(stream) {
+                    let audioContext = new AudioContext();
+                    let analyser = audioContext.createAnalyser();
+                    let micSource = audioContext.createMediaStreamSource(stream);
+                    let processor = audioContext.createScriptProcessor(2048, 1, 1);
+                    analyser.smoothingTimeConstant = 0.8;
+                    analyser.fftSize = 1024;
+                    micSource.connect(analyser);
+                    analyser.connect(processor);
+                    processor.connect(audioContext.destination);
+                    processor.onaudioprocess = () => {
+                        let array = new Uint8Array(analyser.frequencyBinCount);
+                        analyser.getByteFrequencyData(array);
+                        let avgVal = 0;
+                        for (var i = 0; i < array.length; i++) {
+                            avgVal += array[i];
+                        }
+                        // MyPlayer's volume
+                        this.volume = 1.6 * (avgVal / array.length) - 60.0;
+                        this.setInputVolume(this.volume);
+                    }
+                }
+            }
+
+            class App {
+                constructor(config, canvas, triggerButton, muteButton, contextMenu) {
+                    this.config = config;
+                    this.world = null;
+                    this.triggerButton = null;
+                    this.contextMenu = null;
+                    // To add/remove event listener propertly and with the right context we need to bind them first into variables
+                    this.connectMyPlayerBinded = this.connectMyPlayer.bind(this);
+                    this.disconnectMyPlayerBinded = this.disconnectMyPlayer.bind(this);
+
+                                
+
+                    this.setupUI(canvas, triggerButton, muteButton, contextMenu);
+
+                    this.world.animate();
+
+                }
+                // Connect the UI elements that trigger the example and and display information
+                setupUI(canvas, triggerButton, muteButton, contextMenu) {
+                    this.canvas = canvas;
+                    this.world = new World(canvas);
+                    this.triggerButton = triggerButton;
+                    this.muteButton = muteButton;
+                    this.contextMenu = contextMenu;
+                    // Configure the triggerButton
+                    this.triggerButton.addEventListener("click", this.connectMyPlayerBinded, false);
+                    this.triggerButton.innerHTML = `Click to Connect`;
+                    this.muteButton.addEventListener("click", this.onMute.bind(this), false);
+                    window.addEventListener('resize', () => { this.world.onresize(); }, false);
+                    window.addEventListener('load', () => { this.world.onresize(); }, false);
+                    // Setup the canvas to receive control events
+                }
+
+                async connectMyPlayer() {
+
+                    // Data configuration for all nodes base on type
+                    let myPlayerConfig = {name: "MyPlayer", radius: 0.2, color: "#AFAAFF", position: this.config.SPAWN_POINT, orientation: 0};
+                    this.triggerButton.disabled = true;
+                    this.triggerButton.innerHTML = `wait...`;
+
+                    if (await this.world.connect(myPlayerConfig)) {
+                        // Reset trigger button status
+                        this.triggerButton.disabled = false;
+                        this.triggerButton.innerHTML = `Disconnect`;
+                        this.triggerButton.removeEventListener('click', this.connectMyPlayerBinded, false);
+                        this.triggerButton.addEventListener('click', this.disconnectMyPlayerBinded, false);
+                        this.muteButton.classList.remove("muteButton--disabled");
+                    } else {
+                        this.triggerButton.disabled = false;
+                        this.triggerButton.innerHTML = `Reconnect`;
+                    }
+                }
+
+                async disconnectMyPlayer() {
+                    this.triggerButton.disabled = true;
+                    this.triggerButton.innerHTML = `wait...`;
+                    await this.world.disconnect();
+                    // Reset triggerButton
+                    this.triggerButton.disabled = false;
+                    this.triggerButton.innerHTML = `Connect`;
+                    this.triggerButton.removeEventListener('click', this.disconnectMyPlayerBinded, false);
+                    this.triggerButton.addEventListener('click', this.connectMyPlayerBinded, false);
+                    // Reset mute button
+                    this.muteButton.classList.remove("mic-off");
+                    this.muteButton.classList.add("mic-on");
+                    this.muteButton.classList.add("muteButton--disabled");
+                    this.showInfo();
+                }            
+                showInfo(id) {
+                    // Display the player name when selected
+                    if (id) {
+                        let player = this.world.players[id];
+                        this.contextMenu.innerHTML = player.name;
+                    }
+                    this.contextMenu.style.display = id ? "block" : "none";
+                }
+                onMute() {
+                    // Set mute state when the user clicks on the mic icon
+                    let isMuted = this.muteButton.classList.contains("mic-off");
+                    if (this.world.myPlayer && this.world.myPlayer.setMute(!isMuted)) {
+                        if (isMuted) {
+                            this.muteButton.classList.remove("mic-off");
+                            this.muteButton.classList.add("mic-on");
+                        } else {
+                            this.muteButton.classList.remove("mic-on");
+                            this.muteButton.classList.add("mic-off");
+                        }
+                    }
+                }
+
+                // Key Controls Bindings
+                // Every time a key is pressed the canvas will be focused in order to force it to catch the event
+                forceCanvasKeyEvent() {
+                    let eventsToSendToCanvas = ['keydown', 'keyup', 'keypress'];
+                    eventsToSendToCanvas.forEach(eventName => {
+                        document.addEventListener(eventName, (e) => {
+                            if (this.canvas && !this.canvas.onfocus) {
+                                this.canvas.focus();
+                            }
+                        });
+                    });
+                }
+            }
+            HighFidelityAudio.HiFiLogger.setHiFiLogLevel(HighFidelityAudio.HiFiLogLevel.Debug);
+            let config = {};
+            let canvasElement = document.querySelector('.thecanvas');
+            let triggerButton = document.querySelector(`.triggerButton`);
+            let muteButton = document.querySelector(".muteButton");
+            let contextMenu = document.querySelector(".contextMenu");
+            let app = new App(config, canvasElement, triggerButton, muteButton, contextMenu);
+
+        </script>
+    </body>
+</html>
