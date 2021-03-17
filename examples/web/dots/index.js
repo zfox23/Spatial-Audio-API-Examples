@@ -64,22 +64,25 @@ class Avatar extends Client {
         this.gotInputAudio = true;
         this.communicator.setInputAudioMediaStream(stream, stereo);
     }
-    async makeJWT(applicationUserId, internalHifiServerNameOverride = undefined) {
+    async makeJWT(applicationUserId,
+                  appId = document.querySelector('lobby').id,
+                  spaceId = this.room.model.hifiRoomId,
+                  secret = undefined,
+                  internalHifiServerNameOverride = undefined) {
         // A production app would likely require the user to log in to a server, which would provide the JWT token.
         let payload = {
-            app_id: document.querySelector('lobby').id,
-            space_id: this.room.model.hifiRoomId,
+            app_id: appId,
+            space_id: spaceId,
             user_id: applicationUserId,
             stack: internalHifiServerNameOverride // Not included in JSON by default.
         };
         // If a client knew the secret, the client could generate the JWT using this in the .html
         // <script src="https://kjur.github.io/jsrsasign/jsrsasign-latest-all-min.js">
         // and:
-        /*
-        let header = {alg: 'HS256', typ: 'JWT'},
-            secret = YOUR_ACCOUNT_SECRET;
-        return KJUR.jws.JWS.sign("HS256", JSON.stringify(header), JSON.stringify(payload), secret);
-        */
+        if (secret) {
+            let header = {alg: 'HS256', typ: 'JWT'};
+            return KJUR.jws.JWS.sign("HS256", JSON.stringify(header), JSON.stringify(payload), secret);
+        }
         // That's the easiest thing for running your own demo, but, of course, anyone who looked at the source could connect at your expense.
         // Below, we contact a server that only responds to this demo.
         let response = await fetch('https://lit-inlet-37897.herokuapp.com?payload=' + encodeURIComponent(JSON.stringify(payload)));
@@ -89,9 +92,11 @@ class Avatar extends Client {
         return `${this.model.color} ${this.model.name}`;
     }
     async connect() {
-        let urlQueryParameters = new URLSearchParams(location.search), // url overrrides are convenient for dev/tests/demos within High Fidelity
-            stackName = urlQueryParameters.get('stack') || undefined,
-            jwt = await (urlQueryParameters.get('token') || this.makeJWT(this.hifiUserId, stackName));
+        let urlQueryParameters = new URLSearchParams(location.search); // url overrrides are convenient for dev/tests/demos within High Fidelity
+        function maybeOverride(name) { return urlQueryParameters.get(name) || undefined; }
+        let stackName = maybeOverride('stack'),
+            jwt = await (maybeOverride('token') ||
+                         this.makeJWT(this.hifiUserId, maybeOverride('appId'), maybeOverride('spaceId'), maybeOverride('secret'), stackName));
         await this.communicator.connectToHiFiAudioAPIServer(jwt, stackName).then(response => this.connected(response));
     }
     connected(response) { console.info('HiFidelityAudio connect response', response); }
