@@ -64,13 +64,14 @@ class Avatar extends Client {
         this.gotInputAudio = true;
         this.communicator.setInputAudioMediaStream(stream, stereo);
     }
-    async makeJWT(applicationUserId) { // A production app would likely require the user to log in to a server, which would provide the JWT token.
+    async makeJWT(applicationUserId, internalHifiServerNameOverride = undefined) {
+        // A production app would likely require the user to log in to a server, which would provide the JWT token.
         let payload = {
-                app_id: '6023060e-1668-483f-bd6f-e7ff707b8918',
-                space_id: this.room.model.hifiRoomId,
-                user_id: applicationUserId,
-                stack: 'audionet-mixer-api-alpha-01'
-            };
+            app_id: document.querySelector('lobby').id,
+            space_id: this.room.model.hifiRoomId,
+            user_id: applicationUserId,
+            stack: internalHifiServerNameOverride // Not included in JSON by default.
+        };
         // If a client knew the secret, the client could generate the JWT using this in the .html
         // <script src="https://kjur.github.io/jsrsasign/jsrsasign-latest-all-min.js">
         // and:
@@ -88,8 +89,10 @@ class Avatar extends Client {
         return `${this.model.color} ${this.model.name}`;
     }
     async connect() {
-        let jwt = await this.makeJWT(this.hifiUserId);
-        await this.communicator.connectToHiFiAudioAPIServer(jwt).then(response => this.connected(response));
+        let urlQueryParameters = new URLSearchParams(location.search), // url overrrides are convenient for dev/tests/demos within High Fidelity
+            stackName = urlQueryParameters.get('stack') || undefined,
+            jwt = await (urlQueryParameters.get('token') || this.makeJWT(this.hifiUserId, stackName));
+        await this.communicator.connectToHiFiAudioAPIServer(jwt, stackName).then(response => this.connected(response));
     }
     connected(response) { console.info('HiFidelityAudio connect response', response); }
     redraw({x = this.model.x, y = this.model.y, rotation = this.model.rotation, sourceId} = {}) { // after x/y change
@@ -549,6 +552,7 @@ class LobbyRecord extends Record {
 class LobbyUI extends Client {
     constructor(model) {
         super(model);
+        this.lobby = document.querySelector('lobby');
         this.model = model;
         this.subscribe(this.sessionId, 'updateDisplay', this.updateDisplay);
     }
@@ -568,12 +572,12 @@ class LobbyUI extends Client {
         this.roomSession.leave();
         delete this.roomSession;
         this.publish(this.sessionId, 'updateModel', {userId: this.viewId, roomId: 'TheLobby'});        
-        rooms.classList.remove('hidden');
+        this.lobby.classList.remove('hidden');
         map.remove();
     }
     async enterRoom(roomId) {
         this.publish(this.sessionId, 'updateModel', {userId: this.viewId, roomId});
-        rooms.classList.add('hidden');
+        this.lobby.classList.add('hidden');
         // Easist way to maintain rooms is to rebuild them as needed.
         map = mapTemplate.content.cloneNode(true).firstElementChild;
         map.ondragover = ourBehaviorOnly;
@@ -600,6 +604,8 @@ Croquet.Session.join({  // Join the lobby session, which we will be part of the 
     password: "none",
     model: LobbyRecord,
     options: {roomNames: Array.from(document.getElementsByTagName('room')).map(e => e.id)},
+    autoSleep: false,
+    tps: 2,
     view: LobbyUI
 }).then(s => {
     LobbySession = s;
