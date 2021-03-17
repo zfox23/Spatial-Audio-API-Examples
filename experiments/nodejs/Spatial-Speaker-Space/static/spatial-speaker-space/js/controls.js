@@ -72,7 +72,7 @@ function onUserClick(e) {
 
     let clickM = {
         "x": linearScale(rotatedPoint[0], 0, mainCanvas.width, -VIRTUAL_SPACE_DIMENSIONS_PER_SIDE_M / 2, VIRTUAL_SPACE_DIMENSIONS_PER_SIDE_M / 2),
-        "z": linearScale(rotatedPoint[1], 0, mainCanvas.height, -VIRTUAL_SPACE_DIMENSIONS_PER_SIDE_M / 2, VIRTUAL_SPACE_DIMENSIONS_PER_SIDE_M / 2)
+        "z": linearScale(rotatedPoint[1], 0, mainCanvas.height, VIRTUAL_SPACE_DIMENSIONS_PER_SIDE_M / 2, -VIRTUAL_SPACE_DIMENSIONS_PER_SIDE_M / 2)
     };
 
     let isCloseEnough = false;
