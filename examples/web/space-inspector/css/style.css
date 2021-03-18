@@ -29,6 +29,18 @@ body {
     text-align: center;
     color: white;
     width: calc(100vw - 414px);
+    word-wrap: break-word;
+    text-overflow: ellipsis;
+}
+.jwtInput { 
+    resize: none;
+    background-color: #000000; 
+    color: white;
+    width: calc(100vw - 414px);
+}
+.jwtInput--disabled {
+    color: rgb(147, 170, 149);
+    opacity: 0.5;
 }
 
 .console-log {
@@ -89,7 +101,7 @@ body {
 }
 
 .frameButton {
-    float: inline-start;
+    float: inline-end;
     width: 40px;
     height: 40px;
     margin: 20px;

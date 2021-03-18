@@ -12,7 +12,10 @@
         <div class="controlContainer">
             <div class="controlBar">
                 <button class="triggerButton"></button>
-                <p class="example-description">Click the connect button to start.</p>
+                <!--<p class="example-description">Click the connect button to start.</p>>
+                <input type="text" class="jwtInput" value="HIFI AUDIO JWT">-->
+                
+                <textarea class="jwtInput">Enter HIFI AUDIO JWT here or as a url parameter '?jwt=...'</textarea>
                 <div class="frameButton frameButton--disabled frame-on"></div>
                 <div class="muteButton muteButton--disabled mic-on"></div>
             </div>
@@ -57,7 +60,8 @@
             <div class="inspectorPlayerID inspectorField"></div>        
         </div>
 
-        <script src="three/three.min.js"></script>
+        <!--<script src="three/three.min.js"></script>-->
+        <script src="http://threejs.org/build/three.min.js"></script>
         <script src="https://hifi-spatial-audio-api.s3-us-west-2.amazonaws.com/releases/latest/HighFidelityAudio-latest.js"></script>
 
         <script>
@@ -70,18 +74,23 @@
             class Frame {
                 constructor(parent, scale = 1) {
                    
-                    const geometry = new THREE.SphereGeometry(0.1, SPHERE_TESSELLATION, SPHERE_TESSELLATION);
-                    const material = new THREE.MeshToonMaterial( { color: ('#ffff00') } );
+                    //const geometry = new THREE.SphereGeometry(0.1, SPHERE_TESSELLATION, SPHERE_TESSELLATION);
+                    const geometry = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+                    const material = new THREE.MeshToonMaterial( { color: ('#efefef') } );
                     let root = new THREE.Mesh( geometry, material );
                     root.scale.set(scale, scale, scale);
                     root.layers.set(FRAME_LAYER);
                     parent.add(root);
 
-                    const geometryCone = new THREE.ConeGeometry(0.2, 0.4, SPHERE_TESSELLATION, SPHERE_TESSELLATION/2);
+                    const coneOffset = 1.0;
+
+                    const geometryAxis = new THREE.CylinderGeometry(0.01, 0.01, coneOffset, SPHERE_TESSELLATION / 4, SPHERE_TESSELLATION/2, true);
+                    const materialAxis = new THREE.MeshToonMaterial( { color: ('#3f3f3f') } );
+                    
+                    const geometryCone = new THREE.ConeGeometry(0.15, 0.4, SPHERE_TESSELLATION, SPHERE_TESSELLATION/2);
                     const materialX = new THREE.MeshToonMaterial( { color: ('#ff0000') } );
                     const materialY = new THREE.MeshToonMaterial( { color: ('#00ff00') } );
                     const materialZ = new THREE.MeshToonMaterial( { color: ('#0000ff') } );
-                    const coneOffset = 1.0;
 
                     let nodeX = new THREE.Mesh( geometryCone, materialX );
                     nodeX.rotation.order = 'YXZ';
@@ -103,7 +112,27 @@
                     nodeZ.layers.set(FRAME_LAYER);
                     root.add(nodeZ);
 
-                }
+                    const axisOffset = coneOffset * 0.5;
+                    let nodeAxeX = new THREE.Mesh( geometryAxis, materialAxis );
+                    nodeAxeX.rotation.order = 'YXZ';
+                    nodeAxeX.rotation.z = -Math.PI/ 2;
+                    nodeAxeX.position.x = axisOffset;
+                    nodeAxeX.layers.set(FRAME_LAYER);
+                    root.add(nodeAxeX);
+
+                    let nodeAxeY = new THREE.Mesh( geometryAxis, materialAxis );
+                    nodeAxeY.rotation.order = 'YXZ';
+                    nodeAxeY.position.y = axisOffset;
+                    nodeAxeY.layers.set(FRAME_LAYER);
+                    root.add(nodeAxeY);
+                    
+                    let nodeAxeZ = new THREE.Mesh( geometryAxis, materialAxis );
+                    nodeAxeZ.rotation.order = 'YXZ';
+                    nodeAxeZ.rotation.x = Math.PI/ 2;
+                    nodeAxeZ.position.z = axisOffset;
+                    nodeAxeZ.layers.set(FRAME_LAYER);
+                    root.add(nodeAxeZ);
+             }
 
             }
 
@@ -931,7 +960,7 @@
             } 
 
             class App {
-                constructor(config, canvas, triggerButton, muteButton, frameButton, inspectorFrame) {
+                constructor(config, canvas, triggerButton, jwtInput, muteButton, frameButton, inspectorFrame) {
                     this.config = config;
                     this.space = null;
 
@@ -942,21 +971,26 @@
                     this.config.onPickPlayer = this.inspectPlayer.bind(this);
                     this.config.onAnimate = this.onAnimate.bind(this);
 
-                    this.setupUI(canvas, triggerButton, muteButton, frameButton);
+                    this.setupUI(canvas, triggerButton, jwtInput, muteButton, frameButton);
                     this.inspector = new Inspector(inspectorFrame);
 
                     this.space.animate();
                 }
                 // Connect the UI elements that trigger the example and and display information
-                setupUI(canvas, triggerButton, muteButton, frameButton) {
+                setupUI(canvas, triggerButton, jwtInput, muteButton, frameButton) {
                     this.canvas = canvas;
                     this.config.canvas = canvas;
                     this.space = new HIFISpace(this.config);
                     this.triggerButton = triggerButton;
+                    this.jwtInput = jwtInput;
                     this.muteButton = muteButton;
                     this.frameButton = frameButton;
 
-                    // Configure the triggerButton
+                    if (this.config.JWT.length) {
+                        this.jwtInput.value = this.config.JWT;
+                    }
+
+                    // Configure the events
                     this.triggerButton.addEventListener("click", this.connectMyPlayerBinded, false);
                     this.triggerButton.innerHTML = `Click to Connect`;
                     this.muteButton.addEventListener("click", this.onMute.bind(this), false);
@@ -970,6 +1004,10 @@
                     this.triggerButton.disabled = true;
                     this.triggerButton.innerHTML = `wait...`;
 
+                    this.jwtInput.disabled = true;
+                    this.jwtInput.classList.add("jwtInput--disabled");
+                    this.config.JWT = this.jwtInput.value;
+
                     if (await this.space.connect()) {
                         // Reset trigger button status
                         this.triggerButton.disabled = false;
@@ -980,6 +1018,9 @@
                     } else {
                         this.triggerButton.disabled = false;
                         this.triggerButton.innerHTML = `Reconnect`;
+
+                        this.jwtInput.disabled = false;
+                        this.jwtInput.classList.remove("jwtInput--disabled");
                     }
                 }
 
@@ -996,7 +1037,12 @@
                     this.muteButton.classList.remove("mic-off");
                     this.muteButton.classList.add("mic-on");
                     this.muteButton.classList.add("muteButton--disabled");
+                    // Reset inpector
                     this.inspectPlayer();
+
+                    // Reset jwtInput
+                    this.jwtInput.disabled = false;
+                    this.jwtInput.classList.remove("jwtInput--disabled");
                 }            
 
                 onMute() {
@@ -1052,30 +1098,29 @@
 
             HighFidelityAudio.HiFiLogger.setHiFiLogLevel(HighFidelityAudio.HiFiLogLevel.Debug);
 
-            const queryString = window.location.search;
-            const urlParams = new URLSearchParams(queryString);
 
-            // get the expected JWT parameter
+            const queryString = window.location.search;
+            const urlParams = new URLSearchParams(queryString);  
+
+            // Try to get the JWT from the url parameters
             const jwtParam = urlParams.get('jwt');
-            // if no JWT is provided, default to the public space ....
-            const HIFI_AUDIO_JWT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcHBfaWQiOiI5MjEyZjZmNy1lNWIxLTRlYzYtYWUwNi00YTUyMzkxZTFkNmIiLCJzcGFjZV9pZCI6ImNkZjQxZmNjLWI5MmUtNDVjNy1iYzJhLTc0ZDBlOTFlMDIzNCIsInN0YWNrIjoiYXVkaW9uZXQtbWl4ZXItYXBpLWFscGhhLTAzIn0.2irihsIk0J2UD_X4ZZE_pxTjfOmldcENcVlLK1-7rEM";
+            // if no JWT is provided, default to the public jwtInput message ....
             let jwt = "";
             if (jwtParam) {
-                jwt = window.prompt('Using HIFI_AUDIO_JWT provided in URL or ...', HIFI_AUDIO_JWT);
-            } else {
-                jwt = window.prompt('Input HIFI_AUDIO_JWT or DEFAULT', HIFI_AUDIO_JWT);
+                jwt = jwtParam;
             }
-            
+
             let config = {
                 JWT: jwt,
                 floorPlaneAltitude: -0.7 // set the floor plane below the Dot's representation
             };
             let canvasElement = document.querySelector('.thecanvas');
             let triggerButton = document.querySelector(`.triggerButton`);
+            let jwtInput = document.querySelector(".jwtInput");
             let muteButton = document.querySelector(".muteButton");
             let frameButton = document.querySelector(".frameButton");
             let inspectorFrame = document.querySelector(".inspectorFrame");
-            let app = new App(config, canvasElement, triggerButton, muteButton, frameButton, inspectorFrame);
+            let app = new App(config, canvasElement, triggerButton, jwtInput, muteButton, frameButton, inspectorFrame);
 
         </script>
     </body>
