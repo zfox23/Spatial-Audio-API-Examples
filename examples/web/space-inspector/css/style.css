@@ -28,7 +28,7 @@ body {
 .example-description { 
     text-align: center;
     color: white;
-    width: calc(100vw - 314px);
+    width: calc(100vw - 414px);
 }
 
 .console-log {
@@ -88,15 +88,78 @@ body {
     background-image: url("../images/mic_off.svg");
 }
 
-.contextMenu {
+.frameButton {
+    float: inline-start;
+    width: 40px;
+    height: 40px;
+    margin: 20px;
+    background-size: contain;
+    cursor: pointer;
+}
+
+.frameButton--disabled {
+    opacity: 1.0;
+    cursor: default;
+}
+
+.frame-on {
+    background-image: url("../images/frame_on.png");
+}
+
+.frame-off {
+    background-image: url("../images/frame_off.png");
+}
+
+
+.inspectorFrame {
     position: fixed;
     border-bottom: 1px black solid;
-    color: #666;
-    font-weight: bold;
+    background-color: rgb(26, 29, 34);
+    color: white;
     box-shadow: 3px 3px 10px #88888844;
     padding: 10px;
-    width: 140px;
+    top: 88px;
+    left: 8px;
+    width: fit-content;
     text-align: center;
     height: fit-content;
     display: none;
+}
+.inspectorField {
+    width: fit-content;
+    height: 16px;
+    display: block;
+}
+
+.inspectorLabel { 
+    display: inline-block;
+    vertical-align: middle;
+    text-align: right;
+    width: 50px;
+}
+
+.inspectorValue {
+    display: inline-block;
+    vertical-align: middle;
+    text-align: right;
+    width: 100px;
+}
+
+.inspectorPlayerID {
+    text-align: left;
+    word-wrap: break-word;
+    font-size: 11px;
+    width: 155px;
+    height: 32px;
+}
+
+.inspectorPlayerColor {
+    display: inline-block; 
+    height: 20px;
+}
+
+.inspectorPlayerName { 
+    display: inline-block;
+    text-align: left;
+    width: fit-content;
 }

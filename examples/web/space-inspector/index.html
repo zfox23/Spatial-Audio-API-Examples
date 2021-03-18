@@ -13,56 +13,71 @@
             <div class="controlBar">
                 <button class="triggerButton"></button>
                 <p class="example-description">Click the connect button to start.</p>
+                <div class="frameButton frameButton--disabled frame-on"></div>
                 <div class="muteButton muteButton--disabled mic-on"></div>
             </div>
         </div>
     
         <canvas class="thecanvas" tabindex="1"></canvas>
-        <div class="contextMenu"></div>
+
+        <div class="inspectorFrame">
+            <p class="inspectorField">
+                <span class="inspectorPlayerColor inspectorLabel"></span>
+                <span class="inspectorPlayerName inspectorValue"></span>
+            </p>
+
+            <p class="inspectorField">
+                <span class="inspectorLabel">x:</span>
+                <span class="inspectorPlayerPosX inspectorValue"></span>
+            </p>
+            <p class="inspectorField">
+                <span class="inspectorLabel">y:</span>
+                <span class="inspectorPlayerPosY inspectorValue"></span>
+            </p>
+            <p class="inspectorField">
+                <span class="inspectorLabel">z:</span>
+                <span class="inspectorPlayerPosZ inspectorValue"></span>
+            </p>
+            <p class="inspectorField">
+                <span class="inspectorLabel">pitch:</span>
+                <span class="inspectorPlayerEulerP inspectorValue"></span>
+            </p>
+            <p class="inspectorField">
+                <span class="inspectorLabel">yaw:</span>
+                <span class="inspectorPlayerEulerY inspectorValue"></span>
+            </p>
+            <p class="inspectorField">
+                <span class="inspectorLabel">roll:</span>
+                <span class="inspectorPlayerEulerR inspectorValue"></span>
+            </p>
+            <p class="inspectorField">
+                <span class="inspectorLabel">dB:</span>
+                <span class="inspectorPlayerVolume inspectorValue"></span>
+            </p>       
+            <div class="inspectorPlayerID inspectorField"></div>        
+        </div>
+
         <script src="three/three.min.js"></script>
         <script src="https://hifi-spatial-audio-api.s3-us-west-2.amazonaws.com/releases/latest/HighFidelityAudio-latest.js"></script>
 
         <script>
-            const HIFI_AUDIO_JWT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcHBfaWQiOiI5MjEyZjZmNy1lNWIxLTRlYzYtYWUwNi00YTUyMzkxZTFkNmIiLCJzcGFjZV9pZCI6ImNkZjQxZmNjLWI5MmUtNDVjNy1iYzJhLTc0ZDBlOTFlMDIzNCIsInN0YWNrIjoiYXVkaW9uZXQtbWl4ZXItYXBpLWFscGhhLTAzIn0.2irihsIk0J2UD_X4ZZE_pxTjfOmldcENcVlLK1-7rEM";
-        
             const DEG_TO_RAD = Math.PI / 180;
             const RAD_TO_DEG = 180 / Math.PI;
-            
-            class Dot {
+            const PLAYER_PICKABLE_LAYER = 1;
+            const FRAME_LAYER = 2;
+            const SPHERE_TESSELLATION = 32;
 
-                // Build the Dot representation in the scene
-                constructor (scene, pos, ori, col) {
-                    const geometry = new THREE.SphereGeometry(0.7, 32, 32);
-                    // MeshToonMaterial MeshPhysicalMaterial
-                    const material = new THREE.MeshToonMaterial( { color: (col ? col : '#ffff00') } );
-                    let node = new THREE.Mesh( geometry, material );
-                    if (pos) {
-                        node.position.set(pos.x, pos.y, pos.z);
-                    } 
-                    if (ori) {
-                        node.orientation.set(0, 0, 0);
-                    }
-                    // When we use Euler with THREE.js, we expect to use the same order convention as Hifi
-                    // aka Yaw(Y) Pitch(X) Roll(Z)
-                    node.rotation.order = 'YXZ';
+            class Frame {
+                constructor(parent, scale = 1) {
+                   
+                    const geometry = new THREE.SphereGeometry(0.1, SPHERE_TESSELLATION, SPHERE_TESSELLATION);
+                    const material = new THREE.MeshToonMaterial( { color: ('#ffff00') } );
+                    let root = new THREE.Mesh( geometry, material );
+                    root.scale.set(scale, scale, scale);
+                    root.layers.set(FRAME_LAYER);
+                    parent.add(root);
 
-                    node.castShadow = true;
-                   // node.receiveShadow = true;
-                    scene.add( node );
-
-                   // const geometryWave = new THREE.TorusGeometry(1.0,  32, 16, 0, 2*Math.PI, 0, 0.5 * Math.PI);
-                    const geometryWave = new THREE.ConeGeometry(0.5, 1.0, 32, 16);
-                    const materialWave = new THREE.MeshToonMaterial( { color: (col ? col : '#efefef') } );
-                    let wave = new THREE.Mesh(geometryWave, materialWave);
-                    wave.rotation.order = 'YXZ';
-                    wave.rotation.x = Math.PI/ 2;
-                    wave.position.z = -0.5;
-                    wave.castShadow = true;
-
-                    this._wave = wave;
-                    node.add(wave);
-
-                    const geometryCone = new THREE.ConeGeometry(0.3, 0.5, 32, 16);
+                    const geometryCone = new THREE.ConeGeometry(0.2, 0.4, SPHERE_TESSELLATION, SPHERE_TESSELLATION/2);
                     const materialX = new THREE.MeshToonMaterial( { color: ('#ff0000') } );
                     const materialY = new THREE.MeshToonMaterial( { color: ('#00ff00') } );
                     const materialZ = new THREE.MeshToonMaterial( { color: ('#0000ff') } );
@@ -72,25 +87,97 @@
                     nodeX.rotation.order = 'YXZ';
                     nodeX.rotation.z = -Math.PI/ 2;
                     nodeX.position.x = coneOffset;
-                   // nodeX.castShadow = true;
-                   // nodeX.receiveShadow = true;
-                    node.add(nodeX);
+                    nodeX.layers.set(FRAME_LAYER);
+                    root.add(nodeX);
 
                     let nodeY = new THREE.Mesh( geometryCone, materialY );
                     nodeY.rotation.order = 'YXZ';
                     nodeY.position.y = coneOffset;
-                   // nodeY.castShadow = true;
-                   // nodeY.receiveShadow = true;
-                    node.add(nodeY);
+                    nodeY.layers.set(FRAME_LAYER);
+                    root.add(nodeY);
 
                     let nodeZ = new THREE.Mesh( geometryCone, materialZ );
                     nodeZ.rotation.order = 'YXZ';
                     nodeZ.rotation.x = Math.PI/ 2;
                     nodeZ.position.z = coneOffset;
-                   // nodeZ.castShadow = true;
-                   // nodeZ.receiveShadow = true;
-                    node.add(nodeZ);
+                    nodeZ.layers.set(FRAME_LAYER);
+                    root.add(nodeZ);
 
+                }
+
+            }
+
+            class Dot {
+
+                // Build the Dot representation in the scene
+                constructor (config, col) {
+                    let scene = config.scene;
+
+                    this.color =  new THREE.Color((col ? col : '#efefef'));
+
+                    const BODY_RADIUS = 0.7;
+                    const geometry = new THREE.SphereGeometry(BODY_RADIUS, SPHERE_TESSELLATION, SPHERE_TESSELLATION);
+                    // MeshToonMaterial MeshPhysicalMaterial
+                    this.materialBody = new THREE.MeshToonMaterial( { color: this.color } );
+                    let node = new THREE.Mesh( geometry, this.materialBody );
+                    node.layers.enable(PLAYER_PICKABLE_LAYER);
+
+                    // When we use Euler with THREE.js, we expect to use the same order convention as Hifi
+                    // aka Yaw(Y) Pitch(X) Roll(Z)
+                    node.rotation.order = 'YXZ';
+
+                    scene.add( node );
+
+                    // Cone speaker
+                    /*
+                    const geometrySpeaker = new THREE.ConeGeometry(0.5, 1.0, SPHERE_TESSELLATION, SPHERE_TESSELLATION/2);
+                    this.materialSpeaker = new THREE.MeshToonMaterial( { color: this.color } );
+                    let speaker = new THREE.Mesh(geometrySpeaker, this.materialSpeaker);
+                    speaker.rotation.order = 'YXZ';
+                    speaker.rotation.x = Math.PI/ 2;
+                    speaker.position.z = -0.5;
+                    this._speaker = speaker;
+                    node.add(speaker);
+                    */
+
+                    // Rings speaker
+                    if (true) {                    
+                        this.materialSpeaker = new THREE.MeshToonMaterial( { color: this.color } );
+                        const speakerGeometries = [
+                            new THREE.TorusGeometry( 0.3 * BODY_RADIUS, 0.05 * BODY_RADIUS, SPHERE_TESSELLATION, 50),
+                            new THREE.TorusGeometry( 0.5 * BODY_RADIUS, 0.05 * BODY_RADIUS, SPHERE_TESSELLATION, 50),
+                            new THREE.TorusGeometry( 0.7 * BODY_RADIUS, 0.05 * BODY_RADIUS, SPHERE_TESSELLATION, 50),
+                        ];
+                        const speakerOffsets = [
+                            -1.1 * BODY_RADIUS,
+                            -0.2 * BODY_RADIUS,
+                            -0.2 * BODY_RADIUS
+                        ];
+
+                        let speaker0 = new THREE.Mesh(speakerGeometries[0], this.materialSpeaker);
+                        speaker0.position.z = speakerOffsets[0];
+                        this._speaker = speaker0;
+                        node.add(speaker0);
+                        
+                        let speaker1 = new THREE.Mesh(speakerGeometries[1], this.materialSpeaker);
+                        speaker1.position.z = speakerOffsets[1];
+                        speaker0.add(speaker1);
+                        
+                        let speaker2 = new THREE.Mesh(speakerGeometries[2], this.materialSpeaker);
+                        speaker2.position.z = speakerOffsets[2];
+                        speaker1.add(speaker2);
+                    }
+
+                    new Frame(node);
+
+                    const dropShadowGeometry = new THREE.CircleGeometry(BODY_RADIUS, SPHERE_TESSELLATION);
+                    const dropShadowMaterial = new THREE.MeshBasicMaterial( { color: 0x0f0f0f, side: THREE.DoubleSide, transparent: true, opacity: 0.7 } );
+                    let dropShadow = new THREE.Mesh( dropShadowGeometry, dropShadowMaterial );
+                    dropShadow.position.set(node.position.x, 0.0, node.position.z);
+                    scene.add(dropShadow);
+                    dropShadow.rotation.x = Math.PI/ 2;
+                    dropShadow.position.set(0, config.floorPlaneAltitude + 0.01, 0);
+                    this._dropShadow = dropShadow;
 
                    // var dotAxis = new THREE.AxesHelper(2.0);
                   //  node.add(dotAxis);
@@ -98,41 +185,104 @@
                     this._node = node;
                 }
 
-                setInputVolume(value) {
-                    let scale = 2 - Math.min(1, value / -55);
-                    this._wave.position.z = -0.5 * scale;
-                    this._wave.scale.set(scale, scale, scale);
+                setSpeakerVisible(isVisible) {
+                    this._speaker.visible = isVisible;
                 }
 
+                setColor(color) {
+                    this.color.set(color);
+                    this.materialBody.color.set(this.color);
+                    this.materialSpeaker.color.set(this.color);
+                }
+
+                setTHREEPosition(x, y, z) {
+                    this._node.position.set(x, y, z);
+                      
+                    // leave dropShadow at the floor plane altitude;
+                    this._dropShadow.position.set(x, this._dropShadow.position.y, z);    
+                }
+
+                setHifiPosition(x, y, z) {
+                    this.setTHREEPosition(x, y, z);    
+                }
+
+
+                getHifiPosition() {
+                    return new HighFidelityAudio.Point3D({
+                                x: this._node.position.x,
+                                y: this._node.position.y,
+                                z: this._node.position.z });
+                }
+                
+                
+
+                setHifiOrientationQuat(x, y, z, w) {
+                    this._node.quaternion.x = x;
+                    this._node.quaternion.y = y;
+                    this._node.quaternion.z = z;
+                    this._node.quaternion.x = w;
+                    this._node.updateMatrix();
+                }
+
+                setTHREEOrientationEuler(pitch, yaw, roll) {
+                    this._node.rotation.x = pitch;
+                    this._node.rotation.y = yaw;
+                    this._node.rotation.z = roll;
+                    this._node.rotation.order = 'YXZ';
+                    this._node.updateMatrix(); 
+                }
+
+                setHifiOrientationEuler(pitch, yaw, roll) {
+                    this.setTHREEOrientationEuler( pitch * DEG_TO_RAD, yaw * DEG_TO_RAD, roll * DEG_TO_RAD);
+                }
+
+                getHifiOrientationEuler() {
+                    return new HighFidelityAudio.OrientationEuler3D({
+                                pitchDegrees: RAD_TO_DEG * this._node.rotation.x,
+                                yawDegrees: RAD_TO_DEG * this._node.rotation.y,
+                                rollDegrees: RAD_TO_DEG * this._node.rotation.z
+                            });
+                }
+
+                
+                setInputVolume(value) {
+                    let scale = 2 - Math.min(1, value / -55);
+                    //this._speaker.position.z = -0.5 * scale;
+                   // this._speaker.position.z = -1.0 * scale;
+                    this._speaker.scale.set(scale, scale, scale);
+                }
+
+                
+                quit(scene) {
+                    scene.remove( this._node );
+                    scene.remove( this._dropShadow );
+                    scene.remove( this._speaker );
+                }
             };
 
             class CamController {
-                constructor(camNode, orbitNode, onUpdateDelegate) {
+                constructor(camNode, onUpdateDelegate, onPickingDelegate) {
                     this.camNode = camNode;
-                    this.orbitNode = orbitNode;
                     this.onUpdateDelegate = onUpdateDelegate;
+                    this.onPickingDelegate = onPickingDelegate;
  
-                    let obj = this.camNode;
-                    if (this.orbitNode) {
-                        obj = this.orbitNode;
-                    }
-                    this.orbitPos = new THREE.Vector3(obj.position.x, obj.position.y, obj.position.z);
+                    this.orbitPos = new THREE.Vector3(camNode.position.x, camNode.position.y, camNode.position.z);
                     this.boom = 0;
                     this.yaw = 0;
+                    this.orbitYaw = 0;
                     this.pitch = 0;
                     this.onMouseDownYaw = 0;
                     this.onMouseDownPitch = 0;
 
+                    this.shiftDown = false;
                     this.isMouseDown = false;
                     this.onMouseDownPosition = {x: 0, y:0};
 
                     document.addEventListener( 'keydown', (e) => { this.onKeyDown(e); }, false );
                     document.addEventListener( 'keyup', (e) => { this.onKeyUp(e); }, false );
-
                     document.addEventListener( 'mousemove', (e) => { this.onMouseMove(e); }, false );
                     document.addEventListener( 'mousedown', (e) => { this.onMouseDown(e); }, false );
                     document.addEventListener( 'mouseup', (e) => { this.onMouseUp(e); }, false );
-
                     document.addEventListener( 'mousewheel', (e) => { this.onMouseWheel(e); }, false );    
                
                     this.update();
@@ -144,9 +294,11 @@
                      const Rstep = 5;
                      switch (event.key) {
                          case 'w':
+                         case "ArrowUp":
                             this.translateYawSpace(0, 0, -Tstep);
                             break;
                          case 's':
+                         case "ArrowDown":
                             this.translateYawSpace(0, 0, +Tstep);
                             break;
                          case 'q':
@@ -155,21 +307,38 @@
                          case 'e':
                             this.translateYawSpace(+Tstep, 0, 0);
                             break;
-                         case 'r':
+                         case ' ':
+                         case "PageUp":
                             this.translateYawSpace(0, +Tstep, 0);
                             break;
-                         case 'f':
+                         case 'c':
+                         case "PageDown":
                             this.translateYawSpace(0, -Tstep, 0);
                             break;
                          case 'a':
+                         case "ArrowLeft":
                             this.rotateYawSpace(+Rstep);
                             break;
                          case 'd':
+                         case "ArrowRight":
                             this.rotateYawSpace(-Rstep);
-                            break;                              
+                            break;
+                         case 'Shift':
+                             this.shiftDown = true;
+                             break;                              
                      }
+                     this.update();
+
                 }
-                onKeyUp(event) { 
+                onKeyUp(event) {
+                    switch (event.key) {
+                         case 'Shift':
+                            this.shiftDown = false;
+                            this.yaw = this.orbitYaw;
+                            this.update();
+
+                             break;                              
+                     }
                 }                  
 
                 onMouseDown(event) {                    
@@ -180,9 +349,19 @@
                     this.onMouseDownYaw = this.yaw;
                     this.onMouseDownPitch = this.pitch;
                 }
-                onMouseMove(event) {
-                    if ( this.isMouseDown ) {
-                        this.yaw = - ( ( event.clientX - this.onMouseDownPosition.x ) * 0.5 ) + this.onMouseDownYaw;
+                onMouseMove(event) {      
+                    if (event.which && event.which === 1) {
+                        this.onPickingDelegate(event, false);
+                    }
+
+                    if (event.which && (event.which === 2 || event.which === 3)) {
+                        let yaw = -( ( event.clientX - this.onMouseDownPosition.x ) * 0.5 ) + this.onMouseDownYaw;
+                        if (this.shiftDown) {
+                            this.yaw = yaw;
+                        } else {
+                            this.yaw = yaw;
+                            this.orbitYaw = yaw;
+                        }
                         this.pitch = -( ( event.clientY - this.onMouseDownPosition.y ) * 0.5 ) + this.onMouseDownPitch;
                         this.pitch = Math.min( 10, Math.max( -90, this.pitch ) );
                          
@@ -193,6 +372,10 @@
 				    this.isMouseDown = false;
                     this.onMouseDownPosition.x = event.clientX - this.onMouseDownPosition.x;
                     this.onMouseDownPosition.y = event.clientY - this.onMouseDownPosition.y;
+
+                    if (event.which && event.which === 1) {
+                        this.onPickingDelegate(event, true);
+                    }
                 }
 
                 onMouseWheel(event) {
@@ -205,11 +388,11 @@
                         this.boom = Math.max(0, (this.boom >= threshold ? this.boom : 0) * (1 + delta*speed));     
                     }
                     this.update();
-
                 }
 
                 rotateYawSpace(delta) {
                     this.yaw += delta;
+                    this.orbitYaw += delta;
                     this.update();
                 }
 
@@ -225,17 +408,7 @@
                     this.update();
                 }
 
-                update() { 
-                    if (this.orbitNode) {
-                        this.orbitNode.position.x = this.orbitPos.x;
-                        this.orbitNode.position.y = this.orbitPos.y;
-                        this.orbitNode.position.z = this.orbitPos.z;
-                        this.orbitNode.rotation.x = (this.boom ? 0 : (this.pitch * DEG_TO_RAD));
-                        this.orbitNode.rotation.y = (this.yaw * DEG_TO_RAD);
-                        this.orbitNode.rotation.z = 0;
-                        this.orbitNode.rotation.order = 'YXZ';
-                        this.orbitNode.updateMatrix();
-                    }
+                update() {
                     if (this.camNode) {                     
                         this.camNode.position.x = this.orbitPos.x;
                         this.camNode.position.y = this.orbitPos.y;
@@ -247,32 +420,40 @@
                         this.camNode.updateMatrix();
                         this.camNode.translateZ(this.boom);
                     }
+
                     if (this.onUpdateDelegate) {
                         this.onUpdateDelegate(this);
                     }
                 }
             };
 
-
             class World {
-                constructor(thecanvas) {
-                    this.scene = new THREE.Scene();
-                    let scene = this.scene;
+                constructor(config) {
+                    this.config = config;
+                    this.config.floorPlaneAltitude = (config.floorPlaneAltitude ? config.floorPlaneAltitude : 0);
+
+                    let scene = new THREE.Scene();
+                    this.config.scene = scene;
+
                     scene.background = new THREE.Color( 'skyblue' );
 
-                    this.renderer = new THREE.WebGLRenderer({canvas: thecanvas, antialias:true});
+                    this.renderer = new THREE.WebGLRenderer({canvas: config.canvas, antialias:true});
                     let renderer = this.renderer;
 
-                    renderer.shadowMap.enabled = true;
-                 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-
-                    this.camera = new THREE.PerspectiveCamera(60, thecanvas.innerWidth / thecanvas.innerHeight, 0.1, 20000);
+                    this.camera = new THREE.PerspectiveCamera(60, config.canvas.innerWidth / config.canvas.innerHeight, 0.1, 20000);
                     scene.add(this.camera);
 
-                    this.myPlayer = new MyPlayer(this.scene, new THREE.Vector3(0, 0, 0));
-                    this.controller = new CamController(this.camera, this.myPlayer._node);
+                    // Create the 'MyPlayer' aka a fanceier verion of the Dot class representing the user
+                    this.myPlayer = new MyPlayer(this.config);
+                    
+                    // Create the controller on the camera with the initial position
+                    this.camera.position.set(0, 0, 0);
 
-                    this.players = {};
+                    // Bind the onUpdateDelegate from the controller to the myPlayer.updateFromController
+                    // MyPlayer will be assign position and orientation from controller
+                    this.controller = new CamController(this.camera,
+                                                        (controller) => { this.myPlayer.updateFromController(controller); },
+                                                        (event) => { this.picking(event); });
                     
                     const flourSize = 1000;
                     {
@@ -328,121 +509,125 @@
 				        })
                         let plane = new THREE.Mesh( geometry, material );
                         plane.rotation.x = Math.PI / 2;
+                        plane.position.y = config.floorPlaneAltitude;
                         plane.receiveShadow = true;
                         scene.add( plane );
 
-                        const materialShadow = new THREE.ShadowMaterial( {color: 0xff0000, side: THREE.DoubleSide, opacity: 0.15} );
-                        let splane = new THREE.Mesh( geometry, materialShadow );
-                         splane.receiveShadow = true;
-                         splane.position.z = 0.1;
-                         plane.add( splane );
+                        new Frame(scene, 10);
+
                     }
                     {
                         let dirLight = new THREE.DirectionalLight( 0xffffff );
                         dirLight.position.set( 3, 3, 3)//.normalize();
-                        dirLight.castShadow = true;
-
-                        let size = flourSize / 8;
-
-                        dirLight.shadow.camera.left = -size;
-                        dirLight.shadow.camera.right = size;
-                        dirLight.shadow.camera.top = size;
-                        dirLight.shadow.camera.bottom = -size;
-                        dirLight.shadow.camera.near = -size;
-                        dirLight.shadow.camera.far = size;
-
-                        dirLight.shadow.mapSize.width = 1024;
-                        dirLight.shadow.mapSize.height = 1024;
-                    
-                        
                         scene.add(dirLight);
                         
-                        const helper = new THREE.CameraHelper( dirLight.shadow.camera );
+                       // const helper = new THREE.CameraHelper( dirLight.shadow.camera );
                        // scene.add( helper );    
                     }
 
+                    this.raycaster = new THREE.Raycaster();
+                    this.raycaster.layers.set( PLAYER_PICKABLE_LAYER);
 
                     this.onresize();
+                    this.showFrame(false);
                 }
 
                 onresize() {
                     let newWidth = window.innerWidth;
                     let newHeight = window.innerHeight;
+                    this.config.canvas.width = newWidth;
+                    this.config.canvas.height = newHeight;
                     this.renderer.setSize(newWidth, newHeight);
                     this.camera.aspect = newWidth / newHeight;
                     this.camera.updateProjectionMatrix();
                 }
 
+                picking(event) {
+                    if (this.raycaster && this.config.onPickPlayer) {
+                        let mousePos = new THREE.Vector2(
+                           ( event.clientX / this.config.canvas.width ) * 2 - 1,
+                         - ( (event.clientY - this.config.canvas.offsetTop) / this.config.canvas.height ) * 2 + 1
+                        );
+                        this.raycaster.setFromCamera(mousePos, this.camera);
+                        const intersects = this.raycaster.intersectObjects(this.config.scene.children);
+
+                        let player = null;
+                        if (intersects.length) {
+                            // Select the first intersected, find the player
+                            player = this.myPlayer;
+                            let id = intersects[0].object.playerId;
+                            if (id) {
+                                player = this.players[id];
+                            }
+                            console.log(`Pick: ${player.name} X: ${mousePos.x} Y: ${mousePos.y}`);
+
+                        }
+
+                        this.config.onPickPlayer(player);
+                    }
+                }
                 
                 render() {
                     this.controller.update();
-                    this.renderer.render( this.scene, this.camera );
+                    this.renderer.render( this.config.scene, this.camera );
                 }
 
                 animate() {
                     requestAnimationFrame(() => { this.animate(); } );
+                    this.config.onAnimate();
                     this.render();
                 }
-                
-                // When the receiver gets data from the server we update nodes 
-                onDataReceived(dataArray) {
-                    dataArray.forEach((data, idx) => {
-                        if (this.myPlayer && data.hashedVisitID !== this.myPlayer.getId()) {
-                            let player = this.players[data.hashedVisitID];
-                            if (!player) {
-                                let playerCount = Object.keys(this.players).length;
-                                player = new Player(this.scene);
-                                player.setId(data.hashedVisitID);
-                                this.players[data.hashedVisitID] = player;
-                            }
-                            player.updateReceivedData(data);
-                            if (data.position && idx === 3) {
-                                console.log(JSON.stringify(data.position));
-                            }
-                        }
-                    });
-                }
-                async connect(config) {
-                    // Create and connect myPlayer and then add it to the world
-                    let myPlayer = this.myPlayer;
-                    if (await myPlayer.connect()) {
-                        myPlayer.setId(myPlayer.getId());
-                        this.addPlayer(myPlayer);
-                        await myPlayer.setupSending();
-                        await myPlayer.setupReceiving((data) => { this.onDataReceived(data); });
 
-                        // Bind the onUPdate notifier from the controler to the myPlayer.updateData
-                        this.controller.onUpdateDelegate = () => { this.myPlayer.updateData(); };
-
-                        return true;
+                showFrame(visible) {
+                    if (visible) {
+                        this.camera.layers.enable(FRAME_LAYER);
+                    } else {
+                        this.camera.layers.disable(FRAME_LAYER);
                     }
-                    return false;
-                }
-                async disconnect() {
-                    if (this.myPlayer && this.myPlayer.isConnected()) {
-                        await this.myPlayer.disconnect();
-                    }
-                    this.myPlayer = null;
-                    this.players = {};
-                }
-
-                addPlayer(player) {
-                    this.players[player.getId()] = player;
                 }
             }
 
+            
             class Player extends Dot {
-                constructor(scene, pos, ori, col) {
-                    super(scene, pos, ori, col);
-                    this.id = null;
+                static rand(seed, min, max) {
+                    return min + (Math.floor(Math.abs(seed++))) % (max - min);
+                }
+                
+                static randFromString(str) {
+                    var i=0,h=9;i<str.length;
+                    h=Math.imul(h^str.charCodeAt(i++),9**9);
+                    return h^h>>>9;
                 }
 
-                getId() {
-                    return this.id;
+                static nameFromString(str) {
+                    if (!str) return 'My Player';
+                    let ACT = ["Act", "Answer", "Approv", "Break", "Build", "Buy", "Coach", "Color", "Cough", "Creat",	"Cry", "Danc", "Draw", "Drink", "Eat", "Jump", "Laugh", "Listen", "Paint", "Plann", "Play", "Read", "Runn", "Scream", "Shopp", "Shout", "Sing", "Skipp", "Sleep", "Teach", "Turn", "Walk", "Winn"];
+                    let SUB = ["Bat", "Ant", "Fish", "Bird", "Bear", "Goat", "Bull", "Ape", "Cat", "Dog", "Crab", "Cow", "Dodo", "Duck", "Eel", "Emu", "Fly", "Fox", "Kiwi", "Lion", "Koala", "Mule", "Moth", "Puma", "Rat", "Seal", "Squid", "Wolf", "Wasp", "Tuna"];
+                    let seed =Player.randFromString(str);
+                    return ACT[Player.rand(seed, 0, ACT.length)] + "ing " + SUB[Player.rand(seed, 0, SUB.length)];
+                }
+                static colorFromString(str) {
+                    if (!str) return '#efefef';
+                    let seed = Player.randFromString(str);
+                    let hue = Player.rand(seed, 0, 360);
+                    return `hsl(${hue},100%,50%)`;
+                }
+                
+                constructor(config, id) {
+                    super(config, Player.colorFromString(id));
+                    this.setId(id);
+                    this.volume = 0;
                 }
 
                 setId(id) {
                     this.id = id;
+                    this._node.playerId = id;
+                    this.setColor(Player.colorFromString(id));
+                    this.name = Player.nameFromString(id);
+                }
+
+                getId() {
+                    return this.id;
                 }
 
                 updateReceivedData(data) {
@@ -450,64 +635,38 @@
                     this.setInputVolume(this.volume);
 
                     if (data.position !== null) {
-                        this._node.position.set(data.position.x, data.position.y, data.position.z);
+                        this.setHifiPosition(data.position.x, data.position.y, data.position.z);
                     }
                     if (data.orientationQuat !== null) {
-                        this._node.quaternion.x = data.orientationQuat.x;
-                        this._node.quaternion.y = data.orientationQuat.y;
-                        this._node.quaternion.z = data.orientationQuat.z;
-                        this._node.quaternion.x = data.orientationQuat.w;
-                        this._node.updateMatrix();
+                        this.setHifiOrientationQuat(
+                            data.orientationQuat.x,
+                            data.orientationQuat.y,
+                            data.orientationQuat.z,
+                            data.orientationQuat.w);
                     }
                     if (data.orientationEuler !== null) {
-                        this._node.rotation.x = data.orientationEuler.pitchDegrees * DEG_TO_RAD;
-                        this._node.rotation.y = data.orientationEuler.yawDegrees * DEG_TO_RAD;
-                        this._node.rotation.z = data.orientationEuler.rollDegrees * DEG_TO_RAD;
-                        this._node.rotation.order = 'YXZ';
-                        this._node.updateMatrix();
+                        this.setHifiOrientationEuler(
+                            data.orientationEuler.pitchDegrees,
+                            data.orientationEuler.yawDegrees,
+                            data.orientationEuler.rollDegrees);
                     }
                 }
             };
 
             class MyPlayer extends Player {
 
-                constructor(scene, pos, ori, col) {
-                    super(scene, pos, ori, col);
-                    // Create the API's position and orientation objects that will be sent to the mixer
-                    this.mixerPosition = new HighFidelityAudio.Point3D({ x: this._node.position.x, y: this._node.position.z, z: this._node.position.y });
-                    this.mixerOrientation = new HighFidelityAudio.OrientationEuler3D({ "pitchDegrees": 0, "yawDegrees": RAD_TO_DEG * this._node.rotation.y, "rollDegrees": 0 });
+                constructor(config) {
+                    super(config, null);
+
                     this.hifiCommunicator = null; // HighFidelityAudio.HiFiCommunicator
                     this.stream = null; // Input or output stream
-                    this.volume = null; // Value with the volume from mixer in decibels.
                     this.connectResponse = null;
                     this.isMyPlayer = true;
-                }
-                
+                }  
+
                 // If the node is connected, its id will be the visit id hash provided by the server
                 getId() {
                     return this.connectResponse && this.connectResponse.success ? this.connectResponse.audionetInitResponse.visit_id_hash : null;
-                }
-
-                // This function receives position ({x, y, z}) and orientation (radians), updates the renderable2D and soundNode values and send it. 
-                updateData() {
-                    // We need to convert the position sent to the mixer
-                    this.mixerPosition.x = this._node.position.x;
-                    this.mixerPosition.y = this._node.position.y;
-                    this.mixerPosition.z = this._node.position.z;
-                    this.mixerOrientation.pitchDegrees = RAD_TO_DEG * this._node.rotation.x;
-                    this.mixerOrientation.yawDegrees = RAD_TO_DEG * this._node.rotation.y;
-                    this.mixerOrientation.rollDegrees = RAD_TO_DEG * this._node.rotation.z;
-                    this.sendUpdatedData();
-                }
-
-                // Send the converted position and orientation to the mixer
-                sendUpdatedData(name) {
-                    if (this.hifiCommunicator) {
-                        let response = this.hifiCommunicator.updateUserDataAndTransmit({
-                            position: this.mixerPosition,
-                            orientationEuler: this.mixerOrientation
-                        });
-                    }
                 }
 
                 // Notify connection changes for debugging
@@ -515,18 +674,34 @@
                     console.log(`New High Fidelity connection for: ${this.name} state: ${newConnectionState}`);
                 }
                 // Connect to the server using a valid space token
-                async connect() {
+                async connect(config, onDataReceived, onPlayerDisconnected) {
                     console.log(`Connecting Receiver: ` + this.name + ` to High Fidelity Audio API Servers...`);
                     // Setup the communicator
+                    let currentPosition = this.getHifiPosition();
+                    let currentOrientationEuler = this.getHifiOrientationEuler();
+
                     this.hifiCommunicator = new HighFidelityAudio.HiFiCommunicator({
                         initialHiFiAudioAPIData: new HighFidelityAudio.HiFiAudioAPIData({
-                            position: this.mixerPosition,
-                            orientationEuler: this.mixerOrientation
+                            position: currentPosition,
+                            orientationEuler: currentOrientationEuler
                         }),
                         onConnectionStateChanged: this.onConnectionStateChanged.bind(this), // Subscribe to connection changes
+                        onUsersDisconnected: onPlayerDisconnected
                     });
+
+                    // Setup the user data subscription callback to receive updates from the server
+                    let userDataSubscription = new HighFidelityAudio.UserDataSubscription({
+                        "components": [ HighFidelityAudio.AvailableUserDataSubscriptionComponents.VolumeDecibels,
+                                        HighFidelityAudio.AvailableUserDataSubscriptionComponents.Position,
+                                        HighFidelityAudio.AvailableUserDataSubscriptionComponents.OrientationQuat,
+                                        HighFidelityAudio.AvailableUserDataSubscriptionComponents.OrientationEuler  ],
+                        "callback": onDataReceived
+                    });
+                    this.hifiCommunicator.addUserDataSubscription(userDataSubscription);
+                    
+                    // Connect!
                     try {
-                        this.connectResponse = await this.hifiCommunicator.connectToHiFiAudioAPIServer(HIFI_AUDIO_JWT);
+                        this.connectResponse = await this.hifiCommunicator.connectToHiFiAudioAPIServer(config.JWT);
                         console.log(`Call to \`connectToHiFiAudioAPIServer()\` for: ${this.name} succeeded! Response:\n${JSON.stringify(this.connectResponse)}`);
                         return this.connectResponse.success;
                     } catch (e) {
@@ -535,6 +710,7 @@
                         return false;
                     }
                 }
+
                 async setupSending() {
                     // Get the audio media stream associated with the user's default audio input device.
                     try {
@@ -545,21 +721,12 @@
                     }
                     await this.hifiCommunicator.setInputAudioMediaStream(this.stream);
                 }
-                async setupReceiving(onDataReceived) {
+                async setupReceiving() {
                     if (this.hifiCommunicator) {
                         let outputAudioElem = document.createElement('audio');
                         outputAudioElem.srcObject = this.hifiCommunicator.getOutputAudioMediaStream();
                         // We must call `play()` here because certain browsers won't autoplay this stream as we expect.
                         outputAudioElem.play();
-                        // This will get only volume updates for all Users (including ourselves).
-                        let userDataSubscription = new HighFidelityAudio.UserDataSubscription({
-                            "components": [ HighFidelityAudio.AvailableUserDataSubscriptionComponents.VolumeDecibels,
-                                            HighFidelityAudio.AvailableUserDataSubscriptionComponents.Position,
-                                            HighFidelityAudio.AvailableUserDataSubscriptionComponents.OrientationQuat,
-                                            HighFidelityAudio.AvailableUserDataSubscriptionComponents.OrientationEuler  ],
-                            "callback": onDataReceived
-                        });
-                        this.hifiCommunicator.addUserDataSubscription(userDataSubscription);
                         return true;
                     }
                     return false;
@@ -567,11 +734,21 @@
 
                 // Disconnect from the server
                 async disconnect() {
-                    console.log(`Disconnecting Emitter: ${this.name} from High Fidelity Audio API Servers...`);
-                    let disconnectStatus = await this.hifiCommunicator.disconnectFromHiFiAudioAPIServer();
+                    // clear state only valid while connected
+                    // at this point 'isConnected()'' return false
                     this.connectResponse = null;
-                    console.log(`Disconnected status for ${this.name} : ${disconnectStatus}`);
+                    this.stream = null;               
+                    if (this.hifiCommunicator) {
+                        let disconnectStatus = await this.hifiCommunicator.disconnectFromHiFiAudioAPIServer();
+                        this.hifiCommunicator = null;
+                    }
+                    this.setId(null);
                 }
+
+                isConnected() {
+                    return (this.connectResponse ? this.connectResponse.success : false);
+                }
+
                 // Mute the input stream
                 async setMute(muted) {
                     if (this.hifiCommunicator) {
@@ -602,49 +779,198 @@
                         this.setInputVolume(this.volume);
                     }
                 }
+
+                // Update myLayer position and orientation from the controller
+                // propagate the changes to the HifiCommunicator.
+                updateFromController(controller) {
+                    this.setTHREEPosition(
+                        controller.orbitPos.x,
+                        controller.orbitPos.y,
+                        controller.orbitPos.z
+                    );
+                    this.setTHREEOrientationEuler(
+                        (controller.boom ? 0 : (controller.pitch * DEG_TO_RAD)),
+                        (controller.orbitYaw * DEG_TO_RAD),
+                        0
+                    );
+
+                    // hide "speaker' in first person
+                    this.setSpeakerVisible(controller.boom > 0);
+
+                    this.updateCommunicatorData();
+                }
+
+                // This function update the hifiCommunicator state position and orientation
+                // called whenever the controller moves MyPlayer
+                updateCommunicatorData() {
+                    if (this.isConnected() && this.hifiCommunicator) {
+                       
+                        let currentPosition = this.getHifiPosition();
+                        let currentOrientationEuler = this.getHifiOrientationEuler();
+
+                        let response = this.hifiCommunicator.updateUserDataAndTransmit({
+                            position: currentPosition,
+                            orientationEuler: currentOrientationEuler 
+                        });
+                    }
+                }
             }
 
+            class HIFISpace extends World {
+                constructor(config) {
+                    super(config);
+
+                    // All the players known in the space
+                    this.players = {};
+                }
+
+                async connect() {
+                    // Create and connect myPlayer and then add it to the world
+                    let myPlayer = this.myPlayer;
+                    if (await myPlayer.connect( this.config,
+                                                this.onDataReceived.bind(this), //(data) => { this.onDataReceived(data); },
+                                                this.onPlayerDisconnected.bind(this) //(data) => { this.onPlayerDisconnected(data); }
+                                                 )) {
+                        myPlayer.setId(myPlayer.getId()); // assign the true id to myself and update my color
+                        this.players[myPlayer.getId()] = myPlayer;
+                        await myPlayer.setupSending();
+                        await myPlayer.setupReceiving();
+                        return true;
+                    }
+                    return false;
+                }
+
+                async disconnect() {
+                    // without connection we wont be notified for the other's player disconnection, so fake it
+                    let playerIds = Object.keys(this.players);
+                    playerIds.forEach((id) => {
+                        if (id !== this.myPlayer.id) {
+                            this.players[id].quit(this.config.scene);
+                        }
+                    });
+                    this.players = {};
+
+                    if (this.myPlayer && this.myPlayer.isConnected()) {
+                        await this.myPlayer.disconnect();
+                    }
+                }
+
+                                
+                // When the receiver gets data from the server we update the players 
+                onDataReceived(dataArray) {
+                    dataArray.forEach((data, idx) => {
+                        if (this.myPlayer && data.hashedVisitID !== this.myPlayer.getId()) {
+                            let player = this.players[data.hashedVisitID];
+                            if (!player) {
+                                let playerCount = Object.keys(this.players).length;
+                                player = new Player(this.config, data.hashedVisitID);
+                                this.players[data.hashedVisitID] = player;
+                            }
+                            player.updateReceivedData(data);
+                        }
+                    });
+                }
+
+                // When any comminucator disconnect from the space, we remove that player
+                onPlayerDisconnected(dataArray) {
+                    dataArray.forEach((data, idx) => {
+                        // do we know that Player ?
+                        if (this.players[data.hashedVisitID]) {
+                            this.players[data.hashedVisitID].quit(this.config.scene);
+                            delete this.players[data.hashedVisitID];
+                        }
+                    });
+                }
+            }
+
+            class Inspector {
+                constructor(inspectorFrame) {
+                   this.inspectorFrame = inspectorFrame;
+                   this.color = inspectorFrame.querySelector(".inspectorPlayerColor");
+                   this.name = inspectorFrame.querySelector(".inspectorPlayerName");
+                   this.id = inspectorFrame.querySelector(".inspectorPlayerID");
+                   this.posX = inspectorFrame.querySelector(".inspectorPlayerPosX");
+                   this.posY = inspectorFrame.querySelector(".inspectorPlayerPosY");
+                   this.posZ = inspectorFrame.querySelector(".inspectorPlayerPosZ");
+                   this.eulerP = inspectorFrame.querySelector(".inspectorPlayerEulerP");
+                   this.eulerY = inspectorFrame.querySelector(".inspectorPlayerEulerY");
+                   this.eulerR = inspectorFrame.querySelector(".inspectorPlayerEulerR");
+                   this.volume = inspectorFrame.querySelector(".inspectorPlayerVolume");
+
+                   this.inspectedPlayer = null;
+                   this.inspect(null);
+                }
+
+                inspect(player) {
+                    // Display the player name when selected
+                    this.inspectedPlayer = player;
+                    this.inspectorFrame.style.display = player ? "block" : "none";
+                }
+
+                update() {
+                    if (this.inspectedPlayer) {
+                        let player = this.inspectedPlayer;
+                        let pos = player.getHifiPosition();
+                        let euler = player.getHifiOrientationEuler();
+
+                        this.color.style.backgroundColor = player.color.getStyle();
+                        this.name.innerText = player.name;
+                        this.id.innerText = player.id;
+
+                        this.posX.innerText = pos.x.toFixed(1);
+                        this.posY.innerText = pos.y.toFixed(1);
+                        this.posZ.innerText = pos.z.toFixed(1);
+
+                        this.eulerP.innerText = euler.pitchDegrees.toFixed();
+                        this.eulerY.innerText = euler.yawDegrees.toFixed();
+                        this.eulerR.innerText = euler.rollDegrees.toFixed();
+
+                        this.volume.innerText = player.volume.toFixed();
+                    }
+                }
+            } 
+
             class App {
-                constructor(config, canvas, triggerButton, muteButton, contextMenu) {
+                constructor(config, canvas, triggerButton, muteButton, frameButton, inspectorFrame) {
                     this.config = config;
-                    this.world = null;
-                    this.triggerButton = null;
-                    this.contextMenu = null;
+                    this.space = null;
+
                     // To add/remove event listener propertly and with the right context we need to bind them first into variables
                     this.connectMyPlayerBinded = this.connectMyPlayer.bind(this);
                     this.disconnectMyPlayerBinded = this.disconnectMyPlayer.bind(this);
 
-                                
+                    this.config.onPickPlayer = this.inspectPlayer.bind(this);
+                    this.config.onAnimate = this.onAnimate.bind(this);
 
-                    this.setupUI(canvas, triggerButton, muteButton, contextMenu);
+                    this.setupUI(canvas, triggerButton, muteButton, frameButton);
+                    this.inspector = new Inspector(inspectorFrame);
 
-                    this.world.animate();
-
+                    this.space.animate();
                 }
                 // Connect the UI elements that trigger the example and and display information
-                setupUI(canvas, triggerButton, muteButton, contextMenu) {
+                setupUI(canvas, triggerButton, muteButton, frameButton) {
                     this.canvas = canvas;
-                    this.world = new World(canvas);
+                    this.config.canvas = canvas;
+                    this.space = new HIFISpace(this.config);
                     this.triggerButton = triggerButton;
                     this.muteButton = muteButton;
-                    this.contextMenu = contextMenu;
+                    this.frameButton = frameButton;
+
                     // Configure the triggerButton
                     this.triggerButton.addEventListener("click", this.connectMyPlayerBinded, false);
                     this.triggerButton.innerHTML = `Click to Connect`;
                     this.muteButton.addEventListener("click", this.onMute.bind(this), false);
-                    window.addEventListener('resize', () => { this.world.onresize(); }, false);
-                    window.addEventListener('load', () => { this.world.onresize(); }, false);
+                    this.frameButton.addEventListener("click", this.onFrame.bind(this), false);
+                    window.addEventListener('resize', () => { this.space.onresize(); }, false);
+                    window.addEventListener('load', () => { this.space.onresize(); }, false);
                     // Setup the canvas to receive control events
                 }
 
                 async connectMyPlayer() {
-
-                    // Data configuration for all nodes base on type
-                    let myPlayerConfig = {name: "MyPlayer", radius: 0.2, color: "#AFAAFF", position: this.config.SPAWN_POINT, orientation: 0};
                     this.triggerButton.disabled = true;
                     this.triggerButton.innerHTML = `wait...`;
 
-                    if (await this.world.connect(myPlayerConfig)) {
+                    if (await this.space.connect()) {
                         // Reset trigger button status
                         this.triggerButton.disabled = false;
                         this.triggerButton.innerHTML = `Disconnect`;
@@ -660,7 +986,7 @@
                 async disconnectMyPlayer() {
                     this.triggerButton.disabled = true;
                     this.triggerButton.innerHTML = `wait...`;
-                    await this.world.disconnect();
+                    await this.space.disconnect();
                     // Reset triggerButton
                     this.triggerButton.disabled = false;
                     this.triggerButton.innerHTML = `Connect`;
@@ -670,20 +996,13 @@
                     this.muteButton.classList.remove("mic-off");
                     this.muteButton.classList.add("mic-on");
                     this.muteButton.classList.add("muteButton--disabled");
-                    this.showInfo();
+                    this.inspectPlayer();
                 }            
-                showInfo(id) {
-                    // Display the player name when selected
-                    if (id) {
-                        let player = this.world.players[id];
-                        this.contextMenu.innerHTML = player.name;
-                    }
-                    this.contextMenu.style.display = id ? "block" : "none";
-                }
+
                 onMute() {
                     // Set mute state when the user clicks on the mic icon
                     let isMuted = this.muteButton.classList.contains("mic-off");
-                    if (this.world.myPlayer && this.world.myPlayer.setMute(!isMuted)) {
+                    if (this.space.myPlayer && this.space.myPlayer.setMute(!isMuted)) {
                         if (isMuted) {
                             this.muteButton.classList.remove("mic-off");
                             this.muteButton.classList.add("mic-on");
@@ -691,6 +1010,20 @@
                             this.muteButton.classList.remove("mic-on");
                             this.muteButton.classList.add("mic-off");
                         }
+                    }
+                }
+
+                onFrame() {
+                    // Set frame state when the user clicks on the frame icon
+                    let showFrame = this.frameButton.classList.contains("frame-off");
+                    this.space.showFrame(!showFrame);
+
+                    if (showFrame) {
+                        this.frameButton.classList.remove("frame-off");
+                        this.frameButton.classList.add("frame-on");
+                    } else {
+                        this.frameButton.classList.remove("frame-on");
+                        this.frameButton.classList.add("frame-off");
                     }
                 }
 
@@ -706,14 +1039,43 @@
                         });
                     });
                 }
+
+                inspectPlayer(player) {
+                    this.inspector.inspect(player);
+                }
+
+                onAnimate() {
+                    this.inspector.update();
+                }
             }
+
+
             HighFidelityAudio.HiFiLogger.setHiFiLogLevel(HighFidelityAudio.HiFiLogLevel.Debug);
-            let config = {};
+
+            const queryString = window.location.search;
+            const urlParams = new URLSearchParams(queryString);
+
+            // get the expected JWT parameter
+            const jwtParam = urlParams.get('jwt');
+            // if no JWT is provided, default to the public space ....
+            const HIFI_AUDIO_JWT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcHBfaWQiOiI5MjEyZjZmNy1lNWIxLTRlYzYtYWUwNi00YTUyMzkxZTFkNmIiLCJzcGFjZV9pZCI6ImNkZjQxZmNjLWI5MmUtNDVjNy1iYzJhLTc0ZDBlOTFlMDIzNCIsInN0YWNrIjoiYXVkaW9uZXQtbWl4ZXItYXBpLWFscGhhLTAzIn0.2irihsIk0J2UD_X4ZZE_pxTjfOmldcENcVlLK1-7rEM";
+            let jwt = "";
+            if (jwtParam) {
+                jwt = window.prompt('Using HIFI_AUDIO_JWT provided in URL or ...', HIFI_AUDIO_JWT);
+            } else {
+                jwt = window.prompt('Input HIFI_AUDIO_JWT or DEFAULT', HIFI_AUDIO_JWT);
+            }
+            
+            let config = {
+                JWT: jwt,
+                floorPlaneAltitude: -0.7 // set the floor plane below the Dot's representation
+            };
             let canvasElement = document.querySelector('.thecanvas');
             let triggerButton = document.querySelector(`.triggerButton`);
             let muteButton = document.querySelector(".muteButton");
-            let contextMenu = document.querySelector(".contextMenu");
-            let app = new App(config, canvasElement, triggerButton, muteButton, contextMenu);
+            let frameButton = document.querySelector(".frameButton");
+            let inspectorFrame = document.querySelector(".inspectorFrame");
+            let app = new App(config, canvasElement, triggerButton, muteButton, frameButton, inspectorFrame);
 
         </script>
     </body>
