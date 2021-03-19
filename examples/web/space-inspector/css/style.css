@@ -28,6 +28,8 @@ body {
 .example-description { 
     text-align: center;
     color: white;
+    background-color: 	#69a1b8; 
+    
     width: calc(100vw - 414px);
     word-wrap: break-word;
     text-overflow: ellipsis;
@@ -101,7 +103,7 @@ body {
 }
 
 .frameButton {
-    float: inline-end;
+    float: right;
     width: 40px;
     height: 40px;
     margin: 20px;
@@ -115,11 +117,11 @@ body {
 }
 
 .frame-on {
-    background-image: url("../images/frame_on.png");
+    background-image: url("../images/axes-off.png");
 }
 
 .frame-off {
-    background-image: url("../images/frame_off.png");
+    background-image: url("../images/axes-on.png");
 }
 
 
