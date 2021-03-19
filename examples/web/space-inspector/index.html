@@ -60,10 +60,11 @@
             <div class="inspectorPlayerID inspectorField"></div>        
         </div>
 
-        <!--<script src="three/three.min.js"></script>-->
-        <script src="http://threejs.org/build/three.min.js"></script>
-        <script src="https://hifi-spatial-audio-api.s3-us-west-2.amazonaws.com/releases/latest/HighFidelityAudio-latest.js"></script>
+        <script src="three/three.min.js"></script>
+        <!--<script src="http://threejs.org/build/three.min.js"></script>-->
 
+        <script src="https://hifi-spatial-audio-api.s3-us-west-2.amazonaws.com/releases/latest/HighFidelityAudio-latest.js"></script>
+      
         <script>
             const DEG_TO_RAD = Math.PI / 180;
             const RAD_TO_DEG = 180 / Math.PI;
@@ -72,146 +73,217 @@
             const SPHERE_TESSELLATION = 32;
 
             class Frame {
-                constructor(parent, scale = 1) {
+                static geometryOrigin = null;
+                static materialOrigin = null;
+
+                static materialX = null;
+                static materialY = null;
+                static materialZ = null;
+
+                static geometryX = null;
+                static geometryY = null;
+                static geometryZ = null;
+                static boundX = null;
+                static boundY = null;
+                static boundZ = null;
+                static geometryArrow = null;
+
+                static unitSize = 1.0;
+                static geometryAxis = null;
+                static materialAxis = null;
+
+                static initialize(font) {
+                    this.geometryOrigin = new THREE.SphereGeometry(0.1, SPHERE_TESSELLATION, SPHERE_TESSELLATION);
+                    //this.geometryOrigin = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+                    this.materialOrigin = new THREE.MeshToonMaterial( { color: ('#efefef') } );
+ 
+                    // XYZ
+                    this.materialX = new THREE.MeshToonMaterial( { color: ('#ff0000') } );
+                    this.materialY = new THREE.MeshToonMaterial( { color: ('#00ff00') } );
+                    this.materialZ = new THREE.MeshToonMaterial( { color: ('#0000ff') } );
+
+                    const fontDesc =  {font: font, size: 0.25, height: 0.025, curveSegments: 12 };
+                    this.geometryX = new THREE.TextGeometry( 'X', fontDesc);
+                    this.geometryY = new THREE.TextGeometry( 'Y', fontDesc);
+                    this.geometryZ = new THREE.TextGeometry( 'Z', fontDesc);
+                    this.geometryX.computeBoundingBox();
+                    this.geometryY.computeBoundingBox();
+                    this.geometryZ.computeBoundingBox();
+                    this.boundX = new THREE.Vector3();
+                    this.boundY = new THREE.Vector3();
+                    this.boundZ = new THREE.Vector3();
+                    this.geometryX.boundingBox.getSize(this.boundX);
+                    this.geometryY.boundingBox.getSize(this.boundY);
+                    this.geometryZ.boundingBox.getSize(this.boundZ);
+
+                    // Arrow     
+                    this.geometryArrow = new THREE.ConeGeometry(0.15, 0.4, SPHERE_TESSELLATION, SPHERE_TESSELLATION/2);
+               
+                    // Axis
+                    this.geometryAxis = new THREE.CylinderGeometry(0.01, 0.01, this.unitSize, SPHERE_TESSELLATION / 4, SPHERE_TESSELLATION/2, true);
+                    this.materialAxis = new THREE.MeshToonMaterial( { color: ('#3f3f3f') } );
+                }
+
+                constructor(parent, font, scale = 1) {
                    
-                    //const geometry = new THREE.SphereGeometry(0.1, SPHERE_TESSELLATION, SPHERE_TESSELLATION);
-                    const geometry = new THREE.BoxGeometry(0.1, 0.1, 0.1);
-                    const material = new THREE.MeshToonMaterial( { color: ('#efefef') } );
-                    let root = new THREE.Mesh( geometry, material );
+                    if (!Frame.geometryOrigin) {
+                        Frame.initialize(font);
+                    }
+
+                    let root = new THREE.Mesh( Frame.geometryOrigin, Frame.materialOrigin );
                     root.scale.set(scale, scale, scale);
                     root.layers.set(FRAME_LAYER);
                     parent.add(root);
 
-                    const coneOffset = 1.0;
+                    const coneOffset = Frame.unitSize;
+     
+                    const xyzOffset = 1.4;
 
-                    const geometryAxis = new THREE.CylinderGeometry(0.01, 0.01, coneOffset, SPHERE_TESSELLATION / 4, SPHERE_TESSELLATION/2, true);
-                    const materialAxis = new THREE.MeshToonMaterial( { color: ('#3f3f3f') } );
-                    
-                    const geometryCone = new THREE.ConeGeometry(0.15, 0.4, SPHERE_TESSELLATION, SPHERE_TESSELLATION/2);
-                    const materialX = new THREE.MeshToonMaterial( { color: ('#ff0000') } );
-                    const materialY = new THREE.MeshToonMaterial( { color: ('#00ff00') } );
-                    const materialZ = new THREE.MeshToonMaterial( { color: ('#0000ff') } );
-
-                    let nodeX = new THREE.Mesh( geometryCone, materialX );
+                    // XYZ
+                    let nodeX = new THREE.Mesh( Frame.geometryX, Frame.materialX );
                     nodeX.rotation.order = 'YXZ';
-                    nodeX.rotation.z = -Math.PI/ 2;
-                    nodeX.position.x = coneOffset;
+                   // nodeX.rotation.z = -Math.PI/ 2;
+                    nodeX.position.set(-Frame.boundX.x * 0.5 + xyzOffset, -Frame.boundX.y * 0.5, -Frame.boundX.z * 0.5);
                     nodeX.layers.set(FRAME_LAYER);
                     root.add(nodeX);
 
-                    let nodeY = new THREE.Mesh( geometryCone, materialY );
+                    let nodeY = new THREE.Mesh( Frame.geometryY, Frame.materialY );
                     nodeY.rotation.order = 'YXZ';
-                    nodeY.position.y = coneOffset;
+                    nodeY.position.set(-Frame.boundY.x * 0.5, -Frame.boundY.y * 0.5 + xyzOffset, -Frame.boundY.z * 0.5);
                     nodeY.layers.set(FRAME_LAYER);
                     root.add(nodeY);
 
-                    let nodeZ = new THREE.Mesh( geometryCone, materialZ );
+                    let nodeZ = new THREE.Mesh( Frame.geometryZ, Frame.materialZ );
                     nodeZ.rotation.order = 'YXZ';
-                    nodeZ.rotation.x = Math.PI/ 2;
-                    nodeZ.position.z = coneOffset;
+                    nodeZ.rotation.y = Math.PI/ 2;
+                    nodeZ.position.set(-Frame.boundZ.z * 0.5, -Frame.boundZ.y * 0.5, Frame.boundZ.x * 0.5 + xyzOffset);
                     nodeZ.layers.set(FRAME_LAYER);
                     root.add(nodeZ);
 
+                    // Arrows     
+                    let nodeArrowX = new THREE.Mesh( Frame.geometryArrow, Frame.materialX );
+                    nodeArrowX.rotation.order = 'YXZ';
+                    nodeArrowX.rotation.z = -Math.PI/ 2;
+                    nodeArrowX.position.x = coneOffset;
+                    nodeArrowX.layers.set(FRAME_LAYER);
+                    root.add(nodeArrowX);
+
+                    let nodeArrowY = new THREE.Mesh( Frame.geometryArrow, Frame.materialY );
+                    nodeArrowY.rotation.order = 'YXZ';
+                    nodeArrowY.position.y = coneOffset;
+                    nodeArrowY.layers.set(FRAME_LAYER);
+                    root.add(nodeArrowY);
+
+                    let nodeArrowZ = new THREE.Mesh( Frame.geometryArrow, Frame.materialZ );
+                    nodeArrowZ.rotation.order = 'YXZ';
+                    nodeArrowZ.rotation.x = Math.PI/ 2;
+                    nodeArrowZ.position.z = coneOffset;
+                    nodeArrowZ.layers.set(FRAME_LAYER);
+                    root.add(nodeArrowZ);
+
+                    // Axes
                     const axisOffset = coneOffset * 0.5;
-                    let nodeAxeX = new THREE.Mesh( geometryAxis, materialAxis );
+                    let nodeAxeX = new THREE.Mesh( Frame.geometryAxis, Frame.materialAxis );
                     nodeAxeX.rotation.order = 'YXZ';
                     nodeAxeX.rotation.z = -Math.PI/ 2;
                     nodeAxeX.position.x = axisOffset;
                     nodeAxeX.layers.set(FRAME_LAYER);
                     root.add(nodeAxeX);
 
-                    let nodeAxeY = new THREE.Mesh( geometryAxis, materialAxis );
+                    let nodeAxeY = new THREE.Mesh( Frame.geometryAxis, Frame.materialAxis );
                     nodeAxeY.rotation.order = 'YXZ';
                     nodeAxeY.position.y = axisOffset;
                     nodeAxeY.layers.set(FRAME_LAYER);
                     root.add(nodeAxeY);
                     
-                    let nodeAxeZ = new THREE.Mesh( geometryAxis, materialAxis );
+                    let nodeAxeZ = new THREE.Mesh( Frame.geometryAxis, Frame.materialAxis );
                     nodeAxeZ.rotation.order = 'YXZ';
                     nodeAxeZ.rotation.x = Math.PI/ 2;
                     nodeAxeZ.position.z = axisOffset;
                     nodeAxeZ.layers.set(FRAME_LAYER);
                     root.add(nodeAxeZ);
-             }
-
+                }
             }
 
             class Dot {
 
+                static geometryBody = null;
+                static speakerGeometries = null;
+                static speakerOffsets = null;
+                static geometryShadow = null;
+                static materialShadow = null;
+
+                static initialize() {
+                    const BODY_RADIUS = 0.7;
+                    this.geometryBody = new THREE.SphereGeometry(BODY_RADIUS, SPHERE_TESSELLATION, SPHERE_TESSELLATION);
+                
+                    this.speakerGeometries = [
+                        new THREE.TorusGeometry( 0.3 * BODY_RADIUS, 0.05 * BODY_RADIUS, SPHERE_TESSELLATION, 50),
+                        new THREE.TorusGeometry( 0.5 * BODY_RADIUS, 0.05 * BODY_RADIUS, SPHERE_TESSELLATION, 50),
+                        new THREE.TorusGeometry( 0.7 * BODY_RADIUS, 0.05 * BODY_RADIUS, SPHERE_TESSELLATION, 50),
+                    ];
+                    this.speakerOffsets = [
+                        -1.1 * BODY_RADIUS,
+                        -0.2 * BODY_RADIUS,
+                        -0.2 * BODY_RADIUS
+                    ];
+
+                    this.geometryShadow = new THREE.CircleGeometry(BODY_RADIUS, SPHERE_TESSELLATION);
+                    this.materialShadow = new THREE.MeshBasicMaterial( { color: 0x0f0f0f, side: THREE.DoubleSide, transparent: true, opacity: 0.7 } );
+                   
+                }
+
                 // Build the Dot representation in the scene
                 constructor (config, col) {
+                    if (!Dot.geometryBody) {
+                        Dot.initialize();
+                    }
+
                     let scene = config.scene;
 
                     this.color =  new THREE.Color((col ? col : '#efefef'));
 
-                    const BODY_RADIUS = 0.7;
-                    const geometry = new THREE.SphereGeometry(BODY_RADIUS, SPHERE_TESSELLATION, SPHERE_TESSELLATION);
-                    // MeshToonMaterial MeshPhysicalMaterial
+                    // Body
                     this.materialBody = new THREE.MeshToonMaterial( { color: this.color } );
-                    let node = new THREE.Mesh( geometry, this.materialBody );
+                    let node = new THREE.Mesh( Dot.geometryBody, this.materialBody );
                     node.layers.enable(PLAYER_PICKABLE_LAYER);
-
                     // When we use Euler with THREE.js, we expect to use the same order convention as Hifi
                     // aka Yaw(Y) Pitch(X) Roll(Z)
                     node.rotation.order = 'YXZ';
-
                     scene.add( node );
-
-                    // Cone speaker
-                    /*
-                    const geometrySpeaker = new THREE.ConeGeometry(0.5, 1.0, SPHERE_TESSELLATION, SPHERE_TESSELLATION/2);
-                    this.materialSpeaker = new THREE.MeshToonMaterial( { color: this.color } );
-                    let speaker = new THREE.Mesh(geometrySpeaker, this.materialSpeaker);
-                    speaker.rotation.order = 'YXZ';
-                    speaker.rotation.x = Math.PI/ 2;
-                    speaker.position.z = -0.5;
-                    this._speaker = speaker;
-                    node.add(speaker);
-                    */
+                    this._node = node;
 
                     // Rings speaker
-                    if (true) {                    
+                    {                    
                         this.materialSpeaker = new THREE.MeshToonMaterial( { color: this.color } );
-                        const speakerGeometries = [
-                            new THREE.TorusGeometry( 0.3 * BODY_RADIUS, 0.05 * BODY_RADIUS, SPHERE_TESSELLATION, 50),
-                            new THREE.TorusGeometry( 0.5 * BODY_RADIUS, 0.05 * BODY_RADIUS, SPHERE_TESSELLATION, 50),
-                            new THREE.TorusGeometry( 0.7 * BODY_RADIUS, 0.05 * BODY_RADIUS, SPHERE_TESSELLATION, 50),
-                        ];
-                        const speakerOffsets = [
-                            -1.1 * BODY_RADIUS,
-                            -0.2 * BODY_RADIUS,
-                            -0.2 * BODY_RADIUS
-                        ];
-
-                        let speaker0 = new THREE.Mesh(speakerGeometries[0], this.materialSpeaker);
-                        speaker0.position.z = speakerOffsets[0];
+    
+                        let speaker0 = new THREE.Mesh(Dot.speakerGeometries[0], this.materialSpeaker);
+                        speaker0.position.z = Dot.speakerOffsets[0];
                         this._speaker = speaker0;
                         node.add(speaker0);
                         
-                        let speaker1 = new THREE.Mesh(speakerGeometries[1], this.materialSpeaker);
-                        speaker1.position.z = speakerOffsets[1];
+                        let speaker1 = new THREE.Mesh(Dot.speakerGeometries[1], this.materialSpeaker);
+                        speaker1.position.z = Dot.speakerOffsets[1];
                         speaker0.add(speaker1);
                         
-                        let speaker2 = new THREE.Mesh(speakerGeometries[2], this.materialSpeaker);
-                        speaker2.position.z = speakerOffsets[2];
+                        let speaker2 = new THREE.Mesh(Dot.speakerGeometries[2], this.materialSpeaker);
+                        speaker2.position.z = Dot.speakerOffsets[2];
                         speaker1.add(speaker2);
                     }
 
-                    new Frame(node);
+                    // Add the frame
+                    new Frame(node, config.font);
 
-                    const dropShadowGeometry = new THREE.CircleGeometry(BODY_RADIUS, SPHERE_TESSELLATION);
-                    const dropShadowMaterial = new THREE.MeshBasicMaterial( { color: 0x0f0f0f, side: THREE.DoubleSide, transparent: true, opacity: 0.7 } );
-                    let dropShadow = new THREE.Mesh( dropShadowGeometry, dropShadowMaterial );
+                    // Drop Shadow
+                    let dropShadow = new THREE.Mesh( Dot.geometryShadow, Dot.materialShadow );
                     dropShadow.position.set(node.position.x, 0.0, node.position.z);
-                    scene.add(dropShadow);
                     dropShadow.rotation.x = Math.PI/ 2;
                     dropShadow.position.set(0, config.floorPlaneAltitude + 0.01, 0);
+                    scene.add(dropShadow);
                     this._dropShadow = dropShadow;
 
                    // var dotAxis = new THREE.AxesHelper(2.0);
                   //  node.add(dotAxis);
-
-                    this._node = node;
                 }
 
                 setSpeakerVisible(isVisible) {
@@ -243,14 +315,11 @@
                                 z: this._node.position.z });
                 }
                 
-                
-
                 setHifiOrientationQuat(x, y, z, w) {
                     this._node.quaternion.x = x;
                     this._node.quaternion.y = y;
                     this._node.quaternion.z = z;
                     this._node.quaternion.x = w;
-                    this._node.updateMatrix();
                 }
 
                 setTHREEOrientationEuler(pitch, yaw, roll) {
@@ -258,7 +327,6 @@
                     this._node.rotation.y = yaw;
                     this._node.rotation.z = roll;
                     this._node.rotation.order = 'YXZ';
-                    this._node.updateMatrix(); 
                 }
 
                 setHifiOrientationEuler(pitch, yaw, roll) {
@@ -276,11 +344,8 @@
                 
                 setInputVolume(value) {
                     let scale = 2 - Math.min(1, value / -55);
-                    //this._speaker.position.z = -0.5 * scale;
-                   // this._speaker.position.z = -1.0 * scale;
                     this._speaker.scale.set(scale, scale, scale);
                 }
-
                 
                 quit(scene) {
                     scene.remove( this._node );
@@ -472,6 +537,7 @@
                     this.camera = new THREE.PerspectiveCamera(60, config.canvas.innerWidth / config.canvas.innerHeight, 0.1, 20000);
                     scene.add(this.camera);
 
+
                     // Create the 'MyPlayer' aka a fanceier verion of the Dot class representing the user
                     this.myPlayer = new MyPlayer(this.config);
                     
@@ -542,7 +608,7 @@
                         plane.receiveShadow = true;
                         scene.add( plane );
 
-                        new Frame(scene, 10);
+                        new Frame(scene, config.font, 10);
 
                     }
                     {
@@ -660,24 +726,30 @@
                 }
 
                 updateReceivedData(data) {
-                    this.volume = data.volumeDecibels !== null ? data.volumeDecibels : this.volume;
-                    this.setInputVolume(this.volume);
-
+                    if (data.volumeDecibels != null) {
+                        this.volume = data.volumeDecibels !== null ? data.volumeDecibels : this.volume;
+                        this.setInputVolume(this.volume);
+                        this.receivedNewValues = true;
+                    }
+                
                     if (data.position !== null) {
                         this.setHifiPosition(data.position.x, data.position.y, data.position.z);
+                        this.receivedNewValues = true;
                     }
-                    if (data.orientationQuat !== null) {
+                   /* if (data.orientationQuat !== null) {
                         this.setHifiOrientationQuat(
                             data.orientationQuat.x,
                             data.orientationQuat.y,
                             data.orientationQuat.z,
                             data.orientationQuat.w);
-                    }
+                            this.receivedNewValues = true;
+                    }*/
                     if (data.orientationEuler !== null) {
                         this.setHifiOrientationEuler(
                             data.orientationEuler.pitchDegrees,
                             data.orientationEuler.yawDegrees,
                             data.orientationEuler.rollDegrees);
+                            this.receivedNewValues = true;
                     }
                 }
             };
@@ -722,7 +794,7 @@
                     let userDataSubscription = new HighFidelityAudio.UserDataSubscription({
                         "components": [ HighFidelityAudio.AvailableUserDataSubscriptionComponents.VolumeDecibels,
                                         HighFidelityAudio.AvailableUserDataSubscriptionComponents.Position,
-                                        HighFidelityAudio.AvailableUserDataSubscriptionComponents.OrientationQuat,
+                                       // HighFidelityAudio.AvailableUserDataSubscriptionComponents.OrientationQuat,
                                         HighFidelityAudio.AvailableUserDataSubscriptionComponents.OrientationEuler  ],
                         "callback": onDataReceived
                     });
@@ -804,7 +876,8 @@
                             avgVal += array[i];
                         }
                         // MyPlayer's volume
-                        this.volume = 1.6 * (avgVal / array.length) - 60.0;
+                        this.volume = 1.6 * (avgVal / (array.length ? array.length : 1.0)) - 60.0;
+                        this.receivedNewValues = true;
                         this.setInputVolume(this.volume);
                     }
                 }
@@ -822,6 +895,7 @@
                         (controller.orbitYaw * DEG_TO_RAD),
                         0
                     );
+                    this.receivedNewValues = true;
 
                     // hide "speaker' in first person
                     this.setSpeakerVisible(controller.boom > 0);
@@ -939,22 +1013,25 @@
                 update() {
                     if (this.inspectedPlayer) {
                         let player = this.inspectedPlayer;
-                        let pos = player.getHifiPosition();
-                        let euler = player.getHifiOrientationEuler();
+                        if (player.receivedNewValues) {
+                            let pos = player.getHifiPosition();
+                            let euler = player.getHifiOrientationEuler();
 
-                        this.color.style.backgroundColor = player.color.getStyle();
-                        this.name.innerText = player.name;
-                        this.id.innerText = player.id;
+                            this.color.style.backgroundColor = player.color.getStyle();
+                            this.name.innerText = player.name;
+                            this.id.innerText = player.id;
 
-                        this.posX.innerText = pos.x.toFixed(1);
-                        this.posY.innerText = pos.y.toFixed(1);
-                        this.posZ.innerText = pos.z.toFixed(1);
+                            this.posX.innerText = pos.x.toFixed(1);
+                            this.posY.innerText = pos.y.toFixed(1);
+                            this.posZ.innerText = pos.z.toFixed(1);
 
-                        this.eulerP.innerText = euler.pitchDegrees.toFixed();
-                        this.eulerY.innerText = euler.yawDegrees.toFixed();
-                        this.eulerR.innerText = euler.rollDegrees.toFixed();
+                            this.eulerP.innerText = euler.pitchDegrees.toFixed();
+                            this.eulerY.innerText = euler.yawDegrees.toFixed();
+                            this.eulerR.innerText = euler.rollDegrees.toFixed();
 
-                       // this.volume.innerText = player.volume.toFixed();
+                           // this.volume.innerText = player.volume.toFixed();
+                           player.receivedNewValues = false;
+                        }
                     }
                 }
             } 
@@ -1114,14 +1191,21 @@
                 JWT: jwt,
                 floorPlaneAltitude: -0.7 // set the floor plane below the Dot's representation
             };
-            let canvasElement = document.querySelector('.thecanvas');
-            let triggerButton = document.querySelector(`.triggerButton`);
-            let jwtInput = document.querySelector(".jwtInput");
-            let muteButton = document.querySelector(".muteButton");
-            let frameButton = document.querySelector(".frameButton");
-            let inspectorFrame = document.querySelector(".inspectorFrame");
-            let app = new App(config, canvasElement, triggerButton, jwtInput, muteButton, frameButton, inspectorFrame);
 
+            // Create the font:
+            const fontLoader = new THREE.FontLoader();
+            fontLoader.load('fonts/helvetiker_regular.typeface.json', (font) => {
+               config.font = font
+
+                let canvasElement = document.querySelector('.thecanvas');
+                let triggerButton = document.querySelector(`.triggerButton`);
+                let jwtInput = document.querySelector(".jwtInput");
+                let muteButton = document.querySelector(".muteButton");
+                let frameButton = document.querySelector(".frameButton");
+                let inspectorFrame = document.querySelector(".inspectorFrame");
+
+                let app = new App(config, canvasElement, triggerButton, jwtInput, muteButton, frameButton, inspectorFrame);
+            });
         </script>
     </body>
 </html>
