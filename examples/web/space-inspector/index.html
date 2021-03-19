@@ -759,16 +759,13 @@
                 }
 
                 updateReceivedData(data) {
-                    let newValue = false;
                     if (data.volumeDecibels != null) {
                         this.volume = data.volumeDecibels !== null ? data.volumeDecibels : this.volume;
                         this.setInputVolume(this.volume);
-                        newValue = true;
                     }
                 
                     if (data.position !== null) {
                         this.setHifiPosition(data.position.x, data.position.y, data.position.z);
-                        newValue = true;
                     }
                     if (data.orientationQuat !== null) {
                         this.setHifiOrientationQuat(
@@ -776,19 +773,14 @@
                             data.orientationQuat.y,
                             data.orientationQuat.z,
                             data.orientationQuat.w);
-                        newValue = true;
                     }
                     if (data.orientationEuler !== null) {
                         this.setHifiOrientationEuler(
                             data.orientationEuler.pitchDegrees,
                             data.orientationEuler.yawDegrees,
                             data.orientationEuler.rollDegrees);
-                        newValue = true;
                     }
-
-                    if (newValue) {
-                        this.receivedNewValues++;
-                    }
+                    this.receivedNewValues++;
                 }
             };
 
@@ -1065,7 +1057,7 @@
                 update() {
                     if (this.inspectedPlayer) {
                         let player = this.inspectedPlayer;
-                        if (player.receivedNewValues > 10) {
+                        if (player.receivedNewValues > 0) {
                             let pos = player.getHifiPosition();
                             let quat = player.getHifiOrientationQuat();
                             let euler = player.getHifiOrientationEuler();
@@ -1085,7 +1077,7 @@
                             this.eulerR.innerText = euler.rollDegrees.toFixed();
 
                             if (player.volume !== NaN) {
-                          //      this.volume.innerText = player.volume.toFixed();
+                                this.volume.innerText = player.volume.toFixed();
                             }
 
                             player.receivedNewValues = 0;
