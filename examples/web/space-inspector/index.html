@@ -136,7 +136,7 @@
                     this.geometryZ.boundingBox.getSize(this.boundZ);
 
                     // Arrow     
-                    this.geometryArrow = new THREE.ConeGeometry(0.15, 0.4, SPHERE_TESSELLATION, SPHERE_TESSELLATION/2);
+                    this.geometryArrow = new THREE.ConeGeometry(0.1, 0.3, SPHERE_TESSELLATION, SPHERE_TESSELLATION/2);
                
                     // Axis
                     this.geometryAxis = new THREE.CylinderGeometry(0.01, 0.01, this.unitSize, SPHERE_TESSELLATION / 4, SPHERE_TESSELLATION/2, true);
@@ -297,7 +297,7 @@
                     let dropShadow = new THREE.Mesh( Dot.geometryShadow, Dot.materialShadow );
                     dropShadow.position.set(node.position.x, 0.0, node.position.z);
                     dropShadow.rotation.x = Math.PI/ 2;
-                    dropShadow.position.set(0, config.floorPlaneAltitude + 0.02, 0);
+                    dropShadow.position.set(0, config.floorPlaneAltitude + 0.01, 0);
                     scene.add(dropShadow);
                     this._dropShadow = dropShadow;
 
@@ -617,7 +617,8 @@
                                 grid = paintStripe(v_world_pos, 10.0, 0.1);
                                 color = mix( color, vec4(0.0, 0.0, 0.4, 0.5), max(grid.x, grid.z));
                                 
-                                grid = paintStripe(v_world_pos, 2.0, 0.025);
+                                //grid = paintStripe(v_world_pos, 2.0, 0.025);
+                                grid = paintStripe(v_world_pos, 1.0, 0.015);
                                 //color = mix( color, vec4(0.31, 0.25, 0.32, 0.2), max(grid.x, grid.z));
                                 color = mix( color, vec4(0.41, 0.63, 0.72, 0.7), max(grid.x, grid.z));
 
@@ -1246,7 +1247,7 @@
 
             let config = {
                 JWT: jwt,
-                floorPlaneAltitude: -0.7 // set the floor plane below the Dot's representation
+                floorPlaneAltitude: -0.41 // set the floor plane below the Dot's representation
             };
 
             // Create the font:
