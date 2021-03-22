@@ -42,7 +42,7 @@ Corresponds to the "Get a JWT" guide at [highfidelity.com/api/guides/misc/getAJW
 Experience High Fidelity Spatial Audio with 2D video chat powered by TokBox.
 
 ## NodeJS Experiments
-### [3D Dots](./experiments/web/dots3d)
+### [3D Dots](./experiments/web/dots3D)
 Move around as dots in a 3D space with spatial audio.
 ### [Plaza](./experiments/nodejs/plaza)
 Explore various environments connected in a grid with spatial audio between them.
