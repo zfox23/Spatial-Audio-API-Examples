@@ -126,7 +126,7 @@ micControls:not(.muted) button.unmute,
     display: none;
 }
 
-room {
+lobby, room {
     display: block;
 }
 total, concurrency {
