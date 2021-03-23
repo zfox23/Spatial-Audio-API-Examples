@@ -1,5 +1,5 @@
-# High Fidelity Spatial Audio API Examples
-This repository contains example projects that make use of the [High Fidelity Spatial Audio API](https://highfidelity.com/api/).
+# Spatial Audio API Examples
+This repository contains example projects that make use of the [Spatial Audio API](https://highfidelity.com/api/).
 
 These example projects augment the API walkthrough guides you can find at [highfidelity.com/api/guides](https://www.highfidelity.com/api/guides).
 
@@ -20,7 +20,7 @@ Corresponds to the "Build a Simple Web App" guide at [highfidelity.com/api/guide
 ### [simple-with-device-selection](./examples/web/simple-with-device-selection/)
 Similar to the "simple" example above, except this one allows a user to select their audio input/output devices dynamically.
 ### [subscriptions](./examples/web/subscriptions/)
-This project exemplifies how to make use of [User Data Subscriptions](https://docs.highfidelity.com/latest/modules/classes_hifiuserdatasubscription.html) in projects that use the High Fidelity Spatial Audio API.
+This project exemplifies how to make use of [User Data Subscriptions](https://docs.highfidelity.com/latest/modules/classes_hifiuserdatasubscription.html) in projects that use the Spatial Audio API.
 ### [tracks](./examples/web/tracks/)
 A multi-track spatial audio demo.
 ### [player](./examples/web/player/)
@@ -44,7 +44,7 @@ A basic webapp that makes use of the NodeJS version of the Spatial Audio API wit
 Experience High Fidelity Spatial Audio with 2D video chat powered by TokBox.
 
 ## NodeJS Experiments
-### [3D Dots](./experiments/web/dots3d)
+### [3D Dots](./experiments/web/dots3D)
 Move around as dots in a 3D space with spatial audio.
 ### [Plaza](./experiments/nodejs/plaza)
 Explore various environments connected in a grid with spatial audio between them.
@@ -77,6 +77,6 @@ Virtual office with walls and private rooms.
 # Live Demos
 This repository employs GitHub Pages, which means that you can look at some of these example applications live by browsing [this page](https://highfidelity.github.io/Spatial-Audio-API-Examples/).
 
-**None of the example projects committed to this repository contain an embedded JWT, which means connecting to the High Fidelity Spatial Audio API Server from these live examples *will not work*.**
+**None of the example projects committed to this repository contain an embedded JWT, which means connecting to the Spatial Audio API Server from these live examples *will not work*.**
 
 For more information about JWTs, see the "Authorized Access and JWTs" section of our [Spatial Audio FAQ](https://www.highfidelity.com/api-spatial-audio-faq).

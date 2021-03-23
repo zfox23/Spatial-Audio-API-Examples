@@ -64,21 +64,25 @@ class Avatar extends Client {
         this.gotInputAudio = true;
         this.communicator.setInputAudioMediaStream(stream, stereo);
     }
-    async makeJWT(applicationUserId) { // A production app would likely require the user to log in to a server, which would provide the JWT token.
+    async makeJWT(applicationUserId,
+                  appId = document.querySelector('lobby').id,
+                  spaceId = this.room.model.hifiRoomId,
+                  secret = undefined,
+                  internalHifiServerNameOverride = undefined) {
+        // A production app would likely require the user to log in to a server, which would provide the JWT token.
         let payload = {
-                app_id: '6023060e-1668-483f-bd6f-e7ff707b8918',
-                space_id: this.room.model.hifiRoomId,
-                user_id: applicationUserId,
-                stack: 'audionet-mixer-api-alpha-01'
-            };
+            app_id: appId,
+            space_id: spaceId,
+            user_id: applicationUserId,
+            stack: internalHifiServerNameOverride // Not included in JSON by default.
+        };
         // If a client knew the secret, the client could generate the JWT using this in the .html
         // <script src="https://kjur.github.io/jsrsasign/jsrsasign-latest-all-min.js">
         // and:
-        /*
-        let header = {alg: 'HS256', typ: 'JWT'},
-            secret = YOUR_ACCOUNT_SECRET;
-        return KJUR.jws.JWS.sign("HS256", JSON.stringify(header), JSON.stringify(payload), secret);
-        */
+        if (secret) {
+            let header = {alg: 'HS256', typ: 'JWT'};
+            return KJUR.jws.JWS.sign("HS256", JSON.stringify(header), JSON.stringify(payload), secret);
+        }
         // That's the easiest thing for running your own demo, but, of course, anyone who looked at the source could connect at your expense.
         // Below, we contact a server that only responds to this demo.
         let response = await fetch('https://lit-inlet-37897.herokuapp.com?payload=' + encodeURIComponent(JSON.stringify(payload)));
@@ -88,8 +92,12 @@ class Avatar extends Client {
         return `${this.model.color} ${this.model.name}`;
     }
     async connect() {
-        let jwt = await this.makeJWT(this.hifiUserId);
-        await this.communicator.connectToHiFiAudioAPIServer(jwt).then(response => this.connected(response));
+        let urlQueryParameters = new URLSearchParams(location.search); // url overrrides are convenient for dev/tests/demos within High Fidelity
+        function maybeOverride(name) { return urlQueryParameters.get(name) || undefined; }
+        let stackName = maybeOverride('stack'),
+            jwt = await (maybeOverride('token') ||
+                         this.makeJWT(this.hifiUserId, maybeOverride('appId'), maybeOverride('spaceId'), maybeOverride('secret'), stackName));
+        await this.communicator.connectToHiFiAudioAPIServer(jwt, stackName).then(response => this.connected(response));
     }
     connected(response) { console.info('HiFidelityAudio connect response', response); }
     redraw({x = this.model.x, y = this.model.y, rotation = this.model.rotation, sourceId} = {}) { // after x/y change
@@ -275,6 +283,7 @@ class MyAvatar extends Avatar {
     connected(response) { // Connect the communicator output to the player.
         super.connected(response);
         player.srcObject = this.communicator.getOutputAudioMediaStream();
+        player.play(); // Some browsers ignore autoplay, even after user interaction.
         let subscription = new HighFidelityAudio.UserDataSubscription({
             "components": [
                 HighFidelityAudio.AvailableUserDataSubscriptionComponents.VolumeDecibels
@@ -548,6 +557,7 @@ class LobbyRecord extends Record {
 class LobbyUI extends Client {
     constructor(model) {
         super(model);
+        this.lobby = document.querySelector('lobby');
         this.model = model;
         this.subscribe(this.sessionId, 'updateDisplay', this.updateDisplay);
     }
@@ -567,12 +577,12 @@ class LobbyUI extends Client {
         this.roomSession.leave();
         delete this.roomSession;
         this.publish(this.sessionId, 'updateModel', {userId: this.viewId, roomId: 'TheLobby'});        
-        rooms.classList.remove('hidden');
+        this.lobby.classList.remove('hidden');
         map.remove();
     }
     async enterRoom(roomId) {
         this.publish(this.sessionId, 'updateModel', {userId: this.viewId, roomId});
-        rooms.classList.add('hidden');
+        this.lobby.classList.add('hidden');
         // Easist way to maintain rooms is to rebuild them as needed.
         map = mapTemplate.content.cloneNode(true).firstElementChild;
         map.ondragover = ourBehaviorOnly;
@@ -599,6 +609,8 @@ Croquet.Session.join({  // Join the lobby session, which we will be part of the 
     password: "none",
     model: LobbyRecord,
     options: {roomNames: Array.from(document.getElementsByTagName('room')).map(e => e.id)},
+    autoSleep: false,
+    tps: 2,
     view: LobbyUI
 }).then(s => {
     LobbySession = s;

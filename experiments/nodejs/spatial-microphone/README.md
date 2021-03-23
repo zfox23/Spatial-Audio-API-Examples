@@ -13,7 +13,7 @@ Zach Fox
 2. Run `npm install`
 3. Copy `auth.example.json` to `auth.json`.
 4. Populate your credentials inside `./auth.json`.
-    - Obtain `HIFI_*` credentials from the [High Fidelity Spatial Audio API Developer Console](https://account.highfidelity.com/dev/account)
+    - Obtain `HIFI_*` credentials from the [Spatial Audio API Developer Console](https://account.highfidelity.com/dev/account)
 5. Run `npm run start`
 
 ### Starting and Stopping Recording using the Spatial Microphone REST API
