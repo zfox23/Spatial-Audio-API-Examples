@@ -1,0 +1,33 @@
+{
+  "name": "hifi-spatial-audio-example-webpack",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.js",
+  "scripts": {
+    "build": "webpack",
+    "start": "webpack serve --open"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/highfidelity/Spatial-Audio-API-Examples.git"
+  },
+  "author": "Zach Fox",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/highfidelity/Spatial-Audio-API-Examples/issues"
+  },
+  "homepage": "https://github.com/highfidelity/Spatial-Audio-API-Examples#readme",
+  "devDependencies": {
+    "html-webpack-plugin": "^5.3.1",
+    "jsonwebtoken": "^8.5.1",
+    "ts-loader": "^8.0.18",
+    "typescript": "^4.2.3",
+    "webpack": "^5.27.2",
+    "webpack-cli": "^4.5.0",
+    "webpack-dev-server": "^3.11.2"
+  },
+  "dependencies": {
+    "@types/html-webpack-plugin": "^3.2.4",
+    "hifi-spatial-audio": "file:..\\..\\..\\..\\hifi-spatial-audio-js\\hifi-spatial-audio-0.6.1-4.tgz"
+  }
+}

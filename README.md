@@ -33,6 +33,8 @@ Corresponds to the "Make a DJ Bot" guide at [highfidelity.com/api/guides/nodejs/
 Corresponds to the "Build a Web App with the Spatial Audio API, Express, and EJS" guide at [highfidelity.com/api/guides/nodejs/express](https://www.highfidelity.com/api/guides/nodejs/express).
 ### [Get a JWT](./examples/nodejs/express-webapp)
 Corresponds to the "Get a JWT" guide at [highfidelity.com/api/guides/misc/getAJWT](https://www.highfidelity.com/api/guides/misc/getAJWT).
+### [Webpack](./examples/nodejs/webpack)
+A basic webapp that makes use of the NodeJS version of the Spatial Audio API with Webpack. The functionality of this webapp matches that of the "simple" example above.
 
 # The `experiments` Directory
 🐉 The `experiments` directory of this repository contains experimental example projects that import the High Fidelity Spatial Audio Client Library. These examples may not be documented as thoroughly as the above examples. Enjoy!
