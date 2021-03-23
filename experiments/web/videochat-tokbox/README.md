@@ -9,6 +9,6 @@ Zach Fox
 ## Usage
 1. Copy `auth.example.js` to `auth.js`.
 2. Populate your credentials inside `./auth.js`.
-    - Obtain `HIFI_*` credentials from the [High Fidelity Spatial Audio API Developer Console](https://account.highfidelity.com/dev/account)
+    - Obtain `HIFI_*` credentials from the [Spatial Audio API Developer Console](https://account.highfidelity.com/dev/account)
     - Obtain `TOKBOX_*` credentials from the [TokBox Console](https://tokbox.com/account/le)
 3. Double click on `index.html` to open it in Chrome or Firefox.
