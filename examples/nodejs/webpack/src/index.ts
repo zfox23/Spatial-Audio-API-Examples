@@ -1,6 +1,4 @@
-// We at High Fidelity haven't figured out how to get TypeScript types auto-completing when importing `hifi-spatial-audio`.
-// We are terribly sorry about that! We have an internal ticket filed about fixing that problem.
-const { HiFiCommunicator, HiFiLogger, HiFiLogLevel, getBestAudioConstraints } = require('hifi-spatial-audio');
+import { HiFiCommunicator, HiFiLogger, HiFiLogLevel, getBestAudioConstraints } from 'hifi-spatial-audio';
 
 // We need to declare `HIFI_JWT` here so the TypeScript compiler doesn't complain.
 // We're actually defining this variable using Webpack's `DefinePlugin` - see `../webpack.config.js`.
