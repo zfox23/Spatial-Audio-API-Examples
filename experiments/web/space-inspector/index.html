@@ -392,7 +392,8 @@
                     this.boom = 0;
                     this.yaw = 0;
                     this.orbitYaw = 0;
-                    this.pitch = 0;
+                    this.pitch= 0;
+                    this.orbitPitch = 0;
                     this.onMouseDownYaw = 0;
                     this.onMouseDownPitch = 0;
 
@@ -446,7 +447,8 @@
                             this.rotateYawSpace(-Rstep);
                             break;
                          case 'Shift':
-                             this.shiftDown = true;
+                            this.shiftDown = true;
+                            this.orbitPitch = this.pitch;
                              break;                              
                      }
                      this.update();
@@ -457,6 +459,7 @@
                          case 'Shift':
                             this.shiftDown = false;
                             this.yaw = this.orbitYaw;
+                            this.orbitPitch = 0;
                             this.update();
 
                              break;                              
@@ -478,14 +481,9 @@
 
                     if (event.which && (event.which === 2 || event.which === 3)) {
                         let yaw = -( ( event.clientX - this.onMouseDownPosition.x ) * 0.5 ) + this.onMouseDownYaw;
-                        if (this.shiftDown) {
-                            this.yaw = yaw;
-                        } else {
-                            this.yaw = yaw;
-                            this.orbitYaw = yaw;
-                        }
+                        this.yaw = yaw;
                         this.pitch = -( ( event.clientY - this.onMouseDownPosition.y ) * 0.5 ) + this.onMouseDownPitch;
-                        this.pitch = Math.min( 90, Math.max( -90, this.pitch ) );
+                        this.pitch = Math.min( 120, Math.max( -120, this.pitch ) );
                          
                         this.update();
                     }
@@ -531,6 +529,20 @@
                 }
 
                 update() {
+
+                    // orbit yaw is same as yaw except is shift is down
+                    if (!this.shiftDown) {
+                        this.orbitYaw = this.yaw;
+                    }
+
+                    // Keep the orbit pitch flat excetpt if in 1st persion  or shift is down
+                    const threshold = 1.5;
+                    this.orbitPitch = 0;
+                    if (this.shiftDown || this.boom < threshold) {
+                        this.orbitPitch = this.pitch;
+                    }
+                    
+                    // update camera
                     if (this.camNode) {                     
                         this.camNode.position.x = this.orbitPos.x;
                         this.camNode.position.y = this.orbitPos.y;
@@ -543,6 +555,7 @@
                         this.camNode.translateZ(this.boom);
                     }
 
+                    // call update delegate
                     if (this.onUpdateDelegate) {
                         this.onUpdateDelegate(this);
                     }
@@ -800,7 +813,7 @@
                     return this.connectResponse && this.connectResponse.success ? this.connectResponse.audionetInitResponse.visit_id_hash : null;
                 }
 
-                // overitiing the updateReceiveData for MyPLayer to specifically check the feedback from the server for my state
+                // overiting the updateReceiveData for MyPLayer to specifically check the feedback from the server for my state
                 updateReceivedData(data) {
                     if (data.volumeDecibels != null) {
                         this.volume = data.volumeDecibels !== null ? data.volumeDecibels : this.volume;
@@ -859,7 +872,7 @@
                     
                     // Connect!
                     try {
-                        this.connectResponse = await this.hifiCommunicator.connectToHiFiAudioAPIServer(config.JWT);
+                        this.connectResponse = await this.hifiCommunicator.connectToHiFiAudioAPIServer(config.JWT, config.HostURL);
                         console.log(`Call to \`connectToHiFiAudioAPIServer()\` for: ${this.name} succeeded! Response:\n${JSON.stringify(this.connectResponse)}`);
                         return this.connectResponse.success;
                     } catch (e) {
@@ -948,7 +961,7 @@
                         controller.orbitPos.z
                     );
                     this.setTHREEOrientationEuler(
-                        (controller.boom ? 0 : (controller.pitch * DEG_TO_RAD)),
+                        (controller.orbitPitch * DEG_TO_RAD),
                         (controller.orbitYaw * DEG_TO_RAD),
                         0
                     );
@@ -1267,8 +1280,17 @@
                 jwt = jwtParam;
             }
 
+            // Try to get the HostURL from the url parameters
+            const hostURLParam = urlParams.get('hostURL');
+            // if no JWT is provided, default to the public jwtInput message ....
+            let hostURL = null;
+            if (hostURLParam) {
+                hostURL = hostURLParam;
+            }
+
             let config = {
                 JWT: jwt,
+                HostURL: hostURL,
                 floorPlaneAltitude: -0.41 // set the floor plane below the Dot's representation
             };
 

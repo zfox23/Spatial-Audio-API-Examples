@@ -24,14 +24,15 @@ Sam Gateau
 
 # Connect
 - specify a valid 'JWT' for the HifiSpace you want to inspect.
-- If needed, specify the 'hostURL' to a specific server stack url or just use the default.
 - click the connnect button
 - authorize the browser to use your microphone
 - if successful, the communicator is connected at the position and orientation represented by your Dot, and it just changed color.
 - you are now connected in the HifiSpace and can see and hear the spatialized audio of nearby users.
 - all the other peers in the HifiSpace are displayed at their position and orientation.
 
-The `jwt`, `hosturl` can be specified as parameters of the url.
+By default the app connects to the default 'hostURL', if needed you can specify the 'hostURL' to a specific server stack url passing the value
+as a url paramter:
+The `jwt` and `hostURL` fields required to connect the HiFiCommunicator can be specified as parameters of the url.
 For example:
 `http://localhost:8000/?jwt=abcdef...xyz
 fill the jwt text area with the specified value
