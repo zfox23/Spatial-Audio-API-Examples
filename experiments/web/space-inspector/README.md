@@ -33,7 +33,8 @@ Sam Gateau
 
 The `jwt`, `hosturl` can be specified as parameters of the url.
 For example:
-`http://localhost:8000/?jwt=abcdef...xyz&spawn={x:100} 
+`http://localhost:8000/?jwt=abcdef...xyz
+fill the jwt text area with the specified value
 
 # Navigate
 Camera is moving in concert with the user *dot*, and can be experienced in 2 modes:
