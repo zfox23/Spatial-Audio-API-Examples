@@ -12,16 +12,70 @@
         <div class="controlContainer">
             <div class="controlBar">
                 <button class="triggerButton"></button>
-                <!--<p class="example-description">Click the connect button to start.</p>>
-                <input type="text" class="jwtInput" value="HIFI AUDIO JWT">-->
                 
-                <textarea class="jwtInput">Enter HIFI AUDIO JWT here or as a url parameter '?jwt=...'</textarea>
-                <div class="frameButton frameButton--disabled frame-on"></div>
+                <div class="verticalContainer">
+                    <textarea class="hostInput" rows="1">api.highfidelity.com is the default host, modify here or as a url parameter '?hostURL=api-staging.highfidelity.com'</textarea>
+                    <textarea class="jwtInput">Enter HIFI AUDIO JWT here or as a url parameter '?jwt=...'</textarea>
+                </div>
+
                 <div class="muteButton muteButton--disabled mic-on"></div>
+                <div class="muteSpeakerButton muteSpeakerButton--disabled speaker-on"></div>
+                <div class="frameButton frameButton--disabled frame-on"></div>
             </div>
         </div>
     
+        
         <canvas class="thecanvas" tabindex="1"></canvas>
+        <button class="helpButton"> </button>
+
+        <div class="statusContainer">
+            <div class="statusBar">
+               <p class="statusField">
+                My User
+                <span class="statusLabel">x:</span>
+                    <span class="statusPlayerPosX statusValue"></span>
+                </p>
+                <p class="statusField">
+                    <span class="statusLabel">y:</span>
+                    <span class="statusPlayerPosY statusValue"></span>
+                </p>
+                <p class="statusField">
+                    <span class="statusLabel">z:</span>
+                    <span class="statusPlayerPosZ statusValue"></span>
+                </p>
+
+                
+                <p class="statusField">
+                    <span class="statusLabel">qx:</span>
+                    <span class="statusPlayerQuatX statusValue"></span>
+                </p>
+                <p class="statusField">
+                    <span class="statusLabel">qy:</span>
+                    <span class="statusPlayerQuatY statusValue"></span>
+                </p>
+                <p class="statusField">
+                    <span class="statusLabel">qz:</span>
+                    <span class="statusPlayerQuatZ statusValue"></span>
+                </p>
+                <p class="statusField">
+                    <span class="statusLabel">qw:</span>
+                    <span class="statusPlayerQuatW statusValue"></span>
+                </p>
+
+                <p class="statusField">
+                    <span class="statusLabel">pitch:</span>
+                    <span class="statusPlayerEulerP statusValue"></span>
+                </p>
+                <p class="statusField">
+                    <span class="statusLabel">yaw:</span>
+                    <span class="statusPlayerEulerY statusValue"></span>
+                </p>
+                <p class="statusField">
+                    <span class="statusLabel">roll:</span>
+                    <span class="statusPlayerEulerR statusValue"></span>
+                </p>
+            </div>
+        </div>
 
         <div class="inspectorFrame">
             <p class="inspectorField">
@@ -79,6 +133,32 @@
             <div class="inspectorPlayerID inspectorField"></div>        
         </div>
 
+        <div class="helpFrame">
+            <dl>
+                <dt>Audio</dt>
+                <dd>M: mute/unmute microphone</dd>
+                <dd>N: play/pause speaker</dd>
+
+                <dt>Controls</dt>
+                <dd>W or Arrow Up: move front</dd>
+                <dd>S or Arrow Back: move back</dd>
+                <dd>A or Arrow Left: rotate left</dd>
+                <dd>D or Arrow Right: rotate right</dd>
+                <dd>Q: move left</dd>
+                <dd>E: move right</dd>
+                <dd>Space: move up along space vertical axis</dd>
+                <dd>C: move down along space vertical axis</dd>
+                <dd>Mouse + Right Button: orbit</dd>
+
+                <dt>Interact</dt>
+                <dd>Pick a Dot with Left Click: show/hide the inspector</dd>
+                <dd>Y: show/hide the 3d axis of the space</dd>
+                <dd>G: show/hide the server ghost of my User</dd>
+                <dd>U: show/hide the status bar with my User local data</dd>
+                <dd>H: show / hide Help</dd>
+            </dl>
+        </div>
+
         <!--<script src="three/three.min.js"></script>-->
         <script src="https://threejs.org/build/three.min.js"></script>
 
@@ -89,6 +169,7 @@
             const RAD_TO_DEG = 180 / Math.PI;
             const PLAYER_PICKABLE_LAYER = 1;
             const FRAME_LAYER = 2;
+
             const SPHERE_TESSELLATION = 32;
 
             class Frame {
@@ -253,7 +334,7 @@
                 }
 
                 // Build the Dot representation in the scene
-                constructor (config, col) {
+                constructor (config, col, ghost = false) {
                     if (!Dot.geometryBody) {
                         Dot.initialize();
                     }
@@ -263,19 +344,28 @@
                     this.color =  new THREE.Color((col ? col : '#efefef'));
 
                     // Body
-                    this.materialBody = new THREE.MeshToonMaterial( { color: this.color } );
+                    if (ghost) { // Ghost version is transparent of course
+                        this.materialBody = new THREE.MeshToonMaterial( { color: this.color, transparent: true, opacity: 0.5  } );
+                    } else {
+                        this.materialBody = new THREE.MeshToonMaterial( { color: this.color } );
+                    }
                     let node = new THREE.Mesh( Dot.geometryBody, this.materialBody );
                     node.layers.enable(PLAYER_PICKABLE_LAYER);
                     // When we use Euler with THREE.js, we expect to use the same order convention as Hifi
                     // aka Yaw(Y) Pitch(X) Roll(Z)
                     node.rotation.order = 'YXZ';
+ 
                     scene.add( node );
                     this._node = node;
 
+                    if (ghost) { // Ghost version adjustements
+                       this._node.scale.set(0.99, 0.99, 0.99);
+                       this._node.visible = false; // start hidden
+                    }
+                    
                     // Rings speaker
-                    {                    
-                        this.materialSpeaker = new THREE.MeshToonMaterial( { color: this.color } );
-    
+                    {   
+                        this.materialSpeaker = this.materialBody;
                         let speaker0 = new THREE.Mesh(Dot.speakerGeometries[0], this.materialSpeaker);
                         speaker0.position.z = Dot.speakerOffsets[0];
                         this._speaker = speaker0;
@@ -290,19 +380,23 @@
                         speaker1.add(speaker2);
                     }
 
+                    // stop here if it is the ghost version
+                    if (ghost) {
+                        return;
+                    }
+
                     // Add the frame
                     new Frame(node, config.font);
 
                     // Drop Shadow
-                    let dropShadow = new THREE.Mesh( Dot.geometryShadow, Dot.materialShadow );
-                    dropShadow.position.set(node.position.x, 0.0, node.position.z);
-                    dropShadow.rotation.x = Math.PI/ 2;
-                    dropShadow.position.set(0, config.floorPlaneAltitude + 0.01, 0);
-                    scene.add(dropShadow);
-                    this._dropShadow = dropShadow;
-
-                   // var dotAxis = new THREE.AxesHelper(2.0);
-                  //  node.add(dotAxis);
+                    if (true) {
+                        let dropShadow = new THREE.Mesh( Dot.geometryShadow, Dot.materialShadow );
+                        dropShadow.position.set(node.position.x, 0.0, node.position.z);
+                        dropShadow.rotation.x = Math.PI/ 2;
+                        dropShadow.position.set(0, config.floorPlaneAltitude + 0.01, 0);
+                        scene.add(dropShadow);
+                        this._dropShadow = dropShadow;
+                    }
                 }
 
                 setSpeakerVisible(isVisible) {
@@ -312,14 +406,16 @@
                 setColor(color) {
                     this.color.set(color);
                     this.materialBody.color.set(this.color);
-                    this.materialSpeaker.color.set(this.color);
+                    if (this.materialSpeaker) this.materialSpeaker.color.set(this.color);
                 }
 
                 setTHREEPosition(x, y, z) {
                     this._node.position.set(x, y, z);
                       
                     // leave dropShadow at the floor plane altitude;
-                    this._dropShadow.position.set(x, this._dropShadow.position.y, z);    
+                    if (this._dropShadow) {
+                        this._dropShadow.position.set(x, this._dropShadow.position.y, z);    
+                    }
                 }
 
                 setHifiPosition(x, y, z) {
@@ -383,16 +479,18 @@
             };
 
             class CamController {
-                constructor(camNode, onUpdateDelegate, onPickingDelegate) {
+                constructor(camNode, onUpdateDelegate, onPickingDelegate, onKeyDownDelegate, onKeyUpDelegate) {
                     this.camNode = camNode;
                     this.onUpdateDelegate = onUpdateDelegate;
                     this.onPickingDelegate = onPickingDelegate;
+                    this.onKeyDownDelegate = onKeyDownDelegate;
+                    this.onKeyUpDelegate = onKeyUpDelegate;
  
                     this.orbitPos = new THREE.Vector3(camNode.position.x, camNode.position.y, camNode.position.z);
-                    this.boom = 0;
+                    this.boom = 2;
                     this.yaw = 0;
                     this.orbitYaw = 0;
-                    this.pitch= 0;
+                    this.pitch= -20;
                     this.orbitPitch = 0;
                     this.onMouseDownYaw = 0;
                     this.onMouseDownPitch = 0;
@@ -410,7 +508,6 @@
                
                     this.update();
                 }
-
 
                 onKeyDown(event) {
                      const Tstep = 0.2;
@@ -447,22 +544,23 @@
                             this.rotateYawSpace(-Rstep);
                             break;
                          case 'Shift':
-                            this.shiftDown = true;
-                            this.orbitPitch = this.pitch;
-                             break;                              
+                             this.toggleShift(true);
+                             break;    
+                         default:
+                             if (this.onKeyDownDelegate) {
+                                this.onKeyDownDelegate(event);
+                             }
                      }
-                     this.update();
-
                 }
                 onKeyUp(event) {
                     switch (event.key) {
                          case 'Shift':
-                            this.shiftDown = false;
-                            this.yaw = this.orbitYaw;
-                            this.orbitPitch = 0;
-                            this.update();
-
-                             break;                              
+                            this.toggleShift(false);
+                             break;    
+                         default:
+                             if (this.onKeyUpDelegate) {
+                                this.onKeyUpDelegate(event);
+                             }                              
                      }
                 }                  
 
@@ -483,13 +581,13 @@
                         let yaw = -( ( event.clientX - this.onMouseDownPosition.x ) * 0.5 ) + this.onMouseDownYaw;
                         this.yaw = yaw;
                         this.pitch = -( ( event.clientY - this.onMouseDownPosition.y ) * 0.5 ) + this.onMouseDownPitch;
-                        this.pitch = Math.min( 120, Math.max( -120, this.pitch ) );
+                        this.pitch = Math.min( 180, Math.max( -180, this.pitch ) );
                          
                         this.update();
                     }
                 }
                 onMouseUp(event) {    
-				    this.isMouseDown = false;
+                    this.isMouseDown = false;
                     this.onMouseDownPosition.x = event.clientX - this.onMouseDownPosition.x;
                     this.onMouseDownPosition.y = event.clientY - this.onMouseDownPosition.y;
 
@@ -527,6 +625,19 @@
 
                     this.update();
                 }
+
+                toggleShift(isDown) {
+                    this.shiftDown = isDown;
+                    if (isDown) {
+                        this.orbitPitch = this.pitch;
+                    } else {
+                        this.yaw = this.orbitYaw;
+                        this.orbitPitch = 0;
+                    }
+
+                    this.update();
+                }
+
 
                 update() {
 
@@ -589,7 +700,9 @@
                     // MyPlayer will be assign position and orientation from controller
                     this.controller = new CamController(this.camera,
                                                         (controller) => { this.myPlayer.updateFromController(controller); },
-                                                        (event) => { this.picking(event); });
+                                                        (event) => { this.picking(event); },
+                                                        (event) => { if (this.config.onKeyDownDelegate) this.config.onKeyDownDelegate(event); },
+                                                        (event) => { if (this.config.onKeyUpDelegate) this.config.onKeyUpDelegate(event); });
                     
                     const flourSize = 1000;
                     {
@@ -674,7 +787,7 @@
 
                 onresize() {
                     let newWidth = window.innerWidth;
-                    let newHeight = window.innerHeight;
+                    let newHeight = window.innerHeight - 80;
                     this.config.canvas.width = newWidth;
                     this.config.canvas.height = newHeight;
                     this.renderer.setSize(newWidth, newHeight);
@@ -693,14 +806,14 @@
 
                         let player = null;
                         if (intersects.length) {
-                            // Select the first intersected, find the player
+                            // Select the first intersected, find the player (the ghost version reflecting the server value)
                             player = this.myPlayer;
+
                             let id = intersects[0].object.playerId;
                             if (id) {
                                 player = this.players[id];
-                            }
+                            } 
                             console.log(`Pick: ${player.name} X: ${mousePos.x} Y: ${mousePos.y}`);
-
                         }
 
                         this.config.onPickPlayer(player);
@@ -725,6 +838,12 @@
                         this.camera.layers.disable(FRAME_LAYER);
                     }
                 }
+
+                showGhost(visible) {
+                    if (this.myPlayer && this.myPlayer.myGhost && this.myPlayer.myGhost._node) {
+                        this.myPlayer.myGhost._node.visible = visible;
+                    }
+                }
             }
 
             
@@ -740,7 +859,7 @@
                 }
 
                 static nameFromString(str) {
-                    if (!str) return 'My Player';
+                    if (!str) return 'My User';
                     let ACT = ["Act", "Answer", "Approv", "Break", "Build", "Buy", "Coach", "Color", "Cough", "Creat",	"Cry", "Danc", "Draw", "Drink", "Eat", "Jump", "Laugh", "Listen", "Paint", "Plann", "Play", "Read", "Runn", "Scream", "Shopp", "Shout", "Sing", "Skipp", "Sleep", "Teach", "Turn", "Walk", "Winn"];
                     let SUB = ["Bat", "Ant", "Fish", "Bird", "Bear", "Goat", "Bull", "Ape", "Cat", "Dog", "Crab", "Cow", "Dodo", "Duck", "Eel", "Emu", "Fly", "Fox", "Kiwi", "Lion", "Koala", "Mule", "Moth", "Puma", "Rat", "Seal", "Squid", "Wolf", "Wasp", "Tuna"];
                     let seed =Player.randFromString(str);
@@ -753,8 +872,8 @@
                     return `hsl(${hue},100%,50%)`;
                 }
                 
-                constructor(config, id) {
-                    super(config, Player.colorFromString(id));
+                constructor(config, id, ghost) {
+                    super(config, Player.colorFromString(id), ghost);
                     this.setId(id);
                     this.volume = 0;
                     this.receivedNewValues = 0;
@@ -773,7 +892,7 @@
 
                 updateReceivedData(data) {
                     if (data.volumeDecibels != null) {
-                        this.volume = data.volumeDecibels !== null ? data.volumeDecibels : this.volume;
+                        this.volume = data.volumeDecibels;
                         this.setInputVolume(this.volume);
                     }
                 
@@ -802,11 +921,22 @@
                 constructor(config) {
                     super(config, null);
 
+                    this.myGhost = new Player(config, null, true);
+
                     this.hifiCommunicator = null; // HighFidelityAudio.HiFiCommunicator
-                    this.stream = null; // Input or output stream
+                    this.inputStream = null; // Input stream
+                    this.outputStream = null // output stream
                     this.connectResponse = null;
                     this.isMyPlayer = true;
                 }  
+
+                setId(id) {
+                    super.setId(id);
+                    if (this.myGhost) {
+                        this.myGhost.setId(id);
+                        this.myGhost.name += " (from Mixer)"
+                    }
+                }
 
                 // If the node is connected, its id will be the visit id hash provided by the server
                 getId() {
@@ -815,28 +945,15 @@
 
                 // overiting the updateReceiveData for MyPLayer to specifically check the feedback from the server for my state
                 updateReceivedData(data) {
+                    // transfer the updaes received from server to my ghost version
+                    this.myGhost.updateReceivedData(data);
+
+
                     if (data.volumeDecibels != null) {
-                        this.volume = data.volumeDecibels !== null ? data.volumeDecibels : this.volume;
+                        this.volume = data.volumeDecibels;
                         this.setInputVolume(this.volume);
                     }
-                    /*
-                    if (data.position !== null) {
-                        //this.setHifiPosition(data.position.x, data.position.y, data.position.z);
-                    }
-                    if (data.orientationQuat !== null) {
-                        this.setHifiOrientationQuat(
-                            data.orientationQuat.x,
-                            data.orientationQuat.y,
-                            data.orientationQuat.z,
-                            data.orientationQuat.w);
-                    }
-                    if (data.orientationEuler !== null) {
-                        this.setHifiOrientationEuler(
-                            data.orientationEuler.pitchDegrees,
-                            data.orientationEuler.yawDegrees,
-                            data.orientationEuler.rollDegrees);
-                    }
-                    */
+                    
                     this.receivedNewValues++;
                 }
 
@@ -885,19 +1002,18 @@
                 async setupSending() {
                     // Get the audio media stream associated with the user's default audio input device.
                     try {
-                        this.stream = await navigator.mediaDevices.getUserMedia({ audio: HighFidelityAudio.getBestAudioConstraints(), video: false });
-                        this.getVolumeFromInputStream(this.stream);
+                        this.inputStream = await navigator.mediaDevices.getUserMedia({ audio: HighFidelityAudio.getBestAudioConstraints(), video: false });
                     } catch (e) {
                         return;
                     }
-                    await this.hifiCommunicator.setInputAudioMediaStream(this.stream);
+                    await this.hifiCommunicator.setInputAudioMediaStream(this.inputStream);
                 }
                 async setupReceiving() {
                     if (this.hifiCommunicator) {
-                        let outputAudioElem = document.createElement('audio');
-                        outputAudioElem.srcObject = this.hifiCommunicator.getOutputAudioMediaStream();
+                        this.outputStream  = document.createElement('audio');
+                        this.outputStream.srcObject = this.hifiCommunicator.getOutputAudioMediaStream();
                         // We must call `play()` here because certain browsers won't autoplay this stream as we expect.
-                        outputAudioElem.play();
+                        this.outputStream.play();
                         return true;
                     }
                     return false;
@@ -908,7 +1024,8 @@
                     // clear state only valid while connected
                     // at this point 'isConnected()'' return false
                     this.connectResponse = null;
-                    this.stream = null;               
+                    this.inputStream = null;               
+                    this.outputStream = null;               
                     if (this.hifiCommunicator) {
                         let disconnectStatus = await this.hifiCommunicator.disconnectFromHiFiAudioAPIServer();
                         this.hifiCommunicator = null;
@@ -920,36 +1037,25 @@
                     return (this.connectResponse ? this.connectResponse.success : false);
                 }
 
-                // Mute the input stream
+                // Mute the input stream from the HifiCommunicator
                 async setMute(muted) {
                     if (this.hifiCommunicator) {
                         return await this.hifiCommunicator.setInputAudioMuted(muted);
                     }
                     return false;
                 }
-
-                getVolumeFromInputStream(stream) {
-                    let audioContext = new AudioContext();
-                    let analyser = audioContext.createAnalyser();
-                    let micSource = audioContext.createMediaStreamSource(stream);
-                    let processor = audioContext.createScriptProcessor(2048, 1, 1);
-                    analyser.smoothingTimeConstant = 0.8;
-                    analyser.fftSize = 1024;
-                    micSource.connect(analyser);
-                    analyser.connect(processor);
-                    processor.connect(audioContext.destination);
-                    /*processor.onaudioprocess = () => {
-                        let array = new Uint8Array(analyser.frequencyBinCount);
-                        analyser.getByteFrequencyData(array);
-                        let avgVal = 0;
-                        for (var i = 0; i < array.length; i++) {
-                            avgVal += array[i];
+                
+                // Mute the output stream
+                setMuteSpeaker(muted) {
+                    if (this.outputStream) {
+                        if (muted) {
+                            this.outputStream.pause();
+                        } else {
+                            this.outputStream.play();
                         }
-                        // MyPlayer's volume
-                        this.volume = 1.6 * (avgVal / (array.length ? array.length : 1.0)) - 60.0;
-                        this.receivedNewValues++;
-                        this.setInputVolume(this.volume);
-                    }*/
+                        return true;
+                    }
+                    return false;
                 }
 
                 // Update myLayer position and orientation from the controller
@@ -969,6 +1075,7 @@
 
                     // hide "speaker' in first person
                     this.setSpeakerVisible(controller.boom > 0);
+                    this.myGhost.setSpeakerVisible(controller.boom > 0);
 
                     this.updateCommunicatorData();
                 }
@@ -1059,6 +1166,56 @@
                 }
             }
 
+            class Status {
+                constructor(statusFrame, statusPlayer) {
+                   this.statusFrame = statusFrame;
+                   
+                   this.posX = statusFrame.querySelector(".statusPlayerPosX");
+                   this.posY = statusFrame.querySelector(".statusPlayerPosY");
+                   this.posZ = statusFrame.querySelector(".statusPlayerPosZ");
+                   
+                   this.quatX = statusFrame.querySelector(".statusPlayerQuatX");
+                   this.quatY = statusFrame.querySelector(".statusPlayerQuatY");
+                   this.quatZ = statusFrame.querySelector(".statusPlayerQuatZ");
+                   this.quatW = statusFrame.querySelector(".statusPlayerQuatW");
+
+                   this.eulerP = statusFrame.querySelector(".statusPlayerEulerP");
+                   this.eulerY = statusFrame.querySelector(".statusPlayerEulerY");
+                   this.eulerR = statusFrame.querySelector(".statusPlayerEulerR");
+                   this.volume = statusFrame.querySelector(".statusPlayerVolume");
+
+                   this.statusPlayer = statusPlayer;
+                }
+                
+                update() {
+                    if (this.statusPlayer) {
+                        let player = this.statusPlayer;
+
+                        if (player.receivedNewValues > 0) {
+
+                            let pos = player.getHifiPosition();
+                            let quat = player.getHifiOrientationQuat();
+                            let euler = player.getHifiOrientationEuler();
+
+                            this.posX.innerText = pos.x.toFixed(1);
+                            this.posY.innerText = pos.y.toFixed(1);
+                            this.posZ.innerText = pos.z.toFixed(1);
+                            
+                            this.quatX.innerText = quat.x.toFixed(3);
+                            this.quatY.innerText = quat.y.toFixed(3);
+                            this.quatZ.innerText = quat.z.toFixed(3);
+                            this.quatW.innerText = quat.w.toFixed(3);
+
+                            this.eulerP.innerText = euler.pitchDegrees.toFixed();
+                            this.eulerY.innerText = euler.yawDegrees.toFixed();
+                            this.eulerR.innerText = euler.rollDegrees.toFixed();
+
+                            player.receivedNewValues = 0;
+                        }
+                    }
+                }
+            }
+
             class Inspector {
                 constructor(inspectorFrame) {
                    this.inspectorFrame = inspectorFrame;
@@ -1094,13 +1251,25 @@
                         this.color.style.backgroundColor = player.color.getStyle();
                         this.name.innerText = player.name;
                         this.id.innerText = player.id;
+
+                        if (player.isMyPlayer) {
+                            this.name.innerText += " (from Mixer)";
+                        }
+                        // tag the player  asreceived  new values to force an update
+                        player.receivedNewValues++;
                     }
                 }
 
                 update() {
                     if (this.inspectedPlayer) {
                         let player = this.inspectedPlayer;
+                        if (player.isMyPlayer) {
+                            player = this.inspectedPlayer.myGhost;
+                        }
+                        
                         if (player.receivedNewValues > 0) {
+
+
                             let pos = player.getHifiPosition();
                             let quat = player.getHifiOrientationQuat();
                             let euler = player.getHifiOrientationEuler();
@@ -1108,7 +1277,6 @@
                             this.posX.innerText = pos.x.toFixed(1);
                             this.posY.innerText = pos.y.toFixed(1);
                             this.posZ.innerText = pos.z.toFixed(1);
-
                             
                             this.quatX.innerText = quat.x.toFixed(3);
                             this.quatY.innerText = quat.y.toFixed(3);
@@ -1130,7 +1298,7 @@
             } 
 
             class App {
-                constructor(config, canvas, triggerButton, jwtInput, muteButton, frameButton, inspectorFrame) {
+                constructor(config, canvas, triggerButton, jwtInput, hostInput, muteButton, muteSpeakerButton, frameButton, inspectorFrame, statusFrame, helpButton, helpFrame) {
                     this.config = config;
                     this.space = null;
 
@@ -1138,36 +1306,60 @@
                     this.connectMyPlayerBinded = this.connectMyPlayer.bind(this);
                     this.disconnectMyPlayerBinded = this.disconnectMyPlayer.bind(this);
 
+                    // Add app delegates to config 
                     this.config.onPickPlayer = this.inspectPlayer.bind(this);
                     this.config.onAnimate = this.onAnimate.bind(this);
-
-                    this.setupUI(canvas, triggerButton, jwtInput, muteButton, frameButton);
-                    this.inspector = new Inspector(inspectorFrame);
-
-                    this.space.animate();
-                }
-                // Connect the UI elements that trigger the example and and display information
-                setupUI(canvas, triggerButton, jwtInput, muteButton, frameButton) {
+                    this.config.onKeyDownDelegate = this.onKeyDownDelegate.bind(this);
+                    this.config.onKeyUpDelegate = this.onKeyUpDelegate.bind(this);
+               
+                    // Canvas and HifiSpace
                     this.canvas = canvas;
                     this.config.canvas = canvas;
                     this.space = new HIFISpace(this.config);
-                    this.triggerButton = triggerButton;
-                    this.jwtInput = jwtInput;
-                    this.muteButton = muteButton;
-                    this.frameButton = frameButton;
+                    window.addEventListener('resize', () => { this.space.onresize(); }, false);
+                    window.addEventListener('load', () => { this.space.onresize(); }, false);
 
+                    // Connection button & fields
+                    this.triggerButton = triggerButton;
+                    this.triggerButton.addEventListener("click", this.connectMyPlayerBinded, false);
+                    this.triggerButton.innerHTML = `Click to Connect`;
+                    
+                    this.jwtInput = jwtInput;
+                    this.hostInput = hostInput;
                     if (this.config.JWT.length) {
                         this.jwtInput.value = this.config.JWT;
                     }
+                    if (this.config.HostURL && this.config.HostURL.length) {
+                        this.hostInput.value = this.config.HostURL;
+                    }
 
-                    // Configure the events
-                    this.triggerButton.addEventListener("click", this.connectMyPlayerBinded, false);
-                    this.triggerButton.innerHTML = `Click to Connect`;
+                    // Audio control buttons
+                    this.muteButton = muteButton;
                     this.muteButton.addEventListener("click", this.onMute.bind(this), false);
+
+                    this.muteSpeakerButton = muteSpeakerButton;
+                    this.muteSpeakerButton.addEventListener("click", this.onMuteSpeaker.bind(this), false);
+
+                    // 3d axis button
+                    this.frameButton = frameButton;
                     this.frameButton.addEventListener("click", this.onFrame.bind(this), false);
-                    window.addEventListener('resize', () => { this.space.onresize(); }, false);
-                    window.addEventListener('load', () => { this.space.onresize(); }, false);
-                    // Setup the canvas to receive control events
+
+                    // Help button and panel
+                    this.helpButton = helpButton;
+                    this.helpButton.addEventListener("click", this.onHelp.bind(this), false);
+                    this.helpFrame = helpFrame;
+                    this.helpFrame.addEventListener("click", this.onHelp.bind(this), false);
+                    this.helpVisible = false; // help frame starts hidden
+
+                    // Setup the Inspector
+                    this.inspector = new Inspector(inspectorFrame);
+
+                    // Setup the status bar
+                    this.status = new Status(statusFrame, this.space.myPlayer);
+                    this.statusVisible = false;
+
+                    // Ready to rock and roll...
+                    this.space.animate();
                 }
 
                 async connectMyPlayer() {
@@ -1178,6 +1370,14 @@
                     this.jwtInput.classList.add("jwtInput--disabled");
                     this.config.JWT = this.jwtInput.value;
 
+                    this.hostInput.disabled = true;
+                    this.hostInput.classList.add("hostInput--disabled");
+                    if (this.hostInput.value != this.hostInput.defaultValue) {
+                        this.config.HostURL = this.hostInput.value;
+                    } else {
+                        this.config.HostURL = null;
+                    }
+
                     if (await this.space.connect()) {
                         // Reset trigger button status
                         this.triggerButton.disabled = false;
@@ -1185,12 +1385,16 @@
                         this.triggerButton.removeEventListener('click', this.connectMyPlayerBinded, false);
                         this.triggerButton.addEventListener('click', this.disconnectMyPlayerBinded, false);
                         this.muteButton.classList.remove("muteButton--disabled");
+                        this.muteSpeakerButton.classList.remove("muteSpeakerButton--disabled");
                     } else {
                         this.triggerButton.disabled = false;
                         this.triggerButton.innerHTML = `Reconnect`;
 
                         this.jwtInput.disabled = false;
                         this.jwtInput.classList.remove("jwtInput--disabled");
+
+                        this.hostInput.disabled = false;
+                        this.hostInput.classList.remove("hostInput--disabled");
                     }
                 }
 
@@ -1207,12 +1411,21 @@
                     this.muteButton.classList.remove("mic-off");
                     this.muteButton.classList.add("mic-on");
                     this.muteButton.classList.add("muteButton--disabled");
+                    // Reset speaker button
+                    this.muteSpeakerButton.classList.remove("speaker-off");
+                    this.muteSpeakerButton.classList.add("speaker-on");
+                    this.muteSpeakerButton.classList.add("muteSpeakerButton--disabled");
+
                     // Reset inpector
                     this.inspectPlayer();
 
                     // Reset jwtInput
                     this.jwtInput.disabled = false;
                     this.jwtInput.classList.remove("jwtInput--disabled");
+                    
+                    // Reset hostInput
+                    this.hostInput.disabled = false;
+                    this.hostInput.classList.remove("hostInput--disabled");
                 }            
 
                 onMute() {
@@ -1229,6 +1442,20 @@
                     }
                 }
 
+                onMuteSpeaker() {
+                    // Set mute state when the user clicks on the speaker icon
+                    let isMuted = this.muteSpeakerButton.classList.contains("speaker-off");
+                    if (this.space.myPlayer && this.space.myPlayer.setMuteSpeaker(!isMuted)) {
+                        if (isMuted) {
+                            this.muteSpeakerButton.classList.remove("speaker-off");
+                            this.muteSpeakerButton.classList.add("speaker-on");
+                        } else {
+                            this.muteSpeakerButton.classList.remove("speaker-on");
+                            this.muteSpeakerButton.classList.add("speaker-off");
+                        }
+                    }
+                }
+
                 onFrame() {
                     // Set frame state when the user clicks on the frame icon
                     let showFrame = this.frameButton.classList.contains("frame-off");
@@ -1241,6 +1468,22 @@
                         this.frameButton.classList.remove("frame-on");
                         this.frameButton.classList.add("frame-off");
                     }
+                }
+
+                onGhost() {
+                    let flag = (this.showGhost !== null ? this.showGhost : false); // initialize hidden
+                    this.showGhost = !flag;
+                    this.space.showGhost(this.showGhost);
+                }
+
+                onHelp() {
+                    this.helpVisible = !this.helpVisible;
+                    this.helpFrame.style.display = this.helpVisible ? "block" : "none";
+                }
+
+                onStatus() {
+                    this.statusVisible = !this.statusVisible;
+                    this.status.statusFrame.style.display = this.statusVisible ? "block" : "none";
                 }
 
                 // Key Controls Bindings
@@ -1262,6 +1505,34 @@
 
                 onAnimate() {
                     this.inspector.update();
+                    this.status.update();
+                }
+
+
+                onKeyDownDelegate(event) {
+                    switch (event.key) {
+                         case 'h':
+                            this.onHelp();
+                            brak;
+                         case 'm':
+                            this.onMute();
+                            break;
+                         case 'n':
+                            this.onMuteSpeaker();
+                            break;
+                         case 'y':
+                            this.onFrame();
+                            break;
+                         case 'g':
+                            this.onGhost();
+                            break;
+                         case 'u':
+                            this.onStatus();
+                            break;                            
+                    }
+                }
+                onKeyUpDelegate(event) {
+
                 }
             }
 
@@ -1282,7 +1553,7 @@
 
             // Try to get the HostURL from the url parameters
             const hostURLParam = urlParams.get('hostURL');
-            // if no JWT is provided, default to the public jwtInput message ....
+            // if no JWT is provided, default to the public hostInput message ....
             let hostURL = null;
             if (hostURLParam) {
                 hostURL = hostURLParam;
@@ -1302,11 +1573,16 @@
                 let canvasElement = document.querySelector('.thecanvas');
                 let triggerButton = document.querySelector(`.triggerButton`);
                 let jwtInput = document.querySelector(".jwtInput");
+                let hostInput = document.querySelector(".hostInput");
+                let muteSpeakerButton = document.querySelector(".muteSpeakerButton");
                 let muteButton = document.querySelector(".muteButton");
                 let frameButton = document.querySelector(".frameButton");
                 let inspectorFrame = document.querySelector(".inspectorFrame");
+                let statusFrame = document.querySelector(".statusContainer");
+                let helpButton = document.querySelector(".helpButton");
+                let helpFrame = document.querySelector(".helpFrame");
 
-                let app = new App(config, canvasElement, triggerButton, jwtInput, muteButton, frameButton, inspectorFrame);
+                let app = new App(config, canvasElement, triggerButton, jwtInput, hostInput, muteButton, muteSpeakerButton, frameButton, inspectorFrame, statusFrame, helpButton, helpFrame);
             });
         </script>
     </body>

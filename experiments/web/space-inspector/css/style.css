@@ -4,6 +4,7 @@ body {
     margin: 0; 
     padding: 0;
     font-family: 'Montserrat', sans-serif;
+    overflow-y: hidden; //vertical
 }
 
 .triggerButton {
@@ -15,16 +16,6 @@ body {
     height: 60px;
 }
 
-.console {
-    z-index: 1; 
-    background-color: #efefef; 
-    padding: 10px;
-    width: 190px; 
-    font-family: monospace; 
-    font-size: 12px;
-    float: left;
-}
-
 .example-description { 
     text-align: center;
     color: white;
@@ -34,24 +25,40 @@ body {
     word-wrap: break-word;
     text-overflow: ellipsis;
 }
+
+.verticalContainer {
+    display:inline-block;
+    height:100%;
+    vertical-align:middle;
+    width: calc(100vw - 514px);
+}
+
 .jwtInput { 
     resize: none;
     background-color: #000000; 
     color: white;
-    width: calc(100vw - 414px);
+    width: 100%;
+    margin: 0px;
+    padding: 0px;
+    height: calc(60px - 20px);
+    display:inline-block;
 }
 .jwtInput--disabled {
     color: rgb(147, 170, 149);
     opacity: 0.5;
 }
-
-.console-log {
-    margin: 2px; 
-    border-radius: 5px; 
-    padding: 5px; 
-    border: 2px solid transparent; 
-    display: block; 
-    width: fit-content;
+.hostInput { 
+    resize: none;
+    background-color: #000000; 
+    color: white;
+    width: 100%;
+    margin: 0px;
+    padding: 0px;
+    display:inline-block;
+}
+.hostInput--disabled {
+    color: rgb(147, 170, 149);
+    opacity: 0.5;
 }
 
 .controlContainer {
@@ -80,6 +87,50 @@ body {
     top: 80px;
 }
 
+
+.statusContainer {
+    display: none;
+    position: absolute;
+    top:calc(100vh - 30px);
+    left: 0;
+    height: 30px;
+}
+
+.statusBar {
+    background-color: rgba(0,0,0,0.5);
+    width: 100vw;
+}
+
+.statusBar > * {
+    display: inline-block;
+    position: relative;
+    vertical-align: bottom;
+    margin: 0px;
+    height: 30px;
+    color: white;
+}
+
+.statusField {
+    width: fit-content;
+    vertical-align: middle;
+    display: inline-block;
+}
+
+.statusLabel { 
+    display: inline-block;
+    text-align: right;
+    width: 50px;
+    font-size: 12px;
+}
+
+.statusValue {
+    display: inline-block;
+    text-align: left;
+    width: 50px;
+    font-size: 12px;
+}
+
+
 .muteButton {
     float: right;
     width: 40px;
@@ -100,6 +151,28 @@ body {
 
 .mic-off {
     background-image: url("../images/mic_off.svg");
+}
+
+.muteSpeakerButton {
+    float: right;
+    width: 40px;
+    height: 40px;
+    margin: 20px;
+    background-size: contain;
+    cursor: pointer;
+}
+
+.muteSpeakerButton--disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.speaker-on {
+    background-image: url("../images/white-headphones.svg");
+}
+
+.speaker-off {
+    background-image: url("../images/red-headphones-with-x.svg");
 }
 
 .frameButton {
@@ -176,4 +249,37 @@ body {
     display: inline-block;
     text-align: left;
     width: fit-content;
+}
+
+
+
+.helpButton {
+    background-color: #FF000000; 
+    background-image: url("../images/help-idle.png");
+    background-size: contain;
+    position: fixed;
+    top: 100px;
+    left: calc(100vw - 60px);
+    width: 40px;
+    height: 40px;
+    border: 0px;
+    outline:0px;
+    cursor: pointer;
+}
+
+.helpButton:hover {
+    background-image: url("../images/help-hover.png");
+}
+
+.helpFrame {
+    position: fixed;
+    background-color: rgba(26, 29, 34, 0.5);
+    color: white;
+    padding: 10px;
+    top: 90px;
+    left: calc(100vw - 530px);
+    width: 500px;
+    text-align: left;
+    height: fit-content;
+    display: none;
 }
