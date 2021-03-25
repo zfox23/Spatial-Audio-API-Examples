@@ -7,8 +7,6 @@
   "scripts": {
     "start": "node ./index.js",
     "generate": "node ./generateJSON.js",
-    "build": "tsc ../../src/index.ts",
-    "clean": "find ../../src -name '*.js*' -delete",
     "bots": "node ./integration-test.js",
     "bandwidth": "node --unhandled-rejections=strict -- ./testBandwidth.js"
   },

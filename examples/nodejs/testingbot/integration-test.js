@@ -25,24 +25,28 @@ function describe(label, propertyName) {
 const argv = yargs
       .option('jwt', {
           alias: 'j',
-          describe: describe('Credential... TBD', 'jwt'),
+          describe: describe('JSON web token for connecting to a space.', 'jwt'),
           type: 'array'
       })
       .option('app_id', {
-          describe: describe('Application Identifier from credentials, which can be specified along with space_id in lieu of jwt', 'app_id'),
+          describe: describe('Application Identifier from credentials, which can be specified along with space_id in lieu of JWT', 'app_id'),
           type: 'array'
       })
       .option('space_id', {
-          describe: describe('Application Identifier from credentials, which can be specified along with app_id in lieu of jwt', 'space_id'),
+          describe: describe('Application Identifier from credentials, which can be specified along with app_id in lieu of JWT', 'space_id'),
+          type: 'array'
+      })
+      .options('name', {
+          describe: describe('Bot user ID for identification and JWT creation. If this option is not specified, then the user ID of the bot will be "Bot #", where # will be replaced by the bot index number', 'name'),
           type: 'array'
       })
       .option('secret', {
-          describe: describe('Secret for jwt. If neither jwt nor secret is specified, the generated jwt will be unsigned', 'secret'),
+          describe: describe('Secret for JWT. If neither JWT nor secret is specified, the generated JWT will be unsigned', 'secret'),
           type: 'array'
       })
       .option('stackName', {
           alias: 's',
-          describe: describe('Just for internal use with a development stack', 'stackName'),
+          describe: describe('Parameter for internal use with a development stack', 'stackName'),
           type: 'array'
       })
       .option('audio', {
@@ -69,20 +73,16 @@ const argv = yargs
       })
       .options('gain', {
           alias: 'g',
-          describe: describe('Gain at the mixer for this input', 'gain'),
+          describe: describe('Server-side gain for this input', 'gain'),
           type: 'array'
       })
       .options('volume', {
           alias: 'v',
-          describe: describe('Relative sample volume, 0 to 1.0, but you probably want closer to 0.01 if you are trying to tone down the source', 'volume'),
+          describe: describe('Relative sample volume between 0 to 1.0. To reduce the volume of the source, choose a value such as 0.01.', 'volume'),
           type: 'array'
       })
       .options('serverShouldSendUserData', {
-          describe: describe('Must be true if the bot is to subscribe to user data, or false to tell the server to not bother sending any', 'serverShouldSendUserData'),
-          type: 'array'
-      })
-      .options('name', {
-          describe: describe('Bot user-id for identification and jwt creation, in which # will be replaced by the bot index number', 'name'),
+          describe: describe('Must be true if the bot is to subscribe to user data, or false to tell the server to not send any user data', 'serverShouldSendUserData'),
           type: 'array'
       })
       .options('runtimeSeconds', {

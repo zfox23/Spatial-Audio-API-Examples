@@ -1,5 +1,5 @@
-# HiFi Bots - JavaScript
-The Bots code lets us add bots/npcs to a HiFi instance. Bots can be given specific properties and can be programmed to carry out actions.
+# Testing Bots - JavaScript
+The Testing Bots code lets us add bots/npcs to a Space. Bots can be given specific properties and can be programmed to carry out actions.
 
 Bots can:
  - be controlled from scripts that you write;
@@ -13,29 +13,25 @@ Bots can:
     - We're using `NodeJS v14.15`.
 
 # Usage
-1. Clone this repository using `git clone --recursive <repo URL>`.
-    - If you have already cloned this repository but don't have the submodules locally, you can `cd` into the this repo's directory, then run `git submodule update --init --recursive`
-
-2. Run `npm install` to install or update the script dependencies. (NOTE: You may receive errors regarding `node-gyp`. This is an OPTIONAL module and you can ignore those errors.)
-
-3. Change directory into the examples NodeJS folder: `cd example/nodejs`.
-
-4. Run `npm install` again to install the bot requirements.
-5. Run `npm run build` to prepare the files and imports needed to use bots.
-6. Run `npm run bots -- --help` for help.
-7. Run `npm run bots`, supplying any command-line arguments as desired.
+1. Clone this repository using `git clone <repo URL>`.
+2. Within this directory, run `npm install` to install or update the script dependencies. (NOTE: You may receive errors regarding `node-gyp`. This is an OPTIONAL module and you can ignore those errors.)
+3. Run `npm run bots -- --help` for help.
+4. Run `npm run bots`, supplying any command-line arguments as desired.
 
 # Command Line Arguments
 The following command line arguments can be used to define bots or access help:
- - `--key`/`-k`:  **\<array\>**  Credential... TBD  MANDATORY - NO DEFAULT.
+ - `--jwt`/`-j`:  **\<array\>**  [JSON Web Token](https://www.highfidelity.com/api/guides/misc/getAJWT) for connecting to a space. Default: none
+ - `--app_id`:  **\<array\>**  Application Identifier from credentials, which can be specified along with `space_id` in lieu of JWT
+ - `--space_id`:  **\<array\>**  Application Identifier from credentials, which can be specified along with app_id in lieu of JWT
+ - `--name`: **\<array\>**  Bot user ID for identification and JWT creation. If this option is not specified, then the user ID of the bot will be "Bot #", where # will be replaced by the bot index number
+ - `--secret`:  **\<array\>**  Secret for JWT. If neither JWT nor secret is specified, the generated JWT will be unsigned
  - `--audio`/`-a`:  **\<array\>**  Audio frequency, filename, URL, or empty string. Default: ""
- - `--gain`/`-g`:  **\<array\>**  Gain at the mixer for this input. Default: 1
- - `--volume`/`-v`:  **\<array\>**  Relative sample volume, 0 to 1.0, but you probably want closer to 0.01 if you are trying to tone down the source. Default: 1
+ - `--gain`/`-g`:  **\<array\>**  Server-side gain for this input. Default: 1
+ - `--volume`/`-v`:  **\<array\>**  Relative sample volume between 0 to 1.0. To reduce the volume of the source, choose a value such as 0.01.
  - `--x`:  **\<array\>**  Initial x position. Default: 0
  - `--y`:  **\<array\>**  Initial y position. Default: 0
  - `--z`:  **\<array\>**  Initial z position. Default: 0
- - `--motor`/`-m`:  **\<array\>**  Motor (motion) implementation, or empty string. See section on movement below for more details. Default: RandomBoundedMovement
- - `--name`:  **\<array\>**  Speakeasy-specific display name, in which # will be replaced by the bot index number. Default: "Bot #"
+ - `--motor`/`-m`:  **\<array\>**  Motor (motion) implementation, or empty string. See section on movement below for more details. Default: "RandomBoundedMovement"
  - `--color`:  **\<array\>**  Speakeasy-specific color, as a hex string. Default:  "#FF0055"
  - `--configuration/`/`-c`:  **\<string\>**  A relative path to a .json that has an array of individual bot configs, where the property names of each bot config are the above 
  option names. If one or more command line values are supplied, they override the configs.
