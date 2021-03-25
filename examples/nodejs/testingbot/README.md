@@ -36,7 +36,7 @@ The following command line arguments can be used to define bots or access help:
  - `--configuration/`/`-c`:  **\<string\>**  A relative path to a .json that has an array of individual bot configs, where the property names of each bot config are the above 
  option names. If one or more command line values are supplied, they override the configs.
  - `--numBots`/`-n`:  **\<number\>**  Number of bots to spawn. Default: length of array in configuration, else 1
- - `--help`/-`h`:  View help documentation.
+ - `--help`/-`h`:  View help documentation, which includes more advanced arguments for profiling and bot startup control
 
 Each property that takes an array on the command line will apply each element of that array to an individual bot. So, if 3 bots are created with 3 volumes specified, `--numBots 3 --volume 1 0.8 0.5`, the first bot will have a volume of 1, the second will have a volume of 0.8, and the third will have a volume of 0.5.
 
