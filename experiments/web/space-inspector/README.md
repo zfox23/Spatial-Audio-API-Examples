@@ -17,9 +17,9 @@ Sam Gateau
 
 # Run the web app
  Spin a local http server on your computer (ex: `python -m http.server`) and navigate to the index.html page of the app.
-- You appear as a white *dot* at the origin of the 3d space. The *dot* is a sphere of radius 0.4 meter.
+- You appear as a white *dot* at the origin of the 3d space. The *dot* is a sphere of radius 0.2 meter.
 - The floor grid helps appreciate the size of the space, the finer grid is 1x1 meter. 
-- The camera is is 3rd person looking down at your *dot*
+- The camera is in 3rd person mode looking down at your *dot*
 - You can already move in the space while disconnected
 
 # Connect
@@ -33,9 +33,7 @@ Sam Gateau
 By default the app connects to the default 'hostURL', if needed you can specify the 'hostURL' to a specific server stack url passing the value
 as a url paramter:
 The `jwt` and `hostURL` fields required to connect the HiFiCommunicator can be specified as parameters of the url.
-For example:
-`http://localhost:8000/?jwt=abcdef...xyz
-fill the jwt text area with the specified value
+For example, reloading the app at the url: `http://localhost:8000/?jwt=abcdef...xyz` will fill the jwt text area with the specified value.
 
 # Navigate
 Camera is moving in concert with the user *dot*, and can be experienced in 2 modes:
@@ -48,13 +46,16 @@ Camera is moving in concert with the user *dot*, and can be experienced in 2 mod
 - Q/E keys control straffing left or right aka the X coordinate of the user position
 - Space/C keys control translating up or down aka the Y coordinate of the user position
 - A/D or Arrow Left/Right control rotation left or right aka the Yaw angle of the user orientation
-- Mouse move with right button down controls the orietnation of the camera and the user
--- In 1st person: Both Camera and User orietnation are the same
--- In 3rd person: Only the Yaw of the User is affected
--- Pressing Shift
-
+- Mouse move with right button down controls the orientation of the camera and the user
+    - In 1st person: Both Camera and User orietnation are the same
+    - In 3rd person: Only the Yaw of the User is affected
+    
 # Inspect
-- Select any Player with a mouse left click to display the inspector view and inspect their attributes as updated by the server.
-- The color and the name of the users is assigned randomly
+Select any Player with a mouse left click to display the inspector view and inspect their attributes as updated by the server.
+The color and the name of the users is assigned randomly
+
+My own user data as created locally can be observed from the status bar. 
+U key show/hide the status bar.
+
 
 

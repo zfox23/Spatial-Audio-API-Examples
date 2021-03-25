@@ -4,7 +4,7 @@ body {
     margin: 0; 
     padding: 0;
     font-family: 'Montserrat', sans-serif;
-    overflow-y: hidden; //vertical
+    overflow-y: hidden;
 }
 
 .triggerButton {
@@ -19,7 +19,7 @@ body {
 .example-description { 
     text-align: center;
     color: white;
-    background-color: 	#69a1b8; 
+    background-color: #69a1b8; 
     
     width: calc(100vw - 414px);
     word-wrap: break-word;
@@ -94,20 +94,25 @@ body {
     top:calc(100vh - 30px);
     left: 0;
     height: 30px;
+    width: 100%;
+
 }
 
 .statusBar {
     background-color: rgba(0,0,0,0.5);
-    width: 100vw;
+    width: 100%;
 }
 
 .statusBar > * {
-    display: inline-block;
+    display:flex;
+    justify-content: space-between;
     position: relative;
     vertical-align: bottom;
     margin: 0px;
     height: 30px;
     color: white;
+    width: 100%;
+
 }
 
 .statusField {
@@ -115,11 +120,17 @@ body {
     vertical-align: middle;
     display: inline-block;
 }
+.statusTitle { 
+    display: inline-block;
+    text-align: right;
+    width: fit-content;
+    font-size: 12px;
+}
 
 .statusLabel { 
     display: inline-block;
     text-align: right;
-    width: 50px;
+    width: 80px;
     font-size: 12px;
 }
 

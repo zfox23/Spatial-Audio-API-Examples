@@ -30,8 +30,10 @@
 
         <div class="statusContainer">
             <div class="statusBar">
-               <p class="statusField">
-                My User
+                <p class="statusField">
+                    <span class="statusTitle">User state LOCAL</span>
+                </p>
+                <p class="statusField">
                 <span class="statusLabel">x:</span>
                     <span class="statusPlayerPosX statusValue"></span>
                 </p>
@@ -169,6 +171,9 @@
             const RAD_TO_DEG = 180 / Math.PI;
             const PLAYER_PICKABLE_LAYER = 1;
             const FRAME_LAYER = 2;
+
+
+            const BODY_RADIUS = 0.2; // THis size control the radius of the Dot
 
             const SPHERE_TESSELLATION = 32;
 
@@ -314,7 +319,6 @@
                 static materialShadow = null;
 
                 static initialize() {
-                    const BODY_RADIUS = 0.4;
                     this.geometryBody = new THREE.SphereGeometry(BODY_RADIUS, SPHERE_TESSELLATION, SPHERE_TESSELLATION);
                 
                     this.speakerGeometries = [
@@ -545,7 +549,10 @@
                             break;
                          case 'Shift':
                              this.toggleShift(true);
-                             break;    
+                             break;
+                         case 'Control':
+                             this.toggleControl(true);
+                             break;     
                          default:
                              if (this.onKeyDownDelegate) {
                                 this.onKeyDownDelegate(event);
@@ -556,7 +563,10 @@
                     switch (event.key) {
                          case 'Shift':
                             this.toggleShift(false);
-                             break;    
+                             break; 
+                         case 'Control':
+                             this.toggleControl(false);
+                             break;                         
                          default:
                              if (this.onKeyUpDelegate) {
                                 this.onKeyUpDelegate(event);
@@ -580,9 +590,15 @@
                     if (event.which && (event.which === 2 || event.which === 3)) {
                         let yaw = -( ( event.clientX - this.onMouseDownPosition.x ) * 0.5 ) + this.onMouseDownYaw;
                         this.yaw = yaw;
-                        this.pitch = -( ( event.clientY - this.onMouseDownPosition.y ) * 0.5 ) + this.onMouseDownPitch;
-                        this.pitch = Math.min( 180, Math.max( -180, this.pitch ) );
-                         
+
+                        if (this.controlDown) {
+                            this.orbitPitch = -( ( event.clientY - this.onMouseDownPosition.y ) * 0.5 ) + this.onMouseDownPitch;
+                            this.orbitPitch = Math.min( 180, Math.max( -180, this.orbitPitch ) );
+                        } else {
+                            this.pitch = -( ( event.clientY - this.onMouseDownPosition.y ) * 0.5 ) + this.onMouseDownPitch;
+                            this.pitch = Math.min( 180, Math.max( -180, this.pitch ) );
+                        }
+
                         this.update();
                     }
                 }
@@ -638,17 +654,28 @@
                     this.update();
                 }
 
+                toggleControl(isDown) {
+                    this.controlDown = isDown;
+                    if (isDown) {
+                    } else {
+                    }
+
+                    this.update();
+                }
 
                 update() {
 
                     // orbit yaw is same as yaw except is shift is down
-                    if (!this.shiftDown) {
+                    if (!this.controlDown && !this.shiftDown) {
                         this.orbitYaw = this.yaw;
                     }
 
                     // Keep the orbit pitch flat excetpt if in 1st persion  or shift is down
                     const threshold = 1.5;
-                    this.orbitPitch = 0;
+                    if (!this.controlDown) {
+                        this.orbitPitch = 0;
+                    }
+
                     if (this.shiftDown || this.boom < threshold) {
                         this.orbitPitch = this.pitch;
                     }
@@ -943,11 +970,12 @@
                     return this.connectResponse && this.connectResponse.success ? this.connectResponse.audionetInitResponse.visit_id_hash : null;
                 }
 
-                // overiting the updateReceiveData for MyPLayer to specifically check the feedback from the server for my state
+                // overiting the updateReceiveData for MyPlayer to specifically check the feedback from the server for my state
                 updateReceivedData(data) {
                     // transfer the updaes received from server to my ghost version
                     this.myGhost.updateReceivedData(data);
 
+                    // My player position and orientation are reflecting the LOCAL state
 
                     if (data.volumeDecibels != null) {
                         this.volume = data.volumeDecibels;
@@ -1562,7 +1590,7 @@
             let config = {
                 JWT: jwt,
                 HostURL: hostURL,
-                floorPlaneAltitude: -0.41 // set the floor plane below the Dot's representation
+                floorPlaneAltitude: -(BODY_RADIUS + 0.01) // set the floor plane below the Dot's representation + 1cm
             };
 
             // Create the font:
