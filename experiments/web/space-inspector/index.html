@@ -508,7 +508,7 @@
                     document.addEventListener( 'mousemove', (e) => { this.onMouseMove(e); }, false );
                     document.addEventListener( 'mousedown', (e) => { this.onMouseDown(e); }, false );
                     document.addEventListener( 'mouseup', (e) => { this.onMouseUp(e); }, false );
-                    document.addEventListener( 'mousewheel', (e) => { this.onMouseWheel(e); }, false );    
+                    document.addEventListener( 'wheel', (e) => { this.onMouseWheel(e); }, false );    
                
                     this.update();
                 }
@@ -646,6 +646,8 @@
                     this.shiftDown = isDown;
                     if (isDown) {
                     } else {
+                        // when shift ends, then camera yaw returns to orbitYaw
+                        this.yaw = this.orbitYaw;
                     }
 
                     this.update();
