@@ -588,7 +588,7 @@
                     }
 
                     if (event.which && (event.which === 2 || event.which === 3)) {
-                        let yaw = -( ( event.clientX - this.onMouseDownPosition.x ) * 0.5 ) + this.onMouseDownYaw;
+                        let yaw = -( ( event.clientX - this.onMouseDownPosition.x ) * 0.5 ) + this.onMouseDownYaw;                       
                         this.yaw = yaw;
 
                         if (this.controlDown) {
@@ -645,10 +645,7 @@
                 toggleShift(isDown) {
                     this.shiftDown = isDown;
                     if (isDown) {
-                        this.orbitPitch = this.pitch;
                     } else {
-                        this.yaw = this.orbitYaw;
-                        this.orbitPitch = 0;
                     }
 
                     this.update();
@@ -666,18 +663,17 @@
                 update() {
 
                     // orbit yaw is same as yaw except is shift is down
-                    if (!this.controlDown && !this.shiftDown) {
+                    if (!this.shiftDown) {
                         this.orbitYaw = this.yaw;
                     }
 
-                    // Keep the orbit pitch flat excetpt if in 1st persion  or shift is down
+                    // Keep the orbit pitch flat excetpt if in 1st person or control is down
                     const threshold = 1.5;
                     if (!this.controlDown) {
                         this.orbitPitch = 0;
-                    }
-
-                    if (this.shiftDown || this.boom < threshold) {
-                        this.orbitPitch = this.pitch;
+                        if (this.boom < threshold) {
+                            this.orbitPitch = this.pitch;
+                        }
                     }
                     
                     // update camera
