@@ -40,6 +40,8 @@ Corresponds to the "Get a JWT" guide at [highfidelity.com/api/guides/misc/getAJW
 ## Plain HTML/JS Experiments
 ### [Video Chat - TokBox](./experiments/web/videochat-tokbox)
 Experience High Fidelity Spatial Audio with 2D video chat powered by TokBox.
+### [Space Inspector](./experiments/web/space-inspector)
+Inspect and debug in 3D any Hifi Audio Space. powered by THREE.js
 
 ## NodeJS Experiments
 ### [3D Dots](./experiments/web/dots3d)

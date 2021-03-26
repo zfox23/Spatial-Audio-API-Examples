@@ -140,7 +140,7 @@
                 <dt>Audio</dt>
                 <dd>M: mute/unmute microphone</dd>
                 <dd>N: play/pause speaker</dd>
-
+                <dd><br></dd>
                 <dt>Controls</dt>
                 <dd>W or Arrow Up: move front</dd>
                 <dd>S or Arrow Back: move back</dd>
@@ -150,14 +150,22 @@
                 <dd>E: move right</dd>
                 <dd>Space: move up along space vertical axis</dd>
                 <dd>C: move down along space vertical axis</dd>
-                <dd>Mouse + Right Button: orbit</dd>
 
+                <dd> <dl> <dt>Mouse Move + Right Button: orbit</dt>
+                <dd> + Shift: yaw the camera, not the user</dd>
+                <dd> + Control: pitch the user, not the camera</dd>
+                </dd></dl>
+                <dd> <dl> <dt>Mouse Move + Right Button + Alt: pan vertically</dt>
+                    <dd> + Control: pan horizontally</dd>
+                </dd></dl>
+                
                 <dt>Interact</dt>
                 <dd>Pick a Dot with Left Click: show/hide the inspector</dd>
                 <dd>Y: show/hide the 3d axis of the space</dd>
                 <dd>G: show/hide the server ghost of my User</dd>
                 <dd>U: show/hide the status bar with my User local data</dd>
                 <dd>H: show/hide Help</dd>
+                <dd><br></dd>
             </dl>
         </div>
 
@@ -579,26 +587,47 @@
                     this.onMouseDownPosition.y = event.clientY;
 
                     this.onMouseDownYaw = this.yaw;
-                    this.onMouseDownPitch = this.pitch;
+                    if (this.controlDown) {
+                        this.onMouseDownPitch = this.orbitPitch;
+                    } else {
+                        this.onMouseDownPitch = this.pitch;
+                    }
                 }
                 onMouseMove(event) {      
-                    if (event.which && event.which === 1) {
-                        this.onPickingDelegate(event, false);
-                    }
+                    // need a button down
+                    const LEFT_BUTTON_MASK = 1;
+                    const RIGHT_BUTTON_MASK = 2;
+                    const WHEEL_BUTTON_MASK = 4;
 
-                    if (event.which && (event.which === 2 || event.which === 3)) {
-                        let yaw = -( ( event.clientX - this.onMouseDownPosition.x ) * 0.5 ) + this.onMouseDownYaw;                       
-                        this.yaw = yaw;
+                    
+                    // Right button down => MOVE camera and user
+                    if (event.which && (event.buttons & RIGHT_BUTTON_MASK)) {
+                        if (event.altKey) { // alt key down => PAN
+                            let netWidth = window.innerWidth;
+                            let netHeight = window.innerHeight - 80;
 
-                        if (this.controlDown) {
-                            this.orbitPitch = -( ( event.clientY - this.onMouseDownPosition.y ) * 0.5 ) + this.onMouseDownPitch;
-                            this.orbitPitch = Math.min( 180, Math.max( -180, this.orbitPitch ) );
-                        } else {
-                            this.pitch = -( ( event.clientY - this.onMouseDownPosition.y ) * 0.5 ) + this.onMouseDownPitch;
-                            this.pitch = Math.min( 180, Math.max( -180, this.pitch ) );
-                        }
+                            let xDelta = -( ( event.clientX - this.onMouseDownPosition.x ) * 1.0 ) / netWidth;
+                            let yDelta = +( ( event.clientY - this.onMouseDownPosition.y ) * 1.0 ) / netHeight;
 
-                        this.update();
+                            if (this.controlDown) { // Control down => pan horizontally
+                                this.translateYawSpace(xDelta, 0, -yDelta);
+                            } else {
+                                this.translateYawSpace(0, yDelta, 0);
+                            }
+                            
+                        } else { // No alt key down => ORBIT
+                            let yaw = -( ( event.clientX - this.onMouseDownPosition.x ) * 0.5 ) + this.onMouseDownYaw;                       
+                            this.yaw = yaw;
+
+                            if (this.controlDown) {
+                                this.orbitPitch = -( ( event.clientY - this.onMouseDownPosition.y ) * 0.5 ) + this.onMouseDownPitch;
+                                this.orbitPitch = Math.min( 180, Math.max( -180, this.orbitPitch ) );
+                            } else {
+                                this.pitch = -( ( event.clientY - this.onMouseDownPosition.y ) * 0.5 ) + this.onMouseDownPitch;
+                                this.pitch = Math.min( 180, Math.max( -180, this.pitch ) );
+                            }
+                            this.update();
+                        }                        
                     }
                 }
                 onMouseUp(event) {    
