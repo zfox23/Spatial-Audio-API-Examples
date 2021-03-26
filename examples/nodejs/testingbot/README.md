@@ -1,5 +1,5 @@
-# Testing Bots Example
-The Testing Bots code lets you add bots/npcs to a space. Bots can be given specific properties and can be programmed to carry out actions.
+# Testing Bot Example
+The Testing Bot code lets you add bots/npcs to a space. Bots can be given specific properties and can be programmed to carry out actions.
 
 Bots can:
  - be controlled from scripts that you write;
