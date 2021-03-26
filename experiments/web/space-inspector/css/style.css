@@ -179,11 +179,11 @@ body {
 }
 
 .speaker-on {
-    background-image: url("../images/white-headphones.svg");
+    background-image: url("../images/headphones_on.svg");
 }
 
 .speaker-off {
-    background-image: url("../images/red-headphones-with-x.svg");
+    background-image: url("../images/headphones_off.svg");
 }
 
 .frameButton {
