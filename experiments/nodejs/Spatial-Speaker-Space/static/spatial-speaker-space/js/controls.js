@@ -140,7 +140,7 @@ function handleGestureOnCanvasMove(event) {
         lastDistanceBetweenRightClickEvents = newDistance;
 
         if (myUserData) {
-            updateMyPositionAndOrientation(undefined, myUserData.orientationEuler.yawDegrees + deltaDistance * RIGHT_CLICK_ROTATION_SENSITIVITY);
+            updateMyPositionAndOrientation(undefined, myUserData.orientationEuler.yawDegrees - deltaDistance * RIGHT_CLICK_ROTATION_SENSITIVITY);
         }
     }
 }

@@ -30,9 +30,7 @@
         }
 
         if (!myUserData.orientationEuler) {
-            // For proper aural representation.
-            // TODO: Talk to Sam or Luis and figure out why this (and the other related code) is necessary.
-            myUserData.orientationEuler = new HighFidelityAudio.OrientationEuler3D({"pitchDegrees": 180});
+            myUserData.orientationEuler = new HighFidelityAudio.OrientationEuler3D();
         }
 
         if (typeof (targetYawOrientationDegrees) === "number") {
@@ -42,7 +40,7 @@
 
 
             if (!IS_SPEAKER) {
-                canvasRotationDegrees = -myUserData.orientationEuler.yawDegrees;
+                canvasRotationDegrees = myUserData.orientationEuler.yawDegrees + 180;
             }
         }
 
@@ -52,7 +50,7 @@
             Object.assign(dataToTransmit["position"], myUserData.position);
 
             if (IS_SPEAKER) {
-                canvasRotationDegrees = Math.atan2(myUserData.position.x, -myUserData.position.z) * 180 / Math.PI;
+                canvasRotationDegrees = Math.atan2(-myUserData.position.x, -myUserData.position.z) * 180 / Math.PI;
             }
         }
 
@@ -91,7 +89,7 @@
                     let occupied = allLocalUserData.find((element) => { return element.position && Math.abs(element.position.x - currentPotentialPosition.x) < CLOSE_ENOUGH_M && Math.abs(element.position.z - currentPotentialPosition.z) < CLOSE_ENOUGH_M; });
 
                     if (!occupied) {
-                        let orientationYawRadians = Math.atan2(-currentPotentialPosition.x, -currentPotentialPosition.z);
+                        let orientationYawRadians = Math.atan2(currentPotentialPosition.x, currentPotentialPosition.z);
                         let orientationYawDegrees = orientationYawRadians * 180 / Math.PI;
                         orientationYawDegrees %= 360;
                         let computedYawOrientationDegrees = Math.round((orientationYawDegrees + Number.EPSILON) * 100) / 100;
@@ -226,9 +224,6 @@
 
                     if (typeof (currentDataFromServer.orientationEuler.yawDegrees) === "number") {
                         currentLocalUserData.orientationEuler.yawDegrees = currentDataFromServer.orientationEuler.yawDegrees;
-                        // For proper visual representation.
-                        // TODO: Talk to Sam or Luis and figure out why this (and the other related code) is necessary.
-                        currentLocalUserData.orientationEuler.yawDegrees -= 180;
                         currentLocalUserData.orientationEuler.yawDegrees %= 360;
                         mustUpdateCanvas = true;
                     }
@@ -265,10 +260,7 @@
                 }
             } else {
                 console.log(`Received data about new user from Spatial Audio API: ${JSON.stringify(currentDataFromServer)}`)
-                // For proper visual representation.
-                // TODO: Talk to Sam or Luis and figure out why this (and the other related code) is necessary.
                 if (currentDataFromServer.orientationEuler) {
-                    currentDataFromServer.orientationEuler.yawDegrees -= 180;
                     currentDataFromServer.orientationEuler.yawDegrees %= 360;
                 }
                 allLocalUserData.push(new SpeakerSpaceUserData({

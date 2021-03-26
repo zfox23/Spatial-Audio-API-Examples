@@ -40,7 +40,7 @@ function drawAvatarBase({ isMine, userData, avatarRadiusM, positionInCanvasSpace
     }
 
     ctx.translate(positionInCanvasSpace.x, positionInCanvasSpace.y);
-    let amtToRotate = ((userData.orientationEuler && userData.orientationEuler.yawDegrees) || 0) * Math.PI / 180;
+    let amtToRotate = ((userData.orientationEuler && userData.orientationEuler.yawDegrees * -1 + 180) || 0) * Math.PI / 180;
     ctx.rotate(amtToRotate);
 
     if (currentlyHoveringOverVisitIDHash === userData.visitIDHash) {
@@ -122,7 +122,7 @@ function drawAvatar({ userData }) {
     ctx.translate(-mainCanvas.width / 2, -mainCanvas.height / 2);
 
     let positionInCanvasSpace = {
-        "x": Math.round(linearScale(userData.position.x, -VIRTUAL_SPACE_DIMENSIONS_PER_SIDE_M / 2, VIRTUAL_SPACE_DIMENSIONS_PER_SIDE_M / 2, 0, mainCanvas.width)),
+        "x": Math.round(linearScale(userData.position.x, -VIRTUAL_SPACE_DIMENSIONS_PER_SIDE_M / 2, VIRTUAL_SPACE_DIMENSIONS_PER_SIDE_M / 2, mainCanvas.width, 0)),
         // We "reverse" the last two terms here because "-thisAxis" in canvas space is "+thisAxis" in mixer space.
         "y": Math.round(linearScale(userData.position.z, -VIRTUAL_SPACE_DIMENSIONS_PER_SIDE_M / 2, VIRTUAL_SPACE_DIMENSIONS_PER_SIDE_M / 2, mainCanvas.height, 0))
     };
