@@ -91,7 +91,7 @@ This bot will move back and forth along the x axis between -15 and 15.
 "motor": {"type": "RandomBoundedMovement", "x": [-15, 15]}
 ~~~~
 
-This bot will move randomly within a box that stretches from -15 to 15 on the x axis and from -5 to 15 on the y axis.
+This bot will move randomly within a box that stretches from -15 to 15 on the x axis and from -15 to 15 on the y axis.
 
 ~~~~
 "motor": {"type": "RandomBoundedMovement", "x": [-15, 15], "y": [-15, 15]}
