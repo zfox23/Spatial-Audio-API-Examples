@@ -1,5 +1,5 @@
-# Testing Bots - JavaScript
-The Testing Bots code lets us add bots/npcs to a Space. Bots can be given specific properties and can be programmed to carry out actions.
+# Testing Bots Example
+The Testing Bots code lets you add bots/npcs to a space. Bots can be given specific properties and can be programmed to carry out actions.
 
 Bots can:
  - be controlled from scripts that you write;
@@ -7,6 +7,12 @@ Bots can:
  - use pre-packaged behavior specified on the command line;
  - use a .json, but override certain behaviors on the command line.
 
+# Authors
+- Zach Fox
+- Howard Stearns
+- Rebecca Stankus
+- Roxanne Skelly
+- Sabrina Shanman
 
 # Prerequisites
 - [NodeJS](https://nodejs.org/en/)
