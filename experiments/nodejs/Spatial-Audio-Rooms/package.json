@@ -1,0 +1,37 @@
+{
+  "name": "spatial-audio-rooms",
+  "version": "0.1.0",
+  "description": "A complex demo application for High Fidelity's Spatial Audio API which integrates many of the API's features as well as Twilio Video Conferencing.",
+  "main": "src/index.ts",
+  "scripts": {
+    "client": "webpack",
+    "client:watch": "webpack",
+    "server": "nodemon ./src/server/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/highfidelity/Spatial-Audio-API-Examples.git"
+  },
+  "author": "Zach Fox",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/highfidelity/Spatial-Audio-API-Examples/issues"
+  },
+  "homepage": "https://github.com/highfidelity/Spatial-Audio-API-Examples#readme",
+  "dependencies": {
+    "express": "^4.17.1",
+    "jose": "^3.11.1"
+  },
+  "devDependencies": {
+    "@types/html-webpack-plugin": "^3.2.5",
+    "ejs": "^3.1.6",
+    "hifi-spatial-audio": "^0.7.2-1",
+    "html-webpack-plugin": "^5.3.1",
+    "nodemon": "^2.0.7",
+    "ts-loader": "^8.1.0",
+    "typescript": "^4.2.3",
+    "webpack": "^5.28.0",
+    "webpack-cli": "^4.6.0",
+    "webpack-dev-middleware": "^4.1.0"
+  }
+}
