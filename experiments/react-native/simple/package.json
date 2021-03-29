@@ -10,7 +10,7 @@
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
   },
   "dependencies": {
-    "hifi-spatial-audio": "^0.7.2-1",
+    "hifi-spatial-audio": "file:../../../../hifi-spatial-audio-js/hifi-spatial-audio-0.7.2-1.tgz",
     "react": "17.0.1",
     "react-native": "0.64.0",
     "react-native-webrtc": "^1.89.1"
