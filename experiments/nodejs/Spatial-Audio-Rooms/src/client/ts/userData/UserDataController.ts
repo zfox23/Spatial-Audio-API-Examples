@@ -1,9 +1,10 @@
 import { OrientationEuler3D, Point3D } from "hifi-spatial-audio";
-import { userDataController, connectionController, uiController } from "..";
-import { ROOM_SEATING_RADIUS_M, CLOSE_ENOUGH_M } from "../constants/constants";
+import { userDataController, connectionController, uiController, roomController } from "..";
+import { CLOSE_ENOUGH_M } from "../constants/constants";
 
 export interface UserData {
     visitIDHash?: string;
+    currentRoomName?: string;
     displayName?: string;
     colorHex?: string;
     position?: Point3D;
@@ -26,6 +27,7 @@ class MyAvatar {
     constructor() {
         this.myUserData = {
             visitIDHash: undefined,
+            currentRoomName: roomController.lobby.name,
             displayName: undefined,
             colorHex: undefined,
             position: undefined,
@@ -38,20 +40,28 @@ class MyAvatar {
         };
     }
 
-    positionSelfInCrowd() {
-        let allLocalUserData = userDataController.allOtherUserData;
+    positionSelfInRoom() {
+        let currentRoom = roomController.rooms.find((room) => {
+            return room.name === this.myUserData.currentRoomName;
+        });
 
-        console.log(`${allLocalUserData.length} other user(s) present, excluding ourselves.`);
+        if (!currentRoom) {
+            console.error(`Couldn't determine current room!`);
+        }
+
+        let allOtherUserData = userDataController.allOtherUserData;
+
+        console.log(`${allOtherUserData.length} other user(s) present.`);
 
         let foundOpenSpot = false;
-        let currentCircleDivisions = 1;
+        let numSeatsInRoom = 2;
         let positionsChecked = Array<Point3D>();
         while (!foundOpenSpot) {
-            for (let theta = 0; theta < 2 * Math.PI; theta += ((2 * Math.PI) / currentCircleDivisions)) {
+            for (let theta = 0; theta < 2 * Math.PI; theta += ((2 * Math.PI) / numSeatsInRoom)) {
                 let currentPotentialPosition = {
-                    "x": (ROOM_SEATING_RADIUS_M) * Math.cos(theta),
+                    "x": currentRoom.seatingRadius * Math.cos(theta) + currentRoom.center.x,
                     "y": 0,
-                    "z": (ROOM_SEATING_RADIUS_M) * Math.sin(theta)
+                    "z": currentRoom.seatingRadius * Math.sin(theta) + currentRoom.center.z
                 };
 
                 currentPotentialPosition.x = Math.round((currentPotentialPosition.x + Number.EPSILON) * 100) / 100;
@@ -61,23 +71,24 @@ class MyAvatar {
                     continue;
                 }
 
-                let occupied = allLocalUserData.find((element) => { return element.position && Math.abs(element.position.x - currentPotentialPosition.x) < CLOSE_ENOUGH_M && Math.abs(element.position.z - currentPotentialPosition.z) < CLOSE_ENOUGH_M; });
+                let occupied = allOtherUserData.find((element) => { return element.position && Math.abs(element.position.x - currentPotentialPosition.x) < CLOSE_ENOUGH_M && Math.abs(element.position.z - currentPotentialPosition.z) < CLOSE_ENOUGH_M; });
 
                 if (!occupied) {
                     let orientationYawRadians = Math.atan2(currentPotentialPosition.x, currentPotentialPosition.z);
                     let orientationYawDegrees = orientationYawRadians * 180 / Math.PI;
                     orientationYawDegrees %= 360;
                     let computedYawOrientationDegrees = Math.round((orientationYawDegrees + Number.EPSILON) * 100) / 100;
-                    console.log(`Found an open spot at ${JSON.stringify(currentPotentialPosition)} with yaw orientation ${JSON.stringify(computedYawOrientationDegrees)} degrees.`);
+                    console.log(`Found an open spot in room ${currentRoom.name} at ${JSON.stringify(currentPotentialPosition)} with yaw orientation ${JSON.stringify(computedYawOrientationDegrees)} degrees.`);
                     this.updateMyPositionAndOrientation(currentPotentialPosition, computedYawOrientationDegrees);
                     foundOpenSpot = true;
+                    currentRoom.updateSeats(numSeatsInRoom);
                     break;
                 } else {
                     positionsChecked.push(currentPotentialPosition);
                 }
             }
 
-            currentCircleDivisions *= 2;
+            numSeatsInRoom *= 2;
         }
     }
 

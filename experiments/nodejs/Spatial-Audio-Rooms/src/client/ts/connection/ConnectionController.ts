@@ -123,7 +123,7 @@ export class ConnectionController {
             let currentVisitIDHash = currentDataFromServer.hashedVisitID;
             let isMine = false;
             let currentLocalUserData = userDataController.allOtherUserData.find((element) => { return element.visitIDHash === currentVisitIDHash; })
-            if (!currentLocalUserData) {
+            if (!currentLocalUserData && currentVisitIDHash === userDataController.myAvatar.myUserData.visitIDHash) {
                 currentLocalUserData = myUserData;
                 isMine = true;
             }
@@ -193,7 +193,7 @@ export class ConnectionController {
             }
 
             if (allAlone || mustReposition) {
-                userDataController.myAvatar.positionSelfInCrowd();
+                userDataController.myAvatar.positionSelfInRoom();
             }
         }
 

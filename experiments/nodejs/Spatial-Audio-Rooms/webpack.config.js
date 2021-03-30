@@ -46,7 +46,7 @@ module.exports = {
                     {
                         loader: 'file-loader',
                         options: {
-                            esModule: false // Required so that calling `require()` on a file actually works.
+                            name: '[name].[ext]',
                         },
                     },
                 ],

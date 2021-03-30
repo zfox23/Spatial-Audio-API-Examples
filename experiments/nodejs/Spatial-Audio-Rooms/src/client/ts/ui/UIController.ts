@@ -1,12 +1,12 @@
 import '../../css/controls.scss';
 import { AudionetInitResponse, ConnectionController } from '../connection/ConnectionController';
-import { userDataController } from '../index';
 import { CanvasRenderer } from './CanvasRenderer';
 
 export class UIController {
     playOverlay: HTMLElement;
     canvasRenderer: CanvasRenderer;
     bottomControlsContainer: HTMLElement;
+    toggleInputMuteButton: HTMLButtonElement;
     participantsListContainer: HTMLElement;
 
     connectionController: ConnectionController;
@@ -54,6 +54,10 @@ export class UIController {
         this.bottomControlsContainer = document.createElement("div");
         this.bottomControlsContainer.classList.add("bottomControlsContainer");
         document.body.appendChild(this.bottomControlsContainer);
+
+        this.toggleInputMuteButton = document.createElement("button");
+        this.toggleInputMuteButton.classList.add("toggleInputMuteButton");
+        this.bottomControlsContainer.appendChild(this.toggleInputMuteButton);
 
         this.participantsListContainer = document.createElement("div");
         this.participantsListContainer.classList.add("participantsListContainer", "displayNone");
