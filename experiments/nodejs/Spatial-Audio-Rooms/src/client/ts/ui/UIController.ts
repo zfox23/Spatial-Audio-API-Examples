@@ -7,6 +7,7 @@ export class UIController {
     canvasRenderer: CanvasRenderer;
     bottomControlsContainer: HTMLElement;
     toggleInputMuteButton: HTMLButtonElement;
+    toggleOutputMuteButton: HTMLButtonElement;
     participantsListContainer: HTMLElement;
 
     connectionController: ConnectionController;
@@ -58,6 +59,10 @@ export class UIController {
         this.toggleInputMuteButton = document.createElement("button");
         this.toggleInputMuteButton.classList.add("toggleInputMuteButton");
         this.bottomControlsContainer.appendChild(this.toggleInputMuteButton);
+
+        this.toggleOutputMuteButton = document.createElement("button");
+        this.toggleOutputMuteButton.classList.add("toggleOutputMuteButton");
+        this.bottomControlsContainer.appendChild(this.toggleOutputMuteButton);
 
         this.participantsListContainer = document.createElement("div");
         this.participantsListContainer.classList.add("participantsListContainer", "displayNone");

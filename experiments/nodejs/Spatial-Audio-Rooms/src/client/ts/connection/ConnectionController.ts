@@ -1,5 +1,5 @@
 import { HiFiCommunicator, HiFiLogger, HiFiLogLevel, getBestAudioConstraints, HiFiUserDataStreamingScopes, ReceivedHiFiAudioAPIData, UserDataSubscription, AvailableUserDataSubscriptionComponents, OrientationEuler3D, Point3D } from 'hifi-spatial-audio';
-import { userDataController } from '..';
+import { roomController, userDataController } from '..';
 import { AVDevicesController } from '../avDevices/AVDevicesController';
 import { CLOSE_ENOUGH_M } from '../constants/constants';
 import { Utilities } from '../utilities/Utilities';
@@ -174,6 +174,10 @@ export class ConnectionController {
                     orientationEuler: currentDataFromServer.orientationEuler,
                     volumeDecibels: currentDataFromServer.volumeDecibels,
                 });
+
+                let myCurrentRoom = roomController.getRoomFromName(userDataController.myAvatar.myUserData.currentRoomName);
+                myCurrentRoom.updateSeats(myCurrentRoom.findOpenSpot().numSeatsInRoom);
+
                 //recomputeSpeakerAndAudienceCount();
             }
         }
@@ -217,6 +221,10 @@ export class ConnectionController {
                 return localUserData.visitIDHash !== disconnectedUserData.hashedVisitID;
             });
         }
+
+        let myCurrentRoom = roomController.getRoomFromName(userDataController.myAvatar.myUserData.currentRoomName);
+        myCurrentRoom.updateSeats(myCurrentRoom.findOpenSpot().numSeatsInRoom);
+
         //recomputeSpeakerAndAudienceCount();
     }
 }

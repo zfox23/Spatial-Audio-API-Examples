@@ -53,43 +53,10 @@ class MyAvatar {
 
         console.log(`${allOtherUserData.length} other user(s) present.`);
 
-        let foundOpenSpot = false;
-        let numSeatsInRoom = 2;
-        let positionsChecked = Array<Point3D>();
-        while (!foundOpenSpot) {
-            for (let theta = 0; theta < 2 * Math.PI; theta += ((2 * Math.PI) / numSeatsInRoom)) {
-                let currentPotentialPosition = {
-                    "x": currentRoom.seatingRadius * Math.cos(theta) + currentRoom.center.x,
-                    "y": 0,
-                    "z": currentRoom.seatingRadius * Math.sin(theta) + currentRoom.center.z
-                };
-
-                currentPotentialPosition.x = Math.round((currentPotentialPosition.x + Number.EPSILON) * 100) / 100;
-                currentPotentialPosition.z = Math.round((currentPotentialPosition.z + Number.EPSILON) * 100) / 100;
-
-                if (positionsChecked.find((position) => { return currentPotentialPosition.x === position.x && currentPotentialPosition.z === position.z; })) {
-                    continue;
-                }
-
-                let occupied = allOtherUserData.find((element) => { return element.position && Math.abs(element.position.x - currentPotentialPosition.x) < CLOSE_ENOUGH_M && Math.abs(element.position.z - currentPotentialPosition.z) < CLOSE_ENOUGH_M; });
-
-                if (!occupied) {
-                    let orientationYawRadians = Math.atan2(currentPotentialPosition.x - currentRoom.center.x, currentPotentialPosition.z - currentRoom.center.z);
-                    let orientationYawDegrees = orientationYawRadians * 180 / Math.PI;
-                    orientationYawDegrees %= 360;
-                    let computedYawOrientationDegrees = Math.round((orientationYawDegrees + Number.EPSILON) * 100) / 100;
-                    console.log(`Found an open spot in room ${currentRoom.name} at ${JSON.stringify(currentPotentialPosition)} with yaw orientation ${JSON.stringify(computedYawOrientationDegrees)} degrees.`);
-                    this.updateMyPositionAndOrientation(currentPotentialPosition, computedYawOrientationDegrees);
-                    foundOpenSpot = true;
-                    currentRoom.updateSeats(numSeatsInRoom * 2);
-                    break;
-                } else {
-                    positionsChecked.push(currentPotentialPosition);
-                }
-            }
-
-            numSeatsInRoom *= 2;
-        }
+        let { openPosition, yawOrientation, numSeatsInRoom } = currentRoom.findOpenSpot();
+        console.log(`Found an open spot in room ${currentRoom.name} at ${JSON.stringify(openPosition)} with yaw orientation ${JSON.stringify(yawOrientation)} degrees.`);
+        currentRoom.updateSeats(numSeatsInRoom);
+        this.updateMyPositionAndOrientation(openPosition, yawOrientation);
     }
 
     updateMyPositionAndOrientation(targetPosition?: Point3D, targetYawOrientationDegrees?: number) {
