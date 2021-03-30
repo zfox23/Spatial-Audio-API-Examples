@@ -50,3 +50,4 @@ async function generate() {
     fs.writeFile(filename, JSON.stringify(bots, null, 4), console.log);
 }
 generate();
+

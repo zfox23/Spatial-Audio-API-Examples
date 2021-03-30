@@ -37,3 +37,4 @@ module.exports = function preciseInterval(func, interval) {
     let timeout = setTimeout(wrapper);
     return {clear: () => clear(timeout)};
 };
+

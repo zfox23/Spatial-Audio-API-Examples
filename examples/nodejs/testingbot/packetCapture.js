@@ -51,3 +51,4 @@ class PacketCapture { // Counts bytes using libcap. See https://www.npmjs.com/pa
     }
 }
 module.exports = PacketCapture;
+
