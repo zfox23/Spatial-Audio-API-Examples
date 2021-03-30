@@ -1,6 +1,10 @@
-const { Point3D, HiFiAudioAPIData, HiFiCommunicator } = require("hifi-spatial-audio");
-const { MediaStream } = require('wrtc');
-const RTCAudioSourceSineWave = require('./rtcaudiosourcesinewave'); // Copied w/o change from wrtc examples.
+const {
+    Point3D,
+    HiFiAudioAPIData,
+    HiFiCommunicator
+} = require("hifi-spatial-audio");
+const { MediaStream } = require("wrtc");
+const RTCAudioSourceSineWave = require("./rtcaudiosourcesinewave"); // Copied w/o change from wrtc examples.
 
 const HIFI_AUDIO_API_KEY = "abc123";
 

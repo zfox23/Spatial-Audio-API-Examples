@@ -1,12 +1,21 @@
-'use strict';
-const { MediaStream, nonstandard: { RTCAudioSink } } = require('wrtc');
-const { HiFiAudioAPIData, Point3D, OrientationEuler3D, HiFiCommunicator, HiFiConstants } = require("hifi-spatial-audio");
-const { default: SignJWT } = require('jose/jwt/sign');
-const { default: UnsecuredJWT } = require('jose/jwt/unsecured');
-const crypto = require('crypto');
+"use strict";
+const {
+    MediaStream,
+    nonstandard: { RTCAudioSink }
+} = require("wrtc");
+const {
+    HiFiAudioAPIData,
+    Point3D,
+    OrientationEuler3D,
+    HiFiCommunicator,
+    HiFiConstants
+} = require("hifi-spatial-audio");
+const { default: SignJWT } = require("jose/jwt/sign");
+const { default: UnsecuredJWT } = require("jose/jwt/unsecured");
+const crypto = require("crypto");
 
-const SineSource = require('./sineSource');
-const MediaSource = require('./mediaSource');
+const SineSource = require("./sineSource");
+const MediaSource = require("./mediaSource");
 
 const minimumTransmissionPeriodAllowedByAPI = 100; // Should we expose this from the API as an exported constant?
 

@@ -1,6 +1,6 @@
 'use strict';
 
-const {degreesBetween, project} = require('./vectors');
+const { degreesBetween, project } = require("./vectors");
 const { HiFiConstants } = require("hifi-spatial-audio");
 
 class Motor {

@@ -1,7 +1,15 @@
 'use strict';
 
-const Motor = require('./motor');
-const {makeRandom, isWithin, add, subtract, multiply, normalize, degreesBetween} = require('./vectors');
+const Motor = require("./motor");
+const {
+    makeRandom,
+    isWithin,
+    add,
+    subtract,
+    multiply,
+    normalize,
+    degreesBetween
+} = require("./vectors");
 const msPerSecond = 1000;
 
 class RandomBoundedMovement extends Motor {

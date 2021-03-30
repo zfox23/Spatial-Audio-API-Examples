@@ -1,7 +1,7 @@
 'use strict';
 
-const fs = require('fs');
-const {randomNumberBetween} = require('./vectors');
+const fs = require("fs");
+const { randomNumberBetween } = require("./vectors");
 
 const nMaleAudio = 31;
 const nFemaleAudio = 31;

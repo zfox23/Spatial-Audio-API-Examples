@@ -78,4 +78,20 @@ function degreesBetween(a, b, n) {
     return radiansToDegrees(angleBetween(a, b, n));
 }
     
-module.exports = {randomNumberBetween, makeRandom, isWithin, length, add, subtract, multiply, divide, dot, cross, normalize, project, angleBetween, degreesBetween, radiansToDegrees};
+module.exports = {
+    randomNumberBetween,
+    makeRandom,
+    isWithin,
+    length,
+    add,
+    subtract,
+    multiply,
+    divide,
+    dot,
+    cross,
+    normalize,
+    project,
+    angleBetween,
+    degreesBetween,
+    radiansToDegrees
+};

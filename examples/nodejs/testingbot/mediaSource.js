@@ -1,12 +1,14 @@
-'use strict';
+"use strict";
 
-const {promisify} = require('util');
-const readFile = promisify(require('fs').readFile);
-const fetch = require('make-fetch-happen').defaults({cacheManager: __dirname + '/cache'});
-const decode = require('audio-decode');
-const format = require('audio-format');
-const convert = require('pcm-convert');
-const AudioSource = require('./audioSource');
+const { promisify } = require("util");
+const readFile = promisify(require("fs").readFile);
+const fetch = require("make-fetch-happen").defaults({
+    cacheManager: __dirname + "/cache"
+});
+const decode = require("audio-decode");
+const format = require("audio-format");
+const convert = require("pcm-convert");
+const AudioSource = require("./audioSource");
 
 class MediaSource extends AudioSource {
     constructor({url, ...options} = {}) {
