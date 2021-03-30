@@ -22,17 +22,33 @@ module.exports = {
             {
                 test: /\.s[ac]ss$/i,
                 use: [
-                    "style-loader",
+                    {
+                        "loader": "style-loader"
+                    },
                     {
                         "loader": "css-loader",
                         "options": {
-                            modules: {
-                                localIdentName: '[path][name]-[local]'
-                            },
                             importLoaders: 1,
                         }
                     },
-                    "sass-loader",
+                    {
+                        "loader": "sass-loader",
+                        options: {
+                            // Prefer Dart Sass
+                            implementation: require('sass'),
+                        },
+                    }
+                ],
+            },
+            {
+                test: /\.(png|svg|jpg|gif|woff|woff2|eot|ttf|otf|ico|mp3|wav)$/,
+                use: [
+                    {
+                        loader: 'file-loader',
+                        options: {
+                            esModule: false // Required so that calling `require()` on a file actually works.
+                        },
+                    },
                 ],
             },
         ],

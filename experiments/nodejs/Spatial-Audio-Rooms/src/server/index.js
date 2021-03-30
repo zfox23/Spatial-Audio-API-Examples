@@ -1,8 +1,6 @@
 const webpack = require('webpack');
 const express = require('express');
 const chokidar = require('chokidar');
-const cssModulesRequireHook = require('css-modules-require-hook');
-cssModulesRequireHook({generateScopedName: '[path][name]-[local]'});
 
 const webpackHotMiddleware = require('webpack-hot-middleware');
 const webpackDevMiddleware = require('webpack-dev-middleware');

@@ -16,6 +16,10 @@ const template = `<!doctype html>
 </head>
 
 <body>
+    <div class="loadingScreen">
+        <div class="loadingScreen--icon"></div>
+        <div class="loadingScreen--text">L O A D I N G</div>
+    </div>
     <script src="/index.js"></script>
 </body>
 
