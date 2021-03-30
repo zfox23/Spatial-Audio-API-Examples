@@ -179,6 +179,13 @@ $bottom-controls-container-height: 72px;
     margin: 0 12px;
     cursor: pointer;
     background-color: transparent;
+    border: none;
+    outline: none;
+
+    &:focus {
+        border: none;
+        outline: none;
+    }
 }
 
 .toggleInputMuteButton {

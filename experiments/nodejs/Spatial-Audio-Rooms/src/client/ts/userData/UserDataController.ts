@@ -74,14 +74,14 @@ class MyAvatar {
                 let occupied = allOtherUserData.find((element) => { return element.position && Math.abs(element.position.x - currentPotentialPosition.x) < CLOSE_ENOUGH_M && Math.abs(element.position.z - currentPotentialPosition.z) < CLOSE_ENOUGH_M; });
 
                 if (!occupied) {
-                    let orientationYawRadians = Math.atan2(currentPotentialPosition.x, currentPotentialPosition.z);
+                    let orientationYawRadians = Math.atan2(currentPotentialPosition.x - currentRoom.center.x, currentPotentialPosition.z - currentRoom.center.z);
                     let orientationYawDegrees = orientationYawRadians * 180 / Math.PI;
                     orientationYawDegrees %= 360;
                     let computedYawOrientationDegrees = Math.round((orientationYawDegrees + Number.EPSILON) * 100) / 100;
                     console.log(`Found an open spot in room ${currentRoom.name} at ${JSON.stringify(currentPotentialPosition)} with yaw orientation ${JSON.stringify(computedYawOrientationDegrees)} degrees.`);
                     this.updateMyPositionAndOrientation(currentPotentialPosition, computedYawOrientationDegrees);
                     foundOpenSpot = true;
-                    currentRoom.updateSeats(numSeatsInRoom);
+                    currentRoom.updateSeats(numSeatsInRoom * 2);
                     break;
                 } else {
                     positionsChecked.push(currentPotentialPosition);
