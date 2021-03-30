@@ -1,10 +1,11 @@
 const path = require('path');
 const webpack = require('webpack');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
+const devMode = process.env.NODE_ENV !== 'production'
+// const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 
 module.exports = {
     entry: {
-        index: ['webpack-hot-middleware/client', './src/client/ts/index.ts']
+        index: ['webpack-hot-middleware/client?path=/__webpack_hmr&timeout=20000&reload=true', './src/client/ts/index.ts']
     },
     devtool: 'inline-source-map',
     devServer: {
@@ -18,30 +19,34 @@ module.exports = {
                 use: 'ts-loader',
                 exclude: /node_modules/,
             },
+            {
+                test: /\.s[ac]ss$/i,
+                use: [
+                    "style-loader",
+                    {
+                        "loader": "css-loader",
+                        "options": {
+                            modules: {
+                                localIdentName: '[path][name]-[local]'
+                            },
+                            importLoaders: 1,
+                        }
+                    },
+                    "sass-loader",
+                ],
+            },
         ],
     },
     output: {
-        filename: '[name].js',
+        filename: 'index.js',
         path: path.resolve(__dirname, 'dist'),
         publicPath: '/',
         clean: true,
     },
     plugins: [
-        new HtmlWebpackPlugin({
-            title: `Webpack Example - High Fidelity's Spatial Audio API`,
-            template: `./src/client/html/index.html`,
-            filename: `./index.html`,
-            excludeChunks: ['src/server/*'],
-        }),
         new webpack.HotModuleReplacementPlugin(),
     ],
     resolve: {
         extensions: ['.tsx', '.ts', '.js'],
-    },
-    target: 'node',
-    node: {
-        global: false,
-        __filename: false,
-        __dirname: false,
     },
 };

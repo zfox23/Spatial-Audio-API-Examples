@@ -1,79 +1,71 @@
 const webpack = require('webpack');
-const webpackConfig = require('../../webpack.config');
-const compiler = webpack(webpackConfig);
-const crypto = require('crypto');
 const express = require('express');
-const path = require('path');
-const fs = require('fs');
-const auth = require('../../auth.json');
-const { default: SignJWT } = require('jose/jwt/sign');
-const { ADJECTIVES, NOUNS } = require('./words');
+const chokidar = require('chokidar');
+const cssModulesRequireHook = require('css-modules-require-hook');
+cssModulesRequireHook({generateScopedName: '[path][name]-[local]'});
 
-// This is your "App ID" as obtained from the High Fidelity Audio API Developer Console. Do not share this string.
-const APP_ID = auth.HIFI_APP_ID;
-// This is the "App Secret" as obtained from the High Fidelity Audio API Developer Console. Do not share this string.
-const APP_SECRET = auth.HIFI_APP_SECRET;
-const SECRET_KEY_FOR_SIGNING = crypto.createSecretKey(Buffer.from(APP_SECRET, "utf8"));
+const webpackHotMiddleware = require('webpack-hot-middleware');
+const webpackDevMiddleware = require('webpack-dev-middleware');
+
+const WEBPACK_CONFIG = require('../../webpack.config');
+const WEBPACK_COMPILER = webpack(WEBPACK_CONFIG);
+
+const devMiddleWare = webpackDevMiddleware(WEBPACK_COMPILER, { publicPath: WEBPACK_CONFIG.output.publicPath, });
+const hotMiddleware = webpackHotMiddleware(WEBPACK_COMPILER, {
+    'log': console.log,
+    'path': '/__webpack_hmr',
+    'heartbeat': 2000,
+    'reload': true
+});
 
 const app = express();
 const PORT = 8180;
 
-const DIST_DIR = path.join(__dirname, '..', '..', 'dist');
+app.use(express.static('./src/server/static'));
+app.use(devMiddleWare);
+app.use(hotMiddleware);
 
-app.use(express.static(DIST_DIR));
+app.use(async (req, res, next) => {
+    require('./routes')(req, res, next);
+});
 
-app.use(require("webpack-dev-middleware")(compiler, {
-    publicPath: webpackConfig.output.publicPath
-}));
-app.use(require("webpack-hot-middleware")(compiler));
+const watcher = chokidar.watch('./src/server');
+watcher.on('ready', () => {
+    watcher.on('all', () => {
+        console.log("Clearing server module cache...");
+        hotMiddleware.publish({ action: 'reload' });
+        Object.keys(require.cache).forEach((id) => {
+            if (/[\/\\]server[\/\\]/.test(id)) {
+                delete require.cache[id];
+            }
+        });
+    });
+});
 
-function uppercaseFirstLetter(string) {
-    return string.charAt(0).toUpperCase() + string.slice(1);
-}
+app.get('/spatial-audio-rooms', async (req, res, next) => {
+    require('./serverRender')(req, async (err, page) => {
+        if (err) {
+            return next(err);
+        }
+        res.send(page);
+    });
+});
 
-async function generateHiFiJWT(userID, spaceName, isAdmin = false) {
-    let hiFiJWT;
-    try {
-        let jwtArgs = {
-            "user_id": userID,
-            "app_id": APP_ID,
-            "space_name": spaceName,
-            "admin": isAdmin
-        };
 
-        hiFiJWT = await new SignJWT(jwtArgs)
-            .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
-            .sign(SECRET_KEY_FOR_SIGNING);
-
-        return hiFiJWT;
-    } catch (error) {
-        console.error(`Couldn't create JWT! Error:${error}`);
-        return;
-    }
-}
-
-const template = fs.readFileSync(path.join(DIST_DIR, 'index.html'), 'utf8');
-app.get('/spatial-audio-rooms', async (req, res) => {
-    let spaceName = req.query.spaceName || auth.HIFI_DEFAULT_SPACE_NAME;
-
-    let providedUserID = `${uppercaseFirstLetter(ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)])} ${uppercaseFirstLetter(NOUNS[Math.floor(Math.random() * NOUNS.length)])}`;
-    providedUserID += Math.floor(Math.random() * Math.floor(1000));
-
-    let hiFiJWT = await generateHiFiJWT(providedUserID, spaceName, false);
-
-    console.log(`${Date.now()}: Speaker \`${providedUserID}\` connected to the HiFi Space \`${spaceName}\`.`);
-
-    const page = template
-        .replace('$HIFI_PROVIDED_USER_ID', providedUserID)
-        .replace('$HIFI_JWT', hiFiJWT)
-        .replace('$HIFI_SPACE_NAME', spaceName)
-        .replace('$HIFI_ENDPOINT_URL', auth.HIFI_ENDPOINT_URL)
-
-    res.send(page);
+WEBPACK_COMPILER.hooks.compilation.tap('ClearClientModuleCachePlugin', (stats) => {
+    console.log("Clearing client module cache...");
+    hotMiddleware.publish({ action: 'reload' });
+    Object.keys(require.cache).forEach((id) => {
+        if (/[\/\\]client[\/\\]/.test(id)) {
+            delete require.cache[id];
+        }
+    });
 });
 
 const http = require("http").createServer(app);
-
-http.listen(PORT, () => {
+http.listen(PORT, (err) => {
+    if (err) {
+        throw err;
+    }
     console.log(`Spatial Audio Rooms is ready. Go to this URL in your browser: http://localhost:${PORT}/spatial-audio-rooms`);
 });

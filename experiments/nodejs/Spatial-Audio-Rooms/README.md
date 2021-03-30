@@ -12,5 +12,6 @@ Zach Fox
 3. Copy `auth.example.json` to `auth.json`.
 4. Populate your credentials inside `./auth.json`.
     - Obtain `HIFI_*` credentials from the [High Fidelity Spatial Audio API Developer Console](https://account.highfidelity.com/dev/account)
+5. Open `./node_modules/webpack-hot-middleware/process-update.js` in a text editor. Change `ignoreUnaccepted: true,` to `ignoreUnaccepted: false,`.
 5. Run `npm run start`
 6. If your Web browser doesn't automatically open, use a Web browser to navigate to [http://localhost:8080/](http://localhost:8080/).
