@@ -4,7 +4,7 @@
 
 const { RTCAudioSource } = require('wrtc').nonstandard;
 const { MediaStream } = require('wrtc');
-const preciseInterval = require('./preciseInterval');
+const { preciseInterval } = require('hifi-spatial-audio');
 
 // As required by wrtc:
 const bitsPerSample = 16;
