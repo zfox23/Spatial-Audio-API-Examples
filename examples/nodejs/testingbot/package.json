@@ -5,7 +5,6 @@
   "main": "index.js",
   "private": true,
   "scripts": {
-    "generate": "node ./generateJSON.js",
     "bots": "node ./integration-test.js",
     "bandwidth": "node --unhandled-rejections=strict -- ./testBandwidth.js"
   },
