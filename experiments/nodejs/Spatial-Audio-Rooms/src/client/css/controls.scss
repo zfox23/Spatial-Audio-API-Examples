@@ -1,0 +1,170 @@
+@use "./themes";
+@import './include-media';
+$bottom-controls-container-height: 72px;
+
+.playOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.6);
+
+    &__container {
+        height: calc(100% - 24px);
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        align-content: center;
+        margin: 24px auto 0 auto;
+        padding: 12px;
+        flex-direction: column;
+        width: 540px;
+        max-width: 90%;
+    }
+
+    &__header {
+        height: 90px;
+        background: url('../images/high-fidelity-banner.svg') no-repeat center center;
+        background-size: contain;
+        align-self: flex-start;
+        width: 180px;
+        margin: 0;
+        line-height: 50px;
+    }
+
+    &__playText {
+        font-family: 'Graphik-Semibold', 'Helvetica', 'Arial', sans-serif;
+        color: map-get(themes.$theme, text-primary);
+        width: 100%;
+
+        @include media(">tablet") {
+            margin: 24px 0 0 0;
+            font-size: 36px;
+        }
+
+        @include media(">phone", "<=tablet") {
+            margin: 24px 0 0 0;
+            font-size: 36px;
+        }
+
+        @include media("<=phone") {
+            margin: 12px 0 0 0;
+            font-size: 32px;
+        }
+    }
+
+    &__headphones {
+        display: block;
+        @include media(">tablet") {
+            line-height: 48px;
+            font-size: 48px;
+        }
+
+        @include media(">phone", "<=tablet") {
+            line-height: 48px;
+            font-size: 48px;
+        }
+
+        @include media("<=phone") {
+            line-height: 36px;
+            font-size: 36px;
+        }
+    }
+
+    &__thenPress {
+        color: map-get(themes.$theme, text-secondary);
+        position: relative;
+
+        @include media(">tablet") {
+            top: 6px;
+        }
+
+        @include media(">phone", "<=tablet") {
+            top: 6px;
+        }
+
+        @include media("<=phone") {
+            top: 6px;
+        }
+    }
+
+    &__button {
+        background: url('../images/play.svg') no-repeat center center;
+        /* play by Aneeque Ahmed from the Noun Project */
+        background-size: contain;
+        margin: 20px auto;
+        padding: 0;
+        position: relative;
+        display: inline-block;
+        cursor: pointer;
+        border: none;
+
+        &:focus {
+            outline-style: none;
+        }
+
+        &:focus-visible {
+            border: 2px solid rgb(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        @include media(">tablet") {
+            width: 96px;
+            height: 96px;
+        }
+
+        @include media(">phone", "<=tablet") {
+            width: 96px;
+            height: 96px;
+        }
+
+        @include media("<=phone") {
+            width: 86px;
+            height: 86px;
+        }
+    }
+
+    &__playAnimation {
+        border-radius: 50%;
+        position: relative;
+        background-color: map-get(themes.$theme, text-secondary);
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        z-index: -1;
+        animation: scaleIn 2s infinite cubic-bezier(.17,.67,.83,.67);
+
+        @keyframes scaleIn {
+            from {
+              transform: scale(0.8, 0.8);
+              opacity: .8;
+            }
+            to {
+              transform: scale(1.6, 1.6);
+              opacity: 0;
+            }
+          }
+    }
+}
+
+.mainCanvas {
+    width: 100%;
+    height: calc(100vh - #{$bottom-controls-container-height});
+}
+
+.bottomControlsContainer {
+    height: $bottom-controls-container-height;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: black;
+}
+
+.participantsListContainer {
+    position: fixed;
+    bottom: $bottom-controls-container-height;
+    right: 12px;
+    background-color: black;
+}

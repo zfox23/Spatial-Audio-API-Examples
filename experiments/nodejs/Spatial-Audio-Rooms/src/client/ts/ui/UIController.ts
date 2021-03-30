@@ -1,4 +1,6 @@
 import '../../css/controls.scss';
+import { AudionetInitResponse, ConnectionController } from '../connection/ConnectionController';
+import { userDataController } from '../index';
 
 export class UIController {
     playOverlay: HTMLElement;
@@ -6,14 +8,14 @@ export class UIController {
     bottomControlsContainer: HTMLElement;
     participantsListContainer: HTMLElement;
 
-    onPlayButtonClicked: EventListener;
+    connectionController: ConnectionController;
 
-    constructor({ onPlayButtonClicked }: {onPlayButtonClicked: EventListener}) {
+    constructor({ connectionController }: {connectionController: ConnectionController}) {
         this.initPlayOverlay();
         this.initMainUI();
         this.removeLoadingOverlay();
 
-        this.onPlayButtonClicked = onPlayButtonClicked;
+        this.connectionController = connectionController;
     }
 
     initPlayOverlay() {
@@ -43,7 +45,7 @@ export class UIController {
         playButton.appendChild(playAnimation);
         playContainer.appendChild(playButton);
 
-        playButton.addEventListener("click", (e) => { this.onPlayButtonClicked(e); });
+        playButton.addEventListener("click", (e) => { this.startConnectionProcess(); });
     }
 
     initMainUI() {
@@ -62,5 +64,17 @@ export class UIController {
 
     removeLoadingOverlay() {
         document.querySelector('.loadingScreen').remove();
+    }
+
+    async startConnectionProcess() {
+        this.playOverlay.classList.add("displayNone");
+
+        let audionetInitResponse: AudionetInitResponse;
+        try {
+            audionetInitResponse = await this.connectionController.startConnectionProcess();
+        } catch (e) {
+            console.error(`Couldn't connect to High Fidelity! Error:\n${e}`);
+            return;
+        }
     }
 }
