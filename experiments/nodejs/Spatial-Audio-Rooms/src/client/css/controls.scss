@@ -1,4 +1,5 @@
 @use "./themes";
+@use "./z-indices";
 @import './include-media';
 $bottom-controls-container-height: 72px;
 
@@ -9,6 +10,7 @@ $bottom-controls-container-height: 72px;
     width: 100vw;
     height: 100vh;
     background-color: rgba(0, 0, 0, 0.6);
+    z-index: map-get(z-indices.$z-index, aboveModal);
 
     &__container {
         height: calc(100% - 24px);
@@ -151,6 +153,8 @@ $bottom-controls-container-height: 72px;
 .mainCanvas {
     width: 100%;
     height: calc(100vh - #{$bottom-controls-container-height});
+    position: fixed;
+    z-index: map-get(z-indices.$z-index, mainCanvas);
 }
 
 .bottomControlsContainer {

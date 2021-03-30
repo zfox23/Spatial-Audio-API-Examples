@@ -1,10 +1,11 @@
 import '../../css/controls.scss';
 import { AudionetInitResponse, ConnectionController } from '../connection/ConnectionController';
 import { userDataController } from '../index';
+import { CanvasRenderer } from './CanvasRenderer';
 
 export class UIController {
     playOverlay: HTMLElement;
-    mainCanvas: HTMLElement;
+    canvasRenderer: CanvasRenderer;
     bottomControlsContainer: HTMLElement;
     participantsListContainer: HTMLElement;
 
@@ -12,6 +13,7 @@ export class UIController {
 
     constructor({ connectionController }: {connectionController: ConnectionController}) {
         this.initPlayOverlay();
+        this.canvasRenderer = new CanvasRenderer();
         this.initMainUI();
         this.removeLoadingOverlay();
 
@@ -49,10 +51,6 @@ export class UIController {
     }
 
     initMainUI() {
-        this.mainCanvas = document.createElement("canvas");
-        this.mainCanvas.classList.add("mainCanvas");
-        document.body.appendChild(this.mainCanvas);
-
         this.bottomControlsContainer = document.createElement("div");
         this.bottomControlsContainer.classList.add("bottomControlsContainer");
         document.body.appendChild(this.bottomControlsContainer);
