@@ -118,6 +118,8 @@ export class ConnectionController {
     async onNewHiFiUserDataReceived(receivedHiFiAudioAPIDataArray: Array<ReceivedHiFiAudioAPIData>) {
         let myUserData = userDataController.myAvatar.myUserData;
         const myVisitIDHash = userDataController.myAvatar.myUserData.visitIDHash;
+        let receivedNewPositionData = false;
+
         for (let i = 0; i < receivedHiFiAudioAPIDataArray.length; i++) {
             let currentDataFromServer = receivedHiFiAudioAPIDataArray[i];
             let currentVisitIDHash = currentDataFromServer.hashedVisitID;
@@ -140,6 +142,8 @@ export class ConnectionController {
                     if (typeof (currentDataFromServer.position.z) === "number") {
                         currentLocalUserData.position.z = currentDataFromServer.position.z;
                     }
+
+                    receivedNewPositionData = true;
                 }
                 
                 if (currentDataFromServer.orientationEuler && !isMine) {
@@ -163,10 +167,14 @@ export class ConnectionController {
                     }
                 }
             } else {
-                console.log(`Received data about new user from Spatial Audio API: ${JSON.stringify(currentDataFromServer)}`)
+                console.log(`Received data about new user from Spatial Audio API: ${JSON.stringify(currentDataFromServer)}`);
+
+                receivedNewPositionData = true;
+
                 if (currentDataFromServer.orientationEuler) {
                     currentDataFromServer.orientationEuler.yawDegrees %= 360;
                 }
+
                 userDataController.allOtherUserData.push({
                     visitIDHash: currentVisitIDHash,
                     colorHex: Utilities.hexColorFromString(currentVisitIDHash),
@@ -174,11 +182,6 @@ export class ConnectionController {
                     orientationEuler: currentDataFromServer.orientationEuler,
                     volumeDecibels: currentDataFromServer.volumeDecibels,
                 });
-
-                let myCurrentRoom = roomController.getRoomFromName(userDataController.myAvatar.myUserData.currentRoomName);
-                myCurrentRoom.updateSeats(myCurrentRoom.findOpenSpot().numSeatsInRoom);
-
-                //recomputeSpeakerAndAudienceCount();
             }
         }
             
@@ -187,6 +190,10 @@ export class ConnectionController {
             console.log("We're the only one here!");
             allAlone = true;
             this.receivedInitialOtherUserDataFromHiFi = true;
+        }
+
+        if (receivedNewPositionData) {
+            roomController.updateAllRoomSeats();
         }
         
         if (!this.receivedInitialOtherUserDataFromHiFi || allAlone) {
@@ -222,9 +229,6 @@ export class ConnectionController {
             });
         }
 
-        let myCurrentRoom = roomController.getRoomFromName(userDataController.myAvatar.myUserData.currentRoomName);
-        myCurrentRoom.updateSeats(myCurrentRoom.findOpenSpot().numSeatsInRoom);
-
-        //recomputeSpeakerAndAudienceCount();
+        roomController.updateAllRoomSeats();
     }
 }

@@ -47,16 +47,15 @@ class MyAvatar {
 
         if (!currentRoom) {
             console.error(`Couldn't determine current room!`);
+            return;
         }
+        
+        console.log(`Positioning self in room ${currentRoom.name}...`);
 
-        let allOtherUserData = userDataController.allOtherUserData;
-
-        console.log(`${allOtherUserData.length} other user(s) present.`);
-
-        let { openPosition, yawOrientation, numSeatsInRoom } = currentRoom.findOpenSpot();
-        console.log(`Found an open spot in room ${currentRoom.name} at ${JSON.stringify(openPosition)} with yaw orientation ${JSON.stringify(yawOrientation)} degrees.`);
-        currentRoom.updateSeats(numSeatsInRoom);
-        this.updateMyPositionAndOrientation(openPosition, yawOrientation);
+        let newSeat = currentRoom.findOpenSpotForSelf();
+        console.log(`Found an open spot in room ${currentRoom.name} at ${JSON.stringify(newSeat.position)} orientation ${JSON.stringify(newSeat.orientation)}.`);
+        this.updateMyPositionAndOrientation(newSeat.position, newSeat.orientation.yawDegrees);
+        roomController.updateAllRoomSeats();
     }
 
     updateMyPositionAndOrientation(targetPosition?: Point3D, targetYawOrientationDegrees?: number) {
