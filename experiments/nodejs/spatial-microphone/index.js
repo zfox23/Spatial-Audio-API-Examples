@@ -4,7 +4,7 @@ const express = require('express');
 const cors = require('cors');
 const crypto = require('crypto');
 const auth = require('./auth.json');
-const { Point3D, AudioAPIData, Communicator } = require("hifi-spatial-audio"); // Used to interface with the Spatial Audio API.
+const { OrientationEuler3D, Point3D, AudioAPIData, Communicator } = require("hifi-spatial-audio"); // Used to interface with the Spatial Audio API.
 const { RTCAudioSink } = require('wrtc').nonstandard;
 const Lame = require("node-lame").Lame;
 const wav = require('wav');
@@ -60,7 +60,8 @@ class SpatialMicrophone {
         this.spaceName = spaceName;
         // Define the initial HiFi Audio API Data used when connecting to the Spatial Audio API.
         this.audioAPIData = new AudioAPIData({
-            position: new Point3D(position)
+            position: new Point3D(position),
+            orientationEuler: new OrientationEuler3D()
         });
         // Set up the HiFiCommunicator used to communicate with the Spatial Audio API.
         this.communicator = new Communicator({ initialHiFiAudioAPIData: this.audioAPIData });
