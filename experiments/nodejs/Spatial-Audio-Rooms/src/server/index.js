@@ -53,7 +53,7 @@ if (!isInProdMode) {
 }
 
 const DIST_DIR = path.join(__dirname, "..", "..", "dist");
-app.use(express.static(DIST_DIR));
+app.use('/spatial-audio-rooms', express.static(DIST_DIR));
 
 app.get('/spatial-audio-rooms', async (req, res, next) => {
     require('./serverRender')(isInProdMode, req, async (err, page) => {

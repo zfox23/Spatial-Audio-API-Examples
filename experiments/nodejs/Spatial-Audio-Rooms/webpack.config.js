@@ -57,7 +57,7 @@ module.exports = (env) => {
         output: {
             filename: 'index.js',
             path: path.resolve(__dirname, 'dist'),
-            publicPath: '/',
+            publicPath: '/spatial-audio-rooms/',
             clean: true,
         },
         plugins: isInProdMode ? [new MiniCssExtractPlugin({
