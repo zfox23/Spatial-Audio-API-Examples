@@ -55,7 +55,6 @@ class MyAvatar {
         let newSeat = currentRoom.findOpenSpotForSelf();
         console.log(`Found an open spot in room ${currentRoom.name} at ${JSON.stringify(newSeat.position)} orientation ${JSON.stringify(newSeat.orientation)}.`);
         this.updateMyPositionAndOrientation(newSeat.position, newSeat.orientation.yawDegrees);
-        roomController.updateAllRoomSeats();
     }
 
     updateMyPositionAndOrientation(targetPosition?: Point3D, targetYawOrientationDegrees?: number) {
@@ -94,6 +93,8 @@ class MyAvatar {
             needToTransmit = true;
 
             uiController.canvasRenderer.canvasRotationDegrees = Math.atan2(-myUserData.position.x, -myUserData.position.z) * 180 / Math.PI;
+            
+            roomController.updateAllRoomSeats();
         }
 
         if (needToTransmit) {

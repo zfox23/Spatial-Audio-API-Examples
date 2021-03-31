@@ -7,7 +7,7 @@ import { Utilities } from "../utilities/Utilities";
 export class Seat {
     position: Point3D;
     orientation: OrientationEuler3D;
-    occupiedUserData: UserData;
+    occupiedUserData?: UserData;
 
     constructor({ position, orientationEuler, occupiedUserData }: { position: Point3D, orientationEuler: OrientationEuler3D, occupiedUserData?: UserData }) {
         this.position = position;
@@ -56,7 +56,7 @@ class Room {
                     }
                 });
 
-                let occupied = !!roomUserData.find((element) => { return element.position && Math.abs(element.position.x - currentPotentialPosition.x) < CLOSE_ENOUGH_M && Math.abs(element.position.z - currentPotentialPosition.z) < CLOSE_ENOUGH_M; });
+                let occupied = !!roomUserData.find((element) => { return element && element.position && Math.abs(element.position.x - currentPotentialPosition.x) < CLOSE_ENOUGH_M && Math.abs(element.position.z - currentPotentialPosition.z) < CLOSE_ENOUGH_M; });
 
                 if (!occupied) {
                     let orientationYawRadians = Math.atan2(currentPotentialPosition.x - this.center.x, currentPotentialPosition.z - this.center.z);
@@ -66,7 +66,7 @@ class Room {
                     foundOpenSpot = true;
                     return new Seat({
                         position: currentPotentialPosition,
-                        orientationEuler: new OrientationEuler3D({ yawDegrees: computedYawOrientationDegrees}),
+                        orientationEuler: new OrientationEuler3D({ yawDegrees: computedYawOrientationDegrees }),
                         occupiedUserData: userDataController.myAvatar.myUserData
                     });
                 } else {
@@ -91,6 +91,10 @@ export class RoomController {
     }
 
     getRoomFromPoint3D(point3D: Point3D): Room {
+        if (!point3D) {
+            return undefined;
+        }
+
         return this.rooms.find((room) => {
             return Utilities.pointIsWithinRectangle({
                 point: point3D,
@@ -128,6 +132,11 @@ export class RoomController {
                 return;
             }
 
+            // If the user is coming in from, say, Space Inspector, don't add a seat for that user.
+            if (Math.abs(Utilities.getDistanceBetween2DPoints(userData.position.x, userData.position.z, userRoom.center.x, userRoom.center.z) - userRoom.seatingRadius) > CLOSE_ENOUGH_M) {
+                return;
+            }
+
             userRoom.seats.push(new Seat({
                 position: userData.position,
                 orientationEuler: userData.orientationEuler,
@@ -136,7 +145,69 @@ export class RoomController {
         });
 
         this.rooms.forEach((room) => {
+            let roomSeatAnglesOnSeatingCircle: Array<number> = [];
 
+            for (let i = 0; i < room.seats.length; i++) {
+                let seat = room.seats[i];
+
+                // Shouldn't be necessary, since we haven't added any unoccupied seats yet, but just in case...
+                if (!seat.occupiedUserData) {
+                    continue;
+                }
+
+                let seatAngleOnSeatingCircle = Math.atan2(seat.position.z - room.center.z, seat.position.x - room.center.x);
+                while (seatAngleOnSeatingCircle < 0) {
+                    seatAngleOnSeatingCircle += 2 * Math.PI;
+                }
+                seatAngleOnSeatingCircle %= 2 * Math.PI;
+                roomSeatAnglesOnSeatingCircle.push(seatAngleOnSeatingCircle);
+            }
+
+            roomSeatAnglesOnSeatingCircle.sort((a, b) => {
+                return a - b;
+            });
+
+            for (let i = 0; i < roomSeatAnglesOnSeatingCircle.length; i++) {
+                let newSeatTheta;
+                let angle1, angle2;
+                if (i === roomSeatAnglesOnSeatingCircle.length - 1) {
+                    angle1 = roomSeatAnglesOnSeatingCircle[i];
+                    angle2 = roomSeatAnglesOnSeatingCircle.length > 1 ? roomSeatAnglesOnSeatingCircle[0] : roomSeatAnglesOnSeatingCircle[0] + 2 * Math.PI;
+                } else {
+                    angle1 = roomSeatAnglesOnSeatingCircle[i];
+                    angle2 = roomSeatAnglesOnSeatingCircle[i + 1];
+                }
+
+                while (angle2 < angle1) {
+                    angle2 += 2 * Math.PI;
+                }
+
+                newSeatTheta = (angle1 + angle2) / 2;
+                while (newSeatTheta < 0) {
+                    newSeatTheta += 2 * Math.PI;
+                }
+                newSeatTheta %= 2 * Math.PI;
+
+                let newSeatPosition = new Point3D({
+                    "x": room.seatingRadius * Math.cos(newSeatTheta) + room.center.x,
+                    "y": 0,
+                    "z": room.seatingRadius * Math.sin(newSeatTheta) + room.center.z
+                });
+
+                newSeatPosition.x = Math.round((newSeatPosition.x + Number.EPSILON) * 100) / 100;
+                newSeatPosition.z = Math.round((newSeatPosition.z + Number.EPSILON) * 100) / 100;
+
+                let newSeatOrientationYawRadians = Math.atan2(newSeatPosition.x - room.center.x, newSeatPosition.z - room.center.z);
+                let newSeatOrientationYawDegrees = newSeatOrientationYawRadians * 180 / Math.PI;
+                newSeatOrientationYawDegrees %= 360;
+                newSeatOrientationYawDegrees = Math.round((newSeatOrientationYawDegrees + Number.EPSILON) * 100) / 100;
+
+                let newSeat = new Seat({
+                    position: newSeatPosition,
+                    orientationEuler: new OrientationEuler3D({ yawDegrees: newSeatOrientationYawDegrees })
+                })
+                room.seats.push(newSeat);
+            }
         });
     }
 }

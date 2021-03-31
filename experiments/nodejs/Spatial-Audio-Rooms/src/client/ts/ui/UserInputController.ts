@@ -174,15 +174,9 @@ export class UserInputController {
                 console.warn("User clicked on a seat, but we can't determine the current room!");
                 return;
             }
-
-            let newPosition = this.hoveredSeat.position;
-
-            let orientationYawRadians = Math.atan2(newPosition.x - room.center.x, newPosition.z - room.center.z);
-            let orientationYawDegrees = orientationYawRadians * 180 / Math.PI;
-            orientationYawDegrees %= 360;
-            let computedYawOrientationDegrees = Math.round((orientationYawDegrees + Number.EPSILON) * 100) / 100;
-            console.log(`User clicked on a new seat at ${JSON.stringify(newPosition)}! New yaw orientation: ${JSON.stringify(computedYawOrientationDegrees)} degrees.`);
-            userDataController.myAvatar.updateMyPositionAndOrientation(newPosition, computedYawOrientationDegrees);
+            
+            console.log(`User clicked on a new seat at ${JSON.stringify(this.hoveredSeat.position)}! New yaw orientation: ${JSON.stringify(this.hoveredSeat.orientation)} degrees.`);
+            userDataController.myAvatar.updateMyPositionAndOrientation(this.hoveredSeat.position, this.hoveredSeat.orientation.yawDegrees);
 
             this.hoveredSeat = undefined;
         }
@@ -219,9 +213,9 @@ export class UserInputController {
             let deltaDistance = newDistance - this.lastDistanceBetweenRightClickEvents;
             this.lastDistanceBetweenRightClickEvents = newDistance;
     
-            if (userDataController.myAvatar && userDataController.myAvatar.myUserData.orientationEuler && userDataController.myAvatar.myUserData.orientationEuler.yawDegrees) {
+            if (userDataController.myAvatar && userDataController.myAvatar.myUserData.orientationEuler) {
                 let newYawDegrees = userDataController.myAvatar.myUserData.orientationEuler.yawDegrees - deltaDistance * RIGHT_CLICK_ROTATION_SENSITIVITY;
-                if (newYawDegrees) {
+                if (!isNaN(newYawDegrees)) {
                     userDataController.myAvatar.updateMyPositionAndOrientation(undefined, newYawDegrees);
                 }
             }
@@ -240,7 +234,7 @@ export class UserInputController {
             };
 
             this.hoveredUserData = userDataController.allOtherUserData.find((userData) => {
-                return Utilities.getDistanceBetween2DPoints(userData.position.x, userData.position.z, hoverM.x, hoverM.z) < AVATAR_RADIUS_M;
+                return userData.position && Utilities.getDistanceBetween2DPoints(userData.position.x, userData.position.z, hoverM.x, hoverM.z) < AVATAR_RADIUS_M;
             });
 
             if (!this.hoveredUserData && Utilities.getDistanceBetween2DPoints(userDataController.myAvatar.myUserData.position.x, userDataController.myAvatar.myUserData.position.z, hoverM.x, hoverM.z) < AVATAR_RADIUS_M) {
