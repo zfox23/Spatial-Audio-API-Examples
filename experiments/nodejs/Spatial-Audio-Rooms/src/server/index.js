@@ -1,62 +1,66 @@
+const isInProdMode = process.argv.slice(2)[0] === "prod";
+
+console.warn(`*****\nServer production mode status: ${isInProdMode}\n*****\n`);
+
 const webpack = require('webpack');
+const path = require('path');
 const express = require('express');
-const chokidar = require('chokidar');
-
-const webpackHotMiddleware = require('webpack-hot-middleware');
-const webpackDevMiddleware = require('webpack-dev-middleware');
-
-const WEBPACK_CONFIG = require('../../webpack.config');
-const WEBPACK_COMPILER = webpack(WEBPACK_CONFIG);
-
-const devMiddleWare = webpackDevMiddleware(WEBPACK_COMPILER, { publicPath: WEBPACK_CONFIG.output.publicPath, });
-const hotMiddleware = webpackHotMiddleware(WEBPACK_COMPILER, {
-    'log': console.log,
-    'path': '/__webpack_hmr',
-    'heartbeat': 2000,
-    'reload': true
-});
 
 const app = express();
 const PORT = 8180;
 
-app.use(express.static('./src/server/static'));
-app.use(devMiddleWare);
-app.use(hotMiddleware);
+if (!isInProdMode) {
+    const webpackHotMiddleware = require('webpack-hot-middleware');
+    const webpackDevMiddleware = require('webpack-dev-middleware');
+    const chokidar = require('chokidar');
 
-app.use(async (req, res, next) => {
-    require('./routes')(req, res, next);
-});
+    const WEBPACK_CONFIG = require('../../webpack.config.js')();
+    const WEBPACK_COMPILER = webpack(WEBPACK_CONFIG);
+    
+    const devMiddleWare = webpackDevMiddleware(WEBPACK_COMPILER, { publicPath: WEBPACK_CONFIG.output.publicPath, });
+    const hotMiddleware = webpackHotMiddleware(WEBPACK_COMPILER, {
+        'log': console.log,
+        'path': '/__webpack_hmr',
+        'heartbeat': 2000,
+        'reload': true
+    });
 
-const watcher = chokidar.watch('./src/server');
-watcher.on('ready', () => {
-    watcher.on('all', () => {
-        console.log("Clearing server module cache...");
+    app.use(devMiddleWare);
+    app.use(hotMiddleware);
+
+    const watcher = chokidar.watch('./src/server');
+    watcher.on('ready', () => {
+        watcher.on('all', () => {
+            console.log("Clearing server module cache...");
+            hotMiddleware.publish({ action: 'reload' });
+            Object.keys(require.cache).forEach((id) => {
+                if (/[\/\\]server[\/\\]/.test(id)) {
+                    delete require.cache[id];
+                }
+            });
+        });
+    });
+
+    WEBPACK_COMPILER.hooks.compilation.tap('ClearClientModuleCachePlugin', (stats) => {
+        console.log("Clearing client module cache...");
         hotMiddleware.publish({ action: 'reload' });
         Object.keys(require.cache).forEach((id) => {
-            if (/[\/\\]server[\/\\]/.test(id)) {
+            if (/[\/\\]client[\/\\]/.test(id)) {
                 delete require.cache[id];
             }
         });
     });
-});
+}
+
+const DIST_DIR = path.join(__dirname, "..", "..", "dist");
+app.use(express.static(DIST_DIR));
 
 app.get('/spatial-audio-rooms', async (req, res, next) => {
-    require('./serverRender')(req, async (err, page) => {
+    require('./serverRender')(isInProdMode, req, async (err, page) => {
         if (err) {
             return next(err);
         }
         res.send(page);
-    });
-});
-
-
-WEBPACK_COMPILER.hooks.compilation.tap('ClearClientModuleCachePlugin', (stats) => {
-    console.log("Clearing client module cache...");
-    hotMiddleware.publish({ action: 'reload' });
-    Object.keys(require.cache).forEach((id) => {
-        if (/[\/\\]client[\/\\]/.test(id)) {
-            delete require.cache[id];
-        }
     });
 });
 

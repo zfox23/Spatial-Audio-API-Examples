@@ -4,9 +4,12 @@
   "description": "A complex demo application for High Fidelity's Spatial Audio API which integrates many of the API's features as well as Twilio Video Conferencing.",
   "main": "src/index.ts",
   "scripts": {
-    "client": "webpack",
-    "client:watch": "webpack",
-    "start": "babel-node ./src/server/index.js"
+    "client": "webpack --env dev",
+    "client:dev": "webpack --env dev",
+    "client:prod": "webpack --env prod",
+    "server": "node ./src/server/index.js dev",
+    "server:dev": "node ./src/server/index.js dev",
+    "server:prod": "node ./src/server/index.js prod"
   },
   "repository": {
     "type": "git",
