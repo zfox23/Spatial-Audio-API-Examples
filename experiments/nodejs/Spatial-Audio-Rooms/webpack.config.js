@@ -3,7 +3,7 @@ const webpack = require('webpack');
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 
 module.exports = (env) => {
-    const isInProdMode = env.prod === true;
+    const isInProdMode = (env && env.prod === true);
 
     console.log(`*****\nWebpack production mode status: ${isInProdMode}\n*****\n`);
 
