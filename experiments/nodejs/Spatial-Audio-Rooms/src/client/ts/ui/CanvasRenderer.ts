@@ -164,6 +164,11 @@ export class CanvasRenderer {
     }
 
     drawAvatarLabel({ isMine, userData, positionInCanvasSpace }: { isMine: boolean, userData: UserData, positionInCanvasSpace: PositionInCanvasSpace }) {
+        // Don't draw the avatar label if we're drawing that avatar's video.
+        if (videoController.providedUserIDToVideoElementMap.has(userData.providedUserID)) {
+            return;
+        }
+
         let ctx = this.ctx;
         let pxPerM = this.pxPerM;
         let avatarRadiusM = AVATAR_RADIUS_M;
