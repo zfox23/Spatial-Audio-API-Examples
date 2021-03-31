@@ -70,8 +70,6 @@ const socketIOServer = require("socket.io")(http, {
     }
 });
 
-
-
 socketIOServer.on("error", (e) => {
     console.error(e);
 });
