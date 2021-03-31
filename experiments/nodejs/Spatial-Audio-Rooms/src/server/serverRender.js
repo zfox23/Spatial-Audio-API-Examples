@@ -21,7 +21,7 @@ const template = `<!doctype html>
         <div class="loadingScreen--icon"></div>
         <div class="loadingScreen--text">L O A D I N G</div>
     </div>
-    <script src="spatial-audio-rooms/index.js"></script>
+    <script src="/spatial-audio-rooms/index.js"></script>
 </body>
 
 </html>`;
