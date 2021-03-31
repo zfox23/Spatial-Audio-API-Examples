@@ -170,7 +170,8 @@ $bottom-controls-container-height: 72px;
 }
 
 .toggleInputMuteButton,
-.toggleOutputMuteButton {
+.toggleOutputMuteButton,
+.toggleVideoButton {
     width: 40px;
     height: 40px;
     background-repeat: no-repeat;
@@ -206,6 +207,18 @@ $bottom-controls-container-height: 72px;
 
 .toggleOutputMuteButton--muted {
     background-image: url('../images/red-headphones-with-x.svg');
+}
+
+.toggleVideoButton {
+    background-image: url('../images/white-cam.svg');
+}
+
+.toggleVideoButton--muted {
+    background-image: url('../images/red-cam-with-cross.svg');
+}
+
+.toggleVideoButton--disabled {
+    background-image: url('../images/grey-cam-with-cross.svg');
 }
 
 .participantsListContainer {

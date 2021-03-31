@@ -8,6 +8,7 @@ export class UIController {
     bottomControlsContainer: HTMLElement;
     toggleInputMuteButton: HTMLButtonElement;
     toggleOutputMuteButton: HTMLButtonElement;
+    toggleVideoButton: HTMLButtonElement;
     participantsListContainer: HTMLElement;
 
     connectionController: ConnectionController;
@@ -63,6 +64,10 @@ export class UIController {
         this.toggleOutputMuteButton = document.createElement("button");
         this.toggleOutputMuteButton.classList.add("toggleOutputMuteButton");
         this.bottomControlsContainer.appendChild(this.toggleOutputMuteButton);
+
+        this.toggleVideoButton = document.createElement("button");
+        this.toggleVideoButton.classList.add("toggleVideoButton");
+        this.bottomControlsContainer.appendChild(this.toggleVideoButton);
 
         this.participantsListContainer = document.createElement("div");
         this.participantsListContainer.classList.add("participantsListContainer", "displayNone");

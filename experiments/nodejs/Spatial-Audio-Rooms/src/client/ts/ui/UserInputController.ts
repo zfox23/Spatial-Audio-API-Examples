@@ -14,6 +14,7 @@ export class UserInputController {
     wasMutedBeforePTT: boolean = false;
     toggleInputMuteButton: HTMLButtonElement;
     toggleOutputMuteButton: HTMLButtonElement;
+    toggleVideoButton: HTMLButtonElement;
     rightClickStartPositionPX: any;
     lastDistanceBetweenRightClickEvents: number;
     hoveredUserData: UserData;
@@ -33,6 +34,8 @@ export class UserInputController {
         this.toggleOutputMuteButton.addEventListener("click", (e) => {
             this.toggleOutputMute();
         });
+
+        this.toggleVideoButton = document.querySelector('.toggleVideoButton');
 
         this.mainCanvas = document.querySelector('.mainCanvas');
         this.mainCanvas.addEventListener("click", this.onUserClick.bind(this));
@@ -174,7 +177,7 @@ export class UserInputController {
                 console.warn("User clicked on a seat, but we can't determine the current room!");
                 return;
             }
-            
+
             console.log(`User clicked on a new seat at ${JSON.stringify(this.hoveredSeat.position)}! New yaw orientation: ${JSON.stringify(this.hoveredSeat.orientation)} degrees.`);
             userDataController.myAvatar.updateMyPositionAndOrientation(this.hoveredSeat.position, this.hoveredSeat.orientation.yawDegrees);
 

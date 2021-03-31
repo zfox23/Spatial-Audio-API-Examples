@@ -1,6 +1,6 @@
 const auth = require('../../auth.json');
 const { ADJECTIVES, NOUNS } = require('./words');
-const { uppercaseFirstLetter, generateHiFiJWT } = require('./utilities');
+const { uppercaseFirstLetter, generateHiFiJWT, generateTwilioAccessToken } = require('./utilities');
 
 const template = `<!doctype html>
 <html lang="en">
@@ -12,6 +12,7 @@ const template = `<!doctype html>
         const HIFI_JWT = "$HIFI_JWT";
         const HIFI_SPACE_NAME = "$HIFI_SPACE_NAME";
         const HIFI_ENDPOINT_URL = "$HIFI_ENDPOINT_URL";
+        const TWILIO_JWT = "$TWILIO_JWT";
     </script>
 </head>
 
@@ -32,6 +33,7 @@ async function renderApp(req, callback) {
     providedUserID += Math.floor(Math.random() * Math.floor(1000));
 
     let hiFiJWT = await generateHiFiJWT(providedUserID, spaceName, false);
+    let twilioJWT = generateTwilioAccessToken(providedUserID, spaceName);
 
     console.log(`${Date.now()}: Speaker \`${providedUserID}\` connected to the HiFi Space \`${spaceName}\`.`);
 
@@ -39,7 +41,8 @@ async function renderApp(req, callback) {
         .replace('$HIFI_PROVIDED_USER_ID', providedUserID)
         .replace('$HIFI_JWT', hiFiJWT)
         .replace('$HIFI_SPACE_NAME', spaceName)
-        .replace('$HIFI_ENDPOINT_URL', auth.HIFI_ENDPOINT_URL);
+        .replace('$HIFI_ENDPOINT_URL', auth.HIFI_ENDPOINT_URL)
+        .replace('$TWILIO_JWT', twilioJWT);
 
     callback(null, page);
 }

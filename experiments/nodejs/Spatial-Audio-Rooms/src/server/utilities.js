@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const { default: SignJWT } = require('jose/jwt/sign');
 const auth = require('../../auth.json');
+const twilio = require('twilio');
 
 function uppercaseFirstLetter(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
@@ -32,7 +33,31 @@ async function generateHiFiJWT(userID, spaceName, isAdmin = false) {
     }
 }
 
+function generateTwilioAccessToken(providedUserID, spaceName) {
+    const AccessToken = twilio.jwt.AccessToken;
+    const VideoGrant = AccessToken.VideoGrant;
+
+    // Create an Access Token
+    let accessToken = new AccessToken(
+        auth.TWILIO_ACCOUNT_SID,
+        auth.TWILIO_API_KEY_SID,
+        auth.TWILIO_API_KEY_SECRET
+    );
+
+    // Set the Identity of this token
+    accessToken.identity = providedUserID;
+
+    // Grant access to Video
+    let grant = new VideoGrant();
+    grant.room = spaceName;
+    accessToken.addGrant(grant);
+
+    // Serialize the token as a JWT
+    return accessToken.toJwt();
+}
+
 module.exports = {
     uppercaseFirstLetter,
-    generateHiFiJWT
+    generateHiFiJWT,
+    generateTwilioAccessToken
 };

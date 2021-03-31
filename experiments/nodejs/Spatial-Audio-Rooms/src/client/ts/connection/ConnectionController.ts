@@ -1,7 +1,6 @@
 import { HiFiCommunicator, HiFiLogger, HiFiLogLevel, getBestAudioConstraints, HiFiUserDataStreamingScopes, ReceivedHiFiAudioAPIData, UserDataSubscription, AvailableUserDataSubscriptionComponents, OrientationEuler3D, Point3D } from 'hifi-spatial-audio';
-import { roomController, userDataController } from '..';
+import { roomController, userDataController, videoController } from '..';
 import { AVDevicesController } from '../avDevices/AVDevicesController';
-import { CLOSE_ENOUGH_M } from '../constants/constants';
 import { Utilities } from '../utilities/Utilities';
 import { WebSocketConnectionController } from './WebSocketConnectionController';
 
@@ -40,7 +39,7 @@ export class ConnectionController {
         });
     }
 
-    async startConnectionProcess(): Promise<AudionetInitResponse> {
+    async connectToHighFidelity(): Promise<AudionetInitResponse> {
         return new Promise(async (resolve, reject) => {
             console.log("Starting connection process...");
 
@@ -113,6 +112,20 @@ export class ConnectionController {
 
             resolve(audionetInitResponse);
         });
+    }
+
+    async startConnectionProcess(): Promise<AudionetInitResponse> {
+        let audionetInitResponse: AudionetInitResponse;
+        try {
+            audionetInitResponse = await this.connectToHighFidelity();
+        } catch (e) {
+            console.error(`Couldn't connect to High Fidelity!`);
+            return;
+        }
+
+        videoController.connectToTwilio();
+
+        return audionetInitResponse;
     }
 
     async onNewHiFiUserDataReceived(receivedHiFiAudioAPIDataArray: Array<ReceivedHiFiAudioAPIData>) {
