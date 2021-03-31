@@ -55,8 +55,8 @@ module.exports = {
     },
     output: {
         filename: 'index.js',
-        path: path.resolve(__dirname, 'dist', 'spatial-audio-rooms'),
-        publicPath: '/spatial-audio-rooms',
+        path: path.resolve(__dirname, 'dist'),
+        publicPath: '/',
         clean: true,
     },
     plugins: [
