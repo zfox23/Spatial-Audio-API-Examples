@@ -275,7 +275,7 @@ export class UserInputController {
         }
         
         if (event.button === 2 && this.rightClickStartPositionPX !== undefined) {
-            this.rightClickStartPositionPX = null;
+            this.rightClickStartPositionPX = undefined;
             this.lastDistanceBetweenRightClickEvents = 0;
         }
     }

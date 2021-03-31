@@ -144,6 +144,10 @@ export class ConnectionController {
             }
 
             if (currentLocalUserData) {
+                if (currentDataFromServer.providedUserID && !isMine) {
+                    currentLocalUserData.providedUserID = currentDataFromServer.providedUserID;
+                }
+
                 if (currentDataFromServer.position && !isMine) {
                     if (!currentLocalUserData.position) {
                         currentLocalUserData.position = new Point3D();

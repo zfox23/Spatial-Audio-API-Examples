@@ -29,7 +29,7 @@ const template = `<!doctype html>
 async function renderApp(req, callback) {
     let spaceName = req.query.spaceName || auth.HIFI_DEFAULT_SPACE_NAME;
 
-    let providedUserID = `${uppercaseFirstLetter(ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)])} ${uppercaseFirstLetter(NOUNS[Math.floor(Math.random() * NOUNS.length)])}`;
+    let providedUserID = `${uppercaseFirstLetter(ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)])}${uppercaseFirstLetter(NOUNS[Math.floor(Math.random() * NOUNS.length)])}`;
     providedUserID += Math.floor(Math.random() * Math.floor(1000));
 
     let hiFiJWT = await generateHiFiJWT(providedUserID, spaceName, false);

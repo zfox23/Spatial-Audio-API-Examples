@@ -1,6 +1,6 @@
 declare module '*.png';
 
-import { roomController, userDataController } from "..";
+import { roomController, userDataController, videoController } from "..";
 import {
     AVATAR_RADIUS_M,
     MAX_VOLUME_DB,
@@ -117,6 +117,7 @@ export class CanvasRenderer {
         let ctx = this.ctx;
         let pxPerM = this.pxPerM;
         let avatarRadiusM = AVATAR_RADIUS_M;
+        let avatarRadiusPX = avatarRadiusM * pxPerM;
 
         ctx.translate(positionInCanvasSpace.x, positionInCanvasSpace.y);
         let amtToRotate = ((userData.orientationEuler && userData.orientationEuler.yawDegrees * -1 + 180) || 0) * Math.PI / 180;
@@ -134,7 +135,7 @@ export class CanvasRenderer {
         ctx.lineWidth = AVATAR_STROKE_WIDTH_PX;
         ctx.fillStyle = userData.colorHex;
         ctx.beginPath();
-        ctx.arc(0, 0, avatarRadiusM * pxPerM, 0, 2 * Math.PI);
+        ctx.arc(0, 0, avatarRadiusPX, 0, 2 * Math.PI);
         if (isMine) {
             if (userData.isMuted) {
                 ctx.strokeStyle = AVATAR_STROKE_HEX_MUTED;
@@ -148,6 +149,17 @@ export class CanvasRenderer {
         ctx.fill();
         ctx.closePath();
         ctx.rotate(-amtToRotate);
+
+        if (videoController.providedUserIDToVideoElementMap.has(userData.providedUserID)) {
+            let amtToRotateVideo = -this.canvasRotationDegrees * Math.PI / 180;
+            ctx.rotate(amtToRotateVideo);
+            ctx.save();
+            ctx.clip();
+            ctx.drawImage(videoController.providedUserIDToVideoElementMap.get(userData.providedUserID), -avatarRadiusPX, -avatarRadiusPX, avatarRadiusPX * 2, avatarRadiusPX * 2);
+            ctx.restore();
+            ctx.rotate(-amtToRotateVideo);
+        }
+
         ctx.translate(-positionInCanvasSpace.x, -positionInCanvasSpace.y);
     }
 

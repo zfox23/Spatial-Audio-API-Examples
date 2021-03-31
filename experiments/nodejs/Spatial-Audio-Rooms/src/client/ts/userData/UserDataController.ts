@@ -2,8 +2,11 @@ import { OrientationEuler3D, Point3D } from "hifi-spatial-audio";
 import { userDataController, connectionController, uiController, roomController } from "..";
 import { CLOSE_ENOUGH_M } from "../constants/constants";
 
+declare var HIFI_PROVIDED_USER_ID: string;
+
 export interface UserData {
     visitIDHash?: string;
+    providedUserID?: string;
     currentRoomName?: string;
     displayName?: string;
     colorHex?: string;
@@ -27,6 +30,7 @@ class MyAvatar {
     constructor() {
         this.myUserData = {
             visitIDHash: undefined,
+            providedUserID: HIFI_PROVIDED_USER_ID,
             currentRoomName: roomController.lobby.name,
             displayName: undefined,
             colorHex: undefined,
