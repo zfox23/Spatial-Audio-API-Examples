@@ -58,6 +58,7 @@ $bottom-controls-container-height: 72px;
 
     &__headphones {
         display: block;
+
         @include media(">tablet") {
             line-height: 48px;
             font-size: 48px;
@@ -135,18 +136,19 @@ $bottom-controls-container-height: 72px;
         height: 100%;
         opacity: 0;
         z-index: -1;
-        animation: scaleIn 2s infinite cubic-bezier(.17,.67,.83,.67);
+        animation: scaleIn 2s infinite cubic-bezier(.17, .67, .83, .67);
 
         @keyframes scaleIn {
             from {
-              transform: scale(0.8, 0.8);
-              opacity: .8;
+                transform: scale(0.8, 0.8);
+                opacity: .8;
             }
+
             to {
-              transform: scale(1.6, 1.6);
-              opacity: 0;
+                transform: scale(1.6, 1.6);
+                opacity: 0;
             }
-          }
+        }
     }
 }
 
@@ -221,9 +223,66 @@ $bottom-controls-container-height: 72px;
     background-image: url('../images/grey-cam-with-cross.svg');
 }
 
-.participantsListContainer {
+.showRoomListButton {
+    background-image: url('../images/hamburger.svg');
+    width: 32px;
+    height: 32px;
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: center center;
+    margin: 16px;
+    cursor: pointer;
+    background-color: transparent;
+    border: none;
+    outline: none;
     position: fixed;
-    bottom: $bottom-controls-container-height;
-    right: 12px;
-    background-color: black;
+    z-index: map-get(z-indices.$z-index, aboveHamburger);
+}
+
+.roomListOuterContainer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: calc(100vh - #{$bottom-controls-container-height});
+    background-color: rgba(0, 0, 0, 0.3);
+    z-index: map-get(z-indices.$z-index, hamburger);
+}
+
+.roomListInnerContainer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 240px;
+    height: calc(100vh - #{$bottom-controls-container-height} - 72px - 12px);
+    background-color: map-get(themes.$theme, room-list-container-background);
+    z-index: map-get(z-indices.$z-index, hamburger);
+    animation-name: slideIn;
+    animation-duration: 0.25s;
+    display: flex;
+    flex-direction: column;
+    padding: 72px 12px 12px 12px;
+}
+
+@keyframes slideIn {
+    from {
+        left: -240px;
+    }
+
+    to {
+        left: 0;
+    }
+}
+
+.roomInfoContainer {
+    display: flex;
+    flex-direction: column;
+
+    &__header {
+        cursor: pointer;
+    }
+    
+    &__occupant {
+
+    }
 }

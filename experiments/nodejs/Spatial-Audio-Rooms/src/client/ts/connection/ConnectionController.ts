@@ -221,7 +221,7 @@ export class ConnectionController {
             }
 
             if (allAlone || mustReposition) {
-                userDataController.myAvatar.positionSelfInRoom();
+                userDataController.myAvatar.positionSelfInRoom(roomController.lobby.name);
             }
         }
 

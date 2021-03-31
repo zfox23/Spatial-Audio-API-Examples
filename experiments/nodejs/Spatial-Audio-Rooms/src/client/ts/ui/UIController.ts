@@ -9,7 +9,7 @@ export class UIController {
     toggleInputMuteButton: HTMLButtonElement;
     toggleOutputMuteButton: HTMLButtonElement;
     toggleVideoButton: HTMLButtonElement;
-    participantsListContainer: HTMLElement;
+    roomListOuterContainer: HTMLElement;
 
     connectionController: ConnectionController;
 
@@ -68,10 +68,6 @@ export class UIController {
         this.toggleVideoButton = document.createElement("button");
         this.toggleVideoButton.classList.add("toggleVideoButton");
         this.bottomControlsContainer.appendChild(this.toggleVideoButton);
-
-        this.participantsListContainer = document.createElement("div");
-        this.participantsListContainer.classList.add("participantsListContainer", "displayNone");
-        document.body.appendChild(this.participantsListContainer);
     }
 
     removeLoadingOverlay() {

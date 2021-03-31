@@ -82,12 +82,37 @@ class Room {
 export class RoomController {
     lobby: Room;
     rooms: Array<Room>;
+    showRoomListButton: HTMLButtonElement;
+    roomListOuterContainer: HTMLDivElement;
+    roomListInnerContainer: HTMLDivElement;
 
     constructor() {
         this.lobby = new Room({ name: "Lobby", center: new Point3D({ x: 0, y: 0, z: 0 }) });
 
         this.rooms = [];
         this.rooms.push(this.lobby);
+
+        this.rooms.push(new Room({ name: "Battery", center: new Point3D({ x: 15, y: 0, z: 15 }) }));
+        this.rooms.push(new Room({ name: "Folsom", center: new Point3D({ x: -15, y: 0, z: 15 }) }));
+
+        this.showRoomListButton = document.createElement("button");
+        this.showRoomListButton.classList.add("showRoomListButton");
+        document.body.appendChild(this.showRoomListButton);
+        this.showRoomListButton.addEventListener("click", this.toggleRoomList.bind(this));
+
+        this.roomListOuterContainer = document.createElement("div");
+        this.roomListOuterContainer.classList.add("roomListOuterContainer", "displayNone");
+        document.body.appendChild(this.roomListOuterContainer);
+        this.roomListOuterContainer.addEventListener("click", this.toggleRoomList.bind(this));
+
+        this.roomListInnerContainer = document.createElement("div");
+        this.roomListInnerContainer.classList.add("roomListInnerContainer");
+        this.roomListInnerContainer.addEventListener("click", (e) => { e.stopPropagation(); });
+        this.roomListOuterContainer.appendChild(this.roomListInnerContainer);
+    }
+
+    toggleRoomList() {
+        this.roomListOuterContainer.classList.toggle("displayNone");
     }
 
     getRoomFromPoint3D(point3D: Point3D): Room {
@@ -208,6 +233,36 @@ export class RoomController {
                 })
                 room.seats.push(newSeat);
             }
+        });
+
+        this.updateRoomList();
+    }
+
+    updateRoomList() {
+        this.roomListInnerContainer.innerHTML = ``;
+
+        this.rooms.forEach((room) => {
+            let roomInfoContainer = document.createElement("div");
+            roomInfoContainer.classList.add("roomInfoContainer");
+            this.roomListInnerContainer.appendChild(roomInfoContainer);
+
+            let roomInfoContainer__header = document.createElement("h2");
+            roomInfoContainer__header.classList.add("roomInfoContainer__header");
+            roomInfoContainer__header.setAttribute("data-room-name", room.name);
+            roomInfoContainer__header.innerHTML = room.name;
+            roomInfoContainer__header.addEventListener("click", (e) => {
+                userDataController.myAvatar.positionSelfInRoom((<HTMLElement>e.target).getAttribute('data-room-name'));
+            });
+            roomInfoContainer.appendChild(roomInfoContainer__header);
+
+            room.seats.forEach((seat) => {
+                if (seat.occupiedUserData) {
+                    let roomInfoContainer__occupant = document.createElement("p");
+                    roomInfoContainer__occupant.classList.add("roomInfoContainer__occupant");
+                    roomInfoContainer__occupant.innerHTML = seat.occupiedUserData.displayName;
+                    roomInfoContainer.appendChild(roomInfoContainer__occupant);
+                }
+            });
         });
     }
 }

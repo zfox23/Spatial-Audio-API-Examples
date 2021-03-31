@@ -31,7 +31,7 @@ class MyAvatar {
         this.myUserData = {
             visitIDHash: undefined,
             providedUserID: HIFI_PROVIDED_USER_ID,
-            currentRoomName: roomController.lobby.name,
+            currentRoomName: undefined,
             displayName: undefined,
             colorHex: undefined,
             position: undefined,
@@ -44,7 +44,13 @@ class MyAvatar {
         };
     }
 
-    positionSelfInRoom() {
+    positionSelfInRoom(roomName: string) {
+        if (this.myUserData.currentRoomName === roomName) {
+            return;
+        }
+
+        this.myUserData.currentRoomName = roomName;
+
         let currentRoom = roomController.rooms.find((room) => {
             return room.name === this.myUserData.currentRoomName;
         });
