@@ -178,6 +178,9 @@ export class CanvasRenderer {
             ctx.rotate(amtToRotateVideo);
             ctx.save();
             ctx.clip();
+            if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash) {
+                ctx.scale(-1, 1);
+            }
             ctx.drawImage(videoController.providedUserIDToVideoElementMap.get(userData.providedUserID), -avatarRadiusPX, -avatarRadiusPX, avatarRadiusPX * 2, avatarRadiusPX * 2);
             ctx.restore();
             ctx.rotate(-amtToRotateVideo);
