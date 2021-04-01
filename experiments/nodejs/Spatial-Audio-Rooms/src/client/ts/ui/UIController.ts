@@ -15,6 +15,7 @@ export class UIController {
     toggleRoomsDrawerButton: HTMLButtonElement;
     modalBackground: HTMLDivElement;
     avatarContextMenu: HTMLDivElement;
+    hasCompletedTutorial: boolean;
 
     constructor() {
         this.initPlayOverlay();
@@ -22,6 +23,8 @@ export class UIController {
         this.initMainUI();
         this.initContextMenu();
         this.hideLoadingOverlay();
+
+        this.hasCompletedTutorial = localStorage.getItem("hasCompletedTutorial") === "true";
     }
 
     initPlayOverlay() {
@@ -114,6 +117,7 @@ export class UIController {
         }
         
         this.hideLoadingOverlay();
+        roomController.toggleRoomList();
     }
 
     hideAvatarContextMenu() {
@@ -305,6 +309,11 @@ export class UIController {
 
         this.modalBackground.classList.remove("displayNone");
         this.avatarContextMenu.classList.remove("displayNone");
+
+        if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash) {
+            this.hasCompletedTutorial = true;
+            localStorage.setItem("hasCompletedTutorial", "true");
+        }
     }
 
     maybeUpdateAvatarContextMenu(userData: UserData) {

@@ -5,6 +5,7 @@ import { UserData } from "../userData/UserDataController";
 import { Utilities } from "../utilities/Utilities";
 import SeatingRadius1Image1 from "../../images/rooms/room-with-seating-radius-1-bg-1.jpg";
 import SeatingRadius1Image2 from "../../images/rooms/room-with-seating-radius-1-bg-2.jpg";
+import SeatingRadius3Image1 from "../../images/rooms/room-with-seating-radius-3-bg-1.jpg";
 
 export class Seat {
     position: Point3D;

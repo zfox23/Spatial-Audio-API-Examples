@@ -1,6 +1,6 @@
 declare module '*.png';
 
-import { roomController, userDataController, videoController } from "..";
+import { roomController, uiController, userDataController, videoController } from "..";
 import {
     AVATAR_RADIUS_M,
     MAX_VOLUME_DB,
@@ -21,6 +21,12 @@ import {
     ROOM_WITH_IMAGE_LABEL_COLOR,
     MOUSE_WHEEL_ZOOM_FACTOR,
     AVATAR_HOVER_HIGHLIGHT_RADIUS_ADDITION_M,
+    AVATAR_TUTORIAL_RADIUS_M,
+    AVATAR_TUTORIAL_GLOW_HEX,
+    TUTORIAL_TEXT_COLOR,
+    TUTORIAL_TEXT_FONT,
+    TUTORIAL_TEXT_STROKE_WIDTH_PX,
+    TUTORIAL_TEXT_STROKE_COLOR,
 } from "../constants/constants";
 import { UserData } from "../userData/UserDataController";
 import { Utilities } from "../utilities/Utilities";
@@ -216,6 +222,47 @@ export class CanvasRenderer {
         ctx.rotate(-amtToRotateLabel);
     }
 
+    drawTutorialGlow({ userData }: { userData: UserData }) {
+        let ctx = this.ctx;
+        let pxPerM = this.pxPerM;
+
+        let tutorialRadiusPX = AVATAR_TUTORIAL_RADIUS_M * pxPerM;
+
+        ctx.beginPath();
+        ctx.arc(0, 0, tutorialRadiusPX, 0, 2 * Math.PI);
+        let grad = ctx.createRadialGradient(0, 0, 0, 0, 0, tutorialRadiusPX);
+        grad.addColorStop(0.0, AVATAR_TUTORIAL_GLOW_HEX);
+        grad.addColorStop(0.75, AVATAR_TUTORIAL_GLOW_HEX + "00");
+        ctx.fillStyle = grad;
+        ctx.fill();
+        ctx.closePath();
+    }
+
+    drawTutorialText({ userData }: { userData: UserData }) {
+        let ctx = this.ctx;
+        let pxPerM = this.pxPerM;
+
+        let amtToRotateLabel = this.canvasRotationDegrees * Math.PI / 180;
+        ctx.rotate(amtToRotateLabel);
+
+        ctx.font = TUTORIAL_TEXT_FONT;
+        ctx.fillStyle = TUTORIAL_TEXT_COLOR;
+        ctx.lineWidth = TUTORIAL_TEXT_STROKE_WIDTH_PX;
+        ctx.strokeStyle = TUTORIAL_TEXT_STROKE_COLOR;
+        
+        ctx.textAlign = "right";
+        let textToDraw = "This is you.";
+        ctx.fillText(textToDraw, -AVATAR_RADIUS_M * pxPerM - 25, 0);
+        ctx.strokeText(textToDraw, -AVATAR_RADIUS_M * pxPerM - 25, 0);
+
+        ctx.textAlign = "left";
+        textToDraw = "Try clicking yourself.";
+        ctx.fillText(textToDraw, AVATAR_RADIUS_M * pxPerM + 25, 0);
+        ctx.strokeText(textToDraw, AVATAR_RADIUS_M * pxPerM + 25, 0);
+
+        ctx.rotate(-amtToRotateLabel);
+    }
+
     drawAvatar({ userData }: { userData: UserData }) {
         if (!userData || !userData.position || typeof (userData.position.x) !== "number" || typeof (userData.position.z) !== "number") {
             return;
@@ -226,10 +273,18 @@ export class CanvasRenderer {
 
         ctx.translate(userData.position.x * pxPerM, userData.position.z * pxPerM);
 
+        if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash && !uiController.hasCompletedTutorial) {
+            this.drawTutorialGlow({ userData });
+        }
+
         this.drawVolumeBubble({ userData });
         this.drawAvatarBase({ userData });
         this.drawAvatarVideo({ userData });
         this.drawAvatarLabel({ userData });
+
+        if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash && !uiController.hasCompletedTutorial) {
+            this.drawTutorialText({ userData });
+        }
 
         ctx.translate(-userData.position.x * pxPerM, -userData.position.z * pxPerM);
     }
