@@ -170,6 +170,16 @@ export class UserInputController {
         connectionController.webSocketConnectionController.updateMyUserDataOnWebSocketServer();
     }
 
+    setVolumeThreshold(newVolumeThreshold: number) {
+        userDataController.myAvatar.myUserData.volumeThreshold = newVolumeThreshold;
+        console.log(`User changed their Mic Volume Threshold to ${newVolumeThreshold}`);
+        connectionController.hifiCommunicator.updateUserDataAndTransmit({
+            volumeThreshold: newVolumeThreshold,
+        });
+        uiController.maybeUpdateAvatarContextMenu(userDataController.myAvatar.myUserData);
+        connectionController.webSocketConnectionController.updateMyUserDataOnWebSocketServer();
+    }
+
     getGesturePointFromEvent(evt: MouseEvent | TouchEvent) {
         let point = {
             x: 0,

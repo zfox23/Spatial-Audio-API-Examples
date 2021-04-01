@@ -136,6 +136,7 @@ export class UIController {
 
     generateEchoCancellationUI(userData: UserData) {
         let echoCancellationContainer = document.createElement("div");
+        echoCancellationContainer.classList.add("echoCancellationContainer");
         this.avatarContextMenu.appendChild(echoCancellationContainer);
 
         let echoCancellationCheckbox = document.createElement("input");
@@ -166,6 +167,7 @@ export class UIController {
 
     generateAGCUI(userData: UserData) {
         let agcContainer = document.createElement("div");
+        agcContainer.classList.add("agcContainer");
         this.avatarContextMenu.appendChild(agcContainer);
 
         let agcCheckbox = document.createElement("input");
@@ -195,13 +197,14 @@ export class UIController {
     }
 
     generateHiFiGainUI(userData: UserData) {
-        let hiFiGainContainer = document.createElement("div");
-        this.avatarContextMenu.appendChild(hiFiGainContainer);
+        let avatarContextMenu__hiFiGainContainer = document.createElement("div");
+        avatarContextMenu__hiFiGainContainer.classList.add("avatarContextMenu__hiFiGainContainer");
+        this.avatarContextMenu.appendChild(avatarContextMenu__hiFiGainContainer);
 
         let avatarContextMenu__hiFiGainHeader = document.createElement("h3");
         avatarContextMenu__hiFiGainHeader.innerHTML = `Input Gain: ${userData.hiFiGain.toFixed(2)}`;
         avatarContextMenu__hiFiGainHeader.classList.add("avatarContextMenu__hiFiGainHeader");
-        hiFiGainContainer.appendChild(avatarContextMenu__hiFiGainHeader);
+        avatarContextMenu__hiFiGainContainer.appendChild(avatarContextMenu__hiFiGainHeader);
 
         let avatarContextMenu__hiFiGainSlider = document.createElement("input");
         avatarContextMenu__hiFiGainSlider.type = "range";
@@ -220,7 +223,37 @@ export class UIController {
             }
         });
 
-        hiFiGainContainer.appendChild(avatarContextMenu__hiFiGainSlider);
+        avatarContextMenu__hiFiGainContainer.appendChild(avatarContextMenu__hiFiGainSlider);
+    }
+
+    generateVolumeThresholdUI(userData: UserData) {
+        let avatarContextMenu__volumeThresholdContainer = document.createElement("div");
+        avatarContextMenu__volumeThresholdContainer.classList.add("avatarContextMenu__avatarContextMenu__volumeThresholdContainer");
+        this.avatarContextMenu.appendChild(avatarContextMenu__volumeThresholdContainer);
+
+        let avatarContextMenu__volumeThresholdHeader = document.createElement("h3");
+        avatarContextMenu__volumeThresholdHeader.innerHTML = `Mic Threshold: ${userData.volumeThreshold}`;
+        avatarContextMenu__volumeThresholdHeader.classList.add("avatarContextMenu__volumeThresholdHeader");
+        avatarContextMenu__volumeThresholdContainer.appendChild(avatarContextMenu__volumeThresholdHeader);
+
+        let avatarContextMenu__volumeThresholdSlider = document.createElement("input");
+        avatarContextMenu__volumeThresholdSlider.type = "range";
+        avatarContextMenu__volumeThresholdSlider.min = "-96";
+        avatarContextMenu__volumeThresholdSlider.max = "0";
+        avatarContextMenu__volumeThresholdSlider.value = userData.volumeThreshold.toString();
+        avatarContextMenu__volumeThresholdSlider.step = "1";
+        avatarContextMenu__volumeThresholdSlider.classList.add("avatarContextMenu__volumeThresholdSlider");
+
+        avatarContextMenu__volumeThresholdSlider.addEventListener("input", (e) => {
+            let volumeThresholdSliderValue = parseInt((<HTMLInputElement>e.target).value);
+            if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash) {
+                userInputController.setVolumeThreshold(volumeThresholdSliderValue);
+            } else {
+                connectionController.webSocketConnectionController.requestToChangeVolumeThreshold(userData.visitIDHash, volumeThresholdSliderValue);
+            }
+        });
+
+        avatarContextMenu__volumeThresholdContainer.appendChild(avatarContextMenu__volumeThresholdSlider);
     }
 
     showAvatarContextMenu(userData: UserData) {
@@ -233,6 +266,7 @@ export class UIController {
         this.generateEchoCancellationUI(userData);
         this.generateAGCUI(userData);
         this.generateHiFiGainUI(userData);
+        this.generateVolumeThresholdUI(userData);
 
         this.avatarContextMenu.setAttribute('visit-id-hash', userData.visitIDHash);
 
@@ -262,6 +296,13 @@ export class UIController {
         if (avatarContextMenu__hiFiGainSlider) {
             avatarContextMenu__hiFiGainSlider.value = userData.hiFiGainSliderValue;
             avatarContextMenu__hiFiGainHeader.innerHTML = `Input Gain: ${userData.hiFiGain.toFixed(2)}`;
+        }
+
+        let avatarContextMenu__volumeThresholdSlider = <HTMLInputElement>this.avatarContextMenu.querySelector(".avatarContextMenu__volumeThresholdSlider");
+        let avatarContextMenu__volumeThresholdHeader = <HTMLHeadingElement>this.avatarContextMenu.querySelector(".avatarContextMenu__volumeThresholdHeader");
+        if (avatarContextMenu__volumeThresholdSlider) {
+            avatarContextMenu__volumeThresholdSlider.value = userData.volumeThreshold.toString();
+            avatarContextMenu__volumeThresholdHeader.innerHTML = `Mic Threshold: ${userData.volumeThreshold}`;
         }
     }
 

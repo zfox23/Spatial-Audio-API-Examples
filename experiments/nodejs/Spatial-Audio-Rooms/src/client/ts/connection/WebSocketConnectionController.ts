@@ -10,6 +10,7 @@ interface WebSocketParticipantData {
     echoCancellationEnabled: boolean;
     agcEnabled: boolean;
     hiFiGainSliderValue: string;
+    volumeThreshold: number;
 }
 
 export class WebSocketConnectionController {
@@ -33,11 +34,12 @@ export class WebSocketConnectionController {
                     echoCancellationEnabled,
                     agcEnabled,
                     hiFiGainSliderValue,
+                    volumeThreshold,
                 } = participant;
 
                 let localUserData = userDataController.allOtherUserData.find((userData) => { return userData.visitIDHash === visitIDHash; });
                 if (localUserData) {
-                    console.log(`Updating participant with hash \`${localUserData.visitIDHash}\`:\nDisplay Name: \`${displayName}\`\nColor: ${colorHex}\nechoCancellationEnabled: ${echoCancellationEnabled}\nagcEnabled: ${agcEnabled}\nhiFiGainSliderValue: ${hiFiGainSliderValue}\n`);
+                    console.log(`Updating participant with hash \`${localUserData.visitIDHash}\`:\nDisplay Name: \`${displayName}\`\nColor: ${colorHex}\nechoCancellationEnabled: ${echoCancellationEnabled}\nagcEnabled: ${agcEnabled}\nhiFiGainSliderValue: ${hiFiGainSliderValue}\nvolumeThreshold:${volumeThreshold}\n`);
                     if (typeof (displayName) === "string") {
                         localUserData.displayName = displayName;
                     }
@@ -54,6 +56,9 @@ export class WebSocketConnectionController {
                         localUserData.hiFiGainSliderValue = hiFiGainSliderValue;
                         localUserData.hiFiGain = uiController.hiFiGainFromSliderValue(localUserData.hiFiGainSliderValue);
                     }
+                    if (typeof (volumeThreshold) === "number") {
+                        localUserData.volumeThreshold = volumeThreshold;
+                    }
                 } else if (visitIDHash && displayName) {
                     localUserData = {
                         visitIDHash,
@@ -62,6 +67,7 @@ export class WebSocketConnectionController {
                         echoCancellationEnabled,
                         agcEnabled,
                         hiFiGainSliderValue,
+                        volumeThreshold,
                     };
                     localUserData.hiFiGain = uiController.hiFiGainFromSliderValue(localUserData.hiFiGainSliderValue);
                     userDataController.allOtherUserData.push(localUserData);
@@ -101,6 +107,11 @@ export class WebSocketConnectionController {
             console.warn(`Got a request from \`${fromVisitIDHash}\` to change HiFiGainSliderValue to \`${newHiFiGainSliderValue}\`!`);
             userInputController.setHiFiGainFromSliderValue(newHiFiGainSliderValue);
         });
+
+        this.socket.on("onRequestToChangeVolumeThreshold", ({ fromVisitIDHash, newVolumeThreshold }: { fromVisitIDHash: string, newVolumeThreshold: number }) => {
+            console.warn(`Got a request from \`${fromVisitIDHash}\` to change Volume Threshold to \`${newVolumeThreshold}\`!`);
+            userInputController.setVolumeThreshold(newVolumeThreshold);
+        });
     }
 
     maybeSendInitialWebSocketData() {
@@ -118,6 +129,7 @@ export class WebSocketConnectionController {
             echoCancellationEnabled: myUserData.echoCancellationEnabled,
             agcEnabled: myUserData.agcEnabled,
             hiFiGainSliderValue: myUserData.hiFiGainSliderValue,
+            volumeThreshold: myUserData.volumeThreshold,
         });
     }
 
@@ -136,6 +148,7 @@ export class WebSocketConnectionController {
             echoCancellationEnabled: myUserData.echoCancellationEnabled,
             agcEnabled: myUserData.agcEnabled,
             hiFiGainSliderValue: myUserData.hiFiGainSliderValue,
+            volumeThreshold: myUserData.volumeThreshold,
         };
 
         console.log(`Updating data about me on server:\n${JSON.stringify(dataToUpdate)}`);
@@ -161,6 +174,10 @@ export class WebSocketConnectionController {
 
     requestToChangeHiFiGainSliderValue(visitIDHash: string, newHiFiGainSliderValue: string) {
         this.socket.emit("requestToChangeHiFiGainSliderValue", { spaceName: HIFI_SPACE_NAME, toVisitIDHash: visitIDHash, fromVisitIDHash: userDataController.myAvatar.myUserData.visitIDHash, newHiFiGainSliderValue });
+    }
+
+    requestToChangeVolumeThreshold(visitIDHash: string, newVolumeThreshold: number) {
+        this.socket.emit("requestToChangeVolumeThreshold", { spaceName: HIFI_SPACE_NAME, toVisitIDHash: visitIDHash, fromVisitIDHash: userDataController.myAvatar.myUserData.visitIDHash, newVolumeThreshold });
     }
 
     stopWebSocketStuff() {
