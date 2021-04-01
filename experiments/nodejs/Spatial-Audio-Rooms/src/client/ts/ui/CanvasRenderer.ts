@@ -81,9 +81,9 @@ export class CanvasRenderer {
         }
 
         if (!newPXPerM) {
-            this.pxPerM = Math.min(this.mainCanvas.width, this.mainCanvas.height) / this.myCurrentRoom.dimensions.x;
+            this.pxPerM = Math.min(this.mainCanvas.width, this.mainCanvas.height) / (2 * this.myCurrentRoom.seatingRadiusM + 3 * AVATAR_RADIUS_M);
         } else {
-            this.pxPerM = Utilities.clamp(newPXPerM, 0, 999);
+            this.pxPerM = Utilities.clamp(newPXPerM, 10, 1000);
         }
     }
 
@@ -268,7 +268,7 @@ export class CanvasRenderer {
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         let textMetrics = ctx.measureText(room.name);
-        if (textMetrics.width < Math.min(room.dimensions.x * pxPerM, room.dimensions.z * pxPerM)) {
+        if (textMetrics.width < Math.min(room.seatingRadiusM * pxPerM, room.seatingRadiusM * pxPerM)) {
             ctx.fillText(room.name, 0, 0);
         }
         ctx.rotate(-amtToRotateLabel);

@@ -3,7 +3,8 @@ import { uiController, userDataController } from "..";
 import { AVATAR_RADIUS_M, CLOSE_ENOUGH_M, MAX_VOLUME_DB_AVATAR_RADIUS_MULTIPLIER, NUM_SEATS_IN_EMPTY_ROOM } from "../constants/constants";
 import { UserData } from "../userData/UserDataController";
 import { Utilities } from "../utilities/Utilities";
-import SeatingRadius1Image from "../../images/rooms/room-with-seating-radius-1-bg.jpg";
+import SeatingRadius1Image1 from "../../images/rooms/room-with-seating-radius-1-bg-1.jpg";
+import SeatingRadius1Image2 from "../../images/rooms/room-with-seating-radius-1-bg-2.jpg";
 
 export class Seat {
     position: Point3D;
@@ -145,13 +146,13 @@ export class RoomController {
     constructor() {
         this.rooms = [];
         
-        this.lobby = new SpatialAudioRoom({ name: "Lobby", center: new Point3D({ x: 1, y: 0, z: 1 }), seatingRadiusM: 1.0, roomImageSRC: SeatingRadius1Image });
+        this.lobby = new SpatialAudioRoom({ name: "Lobby", center: new Point3D({ x: 1, y: 0, z: 1 }), seatingRadiusM: 1.0, roomImageSRC: SeatingRadius1Image1 });
         this.rooms.push(this.lobby);
-        this.rooms.push(new SpatialAudioRoom({ name: "Battery", center: new Point3D({ x: 4.5, y: 0, z: 4.5 }), seatingRadiusM: 1.0, roomImageSRC: SeatingRadius1Image }));
-        this.rooms.push(new SpatialAudioRoom({ name: "Folsom", center: new Point3D({ x: -5, y: 0, z: 5 }), seatingRadiusM: 1.0, roomImageSRC: SeatingRadius1Image }));
+        this.rooms.push(new SpatialAudioRoom({ name: "Battery", center: new Point3D({ x: 4.5, y: 0, z: 4.5 }), seatingRadiusM: 1.0, roomImageSRC: SeatingRadius1Image2 }));
+        this.rooms.push(new SpatialAudioRoom({ name: "Folsom", center: new Point3D({ x: -5, y: 0, z: 5 }), seatingRadiusM: 1.0, roomImageSRC: SeatingRadius1Image1 }));
         this.rooms.push(new SpatialAudioRoom({ name: "Tiny", center: new Point3D({ x: 0, y: 0, z: 3.5 }), seatingRadiusM: 0.1 }));
         this.rooms.push(new SpatialAudioRoom({ name: "HUGE", center: new Point3D({ x: 0, y: 0, z: -8 }), seatingRadiusM: 3.0 }));
-        this.rooms.push(new SpatialAudioRoom({ name: "very far", center: new Point3D({ x: 100, y: 0, z: 100 }), seatingRadiusM: 1.0, roomImageSRC: SeatingRadius1Image }));
+        this.rooms.push(new SpatialAudioRoom({ name: "very far", center: new Point3D({ x: 100, y: 0, z: 100 }), seatingRadiusM: 1.0, roomImageSRC: SeatingRadius1Image2 }));
 
         this.showRoomListButton = document.createElement("button");
         this.showRoomListButton.classList.add("showRoomListButton");
