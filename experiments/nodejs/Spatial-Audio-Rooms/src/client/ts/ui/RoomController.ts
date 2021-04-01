@@ -98,8 +98,8 @@ export class RoomController {
 
         this.rooms.push(new SpatialAudioRoom({ name: "Battery", center: new Point3D({ x: 3.5, y: 0, z: 3.5 }), seatingRadiusM: 1.0 }));
         this.rooms.push(new SpatialAudioRoom({ name: "Folsom", center: new Point3D({ x: -5, y: 0, z: 5 }) }));
-        this.rooms.push(new SpatialAudioRoom({ name: "Small", center: new Point3D({ x: 0, y: 0, z: 10 }), seatingRadiusM: 0.2 }));
-        this.rooms.push(new SpatialAudioRoom({ name: "HUGE", center: new Point3D({ x: 0, y: 0, z: -15 }), seatingRadiusM: 4 }));
+        this.rooms.push(new SpatialAudioRoom({ name: "Tiny", center: new Point3D({ x: 0, y: 0, z: 3.5 }), seatingRadiusM: 0.5 }));
+        this.rooms.push(new SpatialAudioRoom({ name: "HUGE", center: new Point3D({ x: 0, y: 0, z: -8 }), seatingRadiusM: 4 }));
 
         this.showRoomListButton = document.createElement("button");
         this.showRoomListButton.classList.add("showRoomListButton");

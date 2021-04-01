@@ -171,13 +171,6 @@ export class UserInputController {
 
             this.hoveredUserData = undefined;
         } else if (this.hoveredSeat) {
-            let room = roomController.getRoomFromName(userDataController.myAvatar.myUserData.currentRoomName);
-
-            if (!room) {
-                console.warn("User clicked on a seat, but we can't determine the current room!");
-                return;
-            }
-
             console.log(`User clicked on a new seat at ${JSON.stringify(this.hoveredSeat.position)}! New yaw orientation: ${JSON.stringify(this.hoveredSeat.orientation)} degrees.`);
             userDataController.myAvatar.updateMyPositionAndOrientation(this.hoveredSeat.position, this.hoveredSeat.orientation.yawDegrees);
 
@@ -240,15 +233,16 @@ export class UserInputController {
             }
 
             if (!this.hoveredUserData) {
-                this.hoveredSeat = room.seats.find((seat) => {
-                    return Utilities.getDistanceBetween2DPoints(seat.position.x, seat.position.z, hoverM.x, hoverM.z) < SEAT_RADIUS_M;
-                });
-            }
-            if (this.hoveredSeat) {
-                console.log(`room center  position : ${JSON.stringify(room.center)}`)
-                console.log(`hovered seat position : ${JSON.stringify(this.hoveredSeat.position)}`)
-                console.log(`        hover position: ${JSON.stringify(hoverM)}`)
-                console.log(``)
+                for (let i = 0; i < roomController.rooms.length; i++) {
+                    let room = roomController.rooms[i];
+                    this.hoveredSeat = room.seats.find((seat) => {
+                        return Utilities.getDistanceBetween2DPoints(seat.position.x, seat.position.z, hoverM.x, hoverM.z) < SEAT_RADIUS_M;
+                    });
+
+                    if (this.hoveredSeat) {
+                        break;
+                    }
+                }                
             }
         }
 
