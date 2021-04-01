@@ -1,4 +1,10 @@
 import { Point3D } from "hifi-spatial-audio";
+import { uiController } from "..";
+
+export interface CanvasPX {
+    x: number;
+    y: number;
+}
 
 export class Utilities {
     constructor() {
@@ -10,8 +16,6 @@ export class Utilities {
     }
 
     static linearScale(factor: number, minInput: number, maxInput: number, minOutput: number, maxOutput: number) {
-        factor = Utilities.clamp(factor, minInput, maxInput);
-
         return minOutput + (maxOutput - minOutput) *
             (factor - minInput) / (maxInput - minInput);
     }
@@ -149,14 +153,31 @@ export class Utilities {
         return [nx, ny];
     }
 
-    static pointIsWithinRectangle({ point, rectCenter, rectDimensions }: { point: Point3D, rectCenter: Point3D, rectDimensions: Point3D }) {
-        if (!(point && rectCenter && rectDimensions)) {
-            return false;
+    static canvasPXToM(canvasPX: CanvasPX) {
+        if (!uiController.canvasRenderer.myCurrentRoom) {
+            return undefined;
         }
 
-        return point.x <= rectCenter.x + rectDimensions.x / 2 &&
-            point.x >= rectCenter.x - rectDimensions.x / 2 &&
-            point.z <= rectCenter.z + rectDimensions.z / 2 &&
-            point.z >= rectCenter.z - rectDimensions.z / 2;
+        let pxPerM = uiController.canvasRenderer.pxPerM;
+        let canvasOffsetPX = uiController.canvasRenderer.canvasOffsetPX;
+        let cameraPositionM = uiController.canvasRenderer.myCurrentRoom.center;
+        let yawOrientationRadians = uiController.canvasRenderer.canvasRotationDegrees * Math.PI / 180;
+
+        let translatedCanvasPX = {
+            x: canvasPX.x - canvasOffsetPX.x - cameraPositionM.x * pxPerM,
+            y: canvasPX.y - canvasOffsetPX.y - cameraPositionM.z * pxPerM
+        };
+
+        let rotatedCanvasPX = {
+            x: translatedCanvasPX.x * Math.cos(yawOrientationRadians) - translatedCanvasPX.y * Math.sin(yawOrientationRadians),
+            y: translatedCanvasPX.x * Math.sin(yawOrientationRadians) + translatedCanvasPX.y * Math.cos(yawOrientationRadians)
+        };
+
+        let pointM = {
+            x: rotatedCanvasPX.x / pxPerM + cameraPositionM.x,
+            z: rotatedCanvasPX.y / pxPerM - cameraPositionM.z
+        };
+
+        return pointM;
     }
 }

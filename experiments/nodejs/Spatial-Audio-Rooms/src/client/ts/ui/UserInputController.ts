@@ -223,18 +223,13 @@ export class UserInputController {
                 }
             }
         } else {
-            let rotatedPoint = Utilities.rotateAroundPoint(this.mainCanvas.width / 2, this.mainCanvas.height / 2, event.offsetX, event.offsetY, uiController.canvasRenderer.canvasRotationDegrees);
+            let hoverM = Utilities.canvasPXToM({x: event.offsetX, y: event.offsetY});
 
             let room = roomController.getRoomFromName(userDataController.myAvatar.myUserData.currentRoomName);
 
-            if (!(room && userDataController.myAvatar.myUserData.position)) {
+            if (!(hoverM && room && userDataController.myAvatar.myUserData.position)) {
                 return;
             }
-
-            let hoverM = {
-                "x": Utilities.linearScale(rotatedPoint[0], 0, this.mainCanvas.width, room.dimensions.x / 2, -room.dimensions.x / 2) + room.center.x,
-                "z": Utilities.linearScale(rotatedPoint[1], 0, this.mainCanvas.height, room.dimensions.z / 2, -room.dimensions.z / 2) + room.center.z
-            };
 
             this.hoveredUserData = userDataController.allOtherUserData.find((userData) => {
                 return userData.position && Utilities.getDistanceBetween2DPoints(userData.position.x, userData.position.z, hoverM.x, hoverM.z) < AVATAR_RADIUS_M;

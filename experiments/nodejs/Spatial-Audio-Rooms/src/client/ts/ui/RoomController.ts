@@ -1,6 +1,6 @@
 import { OrientationEuler3D, Point3D } from "hifi-spatial-audio";
 import { userDataController } from "..";
-import { CLOSE_ENOUGH_M, ROOM_SEATING_RADIUS_M, VIRTUAL_ROOM_DIMENSIONS_PER_SIDE_M } from "../constants/constants";
+import { AVATAR_RADIUS_M, CLOSE_ENOUGH_M, MAX_VOLUME_DB_AVATAR_RADIUS_MULTIPLIER, NUM_SEATS_IN_EMPTY_ROOM } from "../constants/constants";
 import { UserData } from "../userData/UserDataController";
 import { Utilities } from "../utilities/Utilities";
 
@@ -16,19 +16,23 @@ export class Seat {
     }
 }
 
-class Room {
+export class SpatialAudioRoom {
     name: string;
     center: Point3D;
     dimensions: Point3D;
-    seatingRadius: number;
+    tableRadiusM: number;
+    seatingRadiusM: number;
     seats: Array<Seat>;
+    tableColorHex: string;
 
-    constructor({ name, center }: { name: string, center: Point3D }) {
+    constructor({ name, center, seatingRadiusM = 1.0 }: { name: string, center: Point3D, seatingRadiusM?: number }) {
         this.name = name;
         this.center = center;
-        this.dimensions = new Point3D({ x: VIRTUAL_ROOM_DIMENSIONS_PER_SIDE_M, y: 0, z: VIRTUAL_ROOM_DIMENSIONS_PER_SIDE_M });
-        this.seatingRadius = ROOM_SEATING_RADIUS_M;
+        this.seatingRadiusM = Utilities.clamp(seatingRadiusM, AVATAR_RADIUS_M * MAX_VOLUME_DB_AVATAR_RADIUS_MULTIPLIER, 9999);
+        this.tableRadiusM = this.seatingRadiusM - (AVATAR_RADIUS_M * MAX_VOLUME_DB_AVATAR_RADIUS_MULTIPLIER);
+        this.dimensions = new Point3D({ x: this.seatingRadiusM * 3.0, y: 0, z: this.seatingRadiusM * 3.0 });
         this.seats = [];
+        this.tableColorHex = Utilities.hexColorFromString(this.name);
     }
 
     findOpenSpotForSelf() {
@@ -38,9 +42,9 @@ class Room {
         while (!foundOpenSpot) {
             for (let theta = 0; theta < 2 * Math.PI; theta += ((2 * Math.PI) / numSeatsInRoom)) {
                 let currentPotentialPosition = {
-                    "x": this.seatingRadius * Math.cos(theta) + this.center.x,
+                    "x": this.seatingRadiusM * Math.cos(theta) + this.center.x,
                     "y": 0,
-                    "z": this.seatingRadius * Math.sin(theta) + this.center.z
+                    "z": this.seatingRadiusM * Math.sin(theta) + this.center.z
                 };
 
                 currentPotentialPosition.x = Math.round((currentPotentialPosition.x + Number.EPSILON) * 100) / 100;
@@ -80,20 +84,22 @@ class Room {
 }
 
 export class RoomController {
-    lobby: Room;
-    rooms: Array<Room>;
+    lobby: SpatialAudioRoom;
+    rooms: Array<SpatialAudioRoom>;
     showRoomListButton: HTMLButtonElement;
     roomListOuterContainer: HTMLDivElement;
     roomListInnerContainer: HTMLDivElement;
 
     constructor() {
-        this.lobby = new Room({ name: "Lobby", center: new Point3D({ x: 0, y: 0, z: 0 }) });
+        this.lobby = new SpatialAudioRoom({ name: "Lobby", center: new Point3D({ x: 1, y: 0, z: 1 }), seatingRadiusM: 1.0 });
 
         this.rooms = [];
         this.rooms.push(this.lobby);
 
-        this.rooms.push(new Room({ name: "Battery", center: new Point3D({ x: 15, y: 0, z: 15 }) }));
-        this.rooms.push(new Room({ name: "Folsom", center: new Point3D({ x: -15, y: 0, z: 15 }) }));
+        this.rooms.push(new SpatialAudioRoom({ name: "Battery", center: new Point3D({ x: 3.5, y: 0, z: 3.5 }), seatingRadiusM: 1.0 }));
+        //this.rooms.push(new SpatialAudioRoom({ name: "Folsom", center: new Point3D({ x: -5, y: 0, z: 5 }) }));
+        //this.rooms.push(new SpatialAudioRoom({ name: "Small SpatialAudioRoom", center: new Point3D({ x: 0, y: 0, z: 10 }), seatingRadiusM: 0.2 }));
+        //this.rooms.push(new SpatialAudioRoom({ name: "Huge SpatialAudioRoom", center: new Point3D({ x: 0, y: 0, z: -15 }), seatingRadiusM: 4 }));
 
         this.showRoomListButton = document.createElement("button");
         this.showRoomListButton.classList.add("showRoomListButton");
@@ -115,17 +121,13 @@ export class RoomController {
         this.roomListOuterContainer.classList.toggle("displayNone");
     }
 
-    getRoomFromPoint3D(point3D: Point3D): Room {
+    getRoomFromPoint3D(point3D: Point3D): SpatialAudioRoom {
         if (!point3D) {
             return undefined;
         }
 
         return this.rooms.find((room) => {
-            return Utilities.pointIsWithinRectangle({
-                point: point3D,
-                rectCenter: room.center,
-                rectDimensions: room.dimensions
-            });
+            return Math.abs(Utilities.getDistanceBetween2DPoints(point3D.x, point3D.z, room.center.x, room.center.z) - room.seatingRadiusM) <= CLOSE_ENOUGH_M;
         });
     }
 
@@ -139,13 +141,7 @@ export class RoomController {
         });
     }
 
-    updateAllRoomSeats() {
-        let allUserData = userDataController.allOtherUserData.concat(userDataController.myAvatar.myUserData);
-
-        this.rooms.forEach((room) => {
-            room.seats = [];
-        });
-
+    generateOccupiedSeats(allUserData: Array<UserData>) {
         allUserData.forEach((userData) => {
             if (!userData.position) {
                 return;
@@ -158,7 +154,7 @@ export class RoomController {
             }
 
             // If the user is coming in from, say, Space Inspector, don't add a seat for that user.
-            if (Math.abs(Utilities.getDistanceBetween2DPoints(userData.position.x, userData.position.z, userRoom.center.x, userRoom.center.z) - userRoom.seatingRadius) > CLOSE_ENOUGH_M) {
+            if (Math.abs(Utilities.getDistanceBetween2DPoints(userData.position.x, userData.position.z, userRoom.center.x, userRoom.center.z) - userRoom.seatingRadiusM) > CLOSE_ENOUGH_M) {
                 return;
             }
 
@@ -168,7 +164,9 @@ export class RoomController {
                 occupiedUserData: userData
             }));
         });
+    }
 
+    generateInBetweenSeats() {
         this.rooms.forEach((room) => {
             let roomSeatAnglesOnSeatingCircle: Array<number> = [];
 
@@ -214,9 +212,9 @@ export class RoomController {
                 newSeatTheta %= 2 * Math.PI;
 
                 let newSeatPosition = new Point3D({
-                    "x": room.seatingRadius * Math.cos(newSeatTheta) + room.center.x,
+                    "x": room.seatingRadiusM * Math.cos(newSeatTheta) + room.center.x,
                     "y": 0,
-                    "z": room.seatingRadius * Math.sin(newSeatTheta) + room.center.z
+                    "z": room.seatingRadiusM * Math.sin(newSeatTheta) + room.center.z
                 });
 
                 newSeatPosition.x = Math.round((newSeatPosition.x + Number.EPSILON) * 100) / 100;
@@ -234,7 +232,47 @@ export class RoomController {
                 room.seats.push(newSeat);
             }
         });
+    }
 
+    maybeGenerateVacantSeats() {
+        this.rooms.forEach((room) => {
+            if (room.seats.length === 0) {
+                for (let theta = 0; theta < 2 * Math.PI; theta += ((2 * Math.PI) / NUM_SEATS_IN_EMPTY_ROOM)) {
+                    let currentPotentialPosition = {
+                        "x": room.seatingRadiusM * Math.cos(theta) + room.center.x,
+                        "y": 0,
+                        "z": room.seatingRadiusM * Math.sin(theta) + room.center.z
+                    };
+
+                    currentPotentialPosition.x = Math.round((currentPotentialPosition.x + Number.EPSILON) * 100) / 100;
+                    currentPotentialPosition.z = Math.round((currentPotentialPosition.z + Number.EPSILON) * 100) / 100;
+
+                    let orientationYawRadians = Math.atan2(currentPotentialPosition.x - room.center.x, currentPotentialPosition.z - room.center.z);
+                    let orientationYawDegrees = orientationYawRadians * 180 / Math.PI;
+                    orientationYawDegrees %= 360;
+                    let computedYawOrientationDegrees = Math.round((orientationYawDegrees + Number.EPSILON) * 100) / 100;
+
+                    let newSeat = new Seat({
+                        position: currentPotentialPosition,
+                        orientationEuler: new OrientationEuler3D({yawDegrees: computedYawOrientationDegrees})
+                    });
+
+                    room.seats.push(newSeat);
+                }
+            }
+        });
+    }
+
+    updateAllRoomSeats() {
+        let allUserData = userDataController.allOtherUserData.concat(userDataController.myAvatar.myUserData);
+
+        this.rooms.forEach((room) => {
+            room.seats = [];
+        });
+
+        this.generateOccupiedSeats(allUserData);
+        this.generateInBetweenSeats();
+        this.maybeGenerateVacantSeats();
         this.updateRoomList();
     }
 
