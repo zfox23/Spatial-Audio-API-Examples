@@ -114,12 +114,11 @@ class MyAvatar {
             Object.assign(dataToTransmit.position, myUserData.position);
             needToTransmit = true;
 
-            let currentRoom = roomController.getRoomFromPoint3DOnCircle(targetPosition);
+            let currentRoom = roomController.getRoomFromPoint3DInsideBoundaries(targetPosition);
 
             if (currentRoom) {
                 this.myUserData.currentRoomName = currentRoom.name;
                 uiController.canvasRenderer.canvasRotationDegrees = -1 * Math.atan2(myUserData.position.x - currentRoom.center.x, myUserData.position.z - currentRoom.center.z) * 180 / Math.PI;
-                // uiController.canvasRenderer.canvasRotationDegrees = 0;
             } else {
                 console.error("\`updateMyPositionAndOrientation()\`: Couldn't determine current room!");
             }

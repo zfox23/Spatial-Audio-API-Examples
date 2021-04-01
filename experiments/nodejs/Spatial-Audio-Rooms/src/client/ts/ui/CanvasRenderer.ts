@@ -229,33 +229,42 @@ export class CanvasRenderer {
         ctx.translate(-userData.position.x * pxPerM, -userData.position.z * pxPerM);
     }
 
-    drawTable(room: SpatialAudioRoom) {
+    drawTableOrRoomGraphic(room: SpatialAudioRoom) {
         let ctx = this.ctx;
         let pxPerM = this.pxPerM;
-        let tableRadiusPX = room.tableRadiusM * pxPerM;
 
         this.translateAndRotateCanvas();
         ctx.translate(room.center.x * pxPerM, room.center.z * pxPerM);
 
-        ctx.lineWidth = ROOM_TABLE_STROKE_WIDTH_PX;
-        ctx.fillStyle = room.tableColorHex;
-        ctx.beginPath();
-        ctx.arc(0, 0, tableRadiusPX, 0, 2 * Math.PI);
-        ctx.strokeStyle = ROOM_TABLE_STROKE_HEX;
-        ctx.stroke();
-        ctx.fill();
-        ctx.closePath();
-
-        ctx.drawImage(tableImage, -tableRadiusPX, -tableRadiusPX, tableRadiusPX * 2, tableRadiusPX * 2);
-        
-        let amtToRotateLabel = this.canvasRotationDegrees * Math.PI / 180;
-        ctx.rotate(amtToRotateLabel);
-        ctx.font = AVATAR_LABEL_FONT;
-        ctx.fillStyle = Utilities.getConstrastingTextColor(Utilities.hexToRGB(room.tableColorHex));
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(room.name, 0, 0);
-        ctx.rotate(-amtToRotateLabel);
+        if (room.roomImage && room.roomImage.image.complete && room.roomImage.loaded) {
+            let roomDimensionsPX = {
+                "x": room.dimensions.x * pxPerM,
+                "z": room.dimensions.z * pxPerM
+            };
+            ctx.drawImage(room.roomImage.image, -roomDimensionsPX.x / 2, -roomDimensionsPX.z / 2, roomDimensionsPX.x, roomDimensionsPX.z);
+        } else {
+            let tableRadiusPX = room.tableRadiusM * pxPerM;
+            
+            ctx.lineWidth = ROOM_TABLE_STROKE_WIDTH_PX;
+            ctx.fillStyle = room.tableColorHex;
+            ctx.beginPath();
+            ctx.arc(0, 0, tableRadiusPX, 0, 2 * Math.PI);
+            ctx.strokeStyle = ROOM_TABLE_STROKE_HEX;
+            ctx.stroke();
+            ctx.fill();
+            ctx.closePath();
+    
+            ctx.drawImage(tableImage, -tableRadiusPX, -tableRadiusPX, tableRadiusPX * 2, tableRadiusPX * 2);
+            
+            let amtToRotateLabel = this.canvasRotationDegrees * Math.PI / 180;
+            ctx.rotate(amtToRotateLabel);
+            ctx.font = AVATAR_LABEL_FONT;
+            ctx.fillStyle = Utilities.getConstrastingTextColor(Utilities.hexToRGB(room.tableColorHex));
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(room.name, 0, 0);
+            ctx.rotate(-amtToRotateLabel);
+        }
 
         ctx.translate(-room.center.x * pxPerM, -room.center.z * pxPerM);
         this.unTranslateAndRotateCanvas();
@@ -293,7 +302,7 @@ export class CanvasRenderer {
         }
 
         roomController.rooms.forEach((room) => {
-            this.drawTable(room);
+            this.drawTableOrRoomGraphic(room);
         
             this.translateAndRotateCanvas();
             room.seats.forEach((seat) => {

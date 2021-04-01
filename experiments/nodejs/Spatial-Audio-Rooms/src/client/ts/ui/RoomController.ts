@@ -3,6 +3,7 @@ import { uiController, userDataController } from "..";
 import { AVATAR_RADIUS_M, CLOSE_ENOUGH_M, MAX_VOLUME_DB_AVATAR_RADIUS_MULTIPLIER, NUM_SEATS_IN_EMPTY_ROOM } from "../constants/constants";
 import { UserData } from "../userData/UserDataController";
 import { Utilities } from "../utilities/Utilities";
+import SeatingRadius1Image from "../../images/rooms/room-with-seating-radius-1-bg.jpg";
 
 export class Seat {
     position: Point3D;
@@ -16,6 +17,11 @@ export class Seat {
     }
 }
 
+class SpatialAudioRoomImage {
+    image: HTMLImageElement;
+    loaded: boolean;
+}
+
 export class SpatialAudioRoom {
     name: string;
     center: Point3D;
@@ -24,15 +30,60 @@ export class SpatialAudioRoom {
     seatingRadiusM: number;
     seats: Array<Seat>;
     tableColorHex: string;
+    roomImage: SpatialAudioRoomImage;
 
-    constructor({ name, center, seatingRadiusM = 1.0 }: { name: string, center: Point3D, seatingRadiusM?: number }) {
+    constructor({
+        name,
+        center,
+        seatingRadiusM,
+        dimensions,
+        roomImageSRC
+        }: {
+            name: string,
+            center: Point3D,
+            seatingRadiusM?: number,
+            dimensions?: Point3D,
+            roomImageSRC?: string
+        }) {
         this.name = name;
         this.center = center;
-        this.seatingRadiusM = Utilities.clamp(seatingRadiusM, AVATAR_RADIUS_M * MAX_VOLUME_DB_AVATAR_RADIUS_MULTIPLIER, 9999);
-        this.tableRadiusM = this.seatingRadiusM - (AVATAR_RADIUS_M * MAX_VOLUME_DB_AVATAR_RADIUS_MULTIPLIER);
-        this.dimensions = new Point3D({ x: this.seatingRadiusM * 3.0, y: 0, z: this.seatingRadiusM * 3.0 });
+
+        let maxAvatarRadiusM = AVATAR_RADIUS_M * MAX_VOLUME_DB_AVATAR_RADIUS_MULTIPLIER;
+
+        if (seatingRadiusM) {
+            this.seatingRadiusM = Utilities.clamp(seatingRadiusM, 2 * maxAvatarRadiusM, 9999);
+        } else {
+            this.seatingRadiusM = 2 * maxAvatarRadiusM;
+        }
+
+        this.dimensions = dimensions ? dimensions : new Point3D({x: 2 * this.seatingRadiusM * 2 + maxAvatarRadiusM, y: 0, z: 2 * this.seatingRadiusM * 2 + maxAvatarRadiusM });
+
+        let clampedX = Utilities.clamp(this.dimensions.x, 2 * this.seatingRadiusM + 2 * maxAvatarRadiusM, 9999);
+        if (clampedX !== this.dimensions.x) {
+            console.warn(`Clamped X dimension of room \`${this.name}\` from ${this.dimensions.x} to ${clampedX}m.`);
+            this.dimensions.x = clampedX;
+        }
+        let clampedZ = Utilities.clamp(this.dimensions.z, 2 * this.seatingRadiusM + 2 * maxAvatarRadiusM, 9999);
+        if (clampedZ !== this.dimensions.z) {
+            console.warn(`Clamped Z dimension of room \`${this.name}\` from ${this.dimensions.z} to ${clampedZ}m.`);
+            this.dimensions.z = clampedZ;
+        }
+
+        this.tableRadiusM = this.seatingRadiusM - maxAvatarRadiusM;
+
         this.seats = [];
         this.tableColorHex = Utilities.hexColorFromString(this.name);
+
+        if (roomImageSRC) {
+            this.roomImage = new SpatialAudioRoomImage();
+            this.roomImage.loaded = false;
+            this.roomImage.image = new Image();
+            this.roomImage.image.onload = () => {
+                console.log(`Room image for room ${this.name} has loaded.`);
+                this.roomImage.loaded = true;
+            }
+            this.roomImage.image.src = roomImageSRC;
+        }
     }
 
     findOpenSpotForSelf() {
@@ -94,13 +145,13 @@ export class RoomController {
     constructor() {
         this.rooms = [];
         
-        this.lobby = new SpatialAudioRoom({ name: "Lobby", center: new Point3D({ x: 1, y: 0, z: 1 }), seatingRadiusM: 1.0 });
+        this.lobby = new SpatialAudioRoom({ name: "Lobby", center: new Point3D({ x: 1, y: 0, z: 1 }), seatingRadiusM: 1.0, roomImageSRC: SeatingRadius1Image });
         this.rooms.push(this.lobby);
         this.rooms.push(new SpatialAudioRoom({ name: "Battery", center: new Point3D({ x: 3.5, y: 0, z: 3.5 }), seatingRadiusM: 1.0 }));
-        this.rooms.push(new SpatialAudioRoom({ name: "Folsom", center: new Point3D({ x: -5, y: 0, z: 5 }) }));
-        this.rooms.push(new SpatialAudioRoom({ name: "Tiny", center: new Point3D({ x: 0, y: 0, z: 3.5 }), seatingRadiusM: 0.5 }));
-        this.rooms.push(new SpatialAudioRoom({ name: "HUGE", center: new Point3D({ x: 0, y: 0, z: -8 }), seatingRadiusM: 4 }));
-        this.rooms.push(new SpatialAudioRoom({ name: "very far", center: new Point3D({ x: 100, y: 0, z: 100 }), seatingRadiusM: 1.2 }));
+        this.rooms.push(new SpatialAudioRoom({ name: "Folsom", center: new Point3D({ x: -5, y: 0, z: 5 }), seatingRadiusM: 1.0 }));
+        this.rooms.push(new SpatialAudioRoom({ name: "Tiny", center: new Point3D({ x: 0, y: 0, z: 3.5 }), seatingRadiusM: 0.1 }));
+        this.rooms.push(new SpatialAudioRoom({ name: "HUGE", center: new Point3D({ x: 0, y: 0, z: -8 }), seatingRadiusM: 3.0 }));
+        this.rooms.push(new SpatialAudioRoom({ name: "very far", center: new Point3D({ x: 100, y: 0, z: 100 }), seatingRadiusM: 1.0 }));
 
         this.showRoomListButton = document.createElement("button");
         this.showRoomListButton.classList.add("showRoomListButton");

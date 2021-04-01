@@ -122,6 +122,7 @@ export class VideoController {
             let videoEl = localVideoTrack.attach();
             videoEl.id = userDataController.myAvatar.myUserData.providedUserID;
             this.videoContainer.appendChild(videoEl);
+            videoEl.play();
             this.providedUserIDToVideoElementMap.set(userDataController.myAvatar.myUserData.providedUserID, videoEl);
 
             this.twilioRoom.localParticipant.publishTrack(localVideoTrack);
@@ -169,6 +170,7 @@ export class VideoController {
         let videoEl = track.attach();
         videoEl.id = identity;
         this.videoContainer.appendChild(videoEl);
+        videoEl.play();
         this.providedUserIDToVideoElementMap.set(identity, videoEl);
     }
 
