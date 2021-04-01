@@ -18,6 +18,9 @@ async function renderApp(isInProdMode, req, callback) {
 
 <head>
     <title>Spatial Audio Rooms - High Fidelity Spatial Audio API Demo</title>
+    <meta name='viewport' content='minimal-ui, width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />
+    <meta name="theme-color" content="#333333">
+    <meta name="msapplication-navbutton-color" content="#333333">
     <script>
         const HIFI_PROVIDED_USER_ID = "${providedUserID}";
         const HIFI_JWT = "${hiFiJWT}";
