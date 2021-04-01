@@ -1,4 +1,4 @@
-import { connectionController, roomController } from '..';
+import { connectionController, roomController, userDataController } from '..';
 import '../../css/controls.scss';
 import { AudionetInitResponse, ConnectionController } from '../connection/ConnectionController';
 import { UserData } from '../userData/UserDataController';
@@ -78,7 +78,8 @@ export class UIController {
     initContextMenu() {
         this.avatarContextMenu = document.createElement("div");
         this.avatarContextMenu.classList.add("avatarContextMenu", "displayNone");
-        document.body.appendChild(this.avatarContextMenu);
+        this.avatarContextMenu.addEventListener("click", (e) => { e.stopPropagation(); });
+        this.modalBackground.appendChild(this.avatarContextMenu);
     }
 
     removeLoadingOverlay() {
@@ -104,6 +105,34 @@ export class UIController {
 
     showAvatarContextMenu(userData: UserData) {
         roomController.hideRoomList();
+
+        this.avatarContextMenu.innerHTML = ``;
+
+        let closeButton = document.createElement("button");
+        closeButton.innerHTML = "X";
+        closeButton.classList.add("avatarContextMenu__closeButton");
+        closeButton.addEventListener("click", (e) => {
+            this.hideAvatarContextMenu();
+        });
+        this.avatarContextMenu.appendChild(closeButton);
+
+        let displayName;
+        if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash) {
+            displayName = document.createElement("input");
+            displayName.classList.add("avatarContextMenu__displayName--mine");
+            displayName.type = "text";
+            displayName.value = userData.displayName;
+
+            displayName.addEventListener('input', (e) => {
+                userDataController.myAvatar.onMyDisplayNameChanged((<HTMLInputElement>e.target).value);
+            });
+        } else {
+            displayName = document.createElement("h1");
+            displayName.innerText = userData.displayName;
+        }
+        displayName.classList.add("avatarContextMenu__displayName");
+        this.avatarContextMenu.appendChild(displayName);
+
         this.modalBackground.classList.remove("displayNone");
         this.avatarContextMenu.classList.remove("displayNone");
     }

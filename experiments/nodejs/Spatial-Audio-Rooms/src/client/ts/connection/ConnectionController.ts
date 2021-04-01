@@ -232,12 +232,12 @@ export class ConnectionController {
     }
 
     disconnectFromHiFi() {
+        this.webSocketConnectionController.stopWebSocketStuff();
+
         if (this.hifiCommunicator) {
             this.hifiCommunicator.disconnectFromHiFiAudioAPIServer();
         }
         this.hifiCommunicator = null;
-
-        this.webSocketConnectionController.stopWebSocketStuff();
     }
 
     onUsersDisconnected(allDisconnectedUserData: Array<ReceivedHiFiAudioAPIData>) {
