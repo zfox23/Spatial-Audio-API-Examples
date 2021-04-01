@@ -2,6 +2,7 @@ import { connectionController, roomController, userDataController, userInputCont
 import '../../css/controls.scss';
 import { AudionetInitResponse, ConnectionController } from '../connection/ConnectionController';
 import { UserData } from '../userData/UserDataController';
+import { Utilities } from '../utilities/Utilities';
 import { CanvasRenderer } from './CanvasRenderer';
 
 export class UIController {
@@ -104,6 +105,35 @@ export class UIController {
         this.avatarContextMenu.removeAttribute('visit-id-hash');
     }
 
+    generateCloseButtonUI() {
+        let closeButton = document.createElement("button");
+        closeButton.innerHTML = "X";
+        closeButton.classList.add("avatarContextMenu__closeButton");
+        closeButton.addEventListener("click", (e) => {
+            this.hideAvatarContextMenu();
+        });
+        this.avatarContextMenu.appendChild(closeButton);
+    }
+
+    generateDisplayNameUI(userData: UserData) {
+        let displayName;
+        if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash) {
+            displayName = document.createElement("input");
+            displayName.classList.add("avatarContextMenu__displayName--mine");
+            displayName.type = "text";
+            displayName.value = userData.displayName;
+
+            displayName.addEventListener('input', (e) => {
+                userDataController.myAvatar.onMyDisplayNameChanged((<HTMLInputElement>e.target).value);
+            });
+        } else {
+            displayName = document.createElement("h1");
+            displayName.innerText = userData.displayName;
+        }
+        displayName.classList.add("avatarContextMenu__displayName");
+        this.avatarContextMenu.appendChild(displayName);
+    }
+
     generateEchoCancellationUI(userData: UserData) {
         let echoCancellationContainer = document.createElement("div");
         this.avatarContextMenu.appendChild(echoCancellationContainer);
@@ -164,38 +194,45 @@ export class UIController {
         agcContainer.appendChild(agcCheckboxLabel);
     }
 
+    generateHiFiGainUI(userData: UserData) {
+        let hiFiGainContainer = document.createElement("div");
+        this.avatarContextMenu.appendChild(hiFiGainContainer);
+
+        let avatarContextMenu__hiFiGainHeader = document.createElement("h3");
+        avatarContextMenu__hiFiGainHeader.innerHTML = `Input Gain: ${userData.hiFiGain.toFixed(2)}`;
+        avatarContextMenu__hiFiGainHeader.classList.add("avatarContextMenu__hiFiGainHeader");
+        hiFiGainContainer.appendChild(avatarContextMenu__hiFiGainHeader);
+
+        let avatarContextMenu__hiFiGainSlider = document.createElement("input");
+        avatarContextMenu__hiFiGainSlider.type = "range";
+        avatarContextMenu__hiFiGainSlider.min = "1";
+        avatarContextMenu__hiFiGainSlider.max = "21";
+        avatarContextMenu__hiFiGainSlider.value = userData.hiFiGainSliderValue;
+        avatarContextMenu__hiFiGainSlider.step = "1";
+        avatarContextMenu__hiFiGainSlider.classList.add("avatarContextMenu__hiFiGainSlider");
+
+        avatarContextMenu__hiFiGainSlider.addEventListener("input", (e) => {
+            let gainSliderValue = (<HTMLInputElement>e.target).value;
+            if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash) {
+                userInputController.setHiFiGainFromSliderValue(gainSliderValue);
+            } else {
+                connectionController.webSocketConnectionController.requestToChangeHiFiGainSliderValue(userData.visitIDHash, gainSliderValue);
+            }
+        });
+
+        hiFiGainContainer.appendChild(avatarContextMenu__hiFiGainSlider);
+    }
+
     showAvatarContextMenu(userData: UserData) {
         roomController.hideRoomList();
 
         this.avatarContextMenu.innerHTML = ``;
 
-        let closeButton = document.createElement("button");
-        closeButton.innerHTML = "X";
-        closeButton.classList.add("avatarContextMenu__closeButton");
-        closeButton.addEventListener("click", (e) => {
-            this.hideAvatarContextMenu();
-        });
-        this.avatarContextMenu.appendChild(closeButton);
-
-        let displayName;
-        if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash) {
-            displayName = document.createElement("input");
-            displayName.classList.add("avatarContextMenu__displayName--mine");
-            displayName.type = "text";
-            displayName.value = userData.displayName;
-
-            displayName.addEventListener('input', (e) => {
-                userDataController.myAvatar.onMyDisplayNameChanged((<HTMLInputElement>e.target).value);
-            });
-        } else {
-            displayName = document.createElement("h1");
-            displayName.innerText = userData.displayName;
-        }
-        displayName.classList.add("avatarContextMenu__displayName");
-        this.avatarContextMenu.appendChild(displayName);
-
+        this.generateCloseButtonUI();
+        this.generateDisplayNameUI(userData);
         this.generateEchoCancellationUI(userData);
         this.generateAGCUI(userData);
+        this.generateHiFiGainUI(userData);
 
         this.avatarContextMenu.setAttribute('visit-id-hash', userData.visitIDHash);
 
@@ -214,9 +251,26 @@ export class UIController {
         if (echoCancellationCheckbox) {
             (<HTMLInputElement>echoCancellationCheckbox).checked = userData.echoCancellationEnabled;
         }
+
         let agcCheckbox = this.avatarContextMenu.querySelector(".agcCheckbox");
         if (agcCheckbox) {
             (<HTMLInputElement>agcCheckbox).checked = userData.agcEnabled;
+        }
+
+        let avatarContextMenu__hiFiGainSlider = <HTMLInputElement>this.avatarContextMenu.querySelector(".avatarContextMenu__hiFiGainSlider");
+        let avatarContextMenu__hiFiGainHeader = <HTMLHeadingElement>this.avatarContextMenu.querySelector(".avatarContextMenu__hiFiGainHeader");
+        if (avatarContextMenu__hiFiGainSlider) {
+            avatarContextMenu__hiFiGainSlider.value = userData.hiFiGainSliderValue;
+            avatarContextMenu__hiFiGainHeader.innerHTML = `Input Gain: ${userData.hiFiGain.toFixed(2)}`;
+        }
+    }
+
+    hiFiGainFromSliderValue(hiFiGainSliderValue: string) {
+        // Make the UI look nice with a default gain slider value of 1.0 instead of 1.05...
+        if (hiFiGainSliderValue === "11") {
+            return 1.0;
+        } else {
+            return Utilities.logarithmicScale(parseInt(hiFiGainSliderValue), 1, 21, 1, 110) / 10;
         }
     }
 }

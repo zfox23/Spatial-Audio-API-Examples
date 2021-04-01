@@ -86,17 +86,20 @@ class ServerSpaceInfo {
 }
 
 class Participant {
-    constructor({ socketID, visitIDHash, displayName, colorHex } = {}) {
+    constructor({ socketID, visitIDHash, displayName, colorHex, echoCancellationEnabled, agcEnabled, hiFiGainSliderValue, } = {}) {
         this.socketID = socketID;
         this.visitIDHash = visitIDHash;
         this.displayName = displayName;
         this.colorHex = colorHex;
+        this.echoCancellationEnabled = echoCancellationEnabled;
+        this.agcEnabled = agcEnabled;
+        this.hiFiGainSliderValue = hiFiGainSliderValue;
     }
 }
 
 let spaceInformation = {};
 socketIOServer.on("connection", (socket) => {
-    socket.on("addParticipant", ({ spaceName, visitIDHash, displayName, colorHex, echoCancellationEnabled, agcEnabled, } = {}) => {
+    socket.on("addParticipant", ({ spaceName, visitIDHash, displayName, colorHex, echoCancellationEnabled, agcEnabled, hiFiGainSliderValue, } = {}) => {
         if (!spaceInformation[spaceName]) {
             spaceInformation[spaceName] = new ServerSpaceInfo({ spaceName });
         }
@@ -114,7 +117,8 @@ socketIOServer.on("connection", (socket) => {
             displayName,
             colorHex,
             echoCancellationEnabled,
-            agcEnabled
+            agcEnabled,
+            hiFiGainSliderValue,
         });
 
         spaceInformation[spaceName].participants.push(me);
@@ -125,7 +129,7 @@ socketIOServer.on("connection", (socket) => {
         socket.emit("onParticipantAdded", spaceInformation[spaceName].participants.filter((participant) => { return participant.visitIDHash !== visitIDHash; }));
     });
 
-    socket.on("editParticipant", ({ spaceName, visitIDHash, displayName, colorHex, echoCancellationEnabled, agcEnabled, } = {}) => {
+    socket.on("editParticipant", ({ spaceName, visitIDHash, displayName, colorHex, echoCancellationEnabled, agcEnabled, hiFiGainSliderValue, } = {}) => {
         let participantToEdit = spaceInformation[spaceName].participants.find((participant) => {
             return participant.visitIDHash === visitIDHash;
         });
@@ -142,6 +146,9 @@ socketIOServer.on("connection", (socket) => {
             }
             if (typeof (agcEnabled) === "boolean") {
                 participantToEdit.agcEnabled = agcEnabled;
+            }
+            if (typeof (hiFiGainSliderValue) === "string") {
+                participantToEdit.hiFiGainSliderValue = hiFiGainSliderValue;
             }
             socket.to(spaceName).emit("onParticipantAdded", [participantToEdit]);
         } else {
@@ -168,7 +175,7 @@ socketIOServer.on("connection", (socket) => {
             console.error(`requestToEnableEchoCancellation: Participant didn't have a \`socketID\`!`);
             return;
         }
-        socketIOServer.to(participant.socketID).emit("onRequestToEnableEchoCancellation", fromVisitIDHash);
+        socketIOServer.to(participant.socketID).emit("onRequestToEnableEchoCancellation", { fromVisitIDHash });
     });
 
     socket.on("requestToDisableEchoCancellation", ({ spaceName, toVisitIDHash, fromVisitIDHash } = {}) => {
@@ -182,7 +189,7 @@ socketIOServer.on("connection", (socket) => {
             console.error(`requestToDisableEchoCancellation: Participant didn't have a \`socketID\`!`);
             return;
         }
-        socketIOServer.to(participant.socketID).emit("onRequestToDisableEchoCancellation", fromVisitIDHash);
+        socketIOServer.to(participant.socketID).emit("onRequestToDisableEchoCancellation", { fromVisitIDHash });
     });
 
     socket.on("requestToEnableAGC", ({ spaceName, toVisitIDHash, fromVisitIDHash } = {}) => {
@@ -196,7 +203,7 @@ socketIOServer.on("connection", (socket) => {
             console.error(`requestToEnableAGC: Participant didn't have a \`socketID\`!`);
             return;
         }
-        socketIOServer.to(participant.socketID).emit("onRequestToEnableAGC", fromVisitIDHash);
+        socketIOServer.to(participant.socketID).emit("onRequestToEnableAGC", { fromVisitIDHash });
     });
 
     socket.on("requestToDisableAGC", ({ spaceName, toVisitIDHash, fromVisitIDHash } = {}) => {
@@ -210,7 +217,21 @@ socketIOServer.on("connection", (socket) => {
             console.error(`requestToDisableAGC: Participant didn't have a \`socketID\`!`);
             return;
         }
-        socketIOServer.to(participant.socketID).emit("onRequestToDisableAGC", fromVisitIDHash);
+        socketIOServer.to(participant.socketID).emit("onRequestToDisableAGC", { fromVisitIDHash });
+    });
+
+    socket.on("requestToChangeHiFiGainSliderValue", ({ spaceName, toVisitIDHash, fromVisitIDHash, newHiFiGainSliderValue } = {}) => {
+        if (!spaceInformation[spaceName]) { return; }
+        let participant = spaceInformation[spaceName].participants.find((participant) => { return participant.visitIDHash === toVisitIDHash; });
+        if (!participant) {
+            console.error(`requestToDisableAGC: Couldn't get participant from \`spaceInformation[spaceName].participants[]\` with Visit ID Hash \`${toVisitIDHash}\`!`);
+            return;
+        }
+        if (!participant.socketID) {
+            console.error(`requestToDisableAGC: Participant didn't have a \`socketID\`!`);
+            return;
+        }
+        socketIOServer.to(participant.socketID).emit("onRequestToChangeHiFiGainSliderValue", { fromVisitIDHash, newHiFiGainSliderValue });
     });
 });
 

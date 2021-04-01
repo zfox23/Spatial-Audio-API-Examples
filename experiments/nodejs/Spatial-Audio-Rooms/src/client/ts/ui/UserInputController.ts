@@ -157,6 +157,19 @@ export class UserInputController {
         connectionController.setNewInputAudioMediaStream();
     }
 
+    setHiFiGainFromSliderValue(newHiFiGainSliderValue: string) {
+        let newHiFiGain = uiController.hiFiGainFromSliderValue(newHiFiGainSliderValue);
+
+        userDataController.myAvatar.myUserData.hiFiGain = newHiFiGain;
+        userDataController.myAvatar.myUserData.hiFiGainSliderValue = newHiFiGainSliderValue;
+        console.log(`User changed their HiFiGain to ${newHiFiGain}`);
+        connectionController.hifiCommunicator.updateUserDataAndTransmit({
+            hiFiGain: newHiFiGain,
+        });
+        uiController.maybeUpdateAvatarContextMenu(userDataController.myAvatar.myUserData);
+        connectionController.webSocketConnectionController.updateMyUserDataOnWebSocketServer();
+    }
+
     getGesturePointFromEvent(evt: MouseEvent | TouchEvent) {
         let point = {
             x: 0,
@@ -186,6 +199,8 @@ export class UserInputController {
 
             this.hoveredSeat = undefined;
         }
+
+        document.body.classList.remove("cursorPointer");
     }
 
     handleGestureOnCanvasStart(event: TouchEvent | MouseEvent | PointerEvent) {

@@ -1,4 +1,4 @@
-import { connectionController, roomController, uiController, userDataController } from "..";
+import { connectionController, roomController, uiController, userDataController, userInputController } from "..";
 declare var HIFI_SPACE_NAME: string;
 
 const io = require("socket.io-client");
@@ -9,6 +9,7 @@ interface WebSocketParticipantData {
     colorHex: string;
     echoCancellationEnabled: boolean;
     agcEnabled: boolean;
+    hiFiGainSliderValue: string;
 }
 
 export class WebSocketConnectionController {
@@ -30,12 +31,13 @@ export class WebSocketConnectionController {
                     displayName,
                     colorHex,
                     echoCancellationEnabled,
-                    agcEnabled
+                    agcEnabled,
+                    hiFiGainSliderValue,
                 } = participant;
 
                 let localUserData = userDataController.allOtherUserData.find((userData) => { return userData.visitIDHash === visitIDHash; });
                 if (localUserData) {
-                    console.log(`Updating participant with hash \`${localUserData.visitIDHash}\`:\nDisplay Name: \`${displayName}\`\nColor: ${colorHex}\nechoCancellationEnabled: ${echoCancellationEnabled}\nagcEnabled: ${agcEnabled}\n`);
+                    console.log(`Updating participant with hash \`${localUserData.visitIDHash}\`:\nDisplay Name: \`${displayName}\`\nColor: ${colorHex}\nechoCancellationEnabled: ${echoCancellationEnabled}\nagcEnabled: ${agcEnabled}\nhiFiGainSliderValue: ${hiFiGainSliderValue}\n`);
                     if (typeof (displayName) === "string") {
                         localUserData.displayName = displayName;
                     }
@@ -48,6 +50,10 @@ export class WebSocketConnectionController {
                     if (typeof (agcEnabled) === "boolean") {
                         localUserData.agcEnabled = agcEnabled;
                     }
+                    if (typeof (hiFiGainSliderValue) === "string") {
+                        localUserData.hiFiGainSliderValue = hiFiGainSliderValue;
+                        localUserData.hiFiGain = uiController.hiFiGainFromSliderValue(localUserData.hiFiGainSliderValue);
+                    }
                 } else if (visitIDHash && displayName) {
                     localUserData = {
                         visitIDHash,
@@ -55,7 +61,9 @@ export class WebSocketConnectionController {
                         colorHex,
                         echoCancellationEnabled,
                         agcEnabled,
+                        hiFiGainSliderValue,
                     };
+                    localUserData.hiFiGain = uiController.hiFiGainFromSliderValue(localUserData.hiFiGainSliderValue);
                     userDataController.allOtherUserData.push(localUserData);
                 }
 
@@ -65,28 +73,33 @@ export class WebSocketConnectionController {
             });
         });
 
-        this.socket.on("onRequestToEnableEchoCancellation", (fromVisitIDHash: string) => {
+        this.socket.on("onRequestToEnableEchoCancellation", ({ fromVisitIDHash }: { fromVisitIDHash: string }) => {
             console.warn(`Got a request from \`${fromVisitIDHash}\` to enable echo cancellation!`);
             connectionController.audioConstraints.echoCancellation = true;
             connectionController.setNewInputAudioMediaStream();
         });
 
-        this.socket.on("onRequestToDisableEchoCancellation", (fromVisitIDHash: string) => {
+        this.socket.on("onRequestToDisableEchoCancellation", ({ fromVisitIDHash }: { fromVisitIDHash: string }) => {
             console.warn(`Got a request from \`${fromVisitIDHash}\` to disable echo cancellation!`);
             connectionController.audioConstraints.echoCancellation = false;
             connectionController.setNewInputAudioMediaStream();
         });
 
-        this.socket.on("onRequestToEnableAGC", (fromVisitIDHash: string) => {
+        this.socket.on("onRequestToEnableAGC", ({ fromVisitIDHash }: { fromVisitIDHash: string }) => {
             console.warn(`Got a request from \`${fromVisitIDHash}\` to enable AGC!`);
             connectionController.audioConstraints.autoGainControl = true;
             connectionController.setNewInputAudioMediaStream();
         });
 
-        this.socket.on("onRequestToDisableAGC", (fromVisitIDHash: string) => {
+        this.socket.on("onRequestToDisableAGC", ({ fromVisitIDHash }: { fromVisitIDHash: string }) => {
             console.warn(`Got a request from \`${fromVisitIDHash}\` to disable AGC!`);
             connectionController.audioConstraints.autoGainControl = false;
             connectionController.setNewInputAudioMediaStream();
+        });
+
+        this.socket.on("onRequestToChangeHiFiGainSliderValue", ({ fromVisitIDHash, newHiFiGainSliderValue }: { fromVisitIDHash: string, newHiFiGainSliderValue: string }) => {
+            console.warn(`Got a request from \`${fromVisitIDHash}\` to change HiFiGainSliderValue to \`${newHiFiGainSliderValue}\`!`);
+            userInputController.setHiFiGainFromSliderValue(newHiFiGainSliderValue);
         });
     }
 
@@ -104,6 +117,7 @@ export class WebSocketConnectionController {
             colorHex: myUserData.colorHex,
             echoCancellationEnabled: myUserData.echoCancellationEnabled,
             agcEnabled: myUserData.agcEnabled,
+            hiFiGainSliderValue: myUserData.hiFiGainSliderValue,
         });
     }
 
@@ -113,7 +127,6 @@ export class WebSocketConnectionController {
         }
 
         const myUserData = userDataController.myAvatar.myUserData;
-        console.log(myUserData)
 
         let dataToUpdate = {
             spaceName: HIFI_SPACE_NAME,
@@ -122,6 +135,7 @@ export class WebSocketConnectionController {
             colorHex: myUserData.colorHex,
             echoCancellationEnabled: myUserData.echoCancellationEnabled,
             agcEnabled: myUserData.agcEnabled,
+            hiFiGainSliderValue: myUserData.hiFiGainSliderValue,
         };
 
         console.log(`Updating data about me on server:\n${JSON.stringify(dataToUpdate)}`);
@@ -143,6 +157,10 @@ export class WebSocketConnectionController {
 
     requestToDisableAGC(visitIDHash: string) {
         this.socket.emit("requestToDisableAGC", { spaceName: HIFI_SPACE_NAME, toVisitIDHash: visitIDHash, fromVisitIDHash: userDataController.myAvatar.myUserData.visitIDHash });
+    }
+
+    requestToChangeHiFiGainSliderValue(visitIDHash: string, newHiFiGainSliderValue: string) {
+        this.socket.emit("requestToChangeHiFiGainSliderValue", { spaceName: HIFI_SPACE_NAME, toVisitIDHash: visitIDHash, fromVisitIDHash: userDataController.myAvatar.myUserData.visitIDHash, newHiFiGainSliderValue });
     }
 
     stopWebSocketStuff() {
