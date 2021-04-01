@@ -168,15 +168,21 @@ export class Utilities {
             y: canvasPX.y - canvasOffsetPX.y - cameraPositionM.z * pxPerM
         };
 
+        // console.log(translatedCanvasPX)
+
         let rotatedCanvasPX = {
             x: translatedCanvasPX.x * Math.cos(yawOrientationRadians) - translatedCanvasPX.y * Math.sin(yawOrientationRadians),
             y: translatedCanvasPX.x * Math.sin(yawOrientationRadians) + translatedCanvasPX.y * Math.cos(yawOrientationRadians)
         };
 
+        // console.log(rotatedCanvasPX)
+
         let pointM = {
             x: rotatedCanvasPX.x / pxPerM + cameraPositionM.x,
-            z: rotatedCanvasPX.y / pxPerM - cameraPositionM.z
+            z: rotatedCanvasPX.y / pxPerM + cameraPositionM.z
         };
+        // console.log(pointM)
+        // console.log('')
 
         return pointM;
     }

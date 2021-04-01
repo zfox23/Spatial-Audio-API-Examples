@@ -244,6 +244,12 @@ export class UserInputController {
                     return Utilities.getDistanceBetween2DPoints(seat.position.x, seat.position.z, hoverM.x, hoverM.z) < SEAT_RADIUS_M;
                 });
             }
+            if (this.hoveredSeat) {
+                console.log(`room center  position : ${JSON.stringify(room.center)}`)
+                console.log(`hovered seat position : ${JSON.stringify(this.hoveredSeat.position)}`)
+                console.log(`        hover position: ${JSON.stringify(hoverM)}`)
+                console.log(``)
+            }
         }
 
         if (this.hoveredUserData || this.hoveredSeat) {

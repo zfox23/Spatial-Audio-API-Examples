@@ -21,7 +21,7 @@ import {
 } from "../constants/constants";
 import { UserData } from "../userData/UserDataController";
 import { Utilities } from "../utilities/Utilities";
-import { SpatialAudioRoom } from "../ui/RoomController";
+import { Seat, SpatialAudioRoom } from "../ui/RoomController";
 import SeatIcon from '../../images/seat.png';
 import TableImage from '../../images/table.png';
 
@@ -98,7 +98,7 @@ export class CanvasRenderer {
 
         this.canvasOffsetPX = {
             x: (mainCanvas.width - this.myCurrentRoom.dimensions.x * pxPerM) / 2 + (-this.myCurrentRoom.center.x + this.myCurrentRoom.dimensions.x / 2) * pxPerM,
-            y: (mainCanvas.height - this.myCurrentRoom.dimensions.z * pxPerM) / 2 + (this.myCurrentRoom.center.z + this.myCurrentRoom.dimensions.z / 2) * pxPerM
+            y: (mainCanvas.height - this.myCurrentRoom.dimensions.z * pxPerM) / 2 + (-this.myCurrentRoom.center.z + this.myCurrentRoom.dimensions.z / 2) * pxPerM
         };
     }
 
@@ -126,7 +126,7 @@ export class CanvasRenderer {
         let avatarRadiusM = AVATAR_RADIUS_M;
         let avatarRadiusPX = avatarRadiusM * pxPerM;
 
-        let amtToRotate = userData.orientationEuler.yawDegrees * Math.PI / 180;
+        let amtToRotate = -userData.orientationEuler.yawDegrees * Math.PI / 180;
         ctx.rotate(amtToRotate);
 
         ctx.beginPath();
@@ -212,15 +212,70 @@ export class CanvasRenderer {
         let currentRoom = roomController.getRoomFromPoint3D(userData.position);
 
         if (currentRoom) {    
-            ctx.translate(userData.position.x * pxPerM, -userData.position.z * pxPerM);
+            ctx.translate(userData.position.x * pxPerM, userData.position.z * pxPerM);
 
             this.drawVolumeBubble({ userData });
             this.drawAvatarBase({ userData });
             this.drawAvatarVideo({ userData });
             this.drawAvatarLabel({ userData });
 
-            ctx.translate(-userData.position.x * pxPerM, userData.position.z * pxPerM);
+            ctx.translate(-userData.position.x * pxPerM, -userData.position.z * pxPerM);
         }
+    }
+
+    drawTable(room: SpatialAudioRoom) {
+        let ctx = this.ctx;
+        let pxPerM = this.pxPerM;
+        let tableRadiusPX = room.tableRadiusM * pxPerM;
+
+        this.translateAndRotateCanvas();
+        ctx.translate(room.center.x * pxPerM, room.center.z * pxPerM);
+
+        ctx.lineWidth = ROOM_TABLE_STROKE_WIDTH_PX;
+        ctx.fillStyle = room.tableColorHex;
+        ctx.beginPath();
+        ctx.arc(0, 0, tableRadiusPX, 0, 2 * Math.PI);
+        ctx.strokeStyle = ROOM_TABLE_STROKE_HEX;
+        ctx.stroke();
+        ctx.fill();
+        ctx.closePath();
+
+        ctx.drawImage(tableImage, -tableRadiusPX, -tableRadiusPX, tableRadiusPX * 2, tableRadiusPX * 2);
+        
+        let amtToRotateLabel = this.canvasRotationDegrees * Math.PI / 180;
+        ctx.rotate(amtToRotateLabel);
+        ctx.font = AVATAR_LABEL_FONT;
+        ctx.fillStyle = Utilities.getConstrastingTextColor(Utilities.hexToRGB(room.tableColorHex));
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(room.name, 0, 0);
+        ctx.rotate(-amtToRotateLabel);
+
+        ctx.translate(-room.center.x * pxPerM, -room.center.z * pxPerM);
+        this.unTranslateAndRotateCanvas();
+    }
+
+    drawUnoccupiedSeat(seat: Seat) { 
+        let ctx = this.ctx;
+        let pxPerM = this.pxPerM;
+        ctx.translate(seat.position.x * pxPerM, seat.position.z * pxPerM);
+        let amountToRotateSeatImage = this.canvasRotationDegrees * Math.PI / 180;
+        ctx.rotate(amountToRotateSeatImage);
+
+        ctx.lineWidth = SEAT_STROKE_WIDTH_PX;
+        ctx.fillStyle = SEAT_COLOR_HEX;
+        ctx.beginPath();
+        let seatRadiusPX = SEAT_RADIUS_M * pxPerM;
+        ctx.arc(0, 0, seatRadiusPX, 0, 2 * Math.PI);
+        ctx.strokeStyle = SEAT_STROKE_HEX;
+        ctx.stroke();
+        ctx.fill();
+        ctx.closePath();
+
+        ctx.drawImage(seatIcon, -seatRadiusPX / 2, -seatRadiusPX / 2, seatRadiusPX, seatRadiusPX);
+
+        ctx.rotate(-amountToRotateSeatImage);
+        ctx.translate(-seat.position.x * pxPerM, -seat.position.z * pxPerM);
     }
 
     drawRooms() {
@@ -231,62 +286,19 @@ export class CanvasRenderer {
             return;
         }
 
-        roomController.rooms.forEach((room) => {                
-            let tableRadiusPX = room.tableRadiusM * pxPerM;
+        roomController.rooms.forEach((room) => {
 
+            this.drawTable(room);
+        
             this.translateAndRotateCanvas();
-            ctx.translate(room.center.x * pxPerM, -room.center.z * pxPerM);
-
-            ctx.lineWidth = ROOM_TABLE_STROKE_WIDTH_PX;
-            ctx.fillStyle = room.tableColorHex;
-            ctx.beginPath();
-            ctx.arc(0, 0, tableRadiusPX, 0, 2 * Math.PI);
-            ctx.strokeStyle = ROOM_TABLE_STROKE_HEX;
-            ctx.stroke();
-            ctx.fill();
-            ctx.closePath();
-
-            ctx.drawImage(tableImage, -tableRadiusPX, -tableRadiusPX, tableRadiusPX * 2, tableRadiusPX * 2);
-            
-            let amtToRotateLabel = this.canvasRotationDegrees * Math.PI / 180;
-            ctx.rotate(amtToRotateLabel);
-            ctx.font = AVATAR_LABEL_FONT;
-            ctx.fillStyle = Utilities.getConstrastingTextColor(Utilities.hexToRGB(room.tableColorHex));
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.fillText(room.name, 0, 0);
-            ctx.rotate(-amtToRotateLabel);
-
-            ctx.translate(-room.center.x * pxPerM, room.center.z * pxPerM);
-            this.unTranslateAndRotateCanvas();
-
             room.seats.forEach((seat) => {
                 // Don't draw occupied seats yet.
                 if (seat.occupiedUserData) {
                     return;
                 }
-                this.translateAndRotateCanvas();
-                ctx.translate(seat.position.x * pxPerM, -seat.position.z * pxPerM);
-                let amountToRotateSeatImage = this.canvasRotationDegrees * Math.PI / 180;
-                ctx.rotate(amountToRotateSeatImage);
-
-                ctx.lineWidth = SEAT_STROKE_WIDTH_PX;
-                ctx.fillStyle = SEAT_COLOR_HEX;
-                ctx.beginPath();
-                let seatRadiusPX = SEAT_RADIUS_M * pxPerM;
-                ctx.arc(0, 0, seatRadiusPX, 0, 2 * Math.PI);
-                ctx.strokeStyle = SEAT_STROKE_HEX;
-                ctx.stroke();
-                ctx.fill();
-                ctx.closePath();
-
-                ctx.drawImage(seatIcon, -seatRadiusPX / 2, -seatRadiusPX / 2, seatRadiusPX, seatRadiusPX);
-
-                ctx.rotate(-amountToRotateSeatImage);
-
-                ctx.translate(-seat.position.x * pxPerM, seat.position.z * pxPerM);
-                this.unTranslateAndRotateCanvas();
+                this.drawUnoccupiedSeat(seat);
             });
+            this.unTranslateAndRotateCanvas();
             
             this.translateAndRotateCanvas();
             room.seats.forEach((seat) => {
@@ -315,16 +327,16 @@ export class CanvasRenderer {
     translateAndRotateCanvas() {
         let ctx = this.ctx;
         ctx.translate(this.canvasOffsetPX.x, this.canvasOffsetPX.y);
-        ctx.translate(this.myCurrentRoom.center.x * this.pxPerM, -this.myCurrentRoom.center.z * this.pxPerM);
+        ctx.translate(this.myCurrentRoom.center.x * this.pxPerM, this.myCurrentRoom.center.z * this.pxPerM);
         ctx.rotate(-this.canvasRotationDegrees * Math.PI / 180);
-        ctx.translate(-this.myCurrentRoom.center.x * this.pxPerM, this.myCurrentRoom.center.z * this.pxPerM);
+        ctx.translate(-this.myCurrentRoom.center.x * this.pxPerM, -this.myCurrentRoom.center.z * this.pxPerM);
     }
 
     unTranslateAndRotateCanvas() {
         let ctx = this.ctx;
-        ctx.translate(this.myCurrentRoom.center.x * this.pxPerM, -this.myCurrentRoom.center.z * this.pxPerM);
+        ctx.translate(this.myCurrentRoom.center.x * this.pxPerM, this.myCurrentRoom.center.z * this.pxPerM);
         ctx.rotate(this.canvasRotationDegrees * Math.PI / 180);
-        ctx.translate(-this.myCurrentRoom.center.x * this.pxPerM, this.myCurrentRoom.center.z * this.pxPerM);
+        ctx.translate(-this.myCurrentRoom.center.x * this.pxPerM, -this.myCurrentRoom.center.z * this.pxPerM);
         ctx.translate(-this.canvasOffsetPX.x, -this.canvasOffsetPX.y);
     }
 

@@ -107,8 +107,8 @@ class MyAvatar {
             });
 
             if (currentRoom) {
-                //uiController.canvasRenderer.canvasRotationDegrees = Math.atan2(-(myUserData.position.x - currentRoom.center.x), -(myUserData.position.z - currentRoom.center.z)) * 180 / Math.PI;
-                uiController.canvasRenderer.canvasRotationDegrees = 0;
+                uiController.canvasRenderer.canvasRotationDegrees = -1 * Math.atan2(myUserData.position.x - currentRoom.center.x, myUserData.position.z - currentRoom.center.z) * 180 / Math.PI;
+                // uiController.canvasRenderer.canvasRotationDegrees = 0;
             } else {
                 console.error("Couldn't determine current room!");
             }
