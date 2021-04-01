@@ -11,12 +11,14 @@ import {
     AVATAR_STROKE_HEX_MUTED,
     AVATAR_STROKE_HEX_UNMUTED,
     AVATAR_LABEL_FONT,
+    ROOM_LABEL_FONT,
     SEAT_STROKE_HEX,
     SEAT_STROKE_WIDTH_PX,
     SEAT_COLOR_HEX,
     SEAT_RADIUS_M,
     ROOM_TABLE_STROKE_HEX,
     ROOM_TABLE_STROKE_WIDTH_PX,
+    ROOM_WITH_IMAGE_LABEL_COLOR,
     MOUSE_WHEEL_ZOOM_FACTOR,
     AVATAR_HOVER_HIGHLIGHT_RADIUS_ADDITION_M,
 } from "../constants/constants";
@@ -236,7 +238,9 @@ export class CanvasRenderer {
         this.translateAndRotateCanvas();
         ctx.translate(room.center.x * pxPerM, room.center.z * pxPerM);
 
+        let usingRoomImage = false;
         if (room.roomImage && room.roomImage.image.complete && room.roomImage.loaded) {
+            usingRoomImage = true;
             let roomDimensionsPX = {
                 "x": room.dimensions.x * pxPerM,
                 "z": room.dimensions.z * pxPerM
@@ -244,7 +248,7 @@ export class CanvasRenderer {
             ctx.drawImage(room.roomImage.image, -roomDimensionsPX.x / 2, -roomDimensionsPX.z / 2, roomDimensionsPX.x, roomDimensionsPX.z);
         } else {
             let tableRadiusPX = room.tableRadiusM * pxPerM;
-            
+
             ctx.lineWidth = ROOM_TABLE_STROKE_WIDTH_PX;
             ctx.fillStyle = room.tableColorHex;
             ctx.beginPath();
@@ -255,16 +259,19 @@ export class CanvasRenderer {
             ctx.closePath();
     
             ctx.drawImage(tableImage, -tableRadiusPX, -tableRadiusPX, tableRadiusPX * 2, tableRadiusPX * 2);
-            
-            let amtToRotateLabel = this.canvasRotationDegrees * Math.PI / 180;
-            ctx.rotate(amtToRotateLabel);
-            ctx.font = AVATAR_LABEL_FONT;
-            ctx.fillStyle = Utilities.getConstrastingTextColor(Utilities.hexToRGB(room.tableColorHex));
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.fillText(room.name, 0, 0);
-            ctx.rotate(-amtToRotateLabel);
         }
+            
+        let amtToRotateLabel = this.canvasRotationDegrees * Math.PI / 180;
+        ctx.rotate(amtToRotateLabel);
+        ctx.font = ROOM_LABEL_FONT;
+        ctx.fillStyle = usingRoomImage ? ROOM_WITH_IMAGE_LABEL_COLOR : Utilities.getConstrastingTextColor(Utilities.hexToRGB(room.tableColorHex));
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        let textMetrics = ctx.measureText(room.name);
+        if (textMetrics.width < Math.min(room.dimensions.x * pxPerM, room.dimensions.z * pxPerM)) {
+            ctx.fillText(room.name, 0, 0);
+        }
+        ctx.rotate(-amtToRotateLabel);
 
         ctx.translate(-room.center.x * pxPerM, -room.center.z * pxPerM);
         this.unTranslateAndRotateCanvas();

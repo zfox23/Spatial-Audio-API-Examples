@@ -17,5 +17,7 @@ export const NUM_SEATS_IN_EMPTY_ROOM = 4;
 export const AVATAR_STROKE_HEX_MUTED = "#FF0000";
 export const AVATAR_STROKE_HEX_UNMUTED = "#FFFFFF";
 export const AVATAR_LABEL_FONT = '14px Graphik';
+export const ROOM_LABEL_FONT = '16px Graphik-Semibold';
+export const ROOM_WITH_IMAGE_LABEL_COLOR = '#FFFFFF';
 export const PHYSICS_TICKRATE_MS = 16;
 export const MOUSE_WHEEL_ZOOM_FACTOR = 0.0001;
