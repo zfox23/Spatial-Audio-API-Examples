@@ -186,14 +186,14 @@ export class UserInputController {
             y: 0
         };
     
-        if (evt instanceof TouchEvent) {
+        if (typeof (TouchEvent) !== "undefined" && evt instanceof TouchEvent) {
             // Prefer Touch Events
             point.x = evt.targetTouches[0].clientX;
             point.y = evt.targetTouches[0].clientY;
         } else {
             // Either Mouse event or Pointer Event
-            point.x = evt.clientX;
-            point.y = evt.clientY;
+            point.x = (<MouseEvent>evt).clientX;
+            point.y = (<MouseEvent>evt).clientY;
         }
     
         return point;
