@@ -147,6 +147,16 @@ export class UserInputController {
         }
     }
 
+    setEchoCancellationStatus(newEchoCancellationStatus: boolean) {
+        connectionController.audioConstraints.echoCancellation = newEchoCancellationStatus;
+        connectionController.setNewInputAudioMediaStream();
+    }
+
+    setAGCStatus(newAGCStatus: boolean) {
+        connectionController.audioConstraints.autoGainControl = newAGCStatus;
+        connectionController.setNewInputAudioMediaStream();
+    }
+
     getGesturePointFromEvent(evt: MouseEvent | TouchEvent) {
         let point = {
             x: 0,
@@ -168,7 +178,7 @@ export class UserInputController {
 
     onUserClick(event: TouchEvent | MouseEvent | PointerEvent) {
         if (this.hoveredUserData) {
-
+            uiController.showAvatarContextMenu(this.hoveredUserData);
             this.hoveredUserData = undefined;
         } else if (this.hoveredSeat) {
             console.log(`User clicked on a new seat at ${JSON.stringify(this.hoveredSeat.position)}! New yaw orientation: ${JSON.stringify(this.hoveredSeat.orientation)} degrees.`);

@@ -17,6 +17,8 @@ export interface UserData {
     hiFiGain?: number;
     volumeThreshold?: number;
     isMuted?: boolean;
+    echoCancellationEnabled?: boolean;
+    agcEnabled?: boolean;
 }
 
 interface DataToTransmitToHiFi {
@@ -38,9 +40,11 @@ class MyAvatar {
             orientationEuler: undefined,
             volumeDecibels: undefined,
             volumeDecibelsPeak: undefined,
-            hiFiGain: undefined,
-            volumeThreshold: undefined,
+            volumeThreshold: -60,
+            hiFiGain: 1.0,
             isMuted: false,
+            echoCancellationEnabled: false,
+            agcEnabled: false,
         };
 
         if (localStorage.getItem('myDisplayName')) {
@@ -130,7 +134,7 @@ class MyAvatar {
     onMyDisplayNameChanged(newDisplayName?: string) {
         localStorage.setItem('myDisplayName', newDisplayName);
         this.myUserData.displayName = newDisplayName;
-        connectionController.webSocketConnectionController.updateRemoteParticipant();
+        connectionController.webSocketConnectionController.updateMyUserDataOnWebSocketServer();
         try {
             roomController.updateRoomList();
         } catch (e) { } 

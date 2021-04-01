@@ -1,4 +1,4 @@
-import { connectionController, roomController, userDataController } from '..';
+import { connectionController, roomController, userDataController, userInputController } from '..';
 import '../../css/controls.scss';
 import { AudionetInitResponse, ConnectionController } from '../connection/ConnectionController';
 import { UserData } from '../userData/UserDataController';
@@ -101,6 +101,67 @@ export class UIController {
     hideAvatarContextMenu() {
         this.modalBackground.classList.add("displayNone");
         this.avatarContextMenu.classList.add("displayNone");
+        this.avatarContextMenu.removeAttribute('visit-id-hash');
+    }
+
+    generateEchoCancellationUI(userData: UserData) {
+        let echoCancellationContainer = document.createElement("div");
+        this.avatarContextMenu.appendChild(echoCancellationContainer);
+
+        let echoCancellationCheckbox = document.createElement("input");
+        echoCancellationCheckbox.id = "echoCancellationCheckbox";
+        echoCancellationCheckbox.classList.add("echoCancellationCheckbox");
+        echoCancellationCheckbox.type = "checkbox";
+        echoCancellationCheckbox.checked = userData.echoCancellationEnabled;
+        echoCancellationCheckbox.addEventListener("click", (e) => {
+            let newEchoCancellationStatus = (<HTMLInputElement>e.target).checked;
+            if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash) {
+                userInputController.setEchoCancellationStatus(newEchoCancellationStatus)
+            } else {
+                if (connectionController.webSocketConnectionController && newEchoCancellationStatus) {
+                    connectionController.webSocketConnectionController.requestToEnableEchoCancellation(userData.visitIDHash);
+                } else if (connectionController.webSocketConnectionController && !newEchoCancellationStatus) {
+                    connectionController.webSocketConnectionController.requestToDisableEchoCancellation(userData.visitIDHash);
+                }
+            }
+        });
+        echoCancellationContainer.appendChild(echoCancellationCheckbox);
+
+        let echoCancellationCheckboxLabel = document.createElement("label");
+        echoCancellationCheckboxLabel.setAttribute("for", "echoCancellationCheckbox");
+        echoCancellationCheckboxLabel.classList.add("echoCancellationCheckboxLabel");
+        echoCancellationCheckboxLabel.innerHTML = "Echo Cancellation";
+        echoCancellationContainer.appendChild(echoCancellationCheckboxLabel);
+    }
+
+    generateAGCUI(userData: UserData) {
+        let agcContainer = document.createElement("div");
+        this.avatarContextMenu.appendChild(agcContainer);
+
+        let agcCheckbox = document.createElement("input");
+        agcCheckbox.id = "agcCheckbox";
+        agcCheckbox.classList.add("agcCheckbox");
+        agcCheckbox.type = "checkbox";
+        agcCheckbox.checked = userData.agcEnabled;
+        agcCheckbox.addEventListener("click", (e) => {
+            let newAGCStatus = (<HTMLInputElement>e.target).checked;
+            if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash) {
+                userInputController.setAGCStatus(newAGCStatus)
+            } else {
+                if (connectionController.webSocketConnectionController && newAGCStatus) {
+                    connectionController.webSocketConnectionController.requestToEnableAGC(userData.visitIDHash);
+                } else if (connectionController.webSocketConnectionController && !newAGCStatus) {
+                    connectionController.webSocketConnectionController.requestToDisableAGC(userData.visitIDHash);
+                }
+            }
+        });
+        agcContainer.appendChild(agcCheckbox);
+
+        let agcCheckboxLabel = document.createElement("label");
+        agcCheckboxLabel.setAttribute("for", "agcCheckbox");
+        agcCheckboxLabel.classList.add("agcCheckboxLabel");
+        agcCheckboxLabel.innerHTML = "Automatic Gain Control";
+        agcContainer.appendChild(agcCheckboxLabel);
     }
 
     showAvatarContextMenu(userData: UserData) {
@@ -133,7 +194,29 @@ export class UIController {
         displayName.classList.add("avatarContextMenu__displayName");
         this.avatarContextMenu.appendChild(displayName);
 
+        this.generateEchoCancellationUI(userData);
+        this.generateAGCUI(userData);
+
+        this.avatarContextMenu.setAttribute('visit-id-hash', userData.visitIDHash);
+
         this.modalBackground.classList.remove("displayNone");
         this.avatarContextMenu.classList.remove("displayNone");
+    }
+
+    maybeUpdateAvatarContextMenu(userData: UserData) {
+        if (this.avatarContextMenu.getAttribute('visit-id-hash') !== userData.visitIDHash) {
+            return;
+        }
+
+        (<HTMLHeadingElement>this.avatarContextMenu.querySelector('.avatarContextMenu__displayName')).innerText = userData.displayName;
+
+        let echoCancellationCheckbox = this.avatarContextMenu.querySelector(".echoCancellationCheckbox");
+        if (echoCancellationCheckbox) {
+            (<HTMLInputElement>echoCancellationCheckbox).checked = userData.echoCancellationEnabled;
+        }
+        let agcCheckbox = this.avatarContextMenu.querySelector(".agcCheckbox");
+        if (agcCheckbox) {
+            (<HTMLInputElement>agcCheckbox).checked = userData.agcEnabled;
+        }
     }
 }

@@ -1,5 +1,5 @@
 import { HiFiCommunicator, HiFiLogger, HiFiLogLevel, getBestAudioConstraints, HiFiUserDataStreamingScopes, ReceivedHiFiAudioAPIData, UserDataSubscription, AvailableUserDataSubscriptionComponents, OrientationEuler3D, Point3D } from 'hifi-spatial-audio';
-import { roomController, userDataController, videoController } from '..';
+import { roomController, uiController, userDataController, videoController } from '..';
 import { AVDevicesController } from '../avDevices/AVDevicesController';
 import { Utilities } from '../utilities/Utilities';
 import { WebSocketConnectionController } from './WebSocketConnectionController';
@@ -24,8 +24,10 @@ export class ConnectionController {
     hifiCommunicator: HiFiCommunicator;
     webSocketConnectionController: WebSocketConnectionController;
     receivedInitialOtherUserDataFromHiFi: boolean = false;
+    audioConstraints: MediaTrackConstraints;
 
     constructor() {
+        this.audioConstraints = getBestAudioConstraints();
         this.avDevicesController = new AVDevicesController();
         this.webSocketConnectionController = new WebSocketConnectionController();
         this.hifiCommunicator = new HiFiCommunicator({
@@ -39,22 +41,48 @@ export class ConnectionController {
         });
     }
 
-    async connectToHighFidelity(): Promise<AudionetInitResponse> {
+    async setNewInputAudioMediaStream(): Promise<MediaStream> {
         return new Promise(async (resolve, reject) => {
-            console.log("Starting connection process...");
-
             // Get the audio media stream associated with the user's default audio input device.
             try {
-                console.log("Calling `getUserMedia()`...");
-                this.avDevicesController.inputAudioMediaStream = await navigator.mediaDevices.getUserMedia({ audio: getBestAudioConstraints(), video: false });
+                console.log(`Calling \`getUserMedia()\` with the following audio constraints:\n${JSON.stringify(this.audioConstraints)}`);
+                this.avDevicesController.inputAudioMediaStream = await navigator.mediaDevices.getUserMedia({ audio: this.audioConstraints, video: false });
             } catch (e) {
                 reject(`Error calling \`getUserMedia()\`! Error:\n${e}`);
                 return;
             }
+            
+            let newEchoCancellationStatus = !!this.audioConstraints.echoCancellation.valueOf();
+            userDataController.myAvatar.myUserData.echoCancellationEnabled = newEchoCancellationStatus;
+            
+            let newAGCStatus = !!this.audioConstraints.autoGainControl.valueOf();
+            userDataController.myAvatar.myUserData.agcEnabled = newAGCStatus;
+
+            if (this.webSocketConnectionController) {
+                this.webSocketConnectionController.updateMyUserDataOnWebSocketServer();
+            }
+            uiController.maybeUpdateAvatarContextMenu(userDataController.myAvatar.myUserData);
 
             // Set up our `HiFiCommunicator` object and supply our input media stream.
             console.log("Setting input audio stream on `this.hifiCommunicator`...");
-            await this.hifiCommunicator.setInputAudioMediaStream(this.avDevicesController.inputAudioMediaStream);
+            try {
+                await this.hifiCommunicator.setInputAudioMediaStream(this.avDevicesController.inputAudioMediaStream);
+                resolve(this.avDevicesController.inputAudioMediaStream);
+            } catch (e) {
+                reject(e);
+            }
+        });
+    }
+
+    async connectToHighFidelity(): Promise<AudionetInitResponse> {
+        return new Promise(async (resolve, reject) => {
+            console.log("Starting connection process...");
+
+            try {
+                await this.setNewInputAudioMediaStream();
+            } catch (e) {
+                return;
+            }
 
             // Get the URL search params for below...
             let searchParams = new URLSearchParams(location.search);
