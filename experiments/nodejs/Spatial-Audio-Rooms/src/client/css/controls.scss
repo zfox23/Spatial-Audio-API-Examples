@@ -157,6 +157,7 @@ $bottom-controls-container-height: 72px;
     height: calc(100vh - #{$bottom-controls-container-height});
     position: fixed;
     z-index: map-get(z-indices.$z-index, mainCanvas);
+    touch-action: none;
 }
 
 .bottomControlsContainer {

@@ -52,11 +52,15 @@ export class ConnectionController {
                 return;
             }
             
-            let newEchoCancellationStatus = !!this.audioConstraints.echoCancellation.valueOf();
-            userDataController.myAvatar.myUserData.echoCancellationEnabled = newEchoCancellationStatus;
+            if (typeof (this.audioConstraints.echoCancellation) !== "undefined") {
+                let newEchoCancellationStatus = !!this.audioConstraints.echoCancellation.valueOf();
+                userDataController.myAvatar.myUserData.echoCancellationEnabled = newEchoCancellationStatus;
+            }
             
-            let newAGCStatus = !!this.audioConstraints.autoGainControl.valueOf();
-            userDataController.myAvatar.myUserData.agcEnabled = newAGCStatus;
+            if (typeof (this.audioConstraints.autoGainControl) !== "undefined") {
+                let newAGCStatus = !!this.audioConstraints.autoGainControl.valueOf();
+                userDataController.myAvatar.myUserData.agcEnabled = newAGCStatus;
+            }
 
             if (this.webSocketConnectionController) {
                 this.webSocketConnectionController.updateMyUserDataOnWebSocketServer();
