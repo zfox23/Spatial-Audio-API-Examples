@@ -174,7 +174,8 @@ $bottom-controls-container-height: 72px;
 
 .toggleInputMuteButton,
 .toggleOutputMuteButton,
-.toggleVideoButton {
+.toggleVideoButton,
+.toggleRoomsDrawerButton {
     width: 40px;
     height: 40px;
     background-repeat: no-repeat;
@@ -222,6 +223,10 @@ $bottom-controls-container-height: 72px;
 
 .toggleVideoButton--disabled {
     background-image: url('../images/grey-cam-with-cross.svg');
+}
+
+.toggleRoomsDrawerButton {
+    background-image: url('../images/people.svg');
 }
 
 .showRoomListButton {

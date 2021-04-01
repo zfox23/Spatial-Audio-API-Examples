@@ -95,6 +95,8 @@ export class VideoController {
             this.twilioRoom.localParticipant.unpublishTrack(localVideoTrack);
             localVideoTrack.stop();
             
+            this.providedUserIDToVideoElementMap.delete(userDataController.myAvatar.myUserData.providedUserID);
+            
             this.localTrack = undefined;
     
             const mediaElements = localVideoTrack.detach();

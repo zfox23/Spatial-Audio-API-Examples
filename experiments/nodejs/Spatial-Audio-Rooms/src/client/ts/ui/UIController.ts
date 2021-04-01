@@ -12,6 +12,7 @@ export class UIController {
     toggleInputMuteButton: HTMLButtonElement;
     toggleOutputMuteButton: HTMLButtonElement;
     toggleVideoButton: HTMLButtonElement;
+    toggleRoomsDrawerButton: HTMLButtonElement;
     modalBackground: HTMLDivElement;
     avatarContextMenu: HTMLDivElement;
 
@@ -69,6 +70,11 @@ export class UIController {
         this.toggleVideoButton = document.createElement("button");
         this.toggleVideoButton.classList.add("toggleVideoButton");
         this.bottomControlsContainer.appendChild(this.toggleVideoButton);
+
+        this.toggleRoomsDrawerButton = document.createElement("button");
+        this.toggleRoomsDrawerButton.classList.add("toggleRoomsDrawerButton");
+        this.toggleRoomsDrawerButton.addEventListener("click", roomController.toggleRoomList.bind(roomController));
+        this.bottomControlsContainer.appendChild(this.toggleRoomsDrawerButton);
 
         this.modalBackground = document.createElement("div");
         this.modalBackground.classList.add("modalBackground", "displayNone");
@@ -128,13 +134,17 @@ export class UIController {
             });
         } else {
             displayName = document.createElement("h1");
-            displayName.innerText = userData.displayName;
+            displayName.innerText = userData.displayName && userData.displayName.length > 0 ? userData.displayName : "❓ Anonymous";
         }
         displayName.classList.add("avatarContextMenu__displayName");
         this.avatarContextMenu.appendChild(displayName);
     }
 
     generateEchoCancellationUI(userData: UserData) {
+        if (typeof (userData.echoCancellationEnabled) !== "boolean") {
+            return;
+        }
+
         let echoCancellationContainer = document.createElement("div");
         echoCancellationContainer.classList.add("echoCancellationContainer");
         this.avatarContextMenu.appendChild(echoCancellationContainer);
@@ -166,6 +176,10 @@ export class UIController {
     }
 
     generateAGCUI(userData: UserData) {
+        if (typeof (userData.agcEnabled) !== "boolean") {
+            return;
+        }
+
         let agcContainer = document.createElement("div");
         agcContainer.classList.add("agcContainer");
         this.avatarContextMenu.appendChild(agcContainer);
@@ -197,6 +211,10 @@ export class UIController {
     }
 
     generateHiFiGainUI(userData: UserData) {
+        if (typeof (userData.hiFiGain) !== "number") {
+            return;
+        }
+
         let avatarContextMenu__hiFiGainContainer = document.createElement("div");
         avatarContextMenu__hiFiGainContainer.classList.add("avatarContextMenu__hiFiGainContainer");
         this.avatarContextMenu.appendChild(avatarContextMenu__hiFiGainContainer);
@@ -227,6 +245,10 @@ export class UIController {
     }
 
     generateVolumeThresholdUI(userData: UserData) {
+        if (typeof (userData.volumeThreshold) !== "number") {
+            return;
+        }
+
         let avatarContextMenu__volumeThresholdContainer = document.createElement("div");
         avatarContextMenu__volumeThresholdContainer.classList.add("avatarContextMenu__avatarContextMenu__volumeThresholdContainer");
         this.avatarContextMenu.appendChild(avatarContextMenu__volumeThresholdContainer);
