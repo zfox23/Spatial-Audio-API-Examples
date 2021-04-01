@@ -95,8 +95,7 @@ class Participant {
 
 let spaceInformation = {};
 socketIOServer.on("connection", (socket) => {
-    socket.on("addParticipant", ({ visitIDHash, displayName, colorHex, spaceName } = {}) => {
-
+    socket.on("addParticipant", ({ spaceName, visitIDHash, displayName, colorHex, } = {}) => {
         if (!spaceInformation[spaceName]) {
             spaceInformation[spaceName] = new ServerSpaceInfo({ spaceName });
         }
@@ -118,7 +117,7 @@ socketIOServer.on("connection", (socket) => {
         socket.emit("onParticipantAdded", spaceInformation[spaceName].participants.filter((participant) => { return participant.visitIDHash !== visitIDHash; }));
     });
 
-    socket.on("editParticipant", ({ visitIDHash, displayName, colorHex, spaceName } = {}) => {
+    socket.on("editParticipant", ({ spaceName, visitIDHash, displayName, colorHex, } = {}) => {
         let participantToEdit = spaceInformation[spaceName].participants.find((participant) => {
             return participant.visitIDHash === visitIDHash;
         });
@@ -135,17 +134,12 @@ socketIOServer.on("connection", (socket) => {
         }
     });
 
-    socket.on("removeParticipant", ({ visitIDHash, spaceName } = {}) => {
+    socket.on("removeParticipant", ({ spaceName, visitIDHash, } = {}) => {
         if (!spaceInformation[spaceName]) {
             return;
         }
 
         spaceInformation[spaceName].participants = spaceInformation[spaceName].participants.filter((participant) => { return participant.visitIDHash !== visitIDHash; })
-    });
-
-    socket.on("addParticle", ({ visitIDHash, spaceName, particleData } = {}) => {
-        console.log(`In ${spaceName}, \`${visitIDHash}\` added a particle!.`);
-        socket.to(spaceName).emit("requestParticleAdd", { visitIDHash, spaceName, particleData });
     });
 });
 

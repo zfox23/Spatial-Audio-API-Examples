@@ -200,7 +200,7 @@ export class CanvasRenderer {
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
 
-        let textToDraw = userData.displayName;
+        let textToDraw =  userData.displayName && userData.displayName.length > 0 ? userData.displayName : "❓ Anonymous";
         let textMetrics = ctx.measureText(textToDraw);
         let avatarRadiusPX = avatarRadiusM * pxPerM;
         if (textMetrics.width > avatarRadiusPX + 5) {

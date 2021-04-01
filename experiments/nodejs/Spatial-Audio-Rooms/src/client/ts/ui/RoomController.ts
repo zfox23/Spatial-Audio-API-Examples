@@ -330,12 +330,16 @@ export class RoomController {
 
             let roomInfoContainer__header = document.createElement("h2");
             roomInfoContainer__header.classList.add("roomInfoContainer__header");
-            roomInfoContainer__header.setAttribute("data-room-name", room.name);
             roomInfoContainer__header.innerHTML = room.name;
             roomInfoContainer__header.addEventListener("click", (e) => {
-                userDataController.myAvatar.positionSelfInRoom((<HTMLElement>e.target).getAttribute('data-room-name'));
+                userDataController.myAvatar.positionSelfInRoom(room.name);
             });
             roomInfoContainer.appendChild(roomInfoContainer__header);
+
+            let roomInfoContainer__occupantsList = document.createElement("div");
+            roomInfoContainer__occupantsList.classList.add("roomInfoContainer__occupantsList");
+            roomInfoContainer__occupantsList.setAttribute("data-room-name", room.name);
+            roomInfoContainer.appendChild(roomInfoContainer__occupantsList);
         });
 
         let allUserData = userDataController.allOtherUserData.concat(userDataController.myAvatar.myUserData);
@@ -343,9 +347,14 @@ export class RoomController {
             if (userData.currentRoomName) {
                 let roomInfoContainer__occupant = document.createElement("p");
                 roomInfoContainer__occupant.classList.add("roomInfoContainer__occupant");
-                roomInfoContainer__occupant.innerHTML = userData.displayName;
                 roomInfoContainer__occupant.setAttribute('data-visit-id-hash', userData.visitIDHash);
-                document.querySelector(`[data-room-name="${userData.currentRoomName}"]`).parentNode.appendChild(roomInfoContainer__occupant);
+                if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash) {
+                    roomInfoContainer__occupant.innerHTML = `(you) ${userData.displayName}`;
+                    document.querySelector(`[data-room-name="${userData.currentRoomName}"]`).prepend(roomInfoContainer__occupant);
+                } else {
+                    roomInfoContainer__occupant.innerHTML = userData.displayName && userData.displayName.length > 0 ? userData.displayName : "❓ Anonymous";
+                    document.querySelector(`[data-room-name="${userData.currentRoomName}"]`).appendChild(roomInfoContainer__occupant);
+                }
 
                 roomInfoContainer__occupant.addEventListener("click", (e) => {
                     uiController.showAvatarContextMenu(userData);

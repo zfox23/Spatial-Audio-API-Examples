@@ -42,6 +42,12 @@ class MyAvatar {
             volumeThreshold: undefined,
             isMuted: false,
         };
+
+        if (localStorage.getItem('myDisplayName')) {
+            this.onMyDisplayNameChanged(localStorage.getItem('myDisplayName'));
+        } else {
+            this.onMyDisplayNameChanged(HIFI_PROVIDED_USER_ID);
+        }
     }
 
     positionSelfInRoom(roomName: string) {
@@ -56,7 +62,7 @@ class MyAvatar {
         });
 
         if (!currentRoom) {
-            console.error(`Couldn't determine current room!`);
+            console.error(`\`positionSelfInRoom()\`: Couldn't determine current room!`);
             return;
         }
         
@@ -109,7 +115,7 @@ class MyAvatar {
                 uiController.canvasRenderer.canvasRotationDegrees = -1 * Math.atan2(myUserData.position.x - currentRoom.center.x, myUserData.position.z - currentRoom.center.z) * 180 / Math.PI;
                 // uiController.canvasRenderer.canvasRotationDegrees = 0;
             } else {
-                console.error("Couldn't determine current room!");
+                console.error("\`updateMyPositionAndOrientation()\`: Couldn't determine current room!");
             }
 
             roomController.updateAllRoomSeats();
@@ -119,6 +125,15 @@ class MyAvatar {
         if (needToTransmit) {
             hifiCommunicator.updateUserDataAndTransmit(dataToTransmit);
         }
+    }
+
+    onMyDisplayNameChanged(newDisplayName?: string) {
+        localStorage.setItem('myDisplayName', newDisplayName);
+        this.myUserData.displayName = newDisplayName;
+        connectionController.webSocketConnectionController.updateRemoteParticipant();
+        try {
+            roomController.updateRoomList();
+        } catch (e) { } 
     }
 }
 

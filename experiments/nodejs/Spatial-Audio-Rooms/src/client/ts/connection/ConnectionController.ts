@@ -236,6 +236,8 @@ export class ConnectionController {
             this.hifiCommunicator.disconnectFromHiFiAudioAPIServer();
         }
         this.hifiCommunicator = null;
+
+        this.webSocketConnectionController.stopWebSocketStuff();
     }
 
     onUsersDisconnected(allDisconnectedUserData: Array<ReceivedHiFiAudioAPIData>) {
