@@ -36,9 +36,7 @@ export class ConnectionController {
             userDataStreamingScope: HiFiUserDataStreamingScopes.All
         });
 
-        window.addEventListener("beforeunload", (e) => {
-            this.disconnectFromHiFi();
-        });
+        window.addEventListener('beforeunload', this.disconnectFromHiFi.bind(this));
     }
 
     async setNewInputAudioMediaStream(): Promise<MediaStream> {
@@ -263,11 +261,15 @@ export class ConnectionController {
         }
     }
 
-    disconnectFromHiFi() {
+    async disconnectFromHiFi() {
+        console.log(`Disconnecting...`);
+
         this.webSocketConnectionController.stopWebSocketStuff();
 
+        videoController.disconnectFromTwilio();
+
         if (this.hifiCommunicator) {
-            this.hifiCommunicator.disconnectFromHiFiAudioAPIServer();
+            await this.hifiCommunicator.disconnectFromHiFiAudioAPIServer();
         }
         this.hifiCommunicator = null;
     }

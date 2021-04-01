@@ -110,7 +110,7 @@ socketIOServer.on("connection", (socket) => {
             return;
         }
 
-        console.log(`In ${spaceName}, adding participant:\nHashed Visit ID: \`${visitIDHash}\`\nDisplay Name: \`${displayName}\`\nColor: ${colorHex}\n`);
+        console.log(`${Date.now()}: In ${spaceName}, adding participant:\nHashed Visit ID: \`${visitIDHash}\`\nDisplay Name: \`${displayName}\`\nColor: ${colorHex}\n`);
 
         let me = new Participant({
             socketID: socket.id,
@@ -165,6 +165,8 @@ socketIOServer.on("connection", (socket) => {
         if (!spaceInformation[spaceName]) {
             return;
         }
+
+        console.log(`${Date.now()}: In ${spaceName}, removing participant with Hashed Visit ID: \`${visitIDHash}\``);
 
         spaceInformation[spaceName].participants = spaceInformation[spaceName].participants.filter((participant) => { return participant.visitIDHash !== visitIDHash; })
     });
@@ -258,5 +260,5 @@ http.listen(PORT, (err) => {
     if (err) {
         throw err;
     }
-    console.log(`Spatial Audio Rooms is ready. Go to this URL in your browser: http://localhost:${PORT}/spatial-audio-rooms`);
+    console.log(`${Date.now()}: Spatial Audio Rooms is ready. Go to this URL in your browser: http://localhost:${PORT}/spatial-audio-rooms`);
 });

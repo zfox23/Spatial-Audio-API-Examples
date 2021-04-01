@@ -21,7 +21,7 @@ export class UIController {
         this.canvasRenderer = new CanvasRenderer();
         this.initMainUI();
         this.initContextMenu();
-        this.removeLoadingOverlay();
+        this.hideLoadingOverlay();
     }
 
     initPlayOverlay() {
@@ -89,12 +89,21 @@ export class UIController {
         this.modalBackground.appendChild(this.avatarContextMenu);
     }
 
-    removeLoadingOverlay() {
-        document.querySelector('.loadingScreen').remove();
+    hideLoadingOverlay() {
+        document.querySelector('.loadingScreen').classList.add("displayNone");
+    }
+
+    showConnectingOverlay() {
+        let loadingScreen = <HTMLDivElement>document.querySelector('.loadingScreen');
+        let loadingScreen__text = <HTMLDivElement>document.querySelector('.loadingScreen--text');
+        loadingScreen__text.innerHTML = `connecting...`;
+        loadingScreen.style.background = 'transparent';
+        loadingScreen.classList.remove("displayNone");
     }
 
     async startConnectionProcess() {
         this.playOverlay.classList.add("displayNone");
+        this.showConnectingOverlay();
 
         let audionetInitResponse: AudionetInitResponse;
         try {
@@ -103,6 +112,8 @@ export class UIController {
             console.error(`Couldn't connect to High Fidelity! Error:\n${e}`);
             return;
         }
+        
+        this.hideLoadingOverlay();
     }
 
     hideAvatarContextMenu() {

@@ -181,8 +181,7 @@ export class WebSocketConnectionController {
     }
 
     stopWebSocketStuff() {
-        const myUserData = userDataController.myAvatar.myUserData;
-        this.socket.emit("removeParticipant", { spaceName: HIFI_SPACE_NAME, visitIDHash: myUserData.visitIDHash, });
+        this.socket.emit("removeParticipant", { spaceName: HIFI_SPACE_NAME, visitIDHash: userDataController.myAvatar.myUserData.visitIDHash, });
         this.readyToSendWebSocketData = false;
     }
 }
