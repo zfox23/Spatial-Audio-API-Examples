@@ -102,7 +102,7 @@ class MyAvatar {
             Object.assign(dataToTransmit.position, myUserData.position);
             needToTransmit = true;
 
-            let currentRoom = roomController.getRoomFromPoint3D(targetPosition);
+            let currentRoom = roomController.getRoomFromPoint3DOnCircle(targetPosition);
 
             if (currentRoom) {
                 this.myUserData.currentRoomName = currentRoom.name;

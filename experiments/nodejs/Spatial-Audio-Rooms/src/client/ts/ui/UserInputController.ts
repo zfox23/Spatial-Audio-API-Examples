@@ -180,6 +180,9 @@ export class UserInputController {
 
     handleGestureOnCanvasStart(event: TouchEvent | MouseEvent | PointerEvent) {
         event.preventDefault();
+        
+        roomController.hideRoomList();
+        uiController.hideAvatarContextMenu();
 
         let target = <HTMLElement>event.target;
 

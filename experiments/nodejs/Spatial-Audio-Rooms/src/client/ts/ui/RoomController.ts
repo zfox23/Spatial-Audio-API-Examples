@@ -1,5 +1,5 @@
 import { OrientationEuler3D, Point3D } from "hifi-spatial-audio";
-import { userDataController } from "..";
+import { uiController, userDataController } from "..";
 import { AVATAR_RADIUS_M, CLOSE_ENOUGH_M, MAX_VOLUME_DB_AVATAR_RADIUS_MULTIPLIER, NUM_SEATS_IN_EMPTY_ROOM } from "../constants/constants";
 import { UserData } from "../userData/UserDataController";
 import { Utilities } from "../utilities/Utilities";
@@ -89,6 +89,7 @@ export class RoomController {
     showRoomListButton: HTMLButtonElement;
     roomListOuterContainer: HTMLDivElement;
     roomListInnerContainer: HTMLDivElement;
+    currentlyHoveringOverVisitIDHash: string;
 
     constructor() {
         this.lobby = new SpatialAudioRoom({ name: "Lobby", center: new Point3D({ x: 1, y: 0, z: 1 }), seatingRadiusM: 1.0 });
@@ -100,6 +101,7 @@ export class RoomController {
         this.rooms.push(new SpatialAudioRoom({ name: "Folsom", center: new Point3D({ x: -5, y: 0, z: 5 }) }));
         this.rooms.push(new SpatialAudioRoom({ name: "Tiny", center: new Point3D({ x: 0, y: 0, z: 3.5 }), seatingRadiusM: 0.5 }));
         this.rooms.push(new SpatialAudioRoom({ name: "HUGE", center: new Point3D({ x: 0, y: 0, z: -8 }), seatingRadiusM: 4 }));
+        this.rooms.push(new SpatialAudioRoom({ name: "very far", center: new Point3D({ x: 100, y: 0, z: 100 }), seatingRadiusM: 1.2 }));
 
         this.showRoomListButton = document.createElement("button");
         this.showRoomListButton.classList.add("showRoomListButton");
@@ -109,19 +111,21 @@ export class RoomController {
         this.roomListOuterContainer = document.createElement("div");
         this.roomListOuterContainer.classList.add("roomListOuterContainer", "displayNone");
         document.body.appendChild(this.roomListOuterContainer);
-        this.roomListOuterContainer.addEventListener("click", this.toggleRoomList.bind(this));
 
         this.roomListInnerContainer = document.createElement("div");
         this.roomListInnerContainer.classList.add("roomListInnerContainer");
-        this.roomListInnerContainer.addEventListener("click", (e) => { e.stopPropagation(); });
         this.roomListOuterContainer.appendChild(this.roomListInnerContainer);
+    }
+
+    hideRoomList() {
+        this.roomListOuterContainer.classList.add("displayNone");
     }
 
     toggleRoomList() {
         this.roomListOuterContainer.classList.toggle("displayNone");
     }
 
-    getRoomFromPoint3D(point3D: Point3D): SpatialAudioRoom {
+    getRoomFromPoint3DOnCircle(point3D: Point3D): SpatialAudioRoom {
         if (!point3D) {
             return undefined;
         }
@@ -129,6 +133,30 @@ export class RoomController {
         return this.rooms.find((room) => {
             return Math.abs(Utilities.getDistanceBetween2DPoints(point3D.x, point3D.z, room.center.x, room.center.z) - room.seatingRadiusM) <= CLOSE_ENOUGH_M;
         });
+    }
+
+    getRoomFromPoint3DInsideBoundaries(point3D: Point3D): SpatialAudioRoom {
+        if (!point3D) {
+            return undefined;
+        }
+
+        let minDistance = 99999;
+        let currentRoom;
+        for (let i = 0; i < this.rooms.length; i++) {
+            let room = this.rooms[i];
+            let distanceFromCenterOfRoom = Utilities.pointIsWithinRectangle({
+                point: point3D,
+                rectCenter: room.center,
+                rectDimensions: room.dimensions
+            });
+
+            if (distanceFromCenterOfRoom && distanceFromCenterOfRoom < minDistance) {
+                minDistance = distanceFromCenterOfRoom;
+                currentRoom = room;
+            }
+        }
+
+        return currentRoom;
     }
 
     getRoomFromName(roomName: string) {
@@ -147,18 +175,26 @@ export class RoomController {
                 return;
             }
 
-            let userRoom = this.getRoomFromPoint3D(userData.position);
+            let userIsSittingInSeatInRoom = this.getRoomFromPoint3DOnCircle(userData.position);
+            let userIsInRoomBoundaries = this.getRoomFromPoint3DInsideBoundaries(userData.position);
 
-            if (!userRoom) {
+            // If the current user isn't sitting inside any room, return early.
+            if (!userIsInRoomBoundaries) {
+                return;
+            }
+            
+            // Set the current user's current room name.
+            userData.currentRoomName = userIsInRoomBoundaries.name;
+
+            // If the current user isn't sitting inside a seat around the table
+            // in the current room, return early.
+            if (!userIsSittingInSeatInRoom) {
                 return;
             }
 
-            // If the user is coming in from, say, Space Inspector, don't add a seat for that user.
-            if (Math.abs(Utilities.getDistanceBetween2DPoints(userData.position.x, userData.position.z, userRoom.center.x, userRoom.center.z) - userRoom.seatingRadiusM) > CLOSE_ENOUGH_M) {
-                return;
-            }
-
-            userRoom.seats.push(new Seat({
+            // If we get here, we know the user is sitting on a seat in the room,
+            // and we want to update the `seats` array inside that room locally.
+            userIsSittingInSeatInRoom.seats.push(new Seat({
                 position: userData.position,
                 orientationEuler: userData.orientationEuler,
                 occupiedUserData: userData
@@ -279,9 +315,17 @@ export class RoomController {
     updateRoomList() {
         this.roomListInnerContainer.innerHTML = ``;
 
+        let roomListInnerContainer__header = document.createElement("h1");
+        roomListInnerContainer__header.classList.add("roomListInnerContainer__header");
+        roomListInnerContainer__header.innerHTML = `Rooms`;
+        this.roomListInnerContainer.appendChild(roomListInnerContainer__header);
+
         this.rooms.forEach((room) => {
             let roomInfoContainer = document.createElement("div");
             roomInfoContainer.classList.add("roomInfoContainer");
+            if (userDataController.myAvatar.myUserData.currentRoomName === room.name) {
+                roomInfoContainer.classList.add("roomInfoContainer--mine");
+            }
             this.roomListInnerContainer.appendChild(roomInfoContainer);
 
             let roomInfoContainer__header = document.createElement("h2");
@@ -292,15 +336,27 @@ export class RoomController {
                 userDataController.myAvatar.positionSelfInRoom((<HTMLElement>e.target).getAttribute('data-room-name'));
             });
             roomInfoContainer.appendChild(roomInfoContainer__header);
+        });
 
-            room.seats.forEach((seat) => {
-                if (seat.occupiedUserData) {
-                    let roomInfoContainer__occupant = document.createElement("p");
-                    roomInfoContainer__occupant.classList.add("roomInfoContainer__occupant");
-                    roomInfoContainer__occupant.innerHTML = seat.occupiedUserData.displayName;
-                    roomInfoContainer.appendChild(roomInfoContainer__occupant);
-                }
-            });
+        let allUserData = userDataController.allOtherUserData.concat(userDataController.myAvatar.myUserData);
+        allUserData.forEach((userData) => {
+            if (userData.currentRoomName) {
+                let roomInfoContainer__occupant = document.createElement("p");
+                roomInfoContainer__occupant.classList.add("roomInfoContainer__occupant");
+                roomInfoContainer__occupant.innerHTML = userData.displayName;
+                roomInfoContainer__occupant.setAttribute('data-visit-id-hash', userData.visitIDHash);
+                document.querySelector(`[data-room-name="${userData.currentRoomName}"]`).parentNode.appendChild(roomInfoContainer__occupant);
+
+                roomInfoContainer__occupant.addEventListener("click", (e) => {
+                    uiController.showAvatarContextMenu(userData);
+                });
+                roomInfoContainer__occupant.addEventListener("mouseenter", (e) => {
+                    this.currentlyHoveringOverVisitIDHash = userData.visitIDHash;
+                });
+                roomInfoContainer__occupant.addEventListener("mouseleave", (e) => {
+                    this.currentlyHoveringOverVisitIDHash = undefined;
+                });
+            }
         });
     }
 }

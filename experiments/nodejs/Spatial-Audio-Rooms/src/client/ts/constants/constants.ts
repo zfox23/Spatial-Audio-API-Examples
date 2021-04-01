@@ -2,6 +2,7 @@ export const MIN_VOLUME_DB = -96;
 export const MAX_VOLUME_DB = 0;
 export const MAX_VOLUME_DB_AVATAR_RADIUS_MULTIPLIER = 1.8;
 export const AVATAR_RADIUS_M = 0.20;
+export const AVATAR_HOVER_HIGHLIGHT_RADIUS_ADDITION_M = 0.1;
 export const CLOSE_ENOUGH_M = 0.005;
 export const ROOM_SEATING_RADIUS_M = 1.0;
 export const ROOM_TABLE_STROKE_WIDTH_PX = 2.0;

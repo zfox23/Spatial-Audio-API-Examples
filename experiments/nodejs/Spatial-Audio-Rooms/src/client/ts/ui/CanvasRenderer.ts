@@ -18,6 +18,7 @@ import {
     ROOM_TABLE_STROKE_HEX,
     ROOM_TABLE_STROKE_WIDTH_PX,
     MOUSE_WHEEL_ZOOM_FACTOR,
+    AVATAR_HOVER_HIGHLIGHT_RADIUS_ADDITION_M,
 } from "../constants/constants";
 import { UserData } from "../userData/UserDataController";
 import { Utilities } from "../utilities/Utilities";
@@ -129,6 +130,14 @@ export class CanvasRenderer {
         let amtToRotate = -userData.orientationEuler.yawDegrees * Math.PI / 180;
         ctx.rotate(amtToRotate);
 
+        if (roomController.currentlyHoveringOverVisitIDHash === userData.visitIDHash) {
+            ctx.fillStyle = "#FFFFFF";
+            ctx.beginPath();
+            ctx.arc(0, 0, (avatarRadiusM + AVATAR_HOVER_HIGHLIGHT_RADIUS_ADDITION_M) * pxPerM, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.closePath();
+        }
+
         ctx.beginPath();
         ctx.arc(0, -avatarRadiusM * DIRECTION_CLOUD_RADIUS_MULTIPLIER * pxPerM, avatarRadiusM * DIRECTION_CLOUD_RADIUS_MULTIPLIER * pxPerM, 0, Math.PI, false);
         let grad = ctx.createLinearGradient(0, 0, 0, -avatarRadiusM * DIRECTION_CLOUD_RADIUS_MULTIPLIER * pxPerM);
@@ -209,18 +218,15 @@ export class CanvasRenderer {
         
         let ctx = this.ctx;
         let pxPerM = this.pxPerM;
-        let currentRoom = roomController.getRoomFromPoint3D(userData.position);
 
-        if (currentRoom) {    
-            ctx.translate(userData.position.x * pxPerM, userData.position.z * pxPerM);
+        ctx.translate(userData.position.x * pxPerM, userData.position.z * pxPerM);
 
-            this.drawVolumeBubble({ userData });
-            this.drawAvatarBase({ userData });
-            this.drawAvatarVideo({ userData });
-            this.drawAvatarLabel({ userData });
+        this.drawVolumeBubble({ userData });
+        this.drawAvatarBase({ userData });
+        this.drawAvatarVideo({ userData });
+        this.drawAvatarLabel({ userData });
 
-            ctx.translate(-userData.position.x * pxPerM, -userData.position.z * pxPerM);
-        }
+        ctx.translate(-userData.position.x * pxPerM, -userData.position.z * pxPerM);
     }
 
     drawTable(room: SpatialAudioRoom) {
@@ -287,7 +293,6 @@ export class CanvasRenderer {
         }
 
         roomController.rooms.forEach((room) => {
-
             this.drawTable(room);
         
             this.translateAndRotateCanvas();
@@ -299,15 +304,14 @@ export class CanvasRenderer {
                 this.drawUnoccupiedSeat(seat);
             });
             this.unTranslateAndRotateCanvas();
-            
-            this.translateAndRotateCanvas();
-            room.seats.forEach((seat) => {
-                if (seat.occupiedUserData) {
-                    this.drawAvatar({ userData: seat.occupiedUserData });
-                }
-            });
-            this.unTranslateAndRotateCanvas();
         });
+            
+        this.translateAndRotateCanvas();
+        let allUserData = userDataController.allOtherUserData.concat(userDataController.myAvatar.myUserData);
+        allUserData.forEach((userData) => {
+            this.drawAvatar({ userData });
+        });
+        this.unTranslateAndRotateCanvas();
     }
 
     draw() {

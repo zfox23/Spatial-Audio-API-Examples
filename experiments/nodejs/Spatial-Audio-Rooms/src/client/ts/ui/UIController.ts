@@ -1,5 +1,7 @@
+import { connectionController, roomController } from '..';
 import '../../css/controls.scss';
 import { AudionetInitResponse, ConnectionController } from '../connection/ConnectionController';
+import { UserData } from '../userData/UserDataController';
 import { CanvasRenderer } from './CanvasRenderer';
 
 export class UIController {
@@ -9,17 +11,15 @@ export class UIController {
     toggleInputMuteButton: HTMLButtonElement;
     toggleOutputMuteButton: HTMLButtonElement;
     toggleVideoButton: HTMLButtonElement;
-    roomListOuterContainer: HTMLElement;
+    modalBackground: HTMLDivElement;
+    avatarContextMenu: HTMLDivElement;
 
-    connectionController: ConnectionController;
-
-    constructor({ connectionController }: {connectionController: ConnectionController}) {
+    constructor() {
         this.initPlayOverlay();
         this.canvasRenderer = new CanvasRenderer();
         this.initMainUI();
+        this.initContextMenu();
         this.removeLoadingOverlay();
-
-        this.connectionController = connectionController;
     }
 
     initPlayOverlay() {
@@ -68,6 +68,17 @@ export class UIController {
         this.toggleVideoButton = document.createElement("button");
         this.toggleVideoButton.classList.add("toggleVideoButton");
         this.bottomControlsContainer.appendChild(this.toggleVideoButton);
+
+        this.modalBackground = document.createElement("div");
+        this.modalBackground.classList.add("modalBackground", "displayNone");
+        this.modalBackground.addEventListener("click", this.hideAvatarContextMenu.bind(this));
+        document.body.appendChild(this.modalBackground);
+    }
+
+    initContextMenu() {
+        this.avatarContextMenu = document.createElement("div");
+        this.avatarContextMenu.classList.add("avatarContextMenu", "displayNone");
+        document.body.appendChild(this.avatarContextMenu);
     }
 
     removeLoadingOverlay() {
@@ -79,10 +90,21 @@ export class UIController {
 
         let audionetInitResponse: AudionetInitResponse;
         try {
-            audionetInitResponse = await this.connectionController.startConnectionProcess();
+            audionetInitResponse = await connectionController.startConnectionProcess();
         } catch (e) {
             console.error(`Couldn't connect to High Fidelity! Error:\n${e}`);
             return;
         }
+    }
+
+    hideAvatarContextMenu() {
+        this.modalBackground.classList.add("displayNone");
+        this.avatarContextMenu.classList.add("displayNone");
+    }
+
+    showAvatarContextMenu(userData: UserData) {
+        roomController.hideRoomList();
+        this.modalBackground.classList.remove("displayNone");
+        this.avatarContextMenu.classList.remove("displayNone");
     }
 }

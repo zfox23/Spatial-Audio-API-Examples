@@ -186,4 +186,22 @@ export class Utilities {
 
         return pointM;
     }
+
+    /**
+     * @returns If the point is within the rectangle, returns the distance from the center of the rectangle. Else, returns `undefined`. 
+     */
+    static pointIsWithinRectangle({ point, rectCenter, rectDimensions }: { point: Point3D, rectCenter: Point3D, rectDimensions: Point3D }) {
+        if (!(point && rectCenter && rectDimensions)) {
+            return false;
+        }
+
+        if (point.x <= rectCenter.x + rectDimensions.x / 2 &&
+            point.x >= rectCenter.x - rectDimensions.x / 2 &&
+            point.z <= rectCenter.z + rectDimensions.z / 2 &&
+            point.z >= rectCenter.z - rectDimensions.z / 2) {
+            return Utilities.getDistanceBetween2DPoints(point.x, point.z, rectCenter.x, rectCenter.z);
+        } else {
+            return undefined;
+        }
+    }
 }
