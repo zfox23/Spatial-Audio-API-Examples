@@ -329,7 +329,8 @@ export class RoomController {
 
             let roomInfoContainer__header = document.createElement("h2");
             roomInfoContainer__header.classList.add("roomInfoContainer__header");
-            roomInfoContainer__header.innerHTML = room.name;
+            let occupiedSeats = room.seats.filter((seat) => { return !!seat.occupiedUserData; });
+            roomInfoContainer__header.innerHTML = `${room.name} (${occupiedSeats.length})`;
             roomInfoContainer__header.addEventListener("click", (e) => {
                 userDataController.myAvatar.positionSelfInRoom(room.name);
             });
