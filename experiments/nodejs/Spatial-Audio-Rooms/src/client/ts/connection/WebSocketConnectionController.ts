@@ -1,4 +1,5 @@
 import { connectionController, roomController, uiController, userDataController, userInputController } from "..";
+import { HEARTBEAT_INTERVAL_MS } from "../constants/constants";
 declare var HIFI_SPACE_NAME: string;
 
 const io = require("socket.io-client");
@@ -16,12 +17,21 @@ interface WebSocketParticipantData {
 export class WebSocketConnectionController {
     socket: SocketIOClient.Socket;
     readyToSendWebSocketData: boolean = false;
+    heartbeatInterval: NodeJS.Timeout;
 
     constructor() {
         this.socket = io('', { path: '/spatial-audio-rooms/socket.io' });
 
         this.socket.on("connect", (socket: any) => {
+            console.log(`Connected to Socket.IO WebSocket server!`);
             this.maybeSendInitialWebSocketData();
+            // TODO: Fix the WSS heartbeat functionality, or remove it and replace it with something more robust.
+            //this.startHeartbeatInterval();
+        });
+
+        this.socket.on("disconnect", (socket: any) => {
+            console.log(`Disconnected from Socket.IO WebSocket server!`);
+            this.stopHeartbeatInterval();
         });
 
         this.socket.on("onParticipantAdded", (participantArray: Array<WebSocketParticipantData>) => {
@@ -114,6 +124,34 @@ export class WebSocketConnectionController {
         });
     }
 
+    // Using a heartbeat to the WebSocket server might not be the best way to
+    // handle users disconnecting un-cleanly (i.e. without sending "participantDisconnected" to the WSS),
+    // but I don't know the best way to do this yet.
+    // Also, as of 2021-04-02, this doesn't even work yet.
+    startHeartbeatInterval() {
+        console.log("Starting WebSocket server heartbeat interval...");
+
+        this.heartbeatInterval = setInterval(() => {
+            const myUserData = userDataController.myAvatar.myUserData;
+
+            if (!(myUserData && myUserData.visitIDHash)) {
+                return;
+            }
+
+            this.socket.emit("heartbeat", {
+                spaceName: HIFI_SPACE_NAME,
+                visitIDHash: myUserData.visitIDHash,
+            });
+        }, HEARTBEAT_INTERVAL_MS);
+    }
+
+    stopHeartbeatInterval() {
+        if (this.heartbeatInterval) {
+            clearInterval(this.heartbeatInterval);
+        }
+        this.heartbeatInterval = undefined;
+    }
+
     maybeSendInitialWebSocketData() {
         if (!this.readyToSendWebSocketData) {
             return;
@@ -181,7 +219,16 @@ export class WebSocketConnectionController {
     }
 
     stopWebSocketStuff() {
-        this.socket.emit("removeParticipant", { spaceName: HIFI_SPACE_NAME, visitIDHash: userDataController.myAvatar.myUserData.visitIDHash, });
-        this.readyToSendWebSocketData = false;
+        if (this.socket.connected) {
+            console.log("Emitting \`removeParticipant\` over \`this.socket\`...")
+            try {
+                this.socket.emit("removeParticipant", { spaceName: HIFI_SPACE_NAME, visitIDHash: userDataController.myAvatar.myUserData.visitIDHash, });
+            } catch (e) {
+                console.warn(`Couldn't emit \`removeParticipant\` over \`this.socket\`:\n${e}`);
+            }
+            this.readyToSendWebSocketData = false;
+        } else {
+            console.warn(`Couldn't emit \`removeParticipant\` over \`this.socket\`: \`this.socket.connected\` is falsey!`);
+        }
     }
 }

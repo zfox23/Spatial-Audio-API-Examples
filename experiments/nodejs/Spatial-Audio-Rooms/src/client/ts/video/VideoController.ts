@@ -53,13 +53,15 @@ export class VideoController {
     disconnectFromTwilio() {
         this.providedUserIDToVideoElementMap.delete(userDataController.myAvatar.myUserData.providedUserID);
 
-        let localVideoTrack = <Video.LocalVideoTrack>this.localTrack;
-
-        const mediaElements = localVideoTrack.detach();
-        mediaElements.forEach(mediaElement => {
-            mediaElement.remove();
-        });
-
+        if (this.localTrack) {
+            let localVideoTrack = <Video.LocalVideoTrack>this.localTrack;
+    
+            const mediaElements = localVideoTrack.detach();
+            mediaElements.forEach(mediaElement => {
+                mediaElement.remove();
+            });
+        }
+        
         this.disableVideoButton();
 
         if (!this.twilioRoom) {
@@ -101,7 +103,7 @@ export class VideoController {
     
             const mediaElements = localVideoTrack.detach();
             mediaElements.forEach(mediaElement => {
-                mediaElement.parentElement.remove();
+                mediaElement.remove();
             });
 
             this.toggleVideoButton.classList.add("toggleVideoButton--muted");
@@ -161,7 +163,6 @@ export class VideoController {
         if (videoEl) {
             videoEl.remove();
         }
-
 
         this.providedUserIDToVideoElementMap.delete(participant.identity);
     }

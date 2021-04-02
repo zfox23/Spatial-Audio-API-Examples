@@ -36,7 +36,7 @@ export class ConnectionController {
             userDataStreamingScope: HiFiUserDataStreamingScopes.All
         });
 
-        window.addEventListener('beforeunload', this.disconnectFromHiFi.bind(this));
+        window.addEventListener('beforeunload', this.shutdown.bind(this));
     }
 
     async setNewInputAudioMediaStream(): Promise<MediaStream> {
@@ -261,15 +261,15 @@ export class ConnectionController {
         }
     }
 
-    async disconnectFromHiFi() {
-        console.log(`Disconnecting...`);
+    shutdown() {
+        console.log(`Shutting down...`);
 
         this.webSocketConnectionController.stopWebSocketStuff();
 
         videoController.disconnectFromTwilio();
 
         if (this.hifiCommunicator) {
-            await this.hifiCommunicator.disconnectFromHiFiAudioAPIServer();
+            this.hifiCommunicator.disconnectFromHiFiAudioAPIServer();
         }
         this.hifiCommunicator = null;
     }

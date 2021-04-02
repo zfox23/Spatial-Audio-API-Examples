@@ -33,6 +33,7 @@ import { Utilities } from "../utilities/Utilities";
 import { Seat, SpatialAudioRoom } from "../ui/RoomController";
 import SeatIcon from '../../images/seat.png';
 import TableImage from '../../images/table.png';
+import { OrientationEuler3D } from "hifi-spatial-audio";
 
 const seatIcon = new Image();
 seatIcon.src = SeatIcon;
@@ -129,6 +130,11 @@ export class CanvasRenderer {
     }
 
     drawAvatarBase({ userData }: { userData: UserData }) {
+        if (!userData.orientationEuler) {
+            userData.orientationEuler = new OrientationEuler3D();
+            return;
+        }
+
         let isMine = userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash;
         let ctx = this.ctx;
         let pxPerM = this.pxPerM;
