@@ -4,15 +4,15 @@
   "description": "Howard Stearns and Zach Fox",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node -r esm index.js"
   },
   "author": "Howard Stearns and Zach Fox",
   "license": "MIT",
   "dependencies": {
     "audio-decode": "^1.4.0",
     "audio-format": "^2.3.2",
-    "hifi-spatial-audio": "^0.5.1",
-    "jose": "^3.6.1",
+    "hifi-spatial-audio": "^0.7.5",
+    "jose": "^3.11.3",
     "pcm-convert": "^1.6.5",
     "wrtc": "^0.4.7",
     "yargs": "^16.2.0"
