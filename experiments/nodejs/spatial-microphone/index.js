@@ -1,13 +1,13 @@
-const { default: SignJWT } = require('jose/jwt/sign');
+const { SignJWT } = require('jose/dist/node/cjs/jwt/sign');
 const yargs = require('yargs'); // Used to make it easier to parse command-line arguments to this script.
 const express = require('express');
 const cors = require('cors');
 const crypto = require('crypto');
 const auth = require('./auth.json');
-const { OrientationEuler3D, Point3D, AudioAPIData, Communicator } = require("hifi-spatial-audio"); // Used to interface with the Spatial Audio API.
 const { RTCAudioSink } = require('wrtc').nonstandard;
 const Lame = require("node-lame").Lame;
 const wav = require('wav');
+import { OrientationEuler3D, Point3D, AudioAPIData, Communicator } from "hifi-spatial-audio"; // Used to interface with the Spatial Audio API.
 
 // This is your "App ID" as obtained from the High Fidelity Audio API Developer Console. Do not share this string.
 const APP_ID = auth.HIFI_APP_ID;
