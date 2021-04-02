@@ -4,12 +4,12 @@
   "description": "Zach Fox",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node -r esm index.js"
   },
   "author": "Zach Fox",
   "license": "MIT",
   "dependencies": {
-    "hifi-spatial-audio": "^0.2.2",
+    "hifi-spatial-audio": "^0.7.5",
     "jose": "^3.6.1"
   }
 }
