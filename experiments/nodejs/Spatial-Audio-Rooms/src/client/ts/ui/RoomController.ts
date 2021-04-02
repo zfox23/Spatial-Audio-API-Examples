@@ -3,9 +3,6 @@ import { uiController, userDataController } from "..";
 import { AVATAR_RADIUS_M, CLOSE_ENOUGH_M, MAX_VOLUME_DB_AVATAR_RADIUS_MULTIPLIER, NUM_SEATS_IN_EMPTY_ROOM } from "../constants/constants";
 import { UserData } from "../userData/UserDataController";
 import { Utilities } from "../utilities/Utilities";
-import SeatingRadius1Image1 from "../../images/rooms/room-with-seating-radius-1-bg-1.jpg";
-import SeatingRadius1Image2 from "../../images/rooms/room-with-seating-radius-1-bg-2.jpg";
-import SeatingRadius3Image1 from "../../images/rooms/room-with-seating-radius-3-bg-1.jpg";
 
 export class Seat {
     position: Point3D;
@@ -136,6 +133,12 @@ export class SpatialAudioRoom {
     }
 }
 
+import SeatingRadius1Image1 from "../../images/rooms/room-with-seating-radius-1-bg-1.jpg";
+import SeatingRadius1Image2 from "../../images/rooms/room-with-seating-radius-1-bg-2.jpg";
+import SeatingRadius1Image3 from "../../images/rooms/room-with-seating-radius-1-bg-3.jpg";
+import SeatingRadius1Image4 from "../../images/rooms/room-with-seating-radius-1-bg-4.jpg";
+import SeatingRadius3Image1 from "../../images/rooms/room-with-seating-radius-3-bg-1.jpg";
+import SeatingRadius10cmImage1 from "../../images/rooms/room-with-seating-radius-10cm-bg-1.jpg"
 export class RoomController {
     lobby: SpatialAudioRoom;
     rooms: Array<SpatialAudioRoom>;
@@ -147,13 +150,46 @@ export class RoomController {
     constructor() {
         this.rooms = [];
         
-        this.lobby = new SpatialAudioRoom({ name: "Lobby", center: new Point3D({ x: 1, y: 0, z: 1 }), seatingRadiusM: 1.0, roomImageSRC: SeatingRadius1Image1 });
+        this.lobby = new SpatialAudioRoom({
+            name: "Lobby",
+            center: new Point3D({ x: 1, y: 0, z: 0 }),
+            seatingRadiusM: 1.0,
+            dimensions: new Point3D({x: 5.15, y: 0, z: 5.15 }),
+            roomImageSRC: SeatingRadius1Image1
+        });
         this.rooms.push(this.lobby);
-        this.rooms.push(new SpatialAudioRoom({ name: "Battery", center: new Point3D({ x: 4.5, y: 0, z: 4.5 }), seatingRadiusM: 1.0, roomImageSRC: SeatingRadius1Image2 }));
-        this.rooms.push(new SpatialAudioRoom({ name: "Folsom", center: new Point3D({ x: -5, y: 0, z: 5 }), seatingRadiusM: 1.0, roomImageSRC: SeatingRadius1Image1 }));
-        this.rooms.push(new SpatialAudioRoom({ name: "Tiny", center: new Point3D({ x: 0, y: 0, z: 3.5 }), seatingRadiusM: 0.1 }));
-        this.rooms.push(new SpatialAudioRoom({ name: "HUGE", center: new Point3D({ x: 0, y: 0, z: -8 }), seatingRadiusM: 3.0 }));
-        this.rooms.push(new SpatialAudioRoom({ name: "very far", center: new Point3D({ x: 100, y: 0, z: 100 }), seatingRadiusM: 1.0, roomImageSRC: SeatingRadius1Image2 }));
+        this.rooms.push(new SpatialAudioRoom({
+            name: "Battery",
+            center: new Point3D({ x: 4.5, y: 0, z: 4.5 }),
+            seatingRadiusM: 1.0,
+            roomImageSRC: SeatingRadius1Image2
+        }));
+        this.rooms.push(new SpatialAudioRoom({
+            name: "Folsom",
+            center: new Point3D({ x: -5, y: 0, z: 5 }),
+            seatingRadiusM: 1.0,
+            roomImageSRC: SeatingRadius1Image3
+        }));
+        this.rooms.push(new SpatialAudioRoom({
+            name: "Tiny",
+            center: new Point3D({ x: 0, y: 0, z: 3.5 }),
+            seatingRadiusM: 0.1,
+            roomImageSRC: SeatingRadius10cmImage1
+        }));
+        this.rooms.push(new SpatialAudioRoom({
+            name: "HUGE",
+            center: new Point3D({ x: 0, y: 0, z: -8 }),
+            dimensions: new Point3D({x: 5.6, y: 0, z: 5.6 }),
+            seatingRadiusM: 3.0,
+            roomImageSRC: SeatingRadius3Image1
+        }));
+        this.rooms.push(new SpatialAudioRoom({
+            name: "very far",
+            center: new Point3D({ x: 100, y: 0, z: 100 }),
+            dimensions: new Point3D({x: 3.6, y: 0, z: 3.6 }),
+            seatingRadiusM: 1.0,
+            roomImageSRC: SeatingRadius1Image4
+        }));
 
         this.showRoomListButton = document.createElement("button");
         this.showRoomListButton.classList.add("showRoomListButton");
