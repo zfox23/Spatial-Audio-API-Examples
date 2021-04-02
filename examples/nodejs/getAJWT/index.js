@@ -1,5 +1,5 @@
-const { default: SignJWT } = require('jose/jwt/sign');
-const { Point3D, HiFiCommunicator } = require("hifi-spatial-audio");
+const { SignJWT } = require('jose/dist/node/cjs/jwt/sign'); // Used to create a JWT associated with your Space.
+import { Point3D, HiFiCommunicator } from "hifi-spatial-audio";
 const crypto = require('crypto');
 
 // This is your "App ID" as obtained from the High Fidelity Audio API Developer Console.

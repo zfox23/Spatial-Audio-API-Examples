@@ -5,7 +5,7 @@ const path = require('path');
 const decode = require('audio-decode');
 const format = require('audio-format');
 const convert = require('pcm-convert');
-const { Point3D, HiFiLogger, HiFiLogLevel, HiFiAudioAPIData, HiFiCommunicator, preciseInterval } = require("hifi-spatial-audio");
+import { Point3D, HiFiLogger, HiFiLogLevel, HiFiAudioAPIData, HiFiCommunicator, preciseInterval } from 'hifi-spatial-audio';
 
 let MAP={};
 let AUDIO_BUFFERS = {}
@@ -186,7 +186,7 @@ async function loadAudioFile(audioPath) {
     }
 
     // Make sure that the file at `audioPath` is a `.mp3` or a `.wav` file.
-    audioFileExtension = path.extname(audioPath).toLowerCase();
+    let audioFileExtension = path.extname(audioPath).toLowerCase();
     if (!(audioFileExtension === ".mp3" || audioFileExtension === ".wav")) {
         console.error(`Specified audio file must be a \`.mp3\` or a \`.wav\`!\nInstead, it's a \`${audioFileExtension}\``);
         return;

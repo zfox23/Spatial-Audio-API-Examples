@@ -1,14 +1,13 @@
-
 const yargs = require('yargs'); // Used to make it easier to parse command-line arguments to this script.
 const crypto = require('crypto'); // Used to create a JWT associated with your Space.
-const { default: SignJWT } = require('jose/jwt/sign'); // Used to create a JWT associated with your Space.
+const { SignJWT } = require('jose/dist/node/cjs/jwt/sign'); // Used to create a JWT associated with your Space.
 const { MediaStream, nonstandard: { RTCAudioSource } } = require('wrtc'); // Used to create the `MediaStream` containing your DJ Bot's audio.
 const fs = require('fs'); // Used to read the specified audio file from your local disk.
 const path = require('path'); // Used to verify that the specified audio file is an MP3 or WAV file.
 const decode = require('audio-decode'); // Used to decode the audio file present on your local disk.
 const format = require('audio-format'); // Allows us to retrieve available format properties from an audio-like object, such as our `AudioBuffer`.
 const convert = require('pcm-convert'); // Allows us to convert our `AudioBuffer` into the proper `int16` format.
-const { Point3D, HiFiAudioAPIData, HiFiCommunicator, preciseInterval } = require("hifi-spatial-audio"); // Used to interface with the Spatial Audio API.
+import { Point3D, HiFiAudioAPIData, HiFiCommunicator, preciseInterval } from 'hifi-spatial-audio'; // Used to interface with the Spatial Audio API.
 
 async function generateJWT() {
     // This is your "App ID" as obtained from the High Fidelity Audio API Developer Console.
@@ -59,7 +58,7 @@ async function startDJBot(audioPath, position, hiFiGain) {
     }
 
     // Make sure that the file at `audioPath` is a `.mp3` or a `.wav` file.
-    audioFileExtension = path.extname(audioPath).toLowerCase();
+    let audioFileExtension = path.extname(audioPath).toLowerCase();
     if (!(audioFileExtension === ".mp3" || audioFileExtension === ".wav")) {
         console.error(`Specified audio file must be a \`.mp3\` or a \`.wav\`!\nInstead, it's a \`${audioFileExtension}\``);
         return;

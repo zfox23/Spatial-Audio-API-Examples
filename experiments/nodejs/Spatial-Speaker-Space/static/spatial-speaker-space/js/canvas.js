@@ -40,7 +40,7 @@ function drawAvatarBase({ isMine, userData, avatarRadiusM, positionInCanvasSpace
     }
 
     ctx.translate(positionInCanvasSpace.x, positionInCanvasSpace.y);
-    let amtToRotate = ((userData.orientationEuler && userData.orientationEuler.yawDegrees * -1 + 180) || 0) * Math.PI / 180;
+    let amtToRotate = ((userData.orientationEuler && userData.orientationEuler.yawDegrees * -1 + 180) || 180) * Math.PI / 180;
     ctx.rotate(amtToRotate);
 
     if (currentlyHoveringOverVisitIDHash === userData.visitIDHash) {
