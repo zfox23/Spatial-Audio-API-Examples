@@ -1,7 +1,7 @@
 'use strict';
 
 const { degreesBetween, project } = require("./vectors");
-import { HiFiConstants } = from "hifi-spatial-audio";
+import { HiFiConstants } from "hifi-spatial-audio";
 
 class Motor {
     constructor({bot, start, updatePeriodMs = HiFiConstants.DEFAULT_TRANSMIT_RATE_LIMIT_TIMEOUT_MS}) {

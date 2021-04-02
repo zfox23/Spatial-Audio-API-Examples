@@ -9,7 +9,7 @@ import {
     OrientationEuler3D,
     HiFiCommunicator,
     HiFiConstants
-} = from "hifi-spatial-audio";
+} from "hifi-spatial-audio";
 const { SignJWT } = require('jose/dist/node/cjs/jwt/sign');
 const { UnsecuredJWT } = require('jose/dist/node/cjs/jwt/unsecured');
 const crypto = require("crypto");
