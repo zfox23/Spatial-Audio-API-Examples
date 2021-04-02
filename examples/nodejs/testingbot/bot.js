@@ -10,8 +10,8 @@ import {
     HiFiCommunicator,
     HiFiConstants
 } = from "hifi-spatial-audio";
-const { default: SignJWT } = require("jose/jwt/sign");
-const { default: UnsecuredJWT } = require("jose/jwt/unsecured");
+const { SignJWT } = require('jose/dist/node/cjs/jwt/sign');
+const { UnsecuredJWT } = require('jose/dist/node/cjs/jwt/unsecured');
 const crypto = require("crypto");
 
 const SineSource = require("./sineSource");
