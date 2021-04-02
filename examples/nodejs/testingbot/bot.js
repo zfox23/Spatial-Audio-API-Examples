@@ -3,13 +3,13 @@ const {
     MediaStream,
     nonstandard: { RTCAudioSink }
 } = require("wrtc");
-const {
+import {
     HiFiAudioAPIData,
     Point3D,
     OrientationEuler3D,
     HiFiCommunicator,
     HiFiConstants
-} = require("hifi-spatial-audio");
+} = from "hifi-spatial-audio";
 const { default: SignJWT } = require("jose/jwt/sign");
 const { default: UnsecuredJWT } = require("jose/jwt/unsecured");
 const crypto = require("crypto");
