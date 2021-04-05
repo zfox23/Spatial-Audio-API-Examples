@@ -29,6 +29,10 @@ export class Utilities {
         return Math.exp(minOutput + scale * (factor - minInput));
     }
 
+    static easeLinear(progressFraction: number) {
+        return progressFraction;
+    }
+
     static easeInOutQuart(progressFraction: number) {
         return progressFraction < 0.5 ? 8 * progressFraction * progressFraction * progressFraction * progressFraction : 1 - Math.pow(-2 * progressFraction + 2, 4) / 2;
     }

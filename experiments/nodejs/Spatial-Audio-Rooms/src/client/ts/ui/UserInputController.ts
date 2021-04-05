@@ -206,7 +206,6 @@ export class UserInputController {
         } else if (this.hoveredSeat) {
             console.log(`User clicked on a new seat at ${JSON.stringify(this.hoveredSeat.position)}! New yaw orientation: ${JSON.stringify(this.hoveredSeat.orientation)} degrees.`);
             userDataController.myAvatar.updateMyPositionAndOrientation(this.hoveredSeat.position, this.hoveredSeat.orientation.yawDegrees);
-
             this.hoveredSeat = undefined;
         }
 
@@ -247,10 +246,10 @@ export class UserInputController {
             let deltaDistance = newDistance - this.lastDistanceBetweenRightClickEvents;
             this.lastDistanceBetweenRightClickEvents = newDistance;
     
-            if (userDataController.myAvatar && userDataController.myAvatar.myUserData.orientationEuler) {
-                let newYawDegrees = userDataController.myAvatar.myUserData.orientationEuler.yawDegrees - deltaDistance * CONTROLS.RIGHT_CLICK_ROTATION_SENSITIVITY;
+            if (userDataController.myAvatar && userDataController.myAvatar.myUserData.orientationEulerCurrent) {
+                let newYawDegrees = userDataController.myAvatar.myUserData.orientationEulerCurrent.yawDegrees - deltaDistance * CONTROLS.RIGHT_CLICK_ROTATION_SENSITIVITY;
                 if (!isNaN(newYawDegrees)) {
-                    userDataController.myAvatar.updateMyPositionAndOrientation(undefined, newYawDegrees);
+                    userDataController.myAvatar.updateMyPositionAndOrientation(undefined, newYawDegrees, true);
                 }
             }
         } else {

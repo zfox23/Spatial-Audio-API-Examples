@@ -58,10 +58,10 @@ export class CanvasRenderer {
             return;
         }
 
-        if (!myUserData.orientationEuler) {
+        if (!myUserData.orientationEulerCurrent) {
             return;
         }
-        this.canvasRotationDegrees = -1 * userDataController.myAvatar.myUserData.orientationEuler.yawDegrees;
+        this.canvasRotationDegrees = -1 * userDataController.myAvatar.myUserData.orientationEulerCurrent.yawDegrees;
 
         this.myCurrentRoom = myCurrentRoom;
 
@@ -101,19 +101,14 @@ export class CanvasRenderer {
     }
 
     drawAvatarBase({ userData }: { userData: UserData }) {
-        if (!userData.orientationEuler) {
-            userData.orientationEuler = new OrientationEuler3D();
-            return;
-        }
-
         let isMine = userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash;
         let ctx = this.ctx;
         let pxPerM = physicsController.pxPerMCurrent;
         let avatarRadiusM = AVATAR.RADIUS_M;
         let avatarRadiusPX = avatarRadiusM * pxPerM;
 
-        let amtToRotate = -userData.orientationEuler.yawDegrees * Math.PI / 180;
-        ctx.rotate(amtToRotate);
+        let amtToRotateAvatar = -userData.orientationEulerCurrent.yawDegrees * Math.PI / 180;
+        ctx.rotate(amtToRotateAvatar);
 
         if (roomController.currentlyHoveringOverVisitIDHash === userData.visitIDHash) {
             ctx.fillStyle = "#FFFFFF";
@@ -148,7 +143,7 @@ export class CanvasRenderer {
         ctx.stroke();
         ctx.fill();
         ctx.closePath();
-        ctx.rotate(-amtToRotate);
+        ctx.rotate(-amtToRotateAvatar);
     }
 
     drawAvatarVideo({ userData }: { userData: UserData }) {
@@ -180,8 +175,8 @@ export class CanvasRenderer {
         let pxPerM = physicsController.pxPerMCurrent;
         let avatarRadiusM = AVATAR.RADIUS_M;
 
-        let amtToRotateLabel = this.canvasRotationDegrees * Math.PI / 180;
-        ctx.rotate(amtToRotateLabel);
+        let amtToRotateAvatarLabel = this.canvasRotationDegrees * Math.PI / 180;
+        ctx.rotate(amtToRotateAvatarLabel);
 
         ctx.font = AVATAR.AVATAR_LABEL_FONT;
         ctx.fillStyle = Utilities.getConstrastingTextColor(Utilities.hexToRGB(userData.colorHex));
@@ -196,7 +191,7 @@ export class CanvasRenderer {
         }
 
         ctx.fillText(textToDraw, 0, 0);
-        ctx.rotate(-amtToRotateLabel);
+        ctx.rotate(-amtToRotateAvatarLabel);
     }
 
     drawTutorialGlow({ userData }: { userData: UserData }) {
@@ -219,8 +214,8 @@ export class CanvasRenderer {
         let ctx = this.ctx;
         let pxPerM = physicsController.pxPerMCurrent;
 
-        let amtToRotateLabel = this.canvasRotationDegrees * Math.PI / 180;
-        ctx.rotate(amtToRotateLabel);
+        let amtToRotateTutorialText = this.canvasRotationDegrees * Math.PI / 180;
+        ctx.rotate(amtToRotateTutorialText);
 
         ctx.font = UI.TUTORIAL_TEXT_FONT;
         ctx.fillStyle = UI.TUTORIAL_TEXT_COLOR;
@@ -237,11 +232,11 @@ export class CanvasRenderer {
         ctx.fillText(textToDraw, AVATAR.RADIUS_M * pxPerM + 25, 0);
         ctx.strokeText(textToDraw, AVATAR.RADIUS_M * pxPerM + 25, 0);
 
-        ctx.rotate(-amtToRotateLabel);
+        ctx.rotate(-amtToRotateTutorialText);
     }
 
     drawAvatar({ userData }: { userData: UserData }) {
-        if (!userData || !userData.positionCurrent || typeof (userData.positionCurrent.x) !== "number" || typeof (userData.positionCurrent.z) !== "number") {
+        if (!userData || !userData.positionCurrent || typeof (userData.positionCurrent.x) !== "number" || typeof (userData.positionCurrent.z) !== "number" || !userData.orientationEulerCurrent || typeof (userData.orientationEulerCurrent.yawDegrees) !== "number") {
             return;
         }
         
@@ -295,8 +290,8 @@ export class CanvasRenderer {
             ctx.drawImage(tableImage, -tableRadiusPX, -tableRadiusPX, tableRadiusPX * 2, tableRadiusPX * 2);
         }
             
-        let amtToRotateLabel = this.canvasRotationDegrees * Math.PI / 180;
-        ctx.rotate(amtToRotateLabel);
+        let amtToRotateRoomLabel = this.canvasRotationDegrees * Math.PI / 180;
+        ctx.rotate(amtToRotateRoomLabel);
         ctx.font = ROOM.ROOM_LABEL_FONT;
         ctx.fillStyle = usingRoomImage ? ROOM.ROOM_WITH_IMAGE_LABEL_COLOR : Utilities.getConstrastingTextColor(Utilities.hexToRGB(room.tableColorHex));
         ctx.textAlign = "center";
@@ -305,7 +300,7 @@ export class CanvasRenderer {
         if (textMetrics.width < Math.min(room.seatingRadiusM * pxPerM, room.seatingRadiusM * pxPerM)) {
             ctx.fillText(room.name, 0, 0);
         }
-        ctx.rotate(-amtToRotateLabel);
+        ctx.rotate(-amtToRotateRoomLabel);
 
         ctx.translate(-room.center.x * pxPerM, -room.center.z * pxPerM);
     }

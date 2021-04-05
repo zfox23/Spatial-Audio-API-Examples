@@ -110,9 +110,12 @@ export class SpatialAudioRoom {
                     }
                 });
 
-                let occupied = !!roomUserData.find((userData) => { return userData && userData.positionCurrent && Math.abs(userData.positionCurrent.x - currentPotentialPosition.x) < MISC.CLOSE_ENOUGH_M && Math.abs(userData.positionCurrent.z - currentPotentialPosition.z) < MISC.CLOSE_ENOUGH_M; });
+                let seatIsOccupied = !!roomUserData.find((userData) => {
+                    let position = userData && (userData.positionTarget || userData.positionCurrent);
+                    return position && Math.abs(position.x - currentPotentialPosition.x) < MISC.CLOSE_ENOUGH_M && Math.abs(position.z - currentPotentialPosition.z) < MISC.CLOSE_ENOUGH_M;
+                });
 
-                if (!occupied) {
+                if (!seatIsOccupied) {
                     let orientationYawRadians = Math.atan2(currentPotentialPosition.x - this.center.x, currentPotentialPosition.z - this.center.z);
                     let orientationYawDegrees = orientationYawRadians * 180 / Math.PI;
                     orientationYawDegrees %= 360;
@@ -257,14 +260,17 @@ export class RoomController {
         });
     }
 
-    generateOccupiedSeats(allUserData: Array<UserData>) {
+    generateOccupiedSeats() {
+        let allUserData = userDataController.allOtherUserData.concat(userDataController.myAvatar.myUserData);
+
         allUserData.forEach((userData) => {
-            if (!userData.positionCurrent) {
+            let position = userData.positionTarget || userData.positionCurrent;
+            if (!position) {
                 return;
             }
 
-            let userIsSittingInSeatInRoom = this.getRoomFromPoint3DOnCircle(userData.positionCurrent);
-            let userIsInRoomBoundaries = this.getRoomFromPoint3DInsideBoundaries(userData.positionCurrent);
+            let userIsSittingInSeatInRoom = this.getRoomFromPoint3DOnCircle(position);
+            let userIsInRoomBoundaries = this.getRoomFromPoint3DInsideBoundaries(position);
 
             // If the current user isn't sitting inside any room, return early.
             if (!userIsInRoomBoundaries) {
@@ -283,8 +289,8 @@ export class RoomController {
             // If we get here, we know the user is sitting on a seat in the room,
             // and we want to update the `seats` array inside that room locally.
             userIsSittingInSeatInRoom.seats.push(new Seat({
-                position: userData.positionCurrent,
-                orientationEuler: userData.orientationEuler,
+                position: position,
+                orientationEuler: userData.orientationEulerTarget,
                 occupiedUserData: userData
             }));
         });
@@ -388,13 +394,11 @@ export class RoomController {
     }
 
     updateAllRoomSeats() {
-        let allUserData = userDataController.allOtherUserData.concat(userDataController.myAvatar.myUserData);
-
         this.rooms.forEach((room) => {
             room.seats = [];
         });
 
-        this.generateOccupiedSeats(allUserData);
+        this.generateOccupiedSeats();
         this.generateInBetweenSeats();
         this.maybeGenerateVacantSeats();
         this.updateRoomList();
@@ -421,6 +425,10 @@ export class RoomController {
             let occupiedSeats = room.seats.filter((seat) => { return !!seat.occupiedUserData; });
             roomInfoContainer__header.innerHTML = `${room.name} (${occupiedSeats.length})`;
             roomInfoContainer__header.addEventListener("click", (e) => {
+                if (userDataController.myAvatar.myUserData.currentRoomName === room.name) {
+                    console.log(`User is already in room \`${room.name}\`!`);
+                    return;
+                }
                 userDataController.myAvatar.positionSelfInRoom(room.name);
             });
             roomInfoContainer.appendChild(roomInfoContainer__header);

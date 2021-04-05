@@ -10,10 +10,13 @@ export interface UserData {
     displayName?: string;
     colorHex?: string;
     motionStartTimestamp?: number;
+    rotationStartTimestamp?: number;
     positionStart?: Point3D;
     positionCurrent?: Point3D;
     positionTarget?: Point3D;
-    orientationEuler?: OrientationEuler3D;
+    orientationEulerStart?: OrientationEuler3D;
+    orientationEulerCurrent?: OrientationEuler3D;
+    orientationEulerTarget?: OrientationEuler3D;
     volumeDecibels?: number;
     volumeDecibelsPeak?: number;
     hiFiGain?: number;
@@ -43,7 +46,10 @@ class MyAvatar {
             positionStart: undefined,
             positionCurrent: undefined,
             positionTarget: undefined,
-            orientationEuler: undefined,
+            rotationStartTimestamp: undefined,
+            orientationEulerStart: undefined,
+            orientationEulerCurrent: undefined,
+            orientationEulerTarget: undefined,
             volumeDecibels: undefined,
             volumeDecibelsPeak: undefined,
             volumeThreshold: -60,
@@ -62,10 +68,6 @@ class MyAvatar {
     }
 
     positionSelfInRoom(roomName: string) {
-        if (this.myUserData.currentRoomName === roomName) {
-            return;
-        }
-
         this.myUserData.currentRoomName = roomName;
 
         let currentRoom = roomController.rooms.find((room) => {
@@ -84,45 +86,42 @@ class MyAvatar {
         this.updateMyPositionAndOrientation(newSeat.position, newSeat.orientation.yawDegrees);
     }
 
-    updateMyPositionAndOrientation(targetPosition?: Point3D, targetYawOrientationDegrees?: number) {
+    updateMyPositionAndOrientation(targetPosition?: Point3D, targetYawOrientationDegrees?: number, forceOrientation: boolean = false) {
         let hifiCommunicator = connectionController.hifiCommunicator;
         if (!hifiCommunicator || !userDataController.myAvatar) {
             return;
         }
 
         let myUserData = userDataController.myAvatar.myUserData;
-
-        let needToTransmit = false;
-        let dataToTransmit: DataToTransmitToHiFi = {
-            orientationEuler: undefined,
-            position: undefined
-        };
-
-        if (!myUserData.orientationEuler) {
-            myUserData.orientationEuler = new OrientationEuler3D();
-        }
-
-        if (typeof (targetYawOrientationDegrees) === "number") {
-            myUserData.orientationEuler.yawDegrees = targetYawOrientationDegrees;
-            dataToTransmit.orientationEuler = new OrientationEuler3D();
-            Object.assign(dataToTransmit.orientationEuler, myUserData.orientationEuler);
-            needToTransmit = true;
-        }
-
+        
+        let mustTransmit = false;
+        let dataToTransmit: DataToTransmitToHiFi = {};
+        
         if (targetPosition) {
-            if (!myUserData.positionTarget) {
-                myUserData.positionTarget = new Point3D();
-            }
-            Object.assign(myUserData.positionTarget, targetPosition);
+            myUserData.motionStartTimestamp = undefined;
 
-            if (!myUserData.positionStart) {
-                myUserData.positionStart = new Point3D();
-            }
-            if (myUserData.positionCurrent) {
-                Object.assign(myUserData.positionStart, myUserData.positionCurrent);
+            if (!myUserData.positionCurrent) {
+                myUserData.positionStart = undefined;
+                myUserData.positionCurrent = new Point3D();
+                Object.assign(myUserData.positionCurrent, targetPosition);
+                myUserData.positionTarget = undefined;
+                
+                dataToTransmit.position = myUserData.positionCurrent;
             } else {
-                Object.assign(myUserData.positionStart, targetPosition);
+                if (!myUserData.positionStart) {
+                    myUserData.positionStart = new Point3D();
+                }
+                Object.assign(myUserData.positionStart, myUserData.positionCurrent);
+
+                if (!myUserData.positionTarget) {
+                    myUserData.positionTarget = new Point3D();
+                }
+                Object.assign(myUserData.positionTarget, targetPosition);
+                
+                dataToTransmit.position = myUserData.positionTarget;
             }
+
+            mustTransmit = true;
 
             let targetRoom = roomController.getRoomFromPoint3DInsideBoundaries(targetPosition);
 
@@ -136,7 +135,39 @@ class MyAvatar {
             physicsController.autoComputePXPerMFromRoom(targetRoom);
         }
 
-        if (needToTransmit) {
+        if (typeof (targetYawOrientationDegrees) === "number") {
+            myUserData.rotationStartTimestamp = undefined;
+
+            if (forceOrientation || !myUserData.orientationEulerCurrent) {
+                if (!myUserData.orientationEulerCurrent) {
+                    myUserData.orientationEulerCurrent = new OrientationEuler3D();
+                }
+                
+                myUserData.orientationEulerStart = undefined;
+                myUserData.orientationEulerCurrent.yawDegrees = targetYawOrientationDegrees;
+                myUserData.orientationEulerTarget = undefined;
+
+                if (forceOrientation) {
+                    dataToTransmit.orientationEuler = myUserData.orientationEulerCurrent;
+                    mustTransmit = true;
+                }
+            } else if (myUserData.orientationEulerCurrent) {
+                if (!myUserData.orientationEulerStart) {
+                    myUserData.orientationEulerStart = new OrientationEuler3D();
+                }
+                Object.assign(myUserData.orientationEulerStart, myUserData.orientationEulerCurrent);
+
+                if (!myUserData.orientationEulerTarget) {
+                    myUserData.orientationEulerTarget = new OrientationEuler3D();
+                }
+                myUserData.orientationEulerTarget.yawDegrees = targetYawOrientationDegrees;
+                
+                dataToTransmit.orientationEuler = myUserData.orientationEulerTarget;
+                mustTransmit = true;
+            }
+        }
+
+        if (mustTransmit) {
             hifiCommunicator.updateUserDataAndTransmit(dataToTransmit);
         }
     }

@@ -1,5 +1,5 @@
-import { Point3D } from "hifi-spatial-audio";
-import { connectionController, uiController, userDataController, userInputController } from "..";
+import { OrientationEuler3D, Point3D } from "hifi-spatial-audio";
+import { connectionController, roomController, uiController, userDataController, userInputController } from "..";
 import { AVATAR, PHYSICS } from "../constants/constants";
 import { SpatialAudioRoom } from "../ui/RoomController";
 import { Utilities } from "../utilities/Utilities";
@@ -25,64 +25,88 @@ export class PhysicsController {
         let dt = now - this.lastNow;
         this.lastNow = now;
 
+        this.computeAvatarPositionsAndOrientations(now);
         this.computePXPerM(now);
-        this.computeAvatarPositions(now);
     }
 
-    computeCurrentPosition({ timestamp, motionStartTimestamp, positionStart, positionTarget }: { timestamp: number, motionStartTimestamp: number, positionStart: Point3D, positionTarget: Point3D }) {
-        // console.log((timestamp - motionStartTimestamp))
-    }
-
-    computeAvatarPositions(timestamp: number) {
+    computeAvatarPositionsAndOrientations(timestamp: number) {
         let hifiCommunicator = connectionController.hifiCommunicator;
         if (!hifiCommunicator || !userDataController.myAvatar) {
             return;
         }
 
-        let myAvatarMoved = false;
+        let otherAvatarMoved = false;
         let allUserData = userDataController.allOtherUserData.concat(userDataController.myAvatar.myUserData);
         allUserData.forEach((userData) => {
-            if (!(userData.positionStart && userData.positionTarget)) {
-                return;
-            }
-
             let isMine = userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash;
-
-            if (isMine) {
-                myAvatarMoved = true;
-            }
-
+            const easingFunction = Utilities.easeOutQuad;
+	    
+            // Position logic
             if (!userData.positionCurrent) {
                 userData.positionCurrent = new Point3D();
             }
+            if (userData.positionTarget && !userData.motionStartTimestamp) {
+                userData.motionStartTimestamp = timestamp;
 
-            if ((timestamp - userData.motionStartTimestamp) > PHYSICS.MOTION_TWEENING_DURATION_MS) {
-                userData.positionStart = undefined;
-                userData.positionTarget = undefined;
-                userData.motionStartTimestamp = undefined;
-                Object.assign(userData.positionCurrent, userData.positionTarget);
-            } else {
-                if (!userData.motionStartTimestamp) {
-                    userData.motionStartTimestamp = timestamp;
+                if (isMine) {
+                    this.smoothZoomDurationMS = PHYSICS.POSITION_TWEENING_DURATION_MS;
+                }
+            }
+            if (userData.motionStartTimestamp && (timestamp - userData.motionStartTimestamp) > PHYSICS.POSITION_TWEENING_DURATION_MS) {
+                if (userData.positionTarget) {
+                    Object.assign(userData.positionCurrent, userData.positionTarget);
 
-                    if (isMine) {
-                        this.smoothZoomDurationMS = PHYSICS.MOTION_TWEENING_DURATION_MS;
+                    if (!isMine) {
+                        otherAvatarMoved = true;
                     }
                 }
-        
-                let newPosition = new Point3D({
-                    x: Utilities.linearScale(Utilities.easeOutQuad((timestamp - userData.motionStartTimestamp) / PHYSICS.MOTION_TWEENING_DURATION_MS), 0, 1, userData.positionStart.x, userData.positionTarget.x),
-                    z: Utilities.linearScale(Utilities.easeOutQuad((timestamp - userData.motionStartTimestamp) / PHYSICS.MOTION_TWEENING_DURATION_MS), 0, 1, userData.positionStart.z, userData.positionTarget.z),
-                });
-                Object.assign(userData.positionCurrent, newPosition);
+                
+                userData.positionStart = undefined;
+                userData.positionTarget = undefined;
+
+                userData.motionStartTimestamp = undefined;
+            } else if (userData.motionStartTimestamp) {
+                if (userData.positionStart && userData.positionTarget) {
+                    let newPosition = new Point3D({
+                        x: Utilities.linearScale(easingFunction((timestamp - userData.motionStartTimestamp) / PHYSICS.POSITION_TWEENING_DURATION_MS), 0, 1, userData.positionStart.x, userData.positionTarget.x),
+                        z: Utilities.linearScale(easingFunction((timestamp - userData.motionStartTimestamp) / PHYSICS.POSITION_TWEENING_DURATION_MS), 0, 1, userData.positionStart.z, userData.positionTarget.z),
+                    });
+                    Object.assign(userData.positionCurrent, newPosition);
+
+                    if (!isMine) {
+                        otherAvatarMoved = true;
+                    }
+                }
+            }
+
+            // Orientation logic
+            if (!userData.orientationEulerCurrent) {
+                userData.orientationEulerCurrent = new OrientationEuler3D();
+            }
+            if (userData.orientationEulerTarget && !userData.rotationStartTimestamp) {
+                userData.rotationStartTimestamp = timestamp;
+            }
+            if (userData.rotationStartTimestamp && (timestamp - userData.rotationStartTimestamp) > PHYSICS.POSITION_TWEENING_DURATION_MS) {
+                if (userData.orientationEulerTarget) {
+                    Object.assign(userData.orientationEulerCurrent, userData.orientationEulerTarget);
+                }
+                
+                userData.orientationEulerStart = undefined;
+                userData.orientationEulerTarget = undefined;
+
+                userData.rotationStartTimestamp = undefined;
+            } else if (userData.rotationStartTimestamp) {                
+                if (userData.orientationEulerStart && userData.orientationEulerTarget) {
+                    let newOrientationEuler = new OrientationEuler3D({
+                        yawDegrees: Utilities.linearScale(easingFunction((timestamp - userData.rotationStartTimestamp) / PHYSICS.POSITION_TWEENING_DURATION_MS), 0, 1, userData.orientationEulerStart.yawDegrees, userData.orientationEulerTarget.yawDegrees),
+                    });
+                    Object.assign(userData.orientationEulerCurrent, newOrientationEuler);
+                }
             }
         });
 
-        if (myAvatarMoved) {
-            let dataToTransmit = {
-                position: userDataController.myAvatar.myUserData.positionCurrent
-            };
-            hifiCommunicator.updateUserDataAndTransmit(dataToTransmit);
+        if (otherAvatarMoved) {
+            roomController.updateAllRoomSeats();
         }
     }
 

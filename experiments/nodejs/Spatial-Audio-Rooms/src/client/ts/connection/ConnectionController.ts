@@ -167,6 +167,7 @@ export class ConnectionController {
             let currentDataFromServer = receivedHiFiAudioAPIDataArray[i];
             let currentVisitIDHash = currentDataFromServer.hashedVisitID;
             let isMine = false;
+            let thisAvatarMoved = false;
             let currentLocalUserData = userDataController.allOtherUserData.find((element) => { return element.visitIDHash === currentVisitIDHash; })
             if (!currentLocalUserData && currentVisitIDHash === userDataController.myAvatar.myUserData.visitIDHash) {
                 currentLocalUserData = myUserData;
@@ -179,38 +180,67 @@ export class ConnectionController {
                 }
 
                 if (currentDataFromServer.position && !isMine) {
-                    if (!currentLocalUserData.positionTarget) {
-                        currentLocalUserData.positionTarget = new Point3D();
-                    }
+                    let targetPosition = new Point3D();
 
                     if (typeof (currentDataFromServer.position.x) === "number") {
-                        currentLocalUserData.positionTarget.x = currentDataFromServer.position.x;
+                        targetPosition.x = currentDataFromServer.position.x;
+                    } else if (typeof (currentLocalUserData.positionCurrent.x) === "number") {
+                        targetPosition.x = currentLocalUserData.positionCurrent.x;
                     }
+
                     if (typeof (currentDataFromServer.position.z) === "number") {
-                        currentLocalUserData.positionTarget.z = currentDataFromServer.position.z;
+                        targetPosition.z = currentDataFromServer.position.z;
+                    } else if (typeof (currentLocalUserData.positionCurrent.z) === "number") {
+                        targetPosition.z = currentLocalUserData.positionCurrent.z;
                     }
 
-                    if (!currentLocalUserData.positionStart) {
-                        currentLocalUserData.positionStart = new Point3D();
-                    }
-                    if (currentLocalUserData.positionCurrent) {
-                        Object.assign(currentLocalUserData.positionStart, currentLocalUserData.positionCurrent);
+                    if (!currentLocalUserData.positionCurrent) {
+                        currentLocalUserData.positionStart = undefined;
+                        currentLocalUserData.positionCurrent = new Point3D();
+                        Object.assign(currentLocalUserData.positionCurrent, targetPosition);
+                        currentLocalUserData.positionTarget = undefined;
                     } else {
-                        Object.assign(currentLocalUserData.positionStart, currentLocalUserData.positionTarget);
+                        if (!currentLocalUserData.positionStart) {
+                            currentLocalUserData.positionStart = new Point3D();
+                        }
+                        Object.assign(currentLocalUserData.positionStart, currentLocalUserData.positionCurrent);
+                        
+                        if (!currentLocalUserData.positionTarget) {
+                            currentLocalUserData.positionTarget = new Point3D();
+                        }
+                        Object.assign(currentLocalUserData.positionTarget, targetPosition);
                     }
 
+                    thisAvatarMoved = true;
                     receivedNewPositionData = true;
+                    currentLocalUserData.motionStartTimestamp = undefined;
                 }
                 
-                if (currentDataFromServer.orientationEuler && !isMine) {
-                    if (!currentLocalUserData.orientationEuler) {
-                        currentLocalUserData.orientationEuler = new OrientationEuler3D();
+                if (currentDataFromServer.orientationEuler && typeof (currentDataFromServer.orientationEuler.yawDegrees) === "number" && !isMine) {
+                    let targetOrientation = new OrientationEuler3D();
+                    targetOrientation.yawDegrees = currentDataFromServer.orientationEuler.yawDegrees;
+                    targetOrientation.yawDegrees %= 360;
+
+                    // If this avatar has NOT also moved during the current reception of user data,
+                    // slam the orientation to whatever the server has sent to us.
+                    if (!currentLocalUserData.orientationEulerCurrent || !thisAvatarMoved) {
+                        currentLocalUserData.orientationEulerStart = undefined;
+                        currentLocalUserData.orientationEulerCurrent = new OrientationEuler3D();
+                        Object.assign(currentLocalUserData.orientationEulerCurrent, targetOrientation);
+                        currentLocalUserData.orientationEulerTarget = undefined;
+                    } else {
+                        if (!currentLocalUserData.orientationEulerStart) {
+                            currentLocalUserData.orientationEulerStart = new OrientationEuler3D();
+                        }
+                        Object.assign(currentLocalUserData.orientationEulerStart, currentLocalUserData.orientationEulerCurrent);
+                        
+                        if (!currentLocalUserData.orientationEulerTarget) {
+                            currentLocalUserData.orientationEulerTarget = new OrientationEuler3D();
+                        }
+                        Object.assign(currentLocalUserData.orientationEulerTarget, targetOrientation);
                     }
 
-                    if (typeof (currentDataFromServer.orientationEuler.yawDegrees) === "number") {
-                        currentLocalUserData.orientationEuler.yawDegrees = currentDataFromServer.orientationEuler.yawDegrees;
-                        currentLocalUserData.orientationEuler.yawDegrees %= 360;
-                    }
+                    currentLocalUserData.rotationStartTimestamp = undefined;
                 }
 
                 if (typeof (currentDataFromServer.volumeDecibels) === "number") {
@@ -235,7 +265,7 @@ export class ConnectionController {
                     visitIDHash: currentVisitIDHash,
                     colorHex: Utilities.hexColorFromString(currentVisitIDHash),
                     positionCurrent: currentDataFromServer.position,
-                    orientationEuler: currentDataFromServer.orientationEuler,
+                    orientationEulerCurrent: currentDataFromServer.orientationEuler,
                     volumeDecibels: currentDataFromServer.volumeDecibels,
                 });
             }
@@ -247,10 +277,6 @@ export class ConnectionController {
             allAlone = true;
             this.receivedInitialOtherUserDataFromHiFi = true;
         }
-
-        if (receivedNewPositionData) {
-            roomController.updateAllRoomSeats();
-        }
         
         if (!this.receivedInitialOtherUserDataFromHiFi || allAlone) {
             let mustReposition = false;
@@ -260,6 +286,7 @@ export class ConnectionController {
             }
 
             if (allAlone || mustReposition) {
+                roomController.updateAllRoomSeats();
                 userDataController.myAvatar.positionSelfInRoom(roomController.lobby.name);
             }
         }
