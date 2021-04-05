@@ -1,5 +1,5 @@
 import { Point3D } from "hifi-spatial-audio";
-import { uiController } from "..";
+import { physicsController, uiController } from "..";
 
 export interface CanvasPX {
     x: number;
@@ -116,6 +116,10 @@ export class Utilities {
         return 1 - (1 - progressFraction) * (1 - progressFraction);
     }
 
+    static easeOutExponential(progressFraction: number) {
+        return progressFraction === 1 ? 1 : 1 - Math.pow(2, -10 * progressFraction);
+    }
+
     static getDistanceBetween2DPoints(x1: number, y1: number, x2: number, y2: number) {
         let xMovement = x2 - x1;
         let yMovement = y2 - y1;
@@ -158,14 +162,14 @@ export class Utilities {
             return undefined;
         }
 
-        let pxPerM = uiController.canvasRenderer.pxPerM;
+        let pxPerM = physicsController.pxPerMCurrent;
         let canvasOffsetPX = uiController.canvasRenderer.canvasOffsetPX;
-        let cameraPositionM = uiController.canvasRenderer.myCurrentRoom.center;
+        let cameraPositionNoOffsetM = uiController.canvasRenderer.cameraPositionNoOffsetM;
         let yawOrientationRadians = uiController.canvasRenderer.canvasRotationDegrees * Math.PI / 180;
 
         let translatedCanvasPX = {
-            x: canvasPX.x - canvasOffsetPX.x - cameraPositionM.x * pxPerM,
-            y: canvasPX.y - canvasOffsetPX.y - cameraPositionM.z * pxPerM
+            x: canvasPX.x - canvasOffsetPX.x - cameraPositionNoOffsetM.x * pxPerM,
+            y: canvasPX.y - canvasOffsetPX.y - cameraPositionNoOffsetM.z * pxPerM
         };
 
         // console.log(translatedCanvasPX)
@@ -178,8 +182,8 @@ export class Utilities {
         // console.log(rotatedCanvasPX)
 
         let pointM = {
-            x: rotatedCanvasPX.x / pxPerM + cameraPositionM.x,
-            z: rotatedCanvasPX.y / pxPerM + cameraPositionM.z
+            x: rotatedCanvasPX.x / pxPerM + cameraPositionNoOffsetM.x,
+            z: rotatedCanvasPX.y / pxPerM + cameraPositionNoOffsetM.z
         };
         // console.log(pointM)
         // console.log('')

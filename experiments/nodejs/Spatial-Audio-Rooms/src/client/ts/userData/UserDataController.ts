@@ -1,5 +1,5 @@
 import { OrientationEuler3D, Point3D } from "hifi-spatial-audio";
-import { userDataController, connectionController, uiController, roomController } from "..";
+import { userDataController, connectionController, uiController, roomController, physicsController } from "..";
 import { CLOSE_ENOUGH_M } from "../constants/constants";
 
 declare var HIFI_PROVIDED_USER_ID: string;
@@ -118,13 +118,12 @@ class MyAvatar {
 
             if (currentRoom) {
                 this.myUserData.currentRoomName = currentRoom.name;
-                uiController.canvasRenderer.canvasRotationDegrees = -1 * Math.atan2(myUserData.position.x - currentRoom.center.x, myUserData.position.z - currentRoom.center.z) * 180 / Math.PI;
             } else {
                 console.error("\`updateMyPositionAndOrientation()\`: Couldn't determine current room!");
             }
 
             roomController.updateAllRoomSeats();
-            uiController.canvasRenderer.updatePXPerM();
+            physicsController.autoComputePXPerMFromRoom(currentRoom);
         }
 
         if (needToTransmit) {

@@ -1,6 +1,6 @@
 declare module '*.png';
 
-import { roomController, uiController, userDataController, videoController } from "..";
+import { physicsController, roomController, uiController, userDataController, videoController } from "..";
 import {
     AVATAR_RADIUS_M,
     MAX_VOLUME_DB,
@@ -27,13 +27,14 @@ import {
     TUTORIAL_TEXT_FONT,
     TUTORIAL_TEXT_STROKE_WIDTH_PX,
     TUTORIAL_TEXT_STROKE_COLOR,
+    MY_AVATAR_Y_SCREEN_CENTER_OFFSET_RATIO,
 } from "../constants/constants";
 import { UserData } from "../userData/UserDataController";
 import { Utilities } from "../utilities/Utilities";
 import { Seat, SpatialAudioRoom } from "../ui/RoomController";
 import SeatIcon from '../../images/seat.png';
 import TableImage from '../../images/table.png';
-import { OrientationEuler3D } from "hifi-spatial-audio";
+import { OrientationEuler3D, Point3D } from "hifi-spatial-audio";
 
 const seatIcon = new Image();
 seatIcon.src = SeatIcon;
@@ -43,19 +44,15 @@ tableImage.src = TableImage;
 export class CanvasRenderer {
     mainCanvas: HTMLCanvasElement;
     ctx: CanvasRenderingContext2D;
-    canvasRotationDegrees: number = 0;
-    pxPerM: number;
     canvasOffsetPX: any;
-    lastNow: number = 0;
     myCurrentRoom: SpatialAudioRoom;
-    lastOnWheelTimestamp: number;
-    onWheelTimestampDeltaMS: number;
+    cameraPositionNoOffsetM: Point3D;
+    canvasRotationDegrees: number = 0;
 
     constructor() {
         this.mainCanvas = document.createElement("canvas");
         this.mainCanvas.classList.add("mainCanvas");
         document.body.appendChild(this.mainCanvas);
-        this.mainCanvas.addEventListener("wheel", this.onWheel.bind(this), false);
 
         this.ctx = this.mainCanvas.getContext("2d");
 
@@ -64,34 +61,12 @@ export class CanvasRenderer {
         });
         this.updateCanvasDimensions();
 
-        // No need for physics yet.
-        //setInterval(this.physicsLoop, PHYSICS_TICKRATE_MS);
-
         window.requestAnimationFrame(this.drawLoop.bind(this));
-    }
-
-    physicsLoop() {
-        let now = performance.now();
-        let dt = now - this.lastNow;
-        this.lastNow = now;
     }
 
     drawLoop() {
         this.draw();
         window.requestAnimationFrame(this.drawLoop.bind(this));
-    }
-
-    updatePXPerM(newPXPerM?: number) {
-        this.updateCanvasParams();
-        if (!this.myCurrentRoom) {
-            return;
-        }
-
-        if (!newPXPerM) {
-            this.pxPerM = Math.min(this.mainCanvas.width, this.mainCanvas.height) / (2 * this.myCurrentRoom.seatingRadiusM + 3 * AVATAR_RADIUS_M);
-        } else {
-            this.pxPerM = Utilities.clamp(newPXPerM, 10, 1000);
-        }
     }
 
     updateCanvasParams() {
@@ -101,15 +76,34 @@ export class CanvasRenderer {
             return;
         }
 
+        const myUserData = userDataController.myAvatar.myUserData;
+        if (!myUserData.position) {
+            return;
+        }
+
+        if (!myUserData.orientationEuler) {
+            return;
+        }
+        this.canvasRotationDegrees = -1 * userDataController.myAvatar.myUserData.orientationEuler.yawDegrees;
+
         this.myCurrentRoom = myCurrentRoom;
 
         let mainCanvas = this.mainCanvas;
-        let pxPerM = this.pxPerM;
+        let pxPerM = physicsController.pxPerMCurrent;
+        
+        let cameraOffsetYPX = mainCanvas.height * MY_AVATAR_Y_SCREEN_CENTER_OFFSET_RATIO;
 
         this.canvasOffsetPX = {
-            x: (mainCanvas.width - this.myCurrentRoom.dimensions.x * pxPerM) / 2 + (-this.myCurrentRoom.center.x + this.myCurrentRoom.dimensions.x / 2) * pxPerM,
-            y: (mainCanvas.height - this.myCurrentRoom.dimensions.z * pxPerM) / 2 + (-this.myCurrentRoom.center.z + this.myCurrentRoom.dimensions.z / 2) * pxPerM
+            x: (mainCanvas.width - this.myCurrentRoom.dimensions.x * pxPerM) / 2 + (-myUserData.position.x + this.myCurrentRoom.dimensions.x / 2) * pxPerM,
+            y: (mainCanvas.height - this.myCurrentRoom.dimensions.z * pxPerM) / 2 + (-myUserData.position.z + this.myCurrentRoom.dimensions.z / 2) * pxPerM + cameraOffsetYPX
         };
+    }
+
+    computeCameraPosition() {
+        if (!userDataController.myAvatar.myUserData.position) {
+            return;
+        }
+        this.cameraPositionNoOffsetM = userDataController.myAvatar.myUserData.position;
     }
 
     updateCanvasDimensions() {
@@ -123,7 +117,7 @@ export class CanvasRenderer {
         }
         let ctx = this.ctx;
         ctx.beginPath();
-        ctx.arc(0, 0, Utilities.linearScale(userData.volumeDecibels, MIN_VOLUME_DB, MAX_VOLUME_DB, AVATAR_RADIUS_M, AVATAR_RADIUS_M * MAX_VOLUME_DB_AVATAR_RADIUS_MULTIPLIER) * this.pxPerM, 0, 2 * Math.PI);
+        ctx.arc(0, 0, Utilities.linearScale(userData.volumeDecibels, MIN_VOLUME_DB, MAX_VOLUME_DB, AVATAR_RADIUS_M, AVATAR_RADIUS_M * MAX_VOLUME_DB_AVATAR_RADIUS_MULTIPLIER) * physicsController.pxPerMCurrent, 0, 2 * Math.PI);
         ctx.fillStyle = userData.colorHex;
         ctx.fill();
         ctx.closePath();
@@ -137,7 +131,7 @@ export class CanvasRenderer {
 
         let isMine = userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash;
         let ctx = this.ctx;
-        let pxPerM = this.pxPerM;
+        let pxPerM = physicsController.pxPerMCurrent;
         let avatarRadiusM = AVATAR_RADIUS_M;
         let avatarRadiusPX = avatarRadiusM * pxPerM;
 
@@ -184,7 +178,7 @@ export class CanvasRenderer {
         if (videoController.providedUserIDToVideoElementMap.has(userData.providedUserID)) {
             let ctx = this.ctx;
             let avatarRadiusM = AVATAR_RADIUS_M;
-            let avatarRadiusPX = avatarRadiusM * this.pxPerM;
+            let avatarRadiusPX = avatarRadiusM * physicsController.pxPerMCurrent;
 
             let amtToRotateVideo = this.canvasRotationDegrees * Math.PI / 180;
             ctx.rotate(amtToRotateVideo);
@@ -206,7 +200,7 @@ export class CanvasRenderer {
         }
 
         let ctx = this.ctx;
-        let pxPerM = this.pxPerM;
+        let pxPerM = physicsController.pxPerMCurrent;
         let avatarRadiusM = AVATAR_RADIUS_M;
 
         let amtToRotateLabel = this.canvasRotationDegrees * Math.PI / 180;
@@ -230,7 +224,7 @@ export class CanvasRenderer {
 
     drawTutorialGlow({ userData }: { userData: UserData }) {
         let ctx = this.ctx;
-        let pxPerM = this.pxPerM;
+        let pxPerM = physicsController.pxPerMCurrent;
 
         let tutorialRadiusPX = AVATAR_TUTORIAL_RADIUS_M * pxPerM;
 
@@ -246,7 +240,7 @@ export class CanvasRenderer {
 
     drawTutorialText({ userData }: { userData: UserData }) {
         let ctx = this.ctx;
-        let pxPerM = this.pxPerM;
+        let pxPerM = physicsController.pxPerMCurrent;
 
         let amtToRotateLabel = this.canvasRotationDegrees * Math.PI / 180;
         ctx.rotate(amtToRotateLabel);
@@ -275,7 +269,7 @@ export class CanvasRenderer {
         }
         
         let ctx = this.ctx;
-        let pxPerM = this.pxPerM;
+        let pxPerM = physicsController.pxPerMCurrent;
 
         ctx.translate(userData.position.x * pxPerM, userData.position.z * pxPerM);
 
@@ -297,7 +291,7 @@ export class CanvasRenderer {
 
     drawTableOrRoomGraphic(room: SpatialAudioRoom) {
         let ctx = this.ctx;
-        let pxPerM = this.pxPerM;
+        let pxPerM = physicsController.pxPerMCurrent;
 
         this.translateAndRotateCanvas();
         ctx.translate(room.center.x * pxPerM, room.center.z * pxPerM);
@@ -343,7 +337,7 @@ export class CanvasRenderer {
 
     drawUnoccupiedSeat(seat: Seat) { 
         let ctx = this.ctx;
-        let pxPerM = this.pxPerM;
+        let pxPerM = physicsController.pxPerMCurrent;
         ctx.translate(seat.position.x * pxPerM, seat.position.z * pxPerM);
         let amountToRotateSeatImage = this.canvasRotationDegrees * Math.PI / 180;
         ctx.rotate(amountToRotateSeatImage);
@@ -366,7 +360,7 @@ export class CanvasRenderer {
 
     drawRooms() {
         let ctx = this.ctx;
-        let pxPerM = this.pxPerM;
+        let pxPerM = physicsController.pxPerMCurrent;
 
         if (!(seatIcon.complete && tableImage.complete && ctx && pxPerM)) {
             return;
@@ -400,6 +394,7 @@ export class CanvasRenderer {
         ctx.clearRect(0, 0, this.mainCanvas.width, this.mainCanvas.height);
 
         this.updateCanvasParams();
+        this.computeCameraPosition();
 
         if (!this.myCurrentRoom) {
             return;
@@ -410,42 +405,31 @@ export class CanvasRenderer {
 
     translateAndRotateCanvas() {
         let ctx = this.ctx;
+        let pxPerM = physicsController.pxPerMCurrent;
+
+        const myUserData = userDataController.myAvatar.myUserData;
+        if (!myUserData.position) {
+            return;
+        }
+
         ctx.translate(this.canvasOffsetPX.x, this.canvasOffsetPX.y);
-        ctx.translate(this.myCurrentRoom.center.x * this.pxPerM, this.myCurrentRoom.center.z * this.pxPerM);
+        ctx.translate(myUserData.position.x * pxPerM, myUserData.position.z * pxPerM);
         ctx.rotate(-this.canvasRotationDegrees * Math.PI / 180);
-        ctx.translate(-this.myCurrentRoom.center.x * this.pxPerM, -this.myCurrentRoom.center.z * this.pxPerM);
+        ctx.translate(-myUserData.position.x * pxPerM, -myUserData.position.z * pxPerM);
     }
 
     unTranslateAndRotateCanvas() {
         let ctx = this.ctx;
-        ctx.translate(this.myCurrentRoom.center.x * this.pxPerM, this.myCurrentRoom.center.z * this.pxPerM);
+        let pxPerM = physicsController.pxPerMCurrent;
+
+        const myUserData = userDataController.myAvatar.myUserData;
+        if (!myUserData.position) {
+            return;
+        }
+
+        ctx.translate(myUserData.position.x * pxPerM, myUserData.position.z * pxPerM);
         ctx.rotate(this.canvasRotationDegrees * Math.PI / 180);
-        ctx.translate(-this.myCurrentRoom.center.x * this.pxPerM, -this.myCurrentRoom.center.z * this.pxPerM);
+        ctx.translate(-myUserData.position.x * pxPerM, -myUserData.position.z * pxPerM);
         ctx.translate(-this.canvasOffsetPX.x, -this.canvasOffsetPX.y);
-    }
-
-    onWheel(e: WheelEvent) {
-        e.preventDefault();
-    
-        if (this.lastOnWheelTimestamp) {
-            this.onWheelTimestampDeltaMS = Date.now() - this.lastOnWheelTimestamp;
-        }
-    
-        let deltaY;
-        // This is a nasty hack that all major browsers subscribe to:
-        // "Pinch" gestures on multi-touch trackpads are rendered as wheel events
-        // with `e.ctrlKey` set to `true`.
-        if (e.ctrlKey) {
-            deltaY = e.deltaY * 10;
-        } else {
-            deltaY = (-e.deltaY * 10);
-        }
-    
-        let scaleFactor = 1 + deltaY * MOUSE_WHEEL_ZOOM_FACTOR;
-        let targetPXPerSU = this.pxPerM * scaleFactor;
-
-        this.updatePXPerM(targetPXPerSU);
-    
-        this.lastOnWheelTimestamp = Date.now();
     }
 }

@@ -1,5 +1,5 @@
-import { connectionController, roomController, uiController, userDataController } from "..";
-import { AVATAR_RADIUS_M, SEAT_RADIUS_M } from "../constants/constants";
+import { connectionController, physicsController, roomController, uiController, userDataController } from "..";
+import { AVATAR_RADIUS_M, MOUSE_WHEEL_ZOOM_FACTOR, SEAT_RADIUS_M } from "../constants/constants";
 import { UserData } from "../userData/UserDataController";
 import { Utilities } from "../utilities/Utilities";
 import { Seat } from "../ui/RoomController";
@@ -19,6 +19,8 @@ export class UserInputController {
     lastDistanceBetweenRightClickEvents: number;
     hoveredUserData: UserData;
     hoveredSeat: Seat;
+    lastOnWheelTimestamp: number;
+    onWheelTimestampDeltaMS: number;
 
     constructor() {
         this.keyboardEventCache = [];
@@ -56,6 +58,8 @@ export class UserInputController {
         this.mainCanvas.addEventListener("gesturechange", (e) => { e.preventDefault(); }, false);
         this.mainCanvas.addEventListener("gestureend", (e) => { e.preventDefault(); }, false);
         this.mainCanvas.addEventListener("contextmenu", (e) => { e.preventDefault(); }, false);
+
+        this.mainCanvas.addEventListener("wheel", this.onWheel.bind(this), false);
     }
 
     onUserKeyDown(event: KeyboardEvent) {
@@ -315,5 +319,30 @@ export class UserInputController {
 
     handleGestureOnCanvasCancel(event: MouseEvent | PointerEvent) {
         this.handleGestureOnCanvasEnd(event);
+    }
+    
+    onWheel(e: WheelEvent) {
+        e.preventDefault();
+    
+        if (this.lastOnWheelTimestamp) {
+            this.onWheelTimestampDeltaMS = Date.now() - this.lastOnWheelTimestamp;
+        }
+    
+        let deltaY;
+        // This is a nasty hack that all major browsers subscribe to:
+        // "Pinch" gestures on multi-touch trackpads are rendered as wheel events
+        // with `e.ctrlKey` set to `true`.
+        if (e.ctrlKey) {
+            deltaY = e.deltaY * 10;
+        } else {
+            // tslint:disable-next-line
+            deltaY = (e as any).wheelDeltaY || (-e.deltaY * 10);
+        }
+    
+        let scaleFactor = 1 + deltaY * MOUSE_WHEEL_ZOOM_FACTOR;
+
+        physicsController.pxPerMTarget = physicsController.pxPerMCurrent * scaleFactor;
+    
+        this.lastOnWheelTimestamp = Date.now();
     }
 }

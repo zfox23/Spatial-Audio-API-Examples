@@ -179,8 +179,8 @@ export class RoomController {
         this.rooms.push(new SpatialAudioRoom({
             name: "HUGE",
             center: new Point3D({ x: 0, y: 0, z: -8 }),
-            dimensions: new Point3D({x: 6.72, y: 0, z: 6.72 }),
-            seatingRadiusM: 3.0,
+            dimensions: new Point3D({x: 5.72, y: 0, z: 5.72 }),
+            seatingRadiusM: 2.5,
             roomImageSRC: SeatingRadius3Image1
         }));
         this.rooms.push(new SpatialAudioRoom({
