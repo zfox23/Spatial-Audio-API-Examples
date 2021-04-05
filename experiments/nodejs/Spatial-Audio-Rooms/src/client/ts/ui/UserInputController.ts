@@ -1,12 +1,8 @@
 import { connectionController, physicsController, roomController, uiController, userDataController } from "..";
-import { AVATAR_RADIUS_M, MOUSE_WHEEL_ZOOM_FACTOR, SEAT_RADIUS_M } from "../constants/constants";
+import { AVATAR, ROOM, CONTROLS } from "../constants/constants";
 import { UserData } from "../userData/UserDataController";
 import { Utilities } from "../utilities/Utilities";
 import { Seat } from "../ui/RoomController";
-
-const M_KEY_CODE = "KeyM";
-const SPACE_KEY_CODE = "Space";
-const RIGHT_CLICK_ROTATION_SENSITIVITY = 0.5;
 
 export class UserInputController {
     mainCanvas: HTMLCanvasElement;
@@ -75,10 +71,10 @@ export class UserInputController {
         }
     
         switch (this.keyboardEventCache[0].code) {
-            case M_KEY_CODE:
+            case CONTROLS.M_KEY_CODE:
                 this.toggleInputMute();
                 break;
-            case SPACE_KEY_CODE:
+            case CONTROLS.SPACE_KEY_CODE:
                 if (userDataController.myAvatar.myUserData.isMuted) {
                     this.wasMutedBeforePTT = true;
                     this.setInputMute(false);
@@ -95,7 +91,7 @@ export class UserInputController {
         }
     
         switch (event.code) {
-            case SPACE_KEY_CODE:
+            case CONTROLS.SPACE_KEY_CODE:
                 if (this.wasMutedBeforePTT) {
                     this.setInputMute(true);
                     this.wasMutedBeforePTT = false;
@@ -252,7 +248,7 @@ export class UserInputController {
             this.lastDistanceBetweenRightClickEvents = newDistance;
     
             if (userDataController.myAvatar && userDataController.myAvatar.myUserData.orientationEuler) {
-                let newYawDegrees = userDataController.myAvatar.myUserData.orientationEuler.yawDegrees - deltaDistance * RIGHT_CLICK_ROTATION_SENSITIVITY;
+                let newYawDegrees = userDataController.myAvatar.myUserData.orientationEuler.yawDegrees - deltaDistance * CONTROLS.RIGHT_CLICK_ROTATION_SENSITIVITY;
                 if (!isNaN(newYawDegrees)) {
                     userDataController.myAvatar.updateMyPositionAndOrientation(undefined, newYawDegrees);
                 }
@@ -267,10 +263,10 @@ export class UserInputController {
             }
 
             this.hoveredUserData = userDataController.allOtherUserData.find((userData) => {
-                return userData.position && Utilities.getDistanceBetween2DPoints(userData.position.x, userData.position.z, hoverM.x, hoverM.z) < AVATAR_RADIUS_M;
+                return userData.position && Utilities.getDistanceBetween2DPoints(userData.position.x, userData.position.z, hoverM.x, hoverM.z) < AVATAR.RADIUS_M;
             });
 
-            if (!this.hoveredUserData && Utilities.getDistanceBetween2DPoints(userDataController.myAvatar.myUserData.position.x, userDataController.myAvatar.myUserData.position.z, hoverM.x, hoverM.z) < AVATAR_RADIUS_M) {
+            if (!this.hoveredUserData && Utilities.getDistanceBetween2DPoints(userDataController.myAvatar.myUserData.position.x, userDataController.myAvatar.myUserData.position.z, hoverM.x, hoverM.z) < AVATAR.RADIUS_M) {
                 this.hoveredUserData = userDataController.myAvatar.myUserData;
             }
 
@@ -278,7 +274,7 @@ export class UserInputController {
                 for (let i = 0; i < roomController.rooms.length; i++) {
                     let room = roomController.rooms[i];
                     this.hoveredSeat = room.seats.find((seat) => {
-                        return Utilities.getDistanceBetween2DPoints(seat.position.x, seat.position.z, hoverM.x, hoverM.z) < SEAT_RADIUS_M;
+                        return Utilities.getDistanceBetween2DPoints(seat.position.x, seat.position.z, hoverM.x, hoverM.z) < ROOM.SEAT_RADIUS_M;
                     });
 
                     if (this.hoveredSeat) {
@@ -339,7 +335,7 @@ export class UserInputController {
             deltaY = (e as any).wheelDeltaY || (-e.deltaY * 10);
         }
     
-        let scaleFactor = 1 + deltaY * MOUSE_WHEEL_ZOOM_FACTOR;
+        let scaleFactor = 1 + deltaY * CONTROLS.MOUSE_WHEEL_ZOOM_FACTOR;
 
         physicsController.pxPerMTarget = physicsController.pxPerMCurrent * scaleFactor;
     

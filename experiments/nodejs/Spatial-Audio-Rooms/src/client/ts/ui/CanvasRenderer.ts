@@ -2,32 +2,9 @@ declare module '*.png';
 
 import { physicsController, roomController, uiController, userDataController, videoController } from "..";
 import {
-    AVATAR_RADIUS_M,
-    MAX_VOLUME_DB,
-    AVATAR_STROKE_WIDTH_PX,
-    DIRECTION_CLOUD_RADIUS_MULTIPLIER,
-    MAX_VOLUME_DB_AVATAR_RADIUS_MULTIPLIER,
-    MIN_VOLUME_DB,
-    AVATAR_STROKE_HEX_MUTED,
-    AVATAR_STROKE_HEX_UNMUTED,
-    AVATAR_LABEL_FONT,
-    ROOM_LABEL_FONT,
-    SEAT_STROKE_HEX,
-    SEAT_STROKE_WIDTH_PX,
-    SEAT_COLOR_HEX,
-    SEAT_RADIUS_M,
-    ROOM_TABLE_STROKE_HEX,
-    ROOM_TABLE_STROKE_WIDTH_PX,
-    ROOM_WITH_IMAGE_LABEL_COLOR,
-    MOUSE_WHEEL_ZOOM_FACTOR,
-    AVATAR_HOVER_HIGHLIGHT_RADIUS_ADDITION_M,
-    AVATAR_TUTORIAL_RADIUS_M,
-    AVATAR_TUTORIAL_GLOW_HEX,
-    TUTORIAL_TEXT_COLOR,
-    TUTORIAL_TEXT_FONT,
-    TUTORIAL_TEXT_STROKE_WIDTH_PX,
-    TUTORIAL_TEXT_STROKE_COLOR,
-    MY_AVATAR_Y_SCREEN_CENTER_OFFSET_RATIO,
+    AVATAR,
+    ROOM,
+    UI,
 } from "../constants/constants";
 import { UserData } from "../userData/UserDataController";
 import { Utilities } from "../utilities/Utilities";
@@ -91,7 +68,7 @@ export class CanvasRenderer {
         let mainCanvas = this.mainCanvas;
         let pxPerM = physicsController.pxPerMCurrent;
         
-        let cameraOffsetYPX = mainCanvas.height * MY_AVATAR_Y_SCREEN_CENTER_OFFSET_RATIO;
+        let cameraOffsetYPX = mainCanvas.height * UI.MY_AVATAR_Y_SCREEN_CENTER_OFFSET_RATIO;
 
         this.canvasOffsetPX = {
             x: (mainCanvas.width - this.myCurrentRoom.dimensions.x * pxPerM) / 2 + (-myUserData.position.x + this.myCurrentRoom.dimensions.x / 2) * pxPerM,
@@ -117,7 +94,7 @@ export class CanvasRenderer {
         }
         let ctx = this.ctx;
         ctx.beginPath();
-        ctx.arc(0, 0, Utilities.linearScale(userData.volumeDecibels, MIN_VOLUME_DB, MAX_VOLUME_DB, AVATAR_RADIUS_M, AVATAR_RADIUS_M * MAX_VOLUME_DB_AVATAR_RADIUS_MULTIPLIER) * physicsController.pxPerMCurrent, 0, 2 * Math.PI);
+        ctx.arc(0, 0, Utilities.linearScale(userData.volumeDecibels, AVATAR.MIN_VOLUME_DB, AVATAR.MAX_VOLUME_DB, AVATAR.RADIUS_M, AVATAR.RADIUS_M * AVATAR.MAX_VOLUME_DB_AVATAR_RADIUS_MULTIPLIER) * physicsController.pxPerMCurrent, 0, 2 * Math.PI);
         ctx.fillStyle = userData.colorHex;
         ctx.fill();
         ctx.closePath();
@@ -132,7 +109,7 @@ export class CanvasRenderer {
         let isMine = userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash;
         let ctx = this.ctx;
         let pxPerM = physicsController.pxPerMCurrent;
-        let avatarRadiusM = AVATAR_RADIUS_M;
+        let avatarRadiusM = AVATAR.RADIUS_M;
         let avatarRadiusPX = avatarRadiusM * pxPerM;
 
         let amtToRotate = -userData.orientationEuler.yawDegrees * Math.PI / 180;
@@ -141,32 +118,32 @@ export class CanvasRenderer {
         if (roomController.currentlyHoveringOverVisitIDHash === userData.visitIDHash) {
             ctx.fillStyle = "#FFFFFF";
             ctx.beginPath();
-            ctx.arc(0, 0, (avatarRadiusM + AVATAR_HOVER_HIGHLIGHT_RADIUS_ADDITION_M) * pxPerM, 0, 2 * Math.PI);
+            ctx.arc(0, 0, (avatarRadiusM + AVATAR.AVATAR_HOVER_HIGHLIGHT_RADIUS_ADDITION_M) * pxPerM, 0, 2 * Math.PI);
             ctx.fill();
             ctx.closePath();
         }
 
         ctx.beginPath();
-        ctx.arc(0, -avatarRadiusM * DIRECTION_CLOUD_RADIUS_MULTIPLIER * pxPerM, avatarRadiusM * DIRECTION_CLOUD_RADIUS_MULTIPLIER * pxPerM, 0, Math.PI, false);
-        let grad = ctx.createLinearGradient(0, 0, 0, -avatarRadiusM * DIRECTION_CLOUD_RADIUS_MULTIPLIER * pxPerM);
+        ctx.arc(0, -avatarRadiusM * AVATAR.DIRECTION_CLOUD_RADIUS_MULTIPLIER * pxPerM, avatarRadiusM * AVATAR.DIRECTION_CLOUD_RADIUS_MULTIPLIER * pxPerM, 0, Math.PI, false);
+        let grad = ctx.createLinearGradient(0, 0, 0, -avatarRadiusM * AVATAR.DIRECTION_CLOUD_RADIUS_MULTIPLIER * pxPerM);
         grad.addColorStop(0.0, userData.colorHex);
         grad.addColorStop(1.0, userData.colorHex + "00");
         ctx.fillStyle = grad;
         ctx.fill();
         ctx.closePath();
 
-        ctx.lineWidth = AVATAR_STROKE_WIDTH_PX;
+        ctx.lineWidth = AVATAR.STROKE_WIDTH_PX;
         ctx.fillStyle = userData.colorHex;
         ctx.beginPath();
         ctx.arc(0, 0, avatarRadiusPX, 0, 2 * Math.PI);
         if (isMine) {
             if (userData.isMuted) {
-                ctx.strokeStyle = AVATAR_STROKE_HEX_MUTED;
+                ctx.strokeStyle = AVATAR.AVATAR_STROKE_HEX_MUTED;
             } else {
-                ctx.strokeStyle = AVATAR_STROKE_HEX_UNMUTED;
+                ctx.strokeStyle = AVATAR.AVATAR_STROKE_HEX_UNMUTED;
             }
         } else {
-            ctx.strokeStyle = AVATAR_STROKE_HEX_UNMUTED;
+            ctx.strokeStyle = AVATAR.AVATAR_STROKE_HEX_UNMUTED;
         }
         ctx.stroke();
         ctx.fill();
@@ -177,7 +154,7 @@ export class CanvasRenderer {
     drawAvatarVideo({ userData }: { userData: UserData }) {
         if (videoController.providedUserIDToVideoElementMap.has(userData.providedUserID)) {
             let ctx = this.ctx;
-            let avatarRadiusM = AVATAR_RADIUS_M;
+            let avatarRadiusM = AVATAR.RADIUS_M;
             let avatarRadiusPX = avatarRadiusM * physicsController.pxPerMCurrent;
 
             let amtToRotateVideo = this.canvasRotationDegrees * Math.PI / 180;
@@ -201,12 +178,12 @@ export class CanvasRenderer {
 
         let ctx = this.ctx;
         let pxPerM = physicsController.pxPerMCurrent;
-        let avatarRadiusM = AVATAR_RADIUS_M;
+        let avatarRadiusM = AVATAR.RADIUS_M;
 
         let amtToRotateLabel = this.canvasRotationDegrees * Math.PI / 180;
         ctx.rotate(amtToRotateLabel);
 
-        ctx.font = AVATAR_LABEL_FONT;
+        ctx.font = AVATAR.AVATAR_LABEL_FONT;
         ctx.fillStyle = Utilities.getConstrastingTextColor(Utilities.hexToRGB(userData.colorHex));
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
@@ -226,13 +203,13 @@ export class CanvasRenderer {
         let ctx = this.ctx;
         let pxPerM = physicsController.pxPerMCurrent;
 
-        let tutorialRadiusPX = AVATAR_TUTORIAL_RADIUS_M * pxPerM;
+        let tutorialRadiusPX = AVATAR.TUTORIAL_RADIUS_M * pxPerM;
 
         ctx.beginPath();
         ctx.arc(0, 0, tutorialRadiusPX, 0, 2 * Math.PI);
         let grad = ctx.createRadialGradient(0, 0, 0, 0, 0, tutorialRadiusPX);
-        grad.addColorStop(0.0, AVATAR_TUTORIAL_GLOW_HEX);
-        grad.addColorStop(0.75, AVATAR_TUTORIAL_GLOW_HEX + "00");
+        grad.addColorStop(0.0, AVATAR.AVATAR_TUTORIAL_GLOW_HEX);
+        grad.addColorStop(0.75, AVATAR.AVATAR_TUTORIAL_GLOW_HEX + "00");
         ctx.fillStyle = grad;
         ctx.fill();
         ctx.closePath();
@@ -245,20 +222,20 @@ export class CanvasRenderer {
         let amtToRotateLabel = this.canvasRotationDegrees * Math.PI / 180;
         ctx.rotate(amtToRotateLabel);
 
-        ctx.font = TUTORIAL_TEXT_FONT;
-        ctx.fillStyle = TUTORIAL_TEXT_COLOR;
-        ctx.lineWidth = TUTORIAL_TEXT_STROKE_WIDTH_PX;
-        ctx.strokeStyle = TUTORIAL_TEXT_STROKE_COLOR;
+        ctx.font = UI.TUTORIAL_TEXT_FONT;
+        ctx.fillStyle = UI.TUTORIAL_TEXT_COLOR;
+        ctx.lineWidth = UI.TUTORIAL_TEXT_STROKE_WIDTH_PX;
+        ctx.strokeStyle = UI.TUTORIAL_TEXT_STROKE_COLOR;
         
         ctx.textAlign = "right";
         let textToDraw = "This is you.";
-        ctx.fillText(textToDraw, -AVATAR_RADIUS_M * pxPerM - 25, 0);
-        ctx.strokeText(textToDraw, -AVATAR_RADIUS_M * pxPerM - 25, 0);
+        ctx.fillText(textToDraw, -AVATAR.RADIUS_M * pxPerM - 25, 0);
+        ctx.strokeText(textToDraw, -AVATAR.RADIUS_M * pxPerM - 25, 0);
 
         ctx.textAlign = "left";
         textToDraw = "Try clicking yourself.";
-        ctx.fillText(textToDraw, AVATAR_RADIUS_M * pxPerM + 25, 0);
-        ctx.strokeText(textToDraw, AVATAR_RADIUS_M * pxPerM + 25, 0);
+        ctx.fillText(textToDraw, AVATAR.RADIUS_M * pxPerM + 25, 0);
+        ctx.strokeText(textToDraw, AVATAR.RADIUS_M * pxPerM + 25, 0);
 
         ctx.rotate(-amtToRotateLabel);
     }
@@ -293,7 +270,6 @@ export class CanvasRenderer {
         let ctx = this.ctx;
         let pxPerM = physicsController.pxPerMCurrent;
 
-        this.translateAndRotateCanvas();
         ctx.translate(room.center.x * pxPerM, room.center.z * pxPerM);
 
         let usingRoomImage = false;
@@ -307,11 +283,11 @@ export class CanvasRenderer {
         } else {
             let tableRadiusPX = room.tableRadiusM * pxPerM;
 
-            ctx.lineWidth = ROOM_TABLE_STROKE_WIDTH_PX;
+            ctx.lineWidth = ROOM.TABLE_STROKE_WIDTH_PX;
             ctx.fillStyle = room.tableColorHex;
             ctx.beginPath();
             ctx.arc(0, 0, tableRadiusPX, 0, 2 * Math.PI);
-            ctx.strokeStyle = ROOM_TABLE_STROKE_HEX;
+            ctx.strokeStyle = ROOM.TABLE_STROKE_HEX;
             ctx.stroke();
             ctx.fill();
             ctx.closePath();
@@ -321,8 +297,8 @@ export class CanvasRenderer {
             
         let amtToRotateLabel = this.canvasRotationDegrees * Math.PI / 180;
         ctx.rotate(amtToRotateLabel);
-        ctx.font = ROOM_LABEL_FONT;
-        ctx.fillStyle = usingRoomImage ? ROOM_WITH_IMAGE_LABEL_COLOR : Utilities.getConstrastingTextColor(Utilities.hexToRGB(room.tableColorHex));
+        ctx.font = ROOM.ROOM_LABEL_FONT;
+        ctx.fillStyle = usingRoomImage ? ROOM.ROOM_WITH_IMAGE_LABEL_COLOR : Utilities.getConstrastingTextColor(Utilities.hexToRGB(room.tableColorHex));
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         let textMetrics = ctx.measureText(room.name);
@@ -332,7 +308,6 @@ export class CanvasRenderer {
         ctx.rotate(-amtToRotateLabel);
 
         ctx.translate(-room.center.x * pxPerM, -room.center.z * pxPerM);
-        this.unTranslateAndRotateCanvas();
     }
 
     drawUnoccupiedSeat(seat: Seat) { 
@@ -342,12 +317,12 @@ export class CanvasRenderer {
         let amountToRotateSeatImage = this.canvasRotationDegrees * Math.PI / 180;
         ctx.rotate(amountToRotateSeatImage);
 
-        ctx.lineWidth = SEAT_STROKE_WIDTH_PX;
-        ctx.fillStyle = SEAT_COLOR_HEX;
+        ctx.lineWidth = ROOM.SEAT_STROKE_WIDTH_PX;
+        ctx.fillStyle = ROOM.SEAT_COLOR_HEX;
         ctx.beginPath();
-        let seatRadiusPX = SEAT_RADIUS_M * pxPerM;
+        let seatRadiusPX = ROOM.SEAT_RADIUS_M * pxPerM;
         ctx.arc(0, 0, seatRadiusPX, 0, 2 * Math.PI);
-        ctx.strokeStyle = SEAT_STROKE_HEX;
+        ctx.strokeStyle = ROOM.SEAT_STROKE_HEX;
         ctx.stroke();
         ctx.fill();
         ctx.closePath();
@@ -369,7 +344,6 @@ export class CanvasRenderer {
         roomController.rooms.forEach((room) => {
             this.drawTableOrRoomGraphic(room);
         
-            this.translateAndRotateCanvas();
             room.seats.forEach((seat) => {
                 // Don't draw occupied seats yet.
                 if (seat.occupiedUserData) {
@@ -377,15 +351,11 @@ export class CanvasRenderer {
                 }
                 this.drawUnoccupiedSeat(seat);
             });
-            this.unTranslateAndRotateCanvas();
         });
-            
-        this.translateAndRotateCanvas();
         let allUserData = userDataController.allOtherUserData.concat(userDataController.myAvatar.myUserData);
         allUserData.forEach((userData) => {
             this.drawAvatar({ userData });
         });
-        this.unTranslateAndRotateCanvas();
     }
 
     draw() {
@@ -400,7 +370,11 @@ export class CanvasRenderer {
             return;
         }
 
+        this.translateAndRotateCanvas();
+        
         this.drawRooms();
+        
+        this.unTranslateAndRotateCanvas();
     }
 
     translateAndRotateCanvas() {

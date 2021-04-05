@@ -1,5 +1,5 @@
 import { connectionController, roomController, uiController, userDataController, userInputController } from "..";
-import { HEARTBEAT_INTERVAL_MS } from "../constants/constants";
+import { NETWORKING } from "../constants/constants";
 declare var HIFI_SPACE_NAME: string;
 
 const io = require("socket.io-client");
@@ -142,7 +142,7 @@ export class WebSocketConnectionController {
                 spaceName: HIFI_SPACE_NAME,
                 visitIDHash: myUserData.visitIDHash,
             });
-        }, HEARTBEAT_INTERVAL_MS);
+        }, NETWORKING.HEARTBEAT_INTERVAL_MS);
     }
 
     stopHeartbeatInterval() {

@@ -1,6 +1,6 @@
 import { OrientationEuler3D, Point3D } from "hifi-spatial-audio";
 import { uiController, userDataController } from "..";
-import { AVATAR_RADIUS_M, CLOSE_ENOUGH_M, MAX_VOLUME_DB_AVATAR_RADIUS_MULTIPLIER, NUM_SEATS_IN_EMPTY_ROOM } from "../constants/constants";
+import { AVATAR, ROOM, MISC } from "../constants/constants";
 import { UserData } from "../userData/UserDataController";
 import { Utilities } from "../utilities/Utilities";
 
@@ -47,7 +47,7 @@ export class SpatialAudioRoom {
         this.name = name;
         this.center = center;
 
-        let maxAvatarRadiusM = AVATAR_RADIUS_M * MAX_VOLUME_DB_AVATAR_RADIUS_MULTIPLIER;
+        let maxAvatarRadiusM = AVATAR.RADIUS_M * AVATAR.MAX_VOLUME_DB_AVATAR_RADIUS_MULTIPLIER;
 
         if (seatingRadiusM) {
             this.seatingRadiusM = Utilities.clamp(seatingRadiusM, 2 * maxAvatarRadiusM, 9999);
@@ -110,7 +110,7 @@ export class SpatialAudioRoom {
                     }
                 });
 
-                let occupied = !!roomUserData.find((element) => { return element && element.position && Math.abs(element.position.x - currentPotentialPosition.x) < CLOSE_ENOUGH_M && Math.abs(element.position.z - currentPotentialPosition.z) < CLOSE_ENOUGH_M; });
+                let occupied = !!roomUserData.find((element) => { return element && element.position && Math.abs(element.position.x - currentPotentialPosition.x) < MISC.CLOSE_ENOUGH_M && Math.abs(element.position.z - currentPotentialPosition.z) < MISC.CLOSE_ENOUGH_M; });
 
                 if (!occupied) {
                     let orientationYawRadians = Math.atan2(currentPotentialPosition.x - this.center.x, currentPotentialPosition.z - this.center.z);
@@ -219,7 +219,7 @@ export class RoomController {
         }
 
         return this.rooms.find((room) => {
-            return Math.abs(Utilities.getDistanceBetween2DPoints(point3D.x, point3D.z, room.center.x, room.center.z) - room.seatingRadiusM) <= CLOSE_ENOUGH_M;
+            return Math.abs(Utilities.getDistanceBetween2DPoints(point3D.x, point3D.z, room.center.x, room.center.z) - room.seatingRadiusM) <= MISC.CLOSE_ENOUGH_M;
         });
     }
 
@@ -361,7 +361,7 @@ export class RoomController {
     maybeGenerateVacantSeats() {
         this.rooms.forEach((room) => {
             if (room.seats.length === 0) {
-                for (let theta = 0; theta < 2 * Math.PI; theta += ((2 * Math.PI) / NUM_SEATS_IN_EMPTY_ROOM)) {
+                for (let theta = 0; theta < 2 * Math.PI; theta += ((2 * Math.PI) / ROOM.NUM_SEATS_IN_EMPTY_ROOM)) {
                     let currentPotentialPosition = {
                         "x": room.seatingRadiusM * Math.cos(theta) + room.center.x,
                         "y": 0,

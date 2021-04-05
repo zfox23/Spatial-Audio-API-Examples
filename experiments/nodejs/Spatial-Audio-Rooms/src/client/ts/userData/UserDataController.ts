@@ -1,6 +1,5 @@
 import { OrientationEuler3D, Point3D } from "hifi-spatial-audio";
-import { userDataController, connectionController, uiController, roomController, physicsController } from "..";
-import { CLOSE_ENOUGH_M } from "../constants/constants";
+import { userDataController, connectionController, roomController, physicsController } from "..";
 
 declare var HIFI_PROVIDED_USER_ID: string;
 

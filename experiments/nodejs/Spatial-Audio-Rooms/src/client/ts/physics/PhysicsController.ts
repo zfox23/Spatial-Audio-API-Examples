@@ -1,6 +1,5 @@
-import { Point3D } from "hifi-spatial-audio";
-import { uiController, userDataController, userInputController } from "..";
-import { AVATAR_RADIUS_M, MAX_PX_PER_M, MIN_PX_PER_M, PHYSICS_TICKRATE_MS, SMOOTH_ZOOM_DURATION_NORMAL_MS, SMOOTH_ZOOM_DURATION_SWITCH_ROOMS_MS } from "../constants/constants";
+import { uiController, userInputController } from "..";
+import { AVATAR, PHYSICS } from "../constants/constants";
 import { SpatialAudioRoom } from "../ui/RoomController";
 import { Utilities } from "../utilities/Utilities";
 
@@ -14,7 +13,7 @@ export class PhysicsController {
     smoothZoomStartTimestamp: number;
 
     constructor() {
-        setInterval(this.physicsLoop.bind(this), PHYSICS_TICKRATE_MS);
+        setInterval(this.physicsLoop.bind(this), PHYSICS.PHYSICS_TICKRATE_MS);
         this.mainCanvas = document.querySelector('.mainCanvas');
     }
 
@@ -31,8 +30,8 @@ export class PhysicsController {
             return;
         }
 
-        this.pxPerMTarget = Math.min(this.mainCanvas.width, this.mainCanvas.height) / (2 * room.seatingRadiusM + 3 * AVATAR_RADIUS_M);
-        this.smoothZoomDurationOverrideMS = SMOOTH_ZOOM_DURATION_SWITCH_ROOMS_MS;
+        this.pxPerMTarget = Math.min(this.mainCanvas.width, this.mainCanvas.height) / (2 * room.seatingRadiusM + 3 * AVATAR.RADIUS_M);
+        this.smoothZoomDurationOverrideMS = PHYSICS.SMOOTH_ZOOM_DURATION_SWITCH_ROOMS_MS;
     }
 
     computePXPerM(timestamp: number) {
@@ -40,16 +39,16 @@ export class PhysicsController {
             return;
         }
 
-        this.pxPerMTarget = Utilities.clamp(this.pxPerMTarget, MIN_PX_PER_M, MAX_PX_PER_M);
+        this.pxPerMTarget = Utilities.clamp(this.pxPerMTarget, PHYSICS.MIN_PX_PER_M, PHYSICS.MAX_PX_PER_M);
 
         if (!this.smoothZoomStartTimestamp) {
             this.smoothZoomStartTimestamp = timestamp;
             this.pxPerMStart = this.pxPerMCurrent;
         }
     
-        const smoothZoomDuration = this.smoothZoomDurationOverrideMS || SMOOTH_ZOOM_DURATION_NORMAL_MS;
+        const smoothZoomDuration = this.smoothZoomDurationOverrideMS || PHYSICS.SMOOTH_ZOOM_DURATION_NORMAL_MS;
     
-        if ((!userInputController.onWheelTimestampDeltaMS || userInputController.onWheelTimestampDeltaMS >= SMOOTH_ZOOM_DURATION_NORMAL_MS) &&
+        if ((!userInputController.onWheelTimestampDeltaMS || userInputController.onWheelTimestampDeltaMS >= PHYSICS.SMOOTH_ZOOM_DURATION_NORMAL_MS) &&
             this.pxPerMTarget && this.pxPerMStart && (this.pxPerMTarget !== this.pxPerMStart)) {
             let smoothingFunction = Utilities.easeOutExponential;
             this.pxPerMCurrent = Utilities.linearScale(smoothingFunction((timestamp - this.smoothZoomStartTimestamp) / smoothZoomDuration), 0, 1, this.pxPerMStart, this.pxPerMTarget);
