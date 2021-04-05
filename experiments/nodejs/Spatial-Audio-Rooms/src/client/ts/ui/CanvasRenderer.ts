@@ -54,7 +54,7 @@ export class CanvasRenderer {
         }
 
         const myUserData = userDataController.myAvatar.myUserData;
-        if (!myUserData.position) {
+        if (!myUserData.positionCurrent) {
             return;
         }
 
@@ -71,16 +71,16 @@ export class CanvasRenderer {
         let cameraOffsetYPX = mainCanvas.height * UI.MY_AVATAR_Y_SCREEN_CENTER_OFFSET_RATIO;
 
         this.canvasOffsetPX = {
-            x: (mainCanvas.width - this.myCurrentRoom.dimensions.x * pxPerM) / 2 + (-myUserData.position.x + this.myCurrentRoom.dimensions.x / 2) * pxPerM,
-            y: (mainCanvas.height - this.myCurrentRoom.dimensions.z * pxPerM) / 2 + (-myUserData.position.z + this.myCurrentRoom.dimensions.z / 2) * pxPerM + cameraOffsetYPX
+            x: (mainCanvas.width - this.myCurrentRoom.dimensions.x * pxPerM) / 2 + (-myUserData.positionCurrent.x + this.myCurrentRoom.dimensions.x / 2) * pxPerM,
+            y: (mainCanvas.height - this.myCurrentRoom.dimensions.z * pxPerM) / 2 + (-myUserData.positionCurrent.z + this.myCurrentRoom.dimensions.z / 2) * pxPerM + cameraOffsetYPX
         };
     }
 
     computeCameraPosition() {
-        if (!userDataController.myAvatar.myUserData.position) {
+        if (!userDataController.myAvatar.myUserData.positionCurrent) {
             return;
         }
-        this.cameraPositionNoOffsetM = userDataController.myAvatar.myUserData.position;
+        this.cameraPositionNoOffsetM = userDataController.myAvatar.myUserData.positionCurrent;
     }
 
     updateCanvasDimensions() {
@@ -241,14 +241,14 @@ export class CanvasRenderer {
     }
 
     drawAvatar({ userData }: { userData: UserData }) {
-        if (!userData || !userData.position || typeof (userData.position.x) !== "number" || typeof (userData.position.z) !== "number") {
+        if (!userData || !userData.positionCurrent || typeof (userData.positionCurrent.x) !== "number" || typeof (userData.positionCurrent.z) !== "number") {
             return;
         }
         
         let ctx = this.ctx;
         let pxPerM = physicsController.pxPerMCurrent;
 
-        ctx.translate(userData.position.x * pxPerM, userData.position.z * pxPerM);
+        ctx.translate(userData.positionCurrent.x * pxPerM, userData.positionCurrent.z * pxPerM);
 
         if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash && !uiController.hasCompletedTutorial) {
             this.drawTutorialGlow({ userData });
@@ -263,7 +263,7 @@ export class CanvasRenderer {
             this.drawTutorialText({ userData });
         }
 
-        ctx.translate(-userData.position.x * pxPerM, -userData.position.z * pxPerM);
+        ctx.translate(-userData.positionCurrent.x * pxPerM, -userData.positionCurrent.z * pxPerM);
     }
 
     drawTableOrRoomGraphic(room: SpatialAudioRoom) {
@@ -382,14 +382,14 @@ export class CanvasRenderer {
         let pxPerM = physicsController.pxPerMCurrent;
 
         const myUserData = userDataController.myAvatar.myUserData;
-        if (!myUserData.position) {
+        if (!myUserData.positionCurrent) {
             return;
         }
 
         ctx.translate(this.canvasOffsetPX.x, this.canvasOffsetPX.y);
-        ctx.translate(myUserData.position.x * pxPerM, myUserData.position.z * pxPerM);
+        ctx.translate(myUserData.positionCurrent.x * pxPerM, myUserData.positionCurrent.z * pxPerM);
         ctx.rotate(-this.canvasRotationDegrees * Math.PI / 180);
-        ctx.translate(-myUserData.position.x * pxPerM, -myUserData.position.z * pxPerM);
+        ctx.translate(-myUserData.positionCurrent.x * pxPerM, -myUserData.positionCurrent.z * pxPerM);
     }
 
     unTranslateAndRotateCanvas() {
@@ -397,13 +397,13 @@ export class CanvasRenderer {
         let pxPerM = physicsController.pxPerMCurrent;
 
         const myUserData = userDataController.myAvatar.myUserData;
-        if (!myUserData.position) {
+        if (!myUserData.positionCurrent) {
             return;
         }
 
-        ctx.translate(myUserData.position.x * pxPerM, myUserData.position.z * pxPerM);
+        ctx.translate(myUserData.positionCurrent.x * pxPerM, myUserData.positionCurrent.z * pxPerM);
         ctx.rotate(this.canvasRotationDegrees * Math.PI / 180);
-        ctx.translate(-myUserData.position.x * pxPerM, -myUserData.position.z * pxPerM);
+        ctx.translate(-myUserData.positionCurrent.x * pxPerM, -myUserData.positionCurrent.z * pxPerM);
         ctx.translate(-this.canvasOffsetPX.x, -this.canvasOffsetPX.y);
     }
 }

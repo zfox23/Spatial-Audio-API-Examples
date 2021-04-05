@@ -110,7 +110,7 @@ export class SpatialAudioRoom {
                     }
                 });
 
-                let occupied = !!roomUserData.find((element) => { return element && element.position && Math.abs(element.position.x - currentPotentialPosition.x) < MISC.CLOSE_ENOUGH_M && Math.abs(element.position.z - currentPotentialPosition.z) < MISC.CLOSE_ENOUGH_M; });
+                let occupied = !!roomUserData.find((userData) => { return userData && userData.positionCurrent && Math.abs(userData.positionCurrent.x - currentPotentialPosition.x) < MISC.CLOSE_ENOUGH_M && Math.abs(userData.positionCurrent.z - currentPotentialPosition.z) < MISC.CLOSE_ENOUGH_M; });
 
                 if (!occupied) {
                     let orientationYawRadians = Math.atan2(currentPotentialPosition.x - this.center.x, currentPotentialPosition.z - this.center.z);
@@ -259,12 +259,12 @@ export class RoomController {
 
     generateOccupiedSeats(allUserData: Array<UserData>) {
         allUserData.forEach((userData) => {
-            if (!userData.position) {
+            if (!userData.positionCurrent) {
                 return;
             }
 
-            let userIsSittingInSeatInRoom = this.getRoomFromPoint3DOnCircle(userData.position);
-            let userIsInRoomBoundaries = this.getRoomFromPoint3DInsideBoundaries(userData.position);
+            let userIsSittingInSeatInRoom = this.getRoomFromPoint3DOnCircle(userData.positionCurrent);
+            let userIsInRoomBoundaries = this.getRoomFromPoint3DInsideBoundaries(userData.positionCurrent);
 
             // If the current user isn't sitting inside any room, return early.
             if (!userIsInRoomBoundaries) {
@@ -283,7 +283,7 @@ export class RoomController {
             // If we get here, we know the user is sitting on a seat in the room,
             // and we want to update the `seats` array inside that room locally.
             userIsSittingInSeatInRoom.seats.push(new Seat({
-                position: userData.position,
+                position: userData.positionCurrent,
                 orientationEuler: userData.orientationEuler,
                 occupiedUserData: userData
             }));

@@ -179,15 +179,24 @@ export class ConnectionController {
                 }
 
                 if (currentDataFromServer.position && !isMine) {
-                    if (!currentLocalUserData.position) {
-                        currentLocalUserData.position = new Point3D();
+                    if (!currentLocalUserData.positionTarget) {
+                        currentLocalUserData.positionTarget = new Point3D();
                     }
 
                     if (typeof (currentDataFromServer.position.x) === "number") {
-                        currentLocalUserData.position.x = currentDataFromServer.position.x;
+                        currentLocalUserData.positionTarget.x = currentDataFromServer.position.x;
                     }
                     if (typeof (currentDataFromServer.position.z) === "number") {
-                        currentLocalUserData.position.z = currentDataFromServer.position.z;
+                        currentLocalUserData.positionTarget.z = currentDataFromServer.position.z;
+                    }
+
+                    if (!currentLocalUserData.positionStart) {
+                        currentLocalUserData.positionStart = new Point3D();
+                    }
+                    if (currentLocalUserData.positionCurrent) {
+                        Object.assign(currentLocalUserData.positionStart, currentLocalUserData.positionCurrent);
+                    } else {
+                        Object.assign(currentLocalUserData.positionStart, currentLocalUserData.positionTarget);
                     }
 
                     receivedNewPositionData = true;
@@ -225,7 +234,7 @@ export class ConnectionController {
                 userDataController.allOtherUserData.push({
                     visitIDHash: currentVisitIDHash,
                     colorHex: Utilities.hexColorFromString(currentVisitIDHash),
-                    position: currentDataFromServer.position,
+                    positionCurrent: currentDataFromServer.position,
                     orientationEuler: currentDataFromServer.orientationEuler,
                     volumeDecibels: currentDataFromServer.volumeDecibels,
                 });

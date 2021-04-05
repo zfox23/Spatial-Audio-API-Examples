@@ -1,5 +1,5 @@
 import { connectionController, physicsController, roomController, uiController, userDataController } from "..";
-import { AVATAR, ROOM, CONTROLS } from "../constants/constants";
+import { AVATAR, ROOM, CONTROLS, PHYSICS } from "../constants/constants";
 import { UserData } from "../userData/UserDataController";
 import { Utilities } from "../utilities/Utilities";
 import { Seat } from "../ui/RoomController";
@@ -258,15 +258,15 @@ export class UserInputController {
 
             let room = roomController.getRoomFromName(userDataController.myAvatar.myUserData.currentRoomName);
 
-            if (!(hoverM && room && userDataController.myAvatar.myUserData.position)) {
+            if (!(hoverM && room && userDataController.myAvatar.myUserData.positionCurrent)) {
                 return;
             }
 
             this.hoveredUserData = userDataController.allOtherUserData.find((userData) => {
-                return userData.position && Utilities.getDistanceBetween2DPoints(userData.position.x, userData.position.z, hoverM.x, hoverM.z) < AVATAR.RADIUS_M;
+                return userData.positionCurrent && Utilities.getDistanceBetween2DPoints(userData.positionCurrent.x, userData.positionCurrent.z, hoverM.x, hoverM.z) < AVATAR.RADIUS_M;
             });
 
-            if (!this.hoveredUserData && Utilities.getDistanceBetween2DPoints(userDataController.myAvatar.myUserData.position.x, userDataController.myAvatar.myUserData.position.z, hoverM.x, hoverM.z) < AVATAR.RADIUS_M) {
+            if (!this.hoveredUserData && Utilities.getDistanceBetween2DPoints(userDataController.myAvatar.myUserData.positionCurrent.x, userDataController.myAvatar.myUserData.positionCurrent.z, hoverM.x, hoverM.z) < AVATAR.RADIUS_M) {
                 this.hoveredUserData = userDataController.myAvatar.myUserData;
             }
 
@@ -337,6 +337,7 @@ export class UserInputController {
     
         let scaleFactor = 1 + deltaY * CONTROLS.MOUSE_WHEEL_ZOOM_FACTOR;
 
+        physicsController.smoothZoomDurationMS = PHYSICS.SMOOTH_ZOOM_DURATION_NORMAL_MS;
         physicsController.pxPerMTarget = physicsController.pxPerMCurrent * scaleFactor;
     
         this.lastOnWheelTimestamp = Date.now();

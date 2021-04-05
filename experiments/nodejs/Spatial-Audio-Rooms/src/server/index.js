@@ -85,7 +85,6 @@ class ServerSpaceInfo {
     }
 }
 
-const HEARTBEAT_TIMEOUT_MS = 10000;
 class Participant {
     constructor({ socketID, spaceName, visitIDHash, displayName, colorHex, echoCancellationEnabled, agcEnabled, hiFiGainSliderValue, volumeThreshold, } = {}) {
         this.socketID = socketID;
@@ -97,58 +96,11 @@ class Participant {
         this.agcEnabled = agcEnabled;
         this.hiFiGainSliderValue = hiFiGainSliderValue;
         this.volumeThreshold = volumeThreshold;
-
-        this.heartbeatTimeout = undefined;
-        this.restartHeartbeatTimeout();
     }
-
-    restartHeartbeatTimeout() {
-        return;
-
-        // Using a heartbeat to the WebSocket server might not be the best way to
-        // handle users disconnecting un-cleanly (i.e. without sending "participantDisconnected" to the WSS),
-        // but I don't know the best way to do this yet.
-        // Also, as of 2021-04-02, this doesn't even work yet.
-        let spaceName = JSON.stringify(this.spaceName);
-        let visitIDHash = JSON.stringify(this.visitIDHash);
-
-        console.log(`${Date.now()}: Restarting heartbeat timeout for \`${visitIDHash}\` in \`${spaceName}\`...`);
-        if (this.heartbeatTimeout) {
-            clearTimeout(this.heartbeatTimeout);
-        }
-
-        this.heartbeatTimeout = setTimeout(removeParticipant, HEARTBEAT_TIMEOUT_MS, { spaceName, visitIDHash, removalReason: "Heartbeat Timeout" });
-    }
-}
-
-function removeParticipant({ spaceName, visitIDHash, removalReason }) {
-    if (!spaceInformation[spaceName]) {
-        return;
-    }
-    
-    console.log(`${Date.now()}: In ${spaceName}, removing participant with Hashed Visit ID: \`${visitIDHash}\` for reason: \`${removalReason}\``);
-
-    spaceInformation[spaceName].participants = spaceInformation[spaceName].participants.filter((participant) => { return participant.visitIDHash !== visitIDHash; });
 }
 
 let spaceInformation = {};
 socketIOServer.on("connection", (socket) => {
-    socket.on("heartbeat", ({ spaceName, visitIDHash } = {}) => {
-        if (!spaceInformation[spaceName]) {
-            console.log(`${Date.now()}: During \`heartbeat\` handler, couldn't get spaceInformation["${spaceName}"]!`);
-            return;
-        }
-
-        let participant = spaceInformation[spaceName].participants.find((participant) => { return participant.visitIDHash === visitIDHash; });
-
-        if (!participant) {
-            console.log(`${Date.now()}: During \`heartbeat\` handler, couldn't get participant!`);
-            return;
-        }
-
-        participant.restartHeartbeatTimeout();
-    });
-
     socket.on("addParticipant", ({ spaceName, visitIDHash, displayName, colorHex, echoCancellationEnabled, agcEnabled, hiFiGainSliderValue, volumeThreshold, } = {}) => {
         if (!spaceInformation[spaceName]) {
             spaceInformation[spaceName] = new ServerSpaceInfo({ spaceName });
@@ -211,8 +163,19 @@ socketIOServer.on("connection", (socket) => {
         }
     });
 
-    socket.on("removeParticipant", ({ spaceName, visitIDHash, } = {}) => {
-        removeParticipant({ spaceName, visitIDHash, removalReason: "Disconnected" });
+    socket.on("disconnect", () => {
+        let allSpaces = Object.keys(spaceInformation);
+        let successfullyRemoved = false;
+
+        for (let i = 0; i < allSpaces.length; i++) {
+            let currentSpace = spaceInformation[allSpaces[i]];
+            let participantToRemove = currentSpace.participants.find((participant) => { return participant.socketID === socket.id; });
+            if (participantToRemove) {
+                console.log(`${Date.now()}: In ${allSpaces[i]}, removing participant with Hashed Visit ID: \`${participantToRemove.visitIDHash}\`!`);
+                currentSpace.participants = currentSpace.participants.filter((participant) => { return participant.socketID !== socket.id; });
+                successfullyRemoved = true;
+            }
+        }
     });
 
     socket.on("requestToEnableEchoCancellation", ({ spaceName, toVisitIDHash, fromVisitIDHash } = {}) => {

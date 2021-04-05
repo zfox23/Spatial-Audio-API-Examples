@@ -9,7 +9,10 @@ export interface UserData {
     currentRoomName?: string;
     displayName?: string;
     colorHex?: string;
-    position?: Point3D;
+    motionStartTimestamp?: number;
+    positionStart?: Point3D;
+    positionCurrent?: Point3D;
+    positionTarget?: Point3D;
     orientationEuler?: OrientationEuler3D;
     volumeDecibels?: number;
     volumeDecibelsPeak?: number;
@@ -36,7 +39,10 @@ class MyAvatar {
             currentRoomName: undefined,
             displayName: undefined,
             colorHex: undefined,
-            position: undefined,
+            motionStartTimestamp: undefined,
+            positionStart: undefined,
+            positionCurrent: undefined,
+            positionTarget: undefined,
             orientationEuler: undefined,
             volumeDecibels: undefined,
             volumeDecibelsPeak: undefined,
@@ -92,10 +98,6 @@ class MyAvatar {
             position: undefined
         };
 
-        if (!myUserData.position) {
-            myUserData.position = new Point3D();
-        }
-
         if (!myUserData.orientationEuler) {
             myUserData.orientationEuler = new OrientationEuler3D();
         }
@@ -108,21 +110,30 @@ class MyAvatar {
         }
 
         if (targetPosition) {
-            Object.assign(myUserData.position, targetPosition);
-            dataToTransmit.position = new Point3D();
-            Object.assign(dataToTransmit.position, myUserData.position);
-            needToTransmit = true;
+            if (!myUserData.positionTarget) {
+                myUserData.positionTarget = new Point3D();
+            }
+            Object.assign(myUserData.positionTarget, targetPosition);
 
-            let currentRoom = roomController.getRoomFromPoint3DInsideBoundaries(targetPosition);
+            if (!myUserData.positionStart) {
+                myUserData.positionStart = new Point3D();
+            }
+            if (myUserData.positionCurrent) {
+                Object.assign(myUserData.positionStart, myUserData.positionCurrent);
+            } else {
+                Object.assign(myUserData.positionStart, targetPosition);
+            }
 
-            if (currentRoom) {
-                this.myUserData.currentRoomName = currentRoom.name;
+            let targetRoom = roomController.getRoomFromPoint3DInsideBoundaries(targetPosition);
+
+            if (targetRoom) {
+                this.myUserData.currentRoomName = targetRoom.name;
             } else {
                 console.error("\`updateMyPositionAndOrientation()\`: Couldn't determine current room!");
             }
 
             roomController.updateAllRoomSeats();
-            physicsController.autoComputePXPerMFromRoom(currentRoom);
+            physicsController.autoComputePXPerMFromRoom(targetRoom);
         }
 
         if (needToTransmit) {

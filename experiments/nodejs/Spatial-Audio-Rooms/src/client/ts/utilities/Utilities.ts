@@ -21,14 +21,24 @@ export class Utilities {
     }
 
     static logarithmicScale(factor: number, minInput: number, maxInput: number, minOutput: number, maxOutput: number) {
-        factor = Utilities.clamp(factor, minInput, maxInput);
-
         minOutput = Math.log(minOutput);
         maxOutput = Math.log(maxOutput);
 
         let scale = (maxOutput - minOutput) / (maxInput - minInput);
 
         return Math.exp(minOutput + scale * (factor - minInput));
+    }
+
+    static easeInOutQuart(progressFraction: number) {
+        return progressFraction < 0.5 ? 8 * progressFraction * progressFraction * progressFraction * progressFraction : 1 - Math.pow(-2 * progressFraction + 2, 4) / 2;
+    }
+
+    static easeOutQuad(progressFraction: number) {
+        return 1 - (1 - progressFraction) * (1 - progressFraction);
+    }
+
+    static easeOutExponential(progressFraction: number) {
+        return progressFraction === 1 ? 1 : 1 - Math.pow(2, -10 * progressFraction);
     }
 
     static getRandomFloat(min: number, max: number) {
@@ -106,18 +116,6 @@ export class Utilities {
         textWords = textWords.splice(0, 2);
         textWords.forEach((word, idx) => { const symbols = [...word]; textWords[idx] = symbols[0]; });
         return textWords.join("").toUpperCase();
-    }
-
-    static easeInOutQuart(progressFraction: number) {
-        return progressFraction < 0.5 ? 8 * progressFraction * progressFraction * progressFraction * progressFraction : 1 - Math.pow(-2 * progressFraction + 2, 4) / 2;
-    }
-
-    static easeOutQuad(progressFraction: number) {
-        return 1 - (1 - progressFraction) * (1 - progressFraction);
-    }
-
-    static easeOutExponential(progressFraction: number) {
-        return progressFraction === 1 ? 1 : 1 - Math.pow(2, -10 * progressFraction);
     }
 
     static getDistanceBetween2DPoints(x1: number, y1: number, x2: number, y2: number) {
