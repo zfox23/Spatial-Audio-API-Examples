@@ -132,6 +132,8 @@ class MyAvatar {
             } else {
                 console.warn(`\`moveToNewSeat()\`: Couldn't transmit user data!`);
             }
+
+            roomController.updateAllRoomSeats();
         }
         
         let currentRoom = roomController.getRoomFromPoint3DInsideBoundaries(myUserData.positionCurrent);
