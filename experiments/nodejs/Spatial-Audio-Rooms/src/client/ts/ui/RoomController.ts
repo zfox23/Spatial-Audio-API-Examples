@@ -286,11 +286,13 @@ export class RoomController {
                 return;
             }
 
+            let seatOrientation = userData.orientationEulerTarget || userData.orientationEulerCurrent;
+
             // If we get here, we know the user is sitting on a seat in the room,
             // and we want to update the `seats` array inside that room locally.
             userIsSittingInSeatInRoom.seats.push(new Seat({
                 position: position,
-                orientationEuler: userData.orientationEulerTarget,
+                orientationEuler: seatOrientation,
                 occupiedUserData: userData
             }));
         });

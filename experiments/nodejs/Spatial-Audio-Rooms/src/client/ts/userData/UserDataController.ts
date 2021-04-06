@@ -71,15 +71,13 @@ class MyAvatar {
         }
     }
 
-    positionSelfInRoom(roomName: string) {
+    positionSelfInRoom(targetRoomName: string) {
         if (pathsController.currentPath) {
             return;
         }
 
-        this.myUserData.currentRoomName = roomName;
-
         let currentRoom = roomController.rooms.find((room) => {
-            return room.name === this.myUserData.currentRoomName;
+            return room.name === targetRoomName;
         });
 
         if (!currentRoom) {
@@ -91,87 +89,67 @@ class MyAvatar {
 
         let newSeat = currentRoom.findOpenSpotForSelf();
         console.log(`Found an open spot in room ${currentRoom.name} at ${JSON.stringify(newSeat.position)} orientation ${JSON.stringify(newSeat.orientation)}.`);
-        this.setTargetPositionAndOrientation(newSeat.position, newSeat.orientation.yawDegrees);
+        this.moveToNewSeat(newSeat.position, newSeat.orientation.yawDegrees);
     }
 
-    setTargetPositionAndOrientation(targetPosition?: Point3D, targetYawOrientationDegrees?: number) {
-        if (pathsController.currentPath) {
-            return;
-        }
-
-        let hifiCommunicator = connectionController.hifiCommunicator;
-        if (!hifiCommunicator || !userDataController.myAvatar) {
+    moveToNewSeat(targetSeatPosition: Point3D, targetSeatYawOrientationDegrees: number) {
+        if (pathsController.currentPath || !userDataController.myAvatar) {
             return;
         }
 
         let myUserData = userDataController.myAvatar.myUserData;
-        
-        let mustTransmit = false;
         let dataToTransmit: DataToTransmitToHiFi = {};
-        
-        if (targetPosition) {
-            myUserData.motionStartTimestamp = undefined;
 
-            if (!myUserData.positionCurrent) {
-                myUserData.positionStart = undefined;
-                myUserData.positionCurrent = new Point3D();
-                Object.assign(myUserData.positionCurrent, targetPosition);
-                myUserData.positionTarget = undefined;
-                
-                mustTransmit = true;
-                dataToTransmit.position = myUserData.positionCurrent;
-            } else {
-                if (!myUserData.positionStart) {
-                    myUserData.positionStart = new Point3D();
-                }
-                Object.assign(myUserData.positionStart, myUserData.positionCurrent);
+        myUserData.motionStartTimestamp = undefined;
 
-                if (!myUserData.positionTarget) {
-                    myUserData.positionTarget = new Point3D();
-                }
-                Object.assign(myUserData.positionTarget, targetPosition);
+        // We enter this case if this is the first time we're moving to a new seat.
+        if (!myUserData.positionCurrent) {
+            myUserData.positionStart = undefined;
+            myUserData.positionCurrent = new Point3D();
+            Object.assign(myUserData.positionCurrent, targetSeatPosition);
+            myUserData.positionTarget = undefined;
+            
+            dataToTransmit.position = myUserData.positionCurrent;
+        }
+        // We enter this case if this is the first time we're moving to a new seat.
+        if (!myUserData.orientationEulerCurrent) {
+            myUserData.orientationEulerStart = undefined;
+            myUserData.orientationEulerCurrent = new OrientationEuler3D();
+            myUserData.orientationEulerCurrent.yawDegrees = targetSeatYawOrientationDegrees;
+            myUserData.orientationEulerTarget = undefined;
+
+            dataToTransmit.orientationEuler = myUserData.orientationEulerCurrent;
+        }
+        if (dataToTransmit.position || dataToTransmit.orientationEuler) {
+            let hifiCommunicator = connectionController.hifiCommunicator;
+            if (hifiCommunicator) {
+                hifiCommunicator.updateUserDataAndTransmit(dataToTransmit);
             }
+        }
 
-            let targetRoom = roomController.getRoomFromPoint3DInsideBoundaries(targetPosition);
-
-            if (targetRoom) {
-                this.myUserData.currentRoomName = targetRoom.name;
-            } else {
-                console.error("\`setTargetPositionAndOrientation()\`: Couldn't determine current room!");
-            }
-
+        if (dataToTransmit.position || dataToTransmit.orientationEuler) {
+            physicsController.autoComputePXPerMFromRoom(roomController.getRoomFromPoint3DInsideBoundaries(targetSeatPosition));
             roomController.updateAllRoomSeats();
-            physicsController.autoComputePXPerMFromRoom(targetRoom);
+            return;
         }
 
-        if (typeof (targetYawOrientationDegrees) === "number") {
-            myUserData.motionStartTimestamp = undefined;
-
-            if (!myUserData.orientationEulerCurrent) {
-                myUserData.orientationEulerStart = undefined;
-                myUserData.orientationEulerCurrent = new OrientationEuler3D();
-                myUserData.orientationEulerCurrent.yawDegrees = targetYawOrientationDegrees;
-                myUserData.orientationEulerTarget = undefined;
-
-                mustTransmit = true;
-                dataToTransmit.orientationEuler = myUserData.orientationEulerCurrent;
-            } else if (myUserData.orientationEulerCurrent) {
-                if (!myUserData.orientationEulerStart) {
-                    myUserData.orientationEulerStart = new OrientationEuler3D();
-                }
-                Object.assign(myUserData.orientationEulerStart, myUserData.orientationEulerCurrent);
-
-                if (!myUserData.orientationEulerTarget) {
-                    myUserData.orientationEulerTarget = new OrientationEuler3D();
-                }
-
-                myUserData.orientationEulerTarget.yawDegrees = targetYawOrientationDegrees;
-            }
+        if (!myUserData.positionStart) {
+            myUserData.positionStart = new Point3D();
         }
-
-        if (mustTransmit) {
-            hifiCommunicator.updateUserDataAndTransmit(dataToTransmit);
+        Object.assign(myUserData.positionStart, myUserData.positionCurrent);
+        if (!myUserData.positionTarget) {
+            myUserData.positionTarget = new Point3D();
         }
+        Object.assign(myUserData.positionTarget, targetSeatPosition);
+
+        if (!myUserData.orientationEulerStart) {
+            myUserData.orientationEulerStart = new OrientationEuler3D();
+        }
+        Object.assign(myUserData.orientationEulerStart, myUserData.orientationEulerCurrent);
+        if (!myUserData.orientationEulerTarget) {
+            myUserData.orientationEulerTarget = new OrientationEuler3D();
+        }
+        myUserData.orientationEulerTarget.yawDegrees = targetSeatYawOrientationDegrees;
     }
 
     onMyDisplayNameChanged(newDisplayName?: string) {
