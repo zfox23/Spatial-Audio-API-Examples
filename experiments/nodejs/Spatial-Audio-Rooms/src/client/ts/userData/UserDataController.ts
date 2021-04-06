@@ -151,34 +151,33 @@ class MyAvatar {
             }
 
             let newPath = new Path();
+            newPath.onActivated = () => {
+                uiController.canvasRenderer.canvasScrimOpacity = 0.0;
+
+                myUserData.tempData.scrimOpacityInterval = setInterval(() => {
+                    if (uiController.canvasRenderer.canvasScrimOpacity < 0.8) {
+                        uiController.canvasRenderer.canvasScrimOpacity += 0.05;
+                    } else {
+                        uiController.canvasRenderer.canvasScrimOpacity = 0.8;
+                        clearInterval(myUserData.tempData.scrimOpacityInterval);
+                        myUserData.tempData.scrimOpacityInterval = undefined;
+                    }
+                }, PHYSICS.PHYSICS_TICKRATE_MS);
+            };
+            newPath.onDeactivated = () => {
+                uiController.canvasRenderer.canvasScrimOpacity = 0.8;
+
+                myUserData.tempData.scrimOpacityInterval = setInterval(() => {
+                    if (uiController.canvasRenderer.canvasScrimOpacity > 0.0) {
+                        uiController.canvasRenderer.canvasScrimOpacity -= 0.05;
+                    } else {
+                        uiController.canvasRenderer.canvasScrimOpacity = 0.0;
+                        clearInterval(myUserData.tempData.scrimOpacityInterval);
+                        myUserData.tempData.scrimOpacityInterval = undefined;
+                    }
+                }, PHYSICS.PHYSICS_TICKRATE_MS);
+            };
             if (currentRoom === targetRoom) {
-                newPath.onActivated = () => {
-                    uiController.canvasRenderer.canvasScrimOpacity = 0.0;
-
-                    myUserData.tempData.scrimOpacityInterval = setInterval(() => {
-                        if (uiController.canvasRenderer.canvasScrimOpacity < 0.8) {
-                            uiController.canvasRenderer.canvasScrimOpacity += 0.05;
-                        } else {
-                            uiController.canvasRenderer.canvasScrimOpacity = 0.8;
-                            clearInterval(myUserData.tempData.scrimOpacityInterval);
-                            myUserData.tempData.scrimOpacityInterval = undefined;
-                        }
-                    }, PHYSICS.PHYSICS_TICKRATE_MS);
-                };
-                newPath.onDeactivated = () => {
-                    uiController.canvasRenderer.canvasScrimOpacity = 0.8;
-
-                    myUserData.tempData.scrimOpacityInterval = setInterval(() => {
-                        if (uiController.canvasRenderer.canvasScrimOpacity > 0.0) {
-                            uiController.canvasRenderer.canvasScrimOpacity -= 0.05;
-                        } else {
-                            uiController.canvasRenderer.canvasScrimOpacity = 0.0;
-                            clearInterval(myUserData.tempData.scrimOpacityInterval);
-                            myUserData.tempData.scrimOpacityInterval = undefined;
-                        }
-                    }, PHYSICS.PHYSICS_TICKRATE_MS);
-                };
-
                 let transitionCircleCenter = new Point3D({x: currentRoom.center.x, z: currentRoom.center.z});
 
                 let orientationEulerInitial = new OrientationEuler3D({yawDegrees: myUserData.orientationEulerCurrent.yawDegrees});
@@ -191,12 +190,22 @@ class MyAvatar {
                     "z": (currentRoom.seatingRadiusM + AVATAR.RADIUS_M * 3) * Math.sin(step1PositionTheta) + transitionCircleCenter.z
                 });
                 let step3PositionEnd = new Point3D({x: targetSeatPosition.x, z: targetSeatPosition.z});
-                let step3PositionTheta = Math.atan2(step3PositionEnd.z - transitionCircleCenter.z, step3PositionEnd.x - transitionCircleCenter.x);
+                let step2PositionTheta = Math.atan2(step3PositionEnd.z - transitionCircleCenter.z, step3PositionEnd.x - transitionCircleCenter.x);
+
+                while (step1PositionTheta > step2PositionTheta) {
+                    step2PositionTheta += 2 * Math.PI;
+                }
+
+                while (orientationEulerInitial.yawDegrees < orientationEulerFinal.yawDegrees) {
+                    orientationEulerInitial.yawDegrees += 360;
+                }
+                
+                console.log(`step1Theta: ${step1PositionTheta * 180 / Math.PI}, step2Theta: ${step2PositionTheta * 180 / Math.PI}, initialYaw: ${orientationEulerInitial.yawDegrees}, finalYaw: ${orientationEulerFinal.yawDegrees}`);
 
                 let step2PositionStart = step1PositionEnd;
                 let step2PositionEnd = new Point3D({
-                    "x": (currentRoom.seatingRadiusM + AVATAR.RADIUS_M * 3) * Math.cos(step3PositionTheta) + transitionCircleCenter.x,
-                    "z": (currentRoom.seatingRadiusM + AVATAR.RADIUS_M * 3) * Math.sin(step3PositionTheta) + transitionCircleCenter.z
+                    "x": (currentRoom.seatingRadiusM + AVATAR.RADIUS_M * 3) * Math.cos(step2PositionTheta) + transitionCircleCenter.x,
+                    "z": (currentRoom.seatingRadiusM + AVATAR.RADIUS_M * 3) * Math.sin(step2PositionTheta) + transitionCircleCenter.z
                 });
 
                 let step3PositionStart = step2PositionEnd;
