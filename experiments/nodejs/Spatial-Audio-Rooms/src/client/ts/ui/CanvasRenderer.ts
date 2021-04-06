@@ -1,17 +1,13 @@
 declare module '*.png';
 
 import { physicsController, roomController, uiController, userDataController, videoController } from "..";
-import {
-    AVATAR,
-    ROOM,
-    UI,
-} from "../constants/constants";
+import { AVATAR, ROOM, UI, } from "../constants/constants";
 import { UserData } from "../userData/UserDataController";
 import { Utilities } from "../utilities/Utilities";
 import { Seat, SpatialAudioRoom } from "../ui/RoomController";
 import SeatIcon from '../../images/seat.png';
 import TableImage from '../../images/table.png';
-import { OrientationEuler3D, Point3D } from "hifi-spatial-audio";
+import { Point3D } from "hifi-spatial-audio";
 
 const seatIcon = new Image();
 seatIcon.src = SeatIcon;
@@ -30,12 +26,9 @@ export class CanvasRenderer {
         this.mainCanvas = document.createElement("canvas");
         this.mainCanvas.classList.add("mainCanvas");
         document.body.appendChild(this.mainCanvas);
-
         this.ctx = this.mainCanvas.getContext("2d");
 
-        window.addEventListener("resize", (e) => {
-            this.updateCanvasDimensions();
-        });
+        window.addEventListener("resize", this.updateCanvasDimensions.bind(this));
         this.updateCanvasDimensions();
 
         window.requestAnimationFrame(this.drawLoop.bind(this));
@@ -44,31 +37,6 @@ export class CanvasRenderer {
     drawLoop() {
         this.draw();
         window.requestAnimationFrame(this.drawLoop.bind(this));
-    }
-
-    updateCanvasParams() {
-        const myUserData = userDataController.myAvatar.myUserData;
-        if (!(myUserData.positionCurrent && myUserData.orientationEulerCurrent)) {
-            return;
-        }
-
-        this.canvasRotationDegrees = -1 * userDataController.myAvatar.myUserData.orientationEulerCurrent.yawDegrees;
-
-        let mainCanvas = this.mainCanvas;
-        let pxPerM = physicsController.pxPerMCurrent;
-        let cameraOffsetYPX = mainCanvas.height * UI.MY_AVATAR_Y_SCREEN_CENTER_OFFSET_RATIO;
-
-        this.canvasOffsetPX = {
-            x: (mainCanvas.width - roomController.lobby.dimensions.x * pxPerM) / 2 + (-myUserData.positionCurrent.x + roomController.lobby.dimensions.x / 2) * pxPerM,
-            y: (mainCanvas.height - roomController.lobby.dimensions.z * pxPerM) / 2 + (-myUserData.positionCurrent.z + roomController.lobby.dimensions.z / 2) * pxPerM + cameraOffsetYPX
-        };
-    }
-
-    computeCameraPosition() {
-        if (!userDataController.myAvatar.myUserData.positionCurrent) {
-            return;
-        }
-        this.cameraPositionNoOffsetM = userDataController.myAvatar.myUserData.positionCurrent;
     }
 
     updateCanvasDimensions() {
@@ -171,7 +139,7 @@ export class CanvasRenderer {
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
 
-        let textToDraw =  userData.displayName && userData.displayName.length > 0 ? userData.displayName : "❓ Anonymous";
+        let textToDraw = userData.displayName && userData.displayName.length > 0 ? userData.displayName : "❓ Anonymous";
         let textMetrics = ctx.measureText(textToDraw);
         let avatarRadiusPX = avatarRadiusM * pxPerM;
         if (textMetrics.width > avatarRadiusPX + 5) {
@@ -182,7 +150,7 @@ export class CanvasRenderer {
         ctx.rotate(-amtToRotateAvatarLabel);
     }
 
-    drawTutorialGlow({ userData }: { userData: UserData }) {
+    drawTutorialGlow() {
         let ctx = this.ctx;
         let pxPerM = physicsController.pxPerMCurrent;
 
@@ -198,7 +166,7 @@ export class CanvasRenderer {
         ctx.closePath();
     }
 
-    drawTutorialText({ userData }: { userData: UserData }) {
+    drawTutorialText() {
         let ctx = this.ctx;
         let pxPerM = physicsController.pxPerMCurrent;
 
@@ -209,7 +177,7 @@ export class CanvasRenderer {
         ctx.fillStyle = UI.TUTORIAL_TEXT_COLOR;
         ctx.lineWidth = UI.TUTORIAL_TEXT_STROKE_WIDTH_PX;
         ctx.strokeStyle = UI.TUTORIAL_TEXT_STROKE_COLOR;
-        
+
         ctx.textAlign = "right";
         let textToDraw = "This is you.";
         ctx.fillText(textToDraw, -AVATAR.RADIUS_M * pxPerM - 25, 0);
@@ -227,14 +195,14 @@ export class CanvasRenderer {
         if (!userData || !userData.positionCurrent || userData.positionCurrent.x === undefined || userData.positionCurrent.z === undefined || !userData.orientationEulerCurrent || userData.orientationEulerCurrent.yawDegrees === undefined) {
             return;
         }
-        
+
         let ctx = this.ctx;
         let pxPerM = physicsController.pxPerMCurrent;
 
         ctx.translate(userData.positionCurrent.x * pxPerM, userData.positionCurrent.z * pxPerM);
 
         if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash && !uiController.hasCompletedTutorial) {
-            this.drawTutorialGlow({ userData });
+            this.drawTutorialGlow();
         }
 
         this.drawVolumeBubble({ userData });
@@ -243,7 +211,7 @@ export class CanvasRenderer {
         this.drawAvatarLabel({ userData });
 
         if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash && !uiController.hasCompletedTutorial) {
-            this.drawTutorialText({ userData });
+            this.drawTutorialText();
         }
 
         ctx.translate(-userData.positionCurrent.x * pxPerM, -userData.positionCurrent.z * pxPerM);
@@ -274,10 +242,10 @@ export class CanvasRenderer {
             ctx.stroke();
             ctx.fill();
             ctx.closePath();
-    
+
             ctx.drawImage(tableImage, -tableRadiusPX, -tableRadiusPX, tableRadiusPX * 2, tableRadiusPX * 2);
         }
-            
+
         let amtToRotateRoomLabel = this.canvasRotationDegrees * Math.PI / 180;
         ctx.rotate(amtToRotateRoomLabel);
         ctx.font = ROOM.ROOM_LABEL_FONT;
@@ -293,7 +261,7 @@ export class CanvasRenderer {
         ctx.translate(-room.center.x * pxPerM, -room.center.z * pxPerM);
     }
 
-    drawUnoccupiedSeat(seat: Seat) { 
+    drawUnoccupiedSeat(seat: Seat) {
         let ctx = this.ctx;
         let pxPerM = physicsController.pxPerMCurrent;
         ctx.translate(seat.position.x * pxPerM, seat.position.z * pxPerM);
@@ -339,9 +307,11 @@ export class CanvasRenderer {
             return;
         }
 
+        this.translateAndRotateCanvas();
+
         roomController.rooms.forEach((room) => {
             this.drawTableOrRoomGraphic(room);
-        
+
             room.seats.forEach((seat) => {
                 // Don't draw occupied seats yet.
                 if (seat.occupiedUserData) {
@@ -357,6 +327,8 @@ export class CanvasRenderer {
         allUserData.forEach((userData) => {
             this.drawAvatar({ userData });
         });
+
+        this.unTranslateAndRotateCanvas();
     }
 
     draw() {
@@ -364,14 +336,23 @@ export class CanvasRenderer {
 
         ctx.clearRect(0, 0, this.mainCanvas.width, this.mainCanvas.height);
 
-        this.updateCanvasParams();
-        this.computeCameraPosition();
+        const myUserData = userDataController.myAvatar.myUserData;
+        if (!(myUserData.positionCurrent && myUserData.orientationEulerCurrent)) {
+            return;
+        }
 
-        this.translateAndRotateCanvas();
-        
+        this.canvasRotationDegrees = -1 * userDataController.myAvatar.myUserData.orientationEulerCurrent.yawDegrees;
+
+        let pxPerM = physicsController.pxPerMCurrent;
+        let cameraOffsetYPX = this.mainCanvas.height * UI.MY_AVATAR_Y_SCREEN_CENTER_OFFSET_RATIO;
+        this.canvasOffsetPX = {
+            x: (this.mainCanvas.width - roomController.lobby.dimensions.x * pxPerM) / 2 + (-myUserData.positionCurrent.x + roomController.lobby.dimensions.x / 2) * pxPerM,
+            y: (this.mainCanvas.height - roomController.lobby.dimensions.z * pxPerM) / 2 + (-myUserData.positionCurrent.z + roomController.lobby.dimensions.z / 2) * pxPerM + cameraOffsetYPX
+        };
+
+        this.cameraPositionNoOffsetM = userDataController.myAvatar.myUserData.positionCurrent;
+
         this.drawRooms();
-        
-        this.unTranslateAndRotateCanvas();
     }
 
     translateAndRotateCanvas() {

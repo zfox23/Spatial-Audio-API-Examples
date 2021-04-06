@@ -242,7 +242,5 @@ export class PhysicsController {
             this.smoothZoomStartTimestamp = undefined;
             this.smoothZoomDurationMS = PHYSICS.SMOOTH_ZOOM_DURATION_NORMAL_MS;
         }
-
-        uiController.canvasRenderer.updateCanvasParams();
     }
 }
