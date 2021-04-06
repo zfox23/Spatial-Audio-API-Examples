@@ -24,6 +24,7 @@ export class CanvasRenderer {
     canvasOffsetPX: any;
     cameraPositionNoOffsetM: Point3D;
     canvasRotationDegrees: number = 0;
+    canvasScrimOpacity: number = 0.0;
 
     constructor() {
         this.mainCanvas = document.createElement("canvas");
@@ -223,7 +224,7 @@ export class CanvasRenderer {
     }
 
     drawAvatar({ userData }: { userData: UserData }) {
-        if (!userData || !userData.positionCurrent || typeof (userData.positionCurrent.x) !== "number" || typeof (userData.positionCurrent.z) !== "number" || !userData.orientationEulerCurrent || typeof (userData.orientationEulerCurrent.yawDegrees) !== "number") {
+        if (!userData || !userData.positionCurrent || userData.positionCurrent.x === undefined || userData.positionCurrent.z === undefined || !userData.orientationEulerCurrent || userData.orientationEulerCurrent.yawDegrees === undefined) {
             return;
         }
         
@@ -315,6 +316,21 @@ export class CanvasRenderer {
         ctx.translate(-seat.position.x * pxPerM, -seat.position.z * pxPerM);
     }
 
+    maybeDrawScrim() {
+        if (this.canvasScrimOpacity > 0.0) {
+            let ctx = this.ctx;
+            this.unTranslateAndRotateCanvas();
+
+            ctx.fillStyle = `rgba(0, 0, 0, ${this.canvasScrimOpacity})`;
+            ctx.beginPath();
+            ctx.rect(0, 0, this.mainCanvas.width, this.mainCanvas.height);
+            ctx.fill();
+            ctx.closePath();
+
+            this.translateAndRotateCanvas();
+        }
+    }
+
     drawRooms() {
         let ctx = this.ctx;
         let pxPerM = physicsController.pxPerMCurrent;
@@ -334,6 +350,9 @@ export class CanvasRenderer {
                 this.drawUnoccupiedSeat(seat);
             });
         });
+
+        this.maybeDrawScrim();
+
         let allUserData = userDataController.allOtherUserData.concat(userDataController.myAvatar.myUserData);
         allUserData.forEach((userData) => {
             this.drawAvatar({ userData });

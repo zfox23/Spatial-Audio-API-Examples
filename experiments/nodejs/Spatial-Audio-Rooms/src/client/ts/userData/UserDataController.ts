@@ -1,6 +1,7 @@
 import { OrientationEuler3D, Point3D } from "hifi-spatial-audio";
-import { userDataController, connectionController, roomController, physicsController, pathsController } from "..";
+import { userDataController, connectionController, roomController, physicsController, pathsController, uiController } from "..";
 import { Path, Waypoint } from "../ai/PathsController";
+import { AVATAR, PHYSICS } from "../constants/constants";
 import { DataToTransmitToHiFi, Utilities } from "../utilities/Utilities";
 
 declare var HIFI_PROVIDED_USER_ID: string;
@@ -9,6 +10,7 @@ interface TempUserData {
     circleRadius?: number;
     startTheta?: number;
     targetTheta?: number;
+    scrimOpacityInterval?: NodeJS.Timer;
 }
 
 export interface UserData {
@@ -148,21 +150,92 @@ class MyAvatar {
                 pathsController.resetCurrentPath();
             }
 
-            let transitionCircleCenter;
-            if (currentRoom === targetRoom) {
-                transitionCircleCenter = new Point3D({x: currentRoom.center.x, z: currentRoom.center.z});
-            } 
-
             let newPath = new Path();
-            newPath.pathWaypoints.push(new Waypoint({
-                positionStart: new Point3D({x: myUserData.positionCurrent.x, z: myUserData.positionCurrent.z}),
-                positionTarget: new Point3D({x: targetSeatPosition.x, z: targetSeatPosition.z}),
-                positionCircleCenter: transitionCircleCenter,
-                orientationEulerStart: new OrientationEuler3D({yawDegrees: myUserData.orientationEulerCurrent.yawDegrees}),
-                orientationEulerTarget: new OrientationEuler3D({yawDegrees: targetSeatYawOrientationDegrees}),
-                durationMS: 2000,
-                easingFunction: Utilities.easeLinear
-            }));
+            if (currentRoom === targetRoom) {
+                newPath.onActivated = () => {
+                    uiController.canvasRenderer.canvasScrimOpacity = 0.0;
+
+                    myUserData.tempData.scrimOpacityInterval = setInterval(() => {
+                        if (uiController.canvasRenderer.canvasScrimOpacity < 0.8) {
+                            uiController.canvasRenderer.canvasScrimOpacity += 0.05;
+                        } else {
+                            uiController.canvasRenderer.canvasScrimOpacity = 0.8;
+                            clearInterval(myUserData.tempData.scrimOpacityInterval);
+                            myUserData.tempData.scrimOpacityInterval = undefined;
+                        }
+                    }, PHYSICS.PHYSICS_TICKRATE_MS);
+                };
+                newPath.onDeactivated = () => {
+                    uiController.canvasRenderer.canvasScrimOpacity = 0.8;
+
+                    myUserData.tempData.scrimOpacityInterval = setInterval(() => {
+                        if (uiController.canvasRenderer.canvasScrimOpacity > 0.0) {
+                            uiController.canvasRenderer.canvasScrimOpacity -= 0.05;
+                        } else {
+                            uiController.canvasRenderer.canvasScrimOpacity = 0.0;
+                            clearInterval(myUserData.tempData.scrimOpacityInterval);
+                            myUserData.tempData.scrimOpacityInterval = undefined;
+                        }
+                    }, PHYSICS.PHYSICS_TICKRATE_MS);
+                };
+
+                let transitionCircleCenter = new Point3D({x: currentRoom.center.x, z: currentRoom.center.z});
+
+                let orientationEulerInitial = new OrientationEuler3D({yawDegrees: myUserData.orientationEulerCurrent.yawDegrees});
+                let orientationEulerFinal = new OrientationEuler3D({yawDegrees: targetSeatYawOrientationDegrees});
+
+                let step1PositionStart = new Point3D({x: myUserData.positionCurrent.x, z: myUserData.positionCurrent.z});
+                let step1PositionTheta = Math.atan2(step1PositionStart.z - transitionCircleCenter.z, step1PositionStart.x - transitionCircleCenter.x);
+                let step1PositionEnd = new Point3D({
+                    "x": (currentRoom.seatingRadiusM + AVATAR.RADIUS_M * 3) * Math.cos(step1PositionTheta) + transitionCircleCenter.x,
+                    "z": (currentRoom.seatingRadiusM + AVATAR.RADIUS_M * 3) * Math.sin(step1PositionTheta) + transitionCircleCenter.z
+                });
+                let step3PositionEnd = new Point3D({x: targetSeatPosition.x, z: targetSeatPosition.z});
+                let step3PositionTheta = Math.atan2(step3PositionEnd.z - transitionCircleCenter.z, step3PositionEnd.x - transitionCircleCenter.x);
+
+                let step2PositionStart = step1PositionEnd;
+                let step2PositionEnd = new Point3D({
+                    "x": (currentRoom.seatingRadiusM + AVATAR.RADIUS_M * 3) * Math.cos(step3PositionTheta) + transitionCircleCenter.x,
+                    "z": (currentRoom.seatingRadiusM + AVATAR.RADIUS_M * 3) * Math.sin(step3PositionTheta) + transitionCircleCenter.z
+                });
+
+                let step3PositionStart = step2PositionEnd;
+
+                newPath.pathWaypoints.push(new Waypoint({
+                    positionStart: step1PositionStart,
+                    positionTarget: step1PositionEnd,
+                    orientationEulerStart: orientationEulerInitial,
+                    orientationEulerTarget: orientationEulerInitial,
+                    durationMS: 1000,
+                    easingFunction: Utilities.easeOutQuad
+                }));
+                newPath.pathWaypoints.push(new Waypoint({
+                    positionStart: step2PositionStart,
+                    positionTarget: step2PositionEnd,
+                    positionCircleCenter: transitionCircleCenter,
+                    orientationEulerStart: orientationEulerInitial,
+                    orientationEulerTarget: orientationEulerFinal,
+                    durationMS: 2000,
+                    easingFunction: Utilities.easeInOutQuart
+                }));
+                newPath.pathWaypoints.push(new Waypoint({
+                    positionStart: step3PositionStart,
+                    positionTarget: step3PositionEnd,
+                    orientationEulerStart: orientationEulerFinal,
+                    orientationEulerTarget: orientationEulerFinal,
+                    durationMS: 1000,
+                    easingFunction: Utilities.easeOutQuad
+                }));
+            } else {
+                newPath.pathWaypoints.push(new Waypoint({
+                    positionStart: new Point3D({x: myUserData.positionCurrent.x, z: myUserData.positionCurrent.z}),
+                    positionTarget: new Point3D({x: targetSeatPosition.x, z: targetSeatPosition.z}),
+                    orientationEulerStart: new OrientationEuler3D({yawDegrees: myUserData.orientationEulerCurrent.yawDegrees}),
+                    orientationEulerTarget: new OrientationEuler3D({yawDegrees: targetSeatYawOrientationDegrees}),
+                    durationMS: 2000,
+                    easingFunction: Utilities.easeOutQuad
+                }));
+            }
             pathsController.setCurrentPath(newPath);
         }
     }
