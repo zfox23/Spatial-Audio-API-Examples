@@ -58,7 +58,9 @@ export class PathsController {
     }
 
     resetCurrentPath() {
-        this.currentPath.currentWaypointIndex = -1;
+        if (this.currentPath) {
+            this.currentPath.currentWaypointIndex = -1;
+        }
         this.currentPath = undefined;
     }
 }

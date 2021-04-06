@@ -222,7 +222,7 @@ export class UserInputController {
             uiController.showAvatarContextMenu(this.hoveredUserData);
             this.hoveredUserData = undefined;
         } else if (this.hoveredSeat && !pathsController.currentPath) {
-            console.log(`User clicked on a new seat at ${JSON.stringify(this.hoveredSeat.position)}! New yaw orientation: ${JSON.stringify(this.hoveredSeat.orientation)} degrees.`);
+            console.log(`User clicked on a new seat at ${JSON.stringify(this.hoveredSeat.position)}! Target seat yaw orientation: ${JSON.stringify(this.hoveredSeat.orientation)} degrees.`);
             userDataController.myAvatar.moveToNewSeat(this.hoveredSeat.position, this.hoveredSeat.orientation.yawDegrees);
             this.hoveredSeat = undefined;
         }

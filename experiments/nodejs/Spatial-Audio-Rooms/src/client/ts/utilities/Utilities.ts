@@ -165,14 +165,14 @@ export class Utilities {
     }
 
     static canvasPXToM(canvasPX: CanvasPX) {
-        if (!uiController.canvasRenderer.myCurrentRoom) {
-            return undefined;
-        }
-
         let pxPerM = physicsController.pxPerMCurrent;
         let canvasOffsetPX = uiController.canvasRenderer.canvasOffsetPX;
         let cameraPositionNoOffsetM = uiController.canvasRenderer.cameraPositionNoOffsetM;
         let yawOrientationRadians = uiController.canvasRenderer.canvasRotationDegrees * Math.PI / 180;
+
+        if (pxPerM === undefined || canvasOffsetPX === undefined || cameraPositionNoOffsetM === undefined || yawOrientationRadians === undefined) {
+            return;
+        }
 
         let translatedCanvasPX = {
             x: canvasPX.x - canvasOffsetPX.x - cameraPositionNoOffsetM.x * pxPerM,

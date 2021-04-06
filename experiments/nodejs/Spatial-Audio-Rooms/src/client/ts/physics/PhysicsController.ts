@@ -40,6 +40,7 @@ export class PhysicsController {
         let mustTransmit = false;
         let dataToTransmit: DataToTransmitToHiFi = {};
 
+        let myAvatarMoved = false;
         let otherAvatarMoved = false;
         let allUserData = userDataController.allOtherUserData.concat(userDataController.myAvatar.myUserData);
         allUserData.forEach((userData) => {
@@ -84,7 +85,9 @@ export class PhysicsController {
                     }
                     Object.assign(userData.positionCurrent, userData.positionTarget);
 
-                    if (!isMine) {
+                    if (isMine) {
+                        myAvatarMoved = true;
+                    } else {
                         otherAvatarMoved = true;
                     }
                 }
@@ -119,14 +122,22 @@ export class PhysicsController {
                 if (userData.positionStart && userData.positionTarget) {
                     let newPosition;
                     if (userData.positionCircleCenter) {
-                        if (!userData.tempData.circleRadius) {
+                        if (typeof (userData.tempData.circleRadius) !== "number") {
                             userData.tempData.circleRadius = Utilities.getDistanceBetween2DPoints(userData.positionCircleCenter.x, userData.positionCircleCenter.z, userData.positionStart.x, userData.positionStart.z);
                         }
-                        if (!userData.tempData.startTheta) {
-                            userData.tempData.startTheta = Math.atan2(userData.positionStart.x - userData.positionCircleCenter.x, userData.positionStart.z - userData.positionCircleCenter.z);
+                        if (typeof (userData.tempData.startTheta) !== "number") {
+                            userData.tempData.startTheta = Math.atan2(userData.positionStart.z - userData.positionCircleCenter.z, userData.positionStart.x - userData.positionCircleCenter.x);
+                            while (userData.tempData.startTheta < 0) {
+                                userData.tempData.startTheta += Math.PI * 2;
+                            }
+                            userData.tempData.startTheta %= (Math.PI * 2);
                         }
-                        if (!userData.tempData.targetTheta) {
-                            userData.tempData.targetTheta = Math.atan2(userData.positionTarget.x - userData.positionCircleCenter.x, userData.positionTarget.z - userData.positionCircleCenter.z);
+                        if (typeof (userData.tempData.targetTheta) !== "number") {
+                            userData.tempData.targetTheta = Math.atan2(userData.positionTarget.z - userData.positionCircleCenter.z, userData.positionTarget.x - userData.positionCircleCenter.x);
+                            while (userData.tempData.targetTheta < 0) {
+                                userData.tempData.targetTheta += Math.PI * 2;
+                            }
+                            userData.tempData.targetTheta %= (Math.PI * 2);
                         }
                         newPosition = new Point3D({
                             "x": userData.tempData.circleRadius * Math.cos(Utilities.linearScale(easingFunction((timestamp - userData.motionStartTimestamp) / motionDurationMS), 0, 1, userData.tempData.startTheta, userData.tempData.targetTheta)) + userData.positionCircleCenter.x,
@@ -143,11 +154,12 @@ export class PhysicsController {
                     }
                     Object.assign(userData.positionCurrent, newPosition);
 
-                    if (!isMine) {
-                        otherAvatarMoved = true;
-                    } else {
+                    if (isMine) {
                         dataToTransmit.position = userData.positionCurrent;
+                        myAvatarMoved = true;
                         mustTransmit = true;
+                    } else {
+                        otherAvatarMoved = true;
                     }
                 }
 
@@ -184,13 +196,14 @@ export class PhysicsController {
             }
         });
 
-        if (otherAvatarMoved) {
+        if (myAvatarMoved || otherAvatarMoved) {
             roomController.updateAllRoomSeats();
         }
     }
 
     autoComputePXPerMFromRoom(room: SpatialAudioRoom) {
         if (!room) {
+            console.warn(`Couldn't compute \`PXPerM\` - \`room\` is \`undefined\`!`);
             return;
         }
 

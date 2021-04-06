@@ -22,7 +22,6 @@ export class CanvasRenderer {
     mainCanvas: HTMLCanvasElement;
     ctx: CanvasRenderingContext2D;
     canvasOffsetPX: any;
-    myCurrentRoom: SpatialAudioRoom;
     cameraPositionNoOffsetM: Point3D;
     canvasRotationDegrees: number = 0;
 
@@ -47,32 +46,20 @@ export class CanvasRenderer {
     }
 
     updateCanvasParams() {
-        let myCurrentRoom = roomController.getRoomFromName(userDataController.myAvatar.myUserData.currentRoomName);
-
-        if (!myCurrentRoom) {
-            return;
-        }
-
         const myUserData = userDataController.myAvatar.myUserData;
-        if (!myUserData.positionCurrent) {
+        if (!(myUserData.positionCurrent && myUserData.orientationEulerCurrent)) {
             return;
         }
 
-        if (!myUserData.orientationEulerCurrent) {
-            return;
-        }
         this.canvasRotationDegrees = -1 * userDataController.myAvatar.myUserData.orientationEulerCurrent.yawDegrees;
-
-        this.myCurrentRoom = myCurrentRoom;
 
         let mainCanvas = this.mainCanvas;
         let pxPerM = physicsController.pxPerMCurrent;
-        
         let cameraOffsetYPX = mainCanvas.height * UI.MY_AVATAR_Y_SCREEN_CENTER_OFFSET_RATIO;
 
         this.canvasOffsetPX = {
-            x: (mainCanvas.width - this.myCurrentRoom.dimensions.x * pxPerM) / 2 + (-myUserData.positionCurrent.x + this.myCurrentRoom.dimensions.x / 2) * pxPerM,
-            y: (mainCanvas.height - this.myCurrentRoom.dimensions.z * pxPerM) / 2 + (-myUserData.positionCurrent.z + this.myCurrentRoom.dimensions.z / 2) * pxPerM + cameraOffsetYPX
+            x: (mainCanvas.width - roomController.lobby.dimensions.x * pxPerM) / 2 + (-myUserData.positionCurrent.x + roomController.lobby.dimensions.x / 2) * pxPerM,
+            y: (mainCanvas.height - roomController.lobby.dimensions.z * pxPerM) / 2 + (-myUserData.positionCurrent.z + roomController.lobby.dimensions.z / 2) * pxPerM + cameraOffsetYPX
         };
     }
 
@@ -360,10 +347,6 @@ export class CanvasRenderer {
 
         this.updateCanvasParams();
         this.computeCameraPosition();
-
-        if (!this.myCurrentRoom) {
-            return;
-        }
 
         this.translateAndRotateCanvas();
         

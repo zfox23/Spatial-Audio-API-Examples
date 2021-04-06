@@ -1,6 +1,7 @@
 import { OrientationEuler3D, Point3D } from "hifi-spatial-audio";
 import { userDataController, connectionController, roomController, physicsController, pathsController } from "..";
-import { DataToTransmitToHiFi } from "../utilities/Utilities";
+import { Path, Waypoint } from "../ai/PathsController";
+import { DataToTransmitToHiFi, Utilities } from "../utilities/Utilities";
 
 declare var HIFI_PROVIDED_USER_ID: string;
 
@@ -93,7 +94,8 @@ class MyAvatar {
     }
 
     moveToNewSeat(targetSeatPosition: Point3D, targetSeatYawOrientationDegrees: number) {
-        if (pathsController.currentPath || !userDataController.myAvatar) {
+        if (!userDataController.myAvatar) {
+            console.warn(`Can't move to new seat - \`userDataController.myAvatar\` is falsey!`);
             return;
         }
 
@@ -120,36 +122,47 @@ class MyAvatar {
 
             dataToTransmit.orientationEuler = myUserData.orientationEulerCurrent;
         }
-        if (dataToTransmit.position || dataToTransmit.orientationEuler) {
+
+        let shouldTransmit = dataToTransmit.position || dataToTransmit.orientationEuler;
+
+        if (shouldTransmit) {
             let hifiCommunicator = connectionController.hifiCommunicator;
             if (hifiCommunicator) {
                 hifiCommunicator.updateUserDataAndTransmit(dataToTransmit);
+            } else {
+                console.warn(`\`moveToNewSeat()\`: Couldn't transmit user data!`);
             }
         }
+        
+        let currentRoom = roomController.getRoomFromPoint3DInsideBoundaries(myUserData.positionCurrent);
+        let targetRoom = roomController.getRoomFromPoint3DOnCircle(targetSeatPosition);
 
-        if (dataToTransmit.position || dataToTransmit.orientationEuler) {
-            physicsController.autoComputePXPerMFromRoom(roomController.getRoomFromPoint3DInsideBoundaries(targetSeatPosition));
-            roomController.updateAllRoomSeats();
-            return;
+        if (shouldTransmit || currentRoom !== targetRoom) {
+            physicsController.autoComputePXPerMFromRoom(targetRoom);
         }
 
-        if (!myUserData.positionStart) {
-            myUserData.positionStart = new Point3D();
-        }
-        Object.assign(myUserData.positionStart, myUserData.positionCurrent);
-        if (!myUserData.positionTarget) {
-            myUserData.positionTarget = new Point3D();
-        }
-        Object.assign(myUserData.positionTarget, targetSeatPosition);
+        if (!shouldTransmit) {
+            if (pathsController.currentPath) {
+                pathsController.resetCurrentPath();
+            }
 
-        if (!myUserData.orientationEulerStart) {
-            myUserData.orientationEulerStart = new OrientationEuler3D();
+            let transitionCircleCenter;
+            if (currentRoom === targetRoom) {
+                transitionCircleCenter = new Point3D({x: currentRoom.center.x, z: currentRoom.center.z});
+            } 
+
+            let newPath = new Path();
+            newPath.pathWaypoints.push(new Waypoint({
+                positionStart: new Point3D({x: myUserData.positionCurrent.x, z: myUserData.positionCurrent.z}),
+                positionTarget: new Point3D({x: targetSeatPosition.x, z: targetSeatPosition.z}),
+                positionCircleCenter: transitionCircleCenter,
+                orientationEulerStart: new OrientationEuler3D({yawDegrees: myUserData.orientationEulerCurrent.yawDegrees}),
+                orientationEulerTarget: new OrientationEuler3D({yawDegrees: targetSeatYawOrientationDegrees}),
+                durationMS: 2000,
+                easingFunction: Utilities.easeLinear
+            }));
+            pathsController.setCurrentPath(newPath);
         }
-        Object.assign(myUserData.orientationEulerStart, myUserData.orientationEulerCurrent);
-        if (!myUserData.orientationEulerTarget) {
-            myUserData.orientationEulerTarget = new OrientationEuler3D();
-        }
-        myUserData.orientationEulerTarget.yawDegrees = targetSeatYawOrientationDegrees;
     }
 
     onMyDisplayNameChanged(newDisplayName?: string) {
