@@ -73,6 +73,7 @@ export class WebSocketConnectionController {
                         agcEnabled,
                         hiFiGainSliderValue,
                         volumeThreshold,
+                        tempData: {}
                     };
                     localUserData.hiFiGain = uiController.hiFiGainFromSliderValue(localUserData.hiFiGainSliderValue);
                     userDataController.allOtherUserData.push(localUserData);

@@ -1,19 +1,20 @@
 import { OrientationEuler3D, Point3D } from "hifi-spatial-audio";
-import { connectionController, pathsController, userDataController } from "..";
-import { DataToTransmitToHiFi } from "../userData/UserDataController";
+import { pathsController, userDataController } from "..";
 import { Utilities } from "../utilities/Utilities";
 
 export class Waypoint {
     positionStart: Point3D;
     positionTarget: Point3D;
+    positionCircleCenter?: Point3D;
     orientationEulerStart: OrientationEuler3D;
     orientationEulerTarget: OrientationEuler3D;
     durationMS: number;
-    easingFunction: (progressFraction: number) => number;
+    easingFunction?: (progressFraction: number) => number;
 
-    constructor({positionStart, positionTarget, orientationEulerStart, orientationEulerTarget, durationMS, easingFunction = Utilities.easeInOutQuart}: {positionStart: Point3D, positionTarget: Point3D, orientationEulerStart: OrientationEuler3D, orientationEulerTarget: OrientationEuler3D, durationMS: number, easingFunction?: (progressFraction: number) => number}) {
+    constructor({positionStart, positionTarget, positionCircleCenter, orientationEulerStart, orientationEulerTarget, durationMS, easingFunction = Utilities.easeInOutQuart}: {positionStart: Point3D, positionTarget: Point3D, positionCircleCenter?: Point3D, orientationEulerStart: OrientationEuler3D, orientationEulerTarget: OrientationEuler3D, durationMS: number, easingFunction?: (progressFraction: number) => number}) {
         this.positionStart = positionStart;
         this.positionTarget = positionTarget;
+        this.positionCircleCenter = positionCircleCenter;
         this.orientationEulerStart = orientationEulerStart;
         this.orientationEulerTarget = orientationEulerTarget;
         this.durationMS = durationMS;
@@ -38,20 +39,8 @@ export class Path {
             this.currentWaypointIndex = 0;
         } else {
             pathsController.resetCurrentPath();
-        }
-
-
-        let hifiCommunicator = connectionController.hifiCommunicator;
-        if (!hifiCommunicator) {
             return;
         }
-
-        let dataToTransmit: DataToTransmitToHiFi = {};
-        
-        dataToTransmit.position = this.pathWaypoints[this.currentWaypointIndex].positionTarget;
-        dataToTransmit.orientationEuler = this.pathWaypoints[this.currentWaypointIndex].orientationEulerTarget;
-
-        hifiCommunicator.updateUserDataAndTransmit(dataToTransmit);
     }
 }
 

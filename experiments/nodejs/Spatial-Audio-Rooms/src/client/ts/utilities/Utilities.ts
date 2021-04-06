@@ -1,5 +1,10 @@
-import { Point3D } from "hifi-spatial-audio";
+import { Point3D, OrientationEuler3D } from "hifi-spatial-audio";
 import { physicsController, uiController } from "..";
+
+export interface DataToTransmitToHiFi {
+    position?: Point3D;
+    orientationEuler?: OrientationEuler3D;
+}
 
 export interface CanvasPX {
     x: number;

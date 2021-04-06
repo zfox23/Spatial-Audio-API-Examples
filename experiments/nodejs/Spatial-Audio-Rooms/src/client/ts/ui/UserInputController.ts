@@ -4,7 +4,7 @@ import { UserData } from "../userData/UserDataController";
 import { Utilities } from "../utilities/Utilities";
 import { Seat } from "../ui/RoomController";
 import { Path, Waypoint } from "../ai/PathsController";
-import { Point3D } from "hifi-spatial-audio";
+import { OrientationEuler3D, Point3D } from "hifi-spatial-audio";
 
 export class UserInputController {
     mainCanvas: HTMLCanvasElement;
@@ -18,7 +18,6 @@ export class UserInputController {
     hoveredUserData: UserData;
     hoveredSeat: Seat;
     lastOnWheelTimestamp: number;
-    onWheelTimestampDeltaMS: number;
 
     constructor() {
         this.keyboardEventCache = [];
@@ -88,27 +87,14 @@ export class UserInputController {
                 } else {
                     let newPath = new Path();
                     newPath.pathWaypoints.push(new Waypoint({
-                        positionStart: userDataController.myAvatar.myUserData.positionCurrent,
-                        positionTarget: new Point3D({x: userDataController.myAvatar.myUserData.positionCurrent.x + 5, z: userDataController.myAvatar.myUserData.positionCurrent.z}),
-                        orientationEulerStart: userDataController.myAvatar.myUserData.orientationEulerCurrent,
-                        orientationEulerTarget: userDataController.myAvatar.myUserData.orientationEulerCurrent,
-                        durationMS: 1000
-                    }));
-                    newPath.pathWaypoints.push(new Waypoint({
-                        positionStart: userDataController.myAvatar.myUserData.positionCurrent,
+                        positionStart: new Point3D({x: userDataController.myAvatar.myUserData.positionCurrent.x, z: userDataController.myAvatar.myUserData.positionCurrent.z}),
                         positionTarget: new Point3D({x: userDataController.myAvatar.myUserData.positionCurrent.x + 5, z: userDataController.myAvatar.myUserData.positionCurrent.z + 5}),
+                        positionCircleCenter: new Point3D({x: userDataController.myAvatar.myUserData.positionCurrent.x + 2.5, z: userDataController.myAvatar.myUserData.positionCurrent.z + 2.5}),
                         orientationEulerStart: userDataController.myAvatar.myUserData.orientationEulerCurrent,
                         orientationEulerTarget: userDataController.myAvatar.myUserData.orientationEulerCurrent,
-                        durationMS: 1000
+                        durationMS: 2000,
+                        easingFunction: Utilities.easeLinear
                     }));
-                    newPath.pathWaypoints.push(new Waypoint({
-                        positionStart: userDataController.myAvatar.myUserData.positionCurrent,
-                        positionTarget: new Point3D({x: userDataController.myAvatar.myUserData.positionCurrent.x, z: userDataController.myAvatar.myUserData.positionCurrent.z}),
-                        orientationEulerStart: userDataController.myAvatar.myUserData.orientationEulerCurrent,
-                        orientationEulerTarget: userDataController.myAvatar.myUserData.orientationEulerCurrent,
-                        durationMS: 1000
-                    }));
-                    newPath.repeats = true;
                     pathsController.setCurrentPath(newPath);
                 }
                 break;
@@ -237,7 +223,7 @@ export class UserInputController {
             this.hoveredUserData = undefined;
         } else if (this.hoveredSeat && !pathsController.currentPath) {
             console.log(`User clicked on a new seat at ${JSON.stringify(this.hoveredSeat.position)}! New yaw orientation: ${JSON.stringify(this.hoveredSeat.orientation)} degrees.`);
-            userDataController.myAvatar.updateMyPositionAndOrientation(this.hoveredSeat.position, this.hoveredSeat.orientation.yawDegrees);
+            userDataController.myAvatar.setTargetPositionAndOrientation(this.hoveredSeat.position, this.hoveredSeat.orientation.yawDegrees);
             this.hoveredSeat = undefined;
         }
 
@@ -281,7 +267,11 @@ export class UserInputController {
             if (userDataController.myAvatar && userDataController.myAvatar.myUserData.orientationEulerCurrent) {
                 let newYawDegrees = userDataController.myAvatar.myUserData.orientationEulerCurrent.yawDegrees - deltaDistance * CONTROLS.RIGHT_CLICK_ROTATION_SENSITIVITY;
                 if (!isNaN(newYawDegrees)) {
-                    userDataController.myAvatar.updateMyPositionAndOrientation(undefined, newYawDegrees, true);
+                    userDataController.myAvatar.myUserData.orientationEulerCurrent.yawDegrees = newYawDegrees;
+                    let hifiCommunicator = connectionController.hifiCommunicator;
+                    if (hifiCommunicator) {
+                        hifiCommunicator.updateUserDataAndTransmit({orientationEuler: new OrientationEuler3D({yawDegrees: newYawDegrees})});
+                    }
                 }
             }
         } else {
@@ -352,7 +342,7 @@ export class UserInputController {
         e.preventDefault();
     
         if (this.lastOnWheelTimestamp) {
-            this.onWheelTimestampDeltaMS = Date.now() - this.lastOnWheelTimestamp;
+            physicsController.onWheelTimestampDeltaMS = Date.now() - this.lastOnWheelTimestamp;
         }
     
         let deltaY;

@@ -2,7 +2,7 @@ import { OrientationEuler3D, Point3D } from "hifi-spatial-audio";
 import { connectionController, pathsController, roomController, uiController, userDataController, userInputController } from "..";
 import { AVATAR, PHYSICS } from "../constants/constants";
 import { SpatialAudioRoom } from "../ui/RoomController";
-import { Utilities } from "../utilities/Utilities";
+import { Utilities, DataToTransmitToHiFi } from "../utilities/Utilities";
 
 export class PhysicsController {
     mainCanvas: HTMLCanvasElement;
@@ -11,6 +11,8 @@ export class PhysicsController {
     pxPerMStart: number;
     pxPerMCurrent: number;
     pxPerMTarget: number;
+
+    onWheelTimestampDeltaMS: number;
 
     smoothZoomDurationMS: number = PHYSICS.SMOOTH_ZOOM_DURATION_NORMAL_MS;
     smoothZoomStartTimestamp: number;
@@ -34,16 +36,20 @@ export class PhysicsController {
         if (!hifiCommunicator || !userDataController.myAvatar) {
             return;
         }
+        
+        let mustTransmit = false;
+        let dataToTransmit: DataToTransmitToHiFi = {};
 
         let otherAvatarMoved = false;
         let allUserData = userDataController.allOtherUserData.concat(userDataController.myAvatar.myUserData);
         allUserData.forEach((userData) => {
             let isMine = userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash;
-            let easingFunction = Utilities.easeOutQuad;
-            let motionDurationMS = PHYSICS.POSITION_TWEENING_DURATION_MS;
+            let easingFunction = isMine ? Utilities.easeOutQuad : Utilities.easeLinear;
+            let motionDurationMS = isMine ? PHYSICS.POSITION_TWEENING_DURATION_MS : PHYSICS.PHYSICS_TICKRATE_MS;
 
             if (isMine && pathsController.currentPath) {
                 let waypoint = pathsController.currentPath.pathWaypoints[pathsController.currentPath.currentWaypointIndex];
+                userData.positionCircleCenter = waypoint.positionCircleCenter;
                 userData.positionStart = waypoint.positionStart;
                 userData.positionTarget = waypoint.positionTarget;
                 userData.orientationEulerStart = waypoint.orientationEulerStart;
@@ -82,6 +88,7 @@ export class PhysicsController {
                         otherAvatarMoved = true;
                     }
                 }
+                userData.positionCircleCenter = undefined;
                 userData.positionStart = undefined;
                 userData.positionTarget = undefined;
                 
@@ -95,16 +102,42 @@ export class PhysicsController {
                 userData.orientationEulerTarget = undefined;
 
                 userData.motionStartTimestamp = undefined;
+                userData.tempData.circleRadius = undefined;
+                userData.tempData.startTheta = undefined;
+                userData.tempData.targetTheta = undefined;
 
                 if (isMine && pathsController.currentPath) {
                     pathsController.currentPath.incrementWaypointIndex();
                 }
+                
+                if (isMine) {
+                    dataToTransmit.position = userData.positionCurrent;
+                    dataToTransmit.orientationEuler = userData.orientationEulerCurrent;
+                    mustTransmit = true;
+                }
             } else if (userData.motionStartTimestamp) {
                 if (userData.positionStart && userData.positionTarget) {
-                    let newPosition = new Point3D({
-                        x: Utilities.linearScale(easingFunction((timestamp - userData.motionStartTimestamp) / motionDurationMS), 0, 1, userData.positionStart.x, userData.positionTarget.x),
-                        z: Utilities.linearScale(easingFunction((timestamp - userData.motionStartTimestamp) / motionDurationMS), 0, 1, userData.positionStart.z, userData.positionTarget.z),
-                    });
+                    let newPosition;
+                    if (userData.positionCircleCenter) {
+                        if (!userData.tempData.circleRadius) {
+                            userData.tempData.circleRadius = Utilities.getDistanceBetween2DPoints(userData.positionCircleCenter.x, userData.positionCircleCenter.z, userData.positionStart.x, userData.positionStart.z);
+                        }
+                        if (!userData.tempData.startTheta) {
+                            userData.tempData.startTheta = Math.atan2(userData.positionStart.x - userData.positionCircleCenter.x, userData.positionStart.z - userData.positionCircleCenter.z);
+                        }
+                        if (!userData.tempData.targetTheta) {
+                            userData.tempData.targetTheta = Math.atan2(userData.positionTarget.x - userData.positionCircleCenter.x, userData.positionTarget.z - userData.positionCircleCenter.z);
+                        }
+                        newPosition = new Point3D({
+                            "x": userData.tempData.circleRadius * Math.cos(Utilities.linearScale(easingFunction((timestamp - userData.motionStartTimestamp) / motionDurationMS), 0, 1, userData.tempData.startTheta, userData.tempData.targetTheta)) + userData.positionCircleCenter.x,
+                            "z": userData.tempData.circleRadius * Math.sin(Utilities.linearScale(easingFunction((timestamp - userData.motionStartTimestamp) / motionDurationMS), 0, 1, userData.tempData.startTheta, userData.tempData.targetTheta)) + userData.positionCircleCenter.z
+                        });
+                    } else {
+                        newPosition = new Point3D({
+                            x: Utilities.linearScale(easingFunction((timestamp - userData.motionStartTimestamp) / motionDurationMS), 0, 1, userData.positionStart.x, userData.positionTarget.x),
+                            z: Utilities.linearScale(easingFunction((timestamp - userData.motionStartTimestamp) / motionDurationMS), 0, 1, userData.positionStart.z, userData.positionTarget.z),
+                        });
+                    }
                     if (!userData.positionCurrent) {
                         userData.positionCurrent = new Point3D();
                     }
@@ -112,18 +145,42 @@ export class PhysicsController {
 
                     if (!isMine) {
                         otherAvatarMoved = true;
+                    } else {
+                        dataToTransmit.position = userData.positionCurrent;
+                        mustTransmit = true;
                     }
                 }
 
                 if (userData.orientationEulerStart && userData.orientationEulerTarget) {
+                    let startYawDegrees = userData.orientationEulerStart.yawDegrees;
+                    let targetYawDegrees = userData.orientationEulerTarget.yawDegrees;
+
+                    // Get start and target angles within 180 degrees of each other to prevent
+                    // over-rotation during animation.
+                    while (targetYawDegrees - startYawDegrees > 180) {
+                        startYawDegrees += 360;
+                    }
+                    while (targetYawDegrees - startYawDegrees < -180) {
+                        startYawDegrees -= 360;
+                    }
+
                     let newOrientationEuler = new OrientationEuler3D({
-                        yawDegrees: Utilities.linearScale(easingFunction((timestamp - userData.motionStartTimestamp) / motionDurationMS), 0, 1, userData.orientationEulerStart.yawDegrees, userData.orientationEulerTarget.yawDegrees),
+                        yawDegrees: Utilities.linearScale(easingFunction((timestamp - userData.motionStartTimestamp) / motionDurationMS), 0, 1, startYawDegrees, targetYawDegrees),
                     });
                     if (!userData.orientationEulerCurrent) {
                         userData.orientationEulerCurrent = new OrientationEuler3D();
                     }
                     Object.assign(userData.orientationEulerCurrent, newOrientationEuler);
+
+                    if (isMine) {
+                        dataToTransmit.orientationEuler = userData.orientationEulerCurrent;
+                        mustTransmit = true;
+                    }
                 }
+            }
+
+            if (isMine && mustTransmit) {
+                hifiCommunicator.updateUserDataAndTransmit(dataToTransmit);
             }
         });
 
@@ -155,7 +212,7 @@ export class PhysicsController {
         }
 
         let slam = false;
-        if ((!userInputController.onWheelTimestampDeltaMS || userInputController.onWheelTimestampDeltaMS >= PHYSICS.SMOOTH_ZOOM_DURATION_NORMAL_MS) &&
+        if ((!this.onWheelTimestampDeltaMS || this.onWheelTimestampDeltaMS >= PHYSICS.SMOOTH_ZOOM_DURATION_NORMAL_MS) &&
             this.pxPerMTarget &&
             this.pxPerMStart &&
             (this.pxPerMTarget !== this.pxPerMStart)) {
@@ -168,10 +225,9 @@ export class PhysicsController {
             this.pxPerMCurrent = this.pxPerMTarget;
             this.pxPerMTarget = undefined;
             this.pxPerMStart = undefined;
+            this.onWheelTimestampDeltaMS = undefined;
             this.smoothZoomStartTimestamp = undefined;
             this.smoothZoomDurationMS = PHYSICS.SMOOTH_ZOOM_DURATION_NORMAL_MS;
-
-            userInputController.onWheelTimestampDeltaMS = undefined;
         }
 
         uiController.canvasRenderer.updateCanvasParams();

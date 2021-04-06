@@ -1,7 +1,14 @@
 import { OrientationEuler3D, Point3D } from "hifi-spatial-audio";
 import { userDataController, connectionController, roomController, physicsController, pathsController } from "..";
+import { DataToTransmitToHiFi } from "../utilities/Utilities";
 
 declare var HIFI_PROVIDED_USER_ID: string;
+
+interface TempUserData {
+    circleRadius?: number;
+    startTheta?: number;
+    targetTheta?: number;
+}
 
 export interface UserData {
     visitIDHash?: string;
@@ -10,6 +17,7 @@ export interface UserData {
     displayName?: string;
     colorHex?: string;
     motionStartTimestamp?: number;
+    positionCircleCenter?: Point3D;
     positionStart?: Point3D;
     positionCurrent?: Point3D;
     positionTarget?: Point3D;
@@ -24,11 +32,7 @@ export interface UserData {
     isMuted?: boolean;
     echoCancellationEnabled?: boolean;
     agcEnabled?: boolean;
-}
-
-export interface DataToTransmitToHiFi {
-    position?: Point3D;
-    orientationEuler?: OrientationEuler3D;
+    tempData?: TempUserData;
 }
 
 class MyAvatar {
@@ -42,6 +46,7 @@ class MyAvatar {
             displayName: undefined,
             colorHex: undefined,
             motionStartTimestamp: undefined,
+            positionCircleCenter: undefined,
             positionStart: undefined,
             positionCurrent: undefined,
             positionTarget: undefined,
@@ -56,6 +61,7 @@ class MyAvatar {
             isMuted: false,
             echoCancellationEnabled: false,
             agcEnabled: false,
+            tempData: {},
         };
 
         if (localStorage.getItem('myDisplayName')) {
@@ -85,10 +91,10 @@ class MyAvatar {
 
         let newSeat = currentRoom.findOpenSpotForSelf();
         console.log(`Found an open spot in room ${currentRoom.name} at ${JSON.stringify(newSeat.position)} orientation ${JSON.stringify(newSeat.orientation)}.`);
-        this.updateMyPositionAndOrientation(newSeat.position, newSeat.orientation.yawDegrees, true);
+        this.setTargetPositionAndOrientation(newSeat.position, newSeat.orientation.yawDegrees);
     }
 
-    updateMyPositionAndOrientation(targetPosition?: Point3D, targetYawOrientationDegrees?: number, forceOrientation: boolean = false) {
+    setTargetPositionAndOrientation(targetPosition?: Point3D, targetYawOrientationDegrees?: number) {
         if (pathsController.currentPath) {
             return;
         }
@@ -112,6 +118,7 @@ class MyAvatar {
                 Object.assign(myUserData.positionCurrent, targetPosition);
                 myUserData.positionTarget = undefined;
                 
+                mustTransmit = true;
                 dataToTransmit.position = myUserData.positionCurrent;
             } else {
                 if (!myUserData.positionStart) {
@@ -123,18 +130,14 @@ class MyAvatar {
                     myUserData.positionTarget = new Point3D();
                 }
                 Object.assign(myUserData.positionTarget, targetPosition);
-                
-                dataToTransmit.position = myUserData.positionTarget;
             }
-
-            mustTransmit = true;
 
             let targetRoom = roomController.getRoomFromPoint3DInsideBoundaries(targetPosition);
 
             if (targetRoom) {
                 this.myUserData.currentRoomName = targetRoom.name;
             } else {
-                console.error("\`updateMyPositionAndOrientation()\`: Couldn't determine current room!");
+                console.error("\`setTargetPositionAndOrientation()\`: Couldn't determine current room!");
             }
 
             roomController.updateAllRoomSeats();
@@ -144,19 +147,14 @@ class MyAvatar {
         if (typeof (targetYawOrientationDegrees) === "number") {
             myUserData.motionStartTimestamp = undefined;
 
-            if (forceOrientation || !myUserData.orientationEulerCurrent) {
-                if (!myUserData.orientationEulerCurrent) {
-                    myUserData.orientationEulerCurrent = new OrientationEuler3D();
-                }
-                
+            if (!myUserData.orientationEulerCurrent) {
                 myUserData.orientationEulerStart = undefined;
+                myUserData.orientationEulerCurrent = new OrientationEuler3D();
                 myUserData.orientationEulerCurrent.yawDegrees = targetYawOrientationDegrees;
                 myUserData.orientationEulerTarget = undefined;
 
-                if (forceOrientation) {
-                    dataToTransmit.orientationEuler = myUserData.orientationEulerCurrent;
-                    mustTransmit = true;
-                }
+                mustTransmit = true;
+                dataToTransmit.orientationEuler = myUserData.orientationEulerCurrent;
             } else if (myUserData.orientationEulerCurrent) {
                 if (!myUserData.orientationEulerStart) {
                     myUserData.orientationEulerStart = new OrientationEuler3D();
@@ -166,10 +164,8 @@ class MyAvatar {
                 if (!myUserData.orientationEulerTarget) {
                     myUserData.orientationEulerTarget = new OrientationEuler3D();
                 }
+
                 myUserData.orientationEulerTarget.yawDegrees = targetYawOrientationDegrees;
-                
-                dataToTransmit.orientationEuler = myUserData.orientationEulerTarget;
-                mustTransmit = true;
             }
         }
 
