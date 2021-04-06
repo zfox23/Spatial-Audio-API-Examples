@@ -1,5 +1,5 @@
 import { OrientationEuler3D, Point3D } from "hifi-spatial-audio";
-import { connectionController, roomController, uiController, userDataController, userInputController } from "..";
+import { connectionController, pathsController, roomController, uiController, userDataController, userInputController } from "..";
 import { AVATAR, PHYSICS } from "../constants/constants";
 import { SpatialAudioRoom } from "../ui/RoomController";
 import { Utilities } from "../utilities/Utilities";
@@ -39,67 +39,89 @@ export class PhysicsController {
         let allUserData = userDataController.allOtherUserData.concat(userDataController.myAvatar.myUserData);
         allUserData.forEach((userData) => {
             let isMine = userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash;
-            const easingFunction = Utilities.easeOutQuad;
-	    
-            // Position logic
-            if (!userData.positionCurrent) {
-                userData.positionCurrent = new Point3D();
-            }
-            if (userData.positionTarget && !userData.motionStartTimestamp) {
-                userData.motionStartTimestamp = timestamp;
+            let easingFunction = Utilities.easeOutQuad;
+            let motionDurationMS = PHYSICS.POSITION_TWEENING_DURATION_MS;
 
-                if (isMine) {
-                    this.smoothZoomDurationMS = PHYSICS.POSITION_TWEENING_DURATION_MS;
+            if (isMine && pathsController.currentPath) {
+                let waypoint = pathsController.currentPath.pathWaypoints[pathsController.currentPath.currentWaypointIndex];
+                userData.positionStart = waypoint.positionStart;
+                userData.positionTarget = waypoint.positionTarget;
+                userData.orientationEulerStart = waypoint.orientationEulerStart;
+                userData.orientationEulerTarget = waypoint.orientationEulerTarget;
+                motionDurationMS = waypoint.durationMS;
+                easingFunction = waypoint.easingFunction;
+
+                if (pathsController.currentPath.currentWaypointIndex === 0) {
+                    if (!userData.positionCurrent) {
+                        userData.positionCurrent = new Point3D();
+                    }
+                    Object.assign(userData.positionCurrent, userData.positionStart);
+                    if (!userData.orientationEulerCurrent) {
+                        userData.orientationEulerCurrent = new OrientationEuler3D();
+                    }
+                    Object.assign(userData.orientationEulerCurrent, userData.orientationEulerStart);
                 }
             }
-            if (userData.motionStartTimestamp && (timestamp - userData.motionStartTimestamp) > PHYSICS.POSITION_TWEENING_DURATION_MS) {
+
+            if ((userData.positionTarget || userData.orientationEulerTarget) && !userData.motionStartTimestamp) {
+                userData.motionStartTimestamp = timestamp;
+
+                if (isMine && !pathsController.currentPath && userData.positionTarget) {
+                    this.smoothZoomDurationMS = motionDurationMS;
+                }
+            }
+
+            if (userData.motionStartTimestamp && (timestamp - userData.motionStartTimestamp) > motionDurationMS) {
                 if (userData.positionTarget) {
+                    if (!userData.positionCurrent) {
+                        userData.positionCurrent = new Point3D();
+                    }
                     Object.assign(userData.positionCurrent, userData.positionTarget);
 
                     if (!isMine) {
                         otherAvatarMoved = true;
                     }
                 }
-                
                 userData.positionStart = undefined;
                 userData.positionTarget = undefined;
+                
+                if (userData.orientationEulerTarget) {
+                    if (!userData.orientationEulerCurrent) {
+                        userData.orientationEulerCurrent = new OrientationEuler3D();
+                    }
+                    Object.assign(userData.orientationEulerCurrent, userData.orientationEulerTarget);
+                }
+                userData.orientationEulerStart = undefined;
+                userData.orientationEulerTarget = undefined;
 
                 userData.motionStartTimestamp = undefined;
+
+                if (isMine && pathsController.currentPath) {
+                    pathsController.currentPath.incrementWaypointIndex();
+                }
             } else if (userData.motionStartTimestamp) {
                 if (userData.positionStart && userData.positionTarget) {
                     let newPosition = new Point3D({
-                        x: Utilities.linearScale(easingFunction((timestamp - userData.motionStartTimestamp) / PHYSICS.POSITION_TWEENING_DURATION_MS), 0, 1, userData.positionStart.x, userData.positionTarget.x),
-                        z: Utilities.linearScale(easingFunction((timestamp - userData.motionStartTimestamp) / PHYSICS.POSITION_TWEENING_DURATION_MS), 0, 1, userData.positionStart.z, userData.positionTarget.z),
+                        x: Utilities.linearScale(easingFunction((timestamp - userData.motionStartTimestamp) / motionDurationMS), 0, 1, userData.positionStart.x, userData.positionTarget.x),
+                        z: Utilities.linearScale(easingFunction((timestamp - userData.motionStartTimestamp) / motionDurationMS), 0, 1, userData.positionStart.z, userData.positionTarget.z),
                     });
+                    if (!userData.positionCurrent) {
+                        userData.positionCurrent = new Point3D();
+                    }
                     Object.assign(userData.positionCurrent, newPosition);
 
                     if (!isMine) {
                         otherAvatarMoved = true;
                     }
                 }
-            }
 
-            // Orientation logic
-            if (!userData.orientationEulerCurrent) {
-                userData.orientationEulerCurrent = new OrientationEuler3D();
-            }
-            if (userData.orientationEulerTarget && !userData.rotationStartTimestamp) {
-                userData.rotationStartTimestamp = timestamp;
-            }
-            if (userData.rotationStartTimestamp && (timestamp - userData.rotationStartTimestamp) > PHYSICS.POSITION_TWEENING_DURATION_MS) {
-                if (userData.orientationEulerTarget) {
-                    Object.assign(userData.orientationEulerCurrent, userData.orientationEulerTarget);
-                }
-                
-                userData.orientationEulerStart = undefined;
-                userData.orientationEulerTarget = undefined;
-
-                userData.rotationStartTimestamp = undefined;
-            } else if (userData.rotationStartTimestamp) {                
                 if (userData.orientationEulerStart && userData.orientationEulerTarget) {
                     let newOrientationEuler = new OrientationEuler3D({
-                        yawDegrees: Utilities.linearScale(easingFunction((timestamp - userData.rotationStartTimestamp) / PHYSICS.POSITION_TWEENING_DURATION_MS), 0, 1, userData.orientationEulerStart.yawDegrees, userData.orientationEulerTarget.yawDegrees),
+                        yawDegrees: Utilities.linearScale(easingFunction((timestamp - userData.motionStartTimestamp) / motionDurationMS), 0, 1, userData.orientationEulerStart.yawDegrees, userData.orientationEulerTarget.yawDegrees),
                     });
+                    if (!userData.orientationEulerCurrent) {
+                        userData.orientationEulerCurrent = new OrientationEuler3D();
+                    }
                     Object.assign(userData.orientationEulerCurrent, newOrientationEuler);
                 }
             }
@@ -115,8 +137,9 @@ export class PhysicsController {
             return;
         }
 
-        this.pxPerMTarget = Math.min(this.mainCanvas.width, this.mainCanvas.height) / (2 * room.seatingRadiusM + 3 * AVATAR.RADIUS_M);
         this.smoothZoomDurationMS = PHYSICS.SMOOTH_ZOOM_DURATION_SWITCH_ROOMS_MS;
+        this.smoothZoomStartTimestamp = undefined;
+        this.pxPerMTarget = Math.min(this.mainCanvas.width, this.mainCanvas.height) / (2 * room.seatingRadiusM + 3 * AVATAR.RADIUS_M);
     }
 
     computePXPerM(timestamp: number) {
@@ -131,25 +154,24 @@ export class PhysicsController {
             this.pxPerMStart = this.pxPerMCurrent;
         }
 
+        let slam = false;
         if ((!userInputController.onWheelTimestampDeltaMS || userInputController.onWheelTimestampDeltaMS >= PHYSICS.SMOOTH_ZOOM_DURATION_NORMAL_MS) &&
             this.pxPerMTarget &&
             this.pxPerMStart &&
             (this.pxPerMTarget !== this.pxPerMStart)) {
             this.pxPerMCurrent = Utilities.linearScale(Utilities.easeOutExponential((timestamp - this.smoothZoomStartTimestamp) / this.smoothZoomDurationMS), 0, 1, this.pxPerMStart, this.pxPerMTarget);
         } else {
-            this.pxPerMCurrent = this.pxPerMTarget;
-            this.pxPerMTarget = undefined;
-            this.pxPerMStart = undefined;
-            this.smoothZoomStartTimestamp = undefined;
-            this.smoothZoomDurationMS = PHYSICS.SMOOTH_ZOOM_DURATION_NORMAL_MS;
+            slam = true;
         }
 
-        if (timestamp > (this.smoothZoomStartTimestamp + this.smoothZoomDurationMS)) {
+        if (slam || (this.smoothZoomStartTimestamp && (timestamp > (this.smoothZoomStartTimestamp + this.smoothZoomDurationMS)))) {
             this.pxPerMCurrent = this.pxPerMTarget;
             this.pxPerMTarget = undefined;
             this.pxPerMStart = undefined;
             this.smoothZoomStartTimestamp = undefined;
             this.smoothZoomDurationMS = PHYSICS.SMOOTH_ZOOM_DURATION_NORMAL_MS;
+
+            userInputController.onWheelTimestampDeltaMS = undefined;
         }
 
         uiController.canvasRenderer.updateCanvasParams();

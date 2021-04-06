@@ -1,8 +1,10 @@
-import { connectionController, physicsController, roomController, uiController, userDataController } from "..";
+import { connectionController, pathsController, physicsController, roomController, uiController, userDataController } from "..";
 import { AVATAR, ROOM, CONTROLS, PHYSICS } from "../constants/constants";
 import { UserData } from "../userData/UserDataController";
 import { Utilities } from "../utilities/Utilities";
 import { Seat } from "../ui/RoomController";
+import { Path, Waypoint } from "../ai/PathsController";
+import { Point3D } from "hifi-spatial-audio";
 
 export class UserInputController {
     mainCanvas: HTMLCanvasElement;
@@ -78,6 +80,36 @@ export class UserInputController {
                 if (userDataController.myAvatar.myUserData.isMuted) {
                     this.wasMutedBeforePTT = true;
                     this.setInputMute(false);
+                }
+                break;
+            case CONTROLS.P_KEY_CODE:
+                if (pathsController.currentPath) {
+                    pathsController.resetCurrentPath();
+                } else {
+                    let newPath = new Path();
+                    newPath.pathWaypoints.push(new Waypoint({
+                        positionStart: userDataController.myAvatar.myUserData.positionCurrent,
+                        positionTarget: new Point3D({x: userDataController.myAvatar.myUserData.positionCurrent.x + 5, z: userDataController.myAvatar.myUserData.positionCurrent.z}),
+                        orientationEulerStart: userDataController.myAvatar.myUserData.orientationEulerCurrent,
+                        orientationEulerTarget: userDataController.myAvatar.myUserData.orientationEulerCurrent,
+                        durationMS: 1000
+                    }));
+                    newPath.pathWaypoints.push(new Waypoint({
+                        positionStart: userDataController.myAvatar.myUserData.positionCurrent,
+                        positionTarget: new Point3D({x: userDataController.myAvatar.myUserData.positionCurrent.x + 5, z: userDataController.myAvatar.myUserData.positionCurrent.z + 5}),
+                        orientationEulerStart: userDataController.myAvatar.myUserData.orientationEulerCurrent,
+                        orientationEulerTarget: userDataController.myAvatar.myUserData.orientationEulerCurrent,
+                        durationMS: 1000
+                    }));
+                    newPath.pathWaypoints.push(new Waypoint({
+                        positionStart: userDataController.myAvatar.myUserData.positionCurrent,
+                        positionTarget: new Point3D({x: userDataController.myAvatar.myUserData.positionCurrent.x, z: userDataController.myAvatar.myUserData.positionCurrent.z}),
+                        orientationEulerStart: userDataController.myAvatar.myUserData.orientationEulerCurrent,
+                        orientationEulerTarget: userDataController.myAvatar.myUserData.orientationEulerCurrent,
+                        durationMS: 1000
+                    }));
+                    newPath.repeats = true;
+                    pathsController.setCurrentPath(newPath);
                 }
                 break;
         }
@@ -203,7 +235,7 @@ export class UserInputController {
         if (this.hoveredUserData) {
             uiController.showAvatarContextMenu(this.hoveredUserData);
             this.hoveredUserData = undefined;
-        } else if (this.hoveredSeat) {
+        } else if (this.hoveredSeat && !pathsController.currentPath) {
             console.log(`User clicked on a new seat at ${JSON.stringify(this.hoveredSeat.position)}! New yaw orientation: ${JSON.stringify(this.hoveredSeat.orientation)} degrees.`);
             userDataController.myAvatar.updateMyPositionAndOrientation(this.hoveredSeat.position, this.hoveredSeat.orientation.yawDegrees);
             this.hoveredSeat = undefined;
@@ -241,7 +273,7 @@ export class UserInputController {
     
         let gesturePointPX = this.getGesturePointFromEvent(event);
         
-        if (event.buttons === 2 && this.rightClickStartPositionPX !== undefined) {
+        if (event.buttons === 2 && this.rightClickStartPositionPX !== undefined && !pathsController.currentPath) {
             let newDistance = gesturePointPX.x - this.rightClickStartPositionPX.x;
             let deltaDistance = newDistance - this.lastDistanceBetweenRightClickEvents;
             this.lastDistanceBetweenRightClickEvents = newDistance;
@@ -337,6 +369,7 @@ export class UserInputController {
         let scaleFactor = 1 + deltaY * CONTROLS.MOUSE_WHEEL_ZOOM_FACTOR;
 
         physicsController.smoothZoomDurationMS = PHYSICS.SMOOTH_ZOOM_DURATION_NORMAL_MS;
+        physicsController.smoothZoomStartTimestamp = undefined;
         physicsController.pxPerMTarget = physicsController.pxPerMCurrent * scaleFactor;
     
         this.lastOnWheelTimestamp = Date.now();

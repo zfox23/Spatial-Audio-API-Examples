@@ -1,5 +1,5 @@
 import { OrientationEuler3D, Point3D } from "hifi-spatial-audio";
-import { userDataController, connectionController, roomController, physicsController } from "..";
+import { userDataController, connectionController, roomController, physicsController, pathsController } from "..";
 
 declare var HIFI_PROVIDED_USER_ID: string;
 
@@ -10,7 +10,6 @@ export interface UserData {
     displayName?: string;
     colorHex?: string;
     motionStartTimestamp?: number;
-    rotationStartTimestamp?: number;
     positionStart?: Point3D;
     positionCurrent?: Point3D;
     positionTarget?: Point3D;
@@ -27,7 +26,7 @@ export interface UserData {
     agcEnabled?: boolean;
 }
 
-interface DataToTransmitToHiFi {
+export interface DataToTransmitToHiFi {
     position?: Point3D;
     orientationEuler?: OrientationEuler3D;
 }
@@ -46,7 +45,6 @@ class MyAvatar {
             positionStart: undefined,
             positionCurrent: undefined,
             positionTarget: undefined,
-            rotationStartTimestamp: undefined,
             orientationEulerStart: undefined,
             orientationEulerCurrent: undefined,
             orientationEulerTarget: undefined,
@@ -68,6 +66,10 @@ class MyAvatar {
     }
 
     positionSelfInRoom(roomName: string) {
+        if (pathsController.currentPath) {
+            return;
+        }
+
         this.myUserData.currentRoomName = roomName;
 
         let currentRoom = roomController.rooms.find((room) => {
@@ -83,10 +85,14 @@ class MyAvatar {
 
         let newSeat = currentRoom.findOpenSpotForSelf();
         console.log(`Found an open spot in room ${currentRoom.name} at ${JSON.stringify(newSeat.position)} orientation ${JSON.stringify(newSeat.orientation)}.`);
-        this.updateMyPositionAndOrientation(newSeat.position, newSeat.orientation.yawDegrees);
+        this.updateMyPositionAndOrientation(newSeat.position, newSeat.orientation.yawDegrees, true);
     }
 
     updateMyPositionAndOrientation(targetPosition?: Point3D, targetYawOrientationDegrees?: number, forceOrientation: boolean = false) {
+        if (pathsController.currentPath) {
+            return;
+        }
+
         let hifiCommunicator = connectionController.hifiCommunicator;
         if (!hifiCommunicator || !userDataController.myAvatar) {
             return;
@@ -136,7 +142,7 @@ class MyAvatar {
         }
 
         if (typeof (targetYawOrientationDegrees) === "number") {
-            myUserData.rotationStartTimestamp = undefined;
+            myUserData.motionStartTimestamp = undefined;
 
             if (forceOrientation || !myUserData.orientationEulerCurrent) {
                 if (!myUserData.orientationEulerCurrent) {

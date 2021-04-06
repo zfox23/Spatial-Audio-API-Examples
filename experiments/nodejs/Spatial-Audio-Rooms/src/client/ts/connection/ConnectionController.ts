@@ -240,7 +240,7 @@ export class ConnectionController {
                         Object.assign(currentLocalUserData.orientationEulerTarget, targetOrientation);
                     }
 
-                    currentLocalUserData.rotationStartTimestamp = undefined;
+                    currentLocalUserData.motionStartTimestamp = undefined;
                 }
 
                 if (typeof (currentDataFromServer.volumeDecibels) === "number") {

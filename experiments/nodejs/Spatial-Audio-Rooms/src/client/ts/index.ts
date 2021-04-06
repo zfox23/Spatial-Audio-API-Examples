@@ -1,4 +1,5 @@
 import '../css/main.scss';
+import { PathsController } from './ai/PathsController';
 import { ConnectionController } from './connection/ConnectionController';
 import { PhysicsController } from './physics/PhysicsController';
 import { RoomController } from './ui/RoomController';
@@ -14,3 +15,4 @@ export const uiController = new UIController();
 export const videoController = new VideoController();
 export const physicsController = new PhysicsController();
 export const userInputController = new UserInputController();
+export const pathsController = new PathsController();
