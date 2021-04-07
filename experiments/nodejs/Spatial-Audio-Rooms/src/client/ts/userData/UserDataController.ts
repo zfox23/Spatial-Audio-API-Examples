@@ -10,6 +10,7 @@ interface TempUserData {
     circleRadius?: number;
     startTheta?: number;
     targetTheta?: number;
+    willMoveClockwise?: boolean;
     scrimOpacityInterval?: NodeJS.Timer;
 }
 
@@ -152,6 +153,10 @@ class MyAvatar {
 
             let newPath = new Path();
             newPath.onActivated = () => {
+                if (myUserData.tempData.scrimOpacityInterval) {
+                    clearInterval(myUserData.tempData.scrimOpacityInterval);
+                }
+
                 uiController.canvasRenderer.canvasScrimOpacity = 0.0;
 
                 myUserData.tempData.scrimOpacityInterval = setInterval(() => {
@@ -165,6 +170,10 @@ class MyAvatar {
                 }, PHYSICS.PHYSICS_TICKRATE_MS);
             };
             newPath.onDeactivated = () => {
+                if (myUserData.tempData.scrimOpacityInterval) {
+                    clearInterval(myUserData.tempData.scrimOpacityInterval);
+                }
+
                 uiController.canvasRenderer.canvasScrimOpacity = 0.8;
 
                 myUserData.tempData.scrimOpacityInterval = setInterval(() => {
@@ -199,8 +208,6 @@ class MyAvatar {
                 while (orientationEulerInitial.yawDegrees < orientationEulerFinal.yawDegrees) {
                     orientationEulerInitial.yawDegrees += 360;
                 }
-                
-                console.log(`step1Theta: ${step1PositionTheta * 180 / Math.PI}, step2Theta: ${step2PositionTheta * 180 / Math.PI}, initialYaw: ${orientationEulerInitial.yawDegrees}, finalYaw: ${orientationEulerFinal.yawDegrees}`);
 
                 let step2PositionStart = step1PositionEnd;
                 let step2PositionEnd = new Point3D({
@@ -215,7 +222,7 @@ class MyAvatar {
                     positionTarget: step1PositionEnd,
                     orientationEulerStart: orientationEulerInitial,
                     orientationEulerTarget: orientationEulerInitial,
-                    durationMS: 1000,
+                    durationMS: 800,
                     easingFunction: Utilities.easeOutQuad
                 }));
                 newPath.pathWaypoints.push(new Waypoint({
@@ -224,7 +231,7 @@ class MyAvatar {
                     positionCircleCenter: transitionCircleCenter,
                     orientationEulerStart: orientationEulerInitial,
                     orientationEulerTarget: orientationEulerFinal,
-                    durationMS: 2000,
+                    durationMS: 1750,
                     easingFunction: Utilities.easeInOutQuart
                 }));
                 newPath.pathWaypoints.push(new Waypoint({
@@ -232,7 +239,7 @@ class MyAvatar {
                     positionTarget: step3PositionEnd,
                     orientationEulerStart: orientationEulerFinal,
                     orientationEulerTarget: orientationEulerFinal,
-                    durationMS: 1000,
+                    durationMS: 800,
                     easingFunction: Utilities.easeOutQuad
                 }));
             } else {

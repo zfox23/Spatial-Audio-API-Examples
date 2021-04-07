@@ -42,6 +42,10 @@ export class CanvasRenderer {
     updateCanvasDimensions() {
         this.mainCanvas.width = window.innerWidth;
         this.mainCanvas.height = window.innerHeight - 72;
+
+        try {
+            physicsController.autoComputePXPerMFromRoom(roomController.getRoomFromPoint3DOnCircle(userDataController.myAvatar.myUserData.positionCurrent));
+        } catch (e) { }
     }
 
     drawVolumeBubble({ userData }: { userData: UserData }) {

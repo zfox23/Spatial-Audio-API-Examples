@@ -292,6 +292,10 @@ export class ConnectionController {
             }
         }
 
+        if (receivedNewPositionData) {
+            roomController.updateAllRoomSeats();
+        }
+
         if (!this.webSocketConnectionController.readyToSendWebSocketData) {
             this.webSocketConnectionController.readyToSendWebSocketData = true;
             this.webSocketConnectionController.maybeSendInitialWebSocketData();

@@ -139,7 +139,8 @@ export class SpatialAudioRoom {
 import SeatingRadius1Image1 from "../../images/rooms/room-with-seating-radius-1-bg-1.jpg";
 import SeatingRadius1Image2 from "../../images/rooms/room-with-seating-radius-1-bg-2.jpg";
 import SeatingRadius1Image3 from "../../images/rooms/room-with-seating-radius-1-bg-3.jpg";
-import SeatingRadius1Image4 from "../../images/rooms/room-with-seating-radius-1-bg-4.jpg";
+// import SeatingRadius1Image4 from "../../images/rooms/room-with-seating-radius-1-bg-4.jpg";
+import SeatingRadius1Image5 from "../../images/rooms/room-with-seating-radius-1-bg-5.jpg";
 import SeatingRadius3Image1 from "../../images/rooms/room-with-seating-radius-3-bg-1.jpg";
 import SeatingRadius10cmImage1 from "../../images/rooms/room-with-seating-radius-10cm-bg-1.jpg"
 export class RoomController {
@@ -163,9 +164,10 @@ export class RoomController {
         this.rooms.push(this.lobby);
         this.rooms.push(new SpatialAudioRoom({
             name: "Battery",
-            center: new Point3D({ x: 4.5, y: 0, z: 4.5 }),
-            seatingRadiusM: 1.0,
-            roomImageSRC: SeatingRadius1Image2
+            center: new Point3D({ x: 5.0, y: 0, z: 5.0 }),
+            dimensions: new Point3D({x: 4.5, y: 0, z: 4.5 }),
+            seatingRadiusM: 0.8,
+            roomImageSRC: SeatingRadius1Image5
         }));
         this.rooms.push(new SpatialAudioRoom({
             name: "Folsom",
@@ -191,7 +193,7 @@ export class RoomController {
             center: new Point3D({ x: 100, y: 0, z: 100 }),
             dimensions: new Point3D({x: 3.6, y: 0, z: 3.6 }),
             seatingRadiusM: 1.0,
-            roomImageSRC: SeatingRadius1Image4
+            roomImageSRC: SeatingRadius1Image2
         }));
 
         this.showRoomListButton = document.createElement("button");

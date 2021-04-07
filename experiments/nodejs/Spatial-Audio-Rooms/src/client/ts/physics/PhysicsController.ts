@@ -108,6 +108,7 @@ export class PhysicsController {
                 userData.tempData.circleRadius = undefined;
                 userData.tempData.startTheta = undefined;
                 userData.tempData.targetTheta = undefined;
+                userData.tempData.willMoveClockwise = undefined;
 
                 if (isMine && pathsController.currentPath) {
                     pathsController.currentPath.incrementWaypointIndex();
@@ -122,22 +123,25 @@ export class PhysicsController {
                 if (userData.positionStart && userData.positionTarget) {
                     let newPosition;
                     if (userData.positionCircleCenter) {
-                        if (typeof (userData.tempData.circleRadius) !== "number") {
+                        if (userData.tempData.circleRadius === undefined || userData.tempData.startTheta === undefined || userData.tempData.targetTheta === undefined) {
                             userData.tempData.circleRadius = Utilities.getDistanceBetween2DPoints(userData.positionCircleCenter.x, userData.positionCircleCenter.z, userData.positionStart.x, userData.positionStart.z);
-                        }
-                        if (typeof (userData.tempData.startTheta) !== "number") {
+
                             userData.tempData.startTheta = Math.atan2(userData.positionStart.z - userData.positionCircleCenter.z, userData.positionStart.x - userData.positionCircleCenter.x);
-                            while (userData.tempData.startTheta < 0) {
-                                userData.tempData.startTheta += Math.PI * 2;
-                            }
-                            userData.tempData.startTheta %= (Math.PI * 2);
-                        }
-                        if (typeof (userData.tempData.targetTheta) !== "number") {
+
                             userData.tempData.targetTheta = Math.atan2(userData.positionTarget.z - userData.positionCircleCenter.z, userData.positionTarget.x - userData.positionCircleCenter.x);
-                            while (userData.tempData.targetTheta < 0) {
-                                userData.tempData.targetTheta += Math.PI * 2;
-                            }
+
+                            // This logic below ensures that the `targetTheta` is always within 180 degrees of the `startTheta`.
+                            userData.tempData.startTheta %= (Math.PI * 2);
                             userData.tempData.targetTheta %= (Math.PI * 2);
+                            if (Math.abs(userData.tempData.targetTheta - userData.tempData.startTheta) > Math.PI) {
+                                if (userData.tempData.startTheta < userData.tempData.targetTheta) {
+                                    userData.tempData.targetTheta -= 2 * Math.PI;
+                                } else if (userData.tempData.startTheta > userData.tempData.targetTheta) {
+                                    userData.tempData.targetTheta += 2 * Math.PI;
+                                }
+                            }
+
+                            userData.tempData.willMoveClockwise = userData.tempData.targetTheta > userData.tempData.startTheta;
                         }
                         newPosition = new Point3D({
                             "x": userData.tempData.circleRadius * Math.cos(Utilities.linearScale(easingFunction((timestamp - userData.motionStartTimestamp) / motionDurationMS), 0, 1, userData.tempData.startTheta, userData.tempData.targetTheta)) + userData.positionCircleCenter.x,
@@ -165,15 +169,29 @@ export class PhysicsController {
 
                 if (userData.orientationEulerStart && userData.orientationEulerTarget) {
                     let startYawDegrees = userData.orientationEulerStart.yawDegrees;
+
                     let targetYawDegrees = userData.orientationEulerTarget.yawDegrees;
 
-                    // Get start and target angles within 180 degrees of each other to prevent
-                    // over-rotation during animation.
-                    while (targetYawDegrees - startYawDegrees > 180) {
-                        startYawDegrees += 360;
+                    // This logic below ensures that the `targetYawDegrees` is always within 180 degrees of the `startYawDegrees`.
+                    startYawDegrees %= 360;
+                    targetYawDegrees %= 360;
+                    if (Math.abs(targetYawDegrees - startYawDegrees) > 180) {
+                        if (startYawDegrees < targetYawDegrees) {
+                            targetYawDegrees -= 360;
+                        } else if (startYawDegrees > targetYawDegrees) {
+                            targetYawDegrees += 360;
+                        }
                     }
-                    while (targetYawDegrees - startYawDegrees < -180) {
-                        startYawDegrees -= 360;
+                    let willRotateClockwise = targetYawDegrees > startYawDegrees;
+
+                    // We always need to be rotating the opposite direction from the direction on which we are rotating around the circle.
+                    if (userData.tempData.willMoveClockwise !== undefined && (userData.tempData.willMoveClockwise === willRotateClockwise)) {
+                        if (userData.tempData.willMoveClockwise) {
+                            startYawDegrees += 360;
+                        } else {
+                            targetYawDegrees += 360;
+                        }
+                        willRotateClockwise = targetYawDegrees > startYawDegrees;
                     }
 
                     let newOrientationEuler = new OrientationEuler3D({
@@ -203,7 +221,6 @@ export class PhysicsController {
 
     autoComputePXPerMFromRoom(room: SpatialAudioRoom) {
         if (!room) {
-            console.warn(`Couldn't compute \`PXPerM\` - \`room\` is \`undefined\`!`);
             return;
         }
 
