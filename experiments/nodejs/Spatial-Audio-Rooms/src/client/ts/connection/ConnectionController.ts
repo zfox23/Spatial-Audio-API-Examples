@@ -272,23 +272,35 @@ export class ConnectionController {
             }
         }
             
-        let allAlone = false;
+        let initiallyAlone = false;
         if (!this.receivedInitialOtherUserDataFromHiFi && receivedHiFiAudioAPIDataArray.length === 1 && receivedHiFiAudioAPIDataArray[0].hashedVisitID === myVisitIDHash) {
             console.log("We're the only one here!");
-            allAlone = true;
+            initiallyAlone = true;
             this.receivedInitialOtherUserDataFromHiFi = true;
         }
         
-        if (!this.receivedInitialOtherUserDataFromHiFi || allAlone) {
-            let mustReposition = false;
+        if (!this.receivedInitialOtherUserDataFromHiFi || initiallyAlone) {
             if (!this.receivedInitialOtherUserDataFromHiFi) {
                 this.receivedInitialOtherUserDataFromHiFi = true;
-                mustReposition = true;
             }
 
-            if (allAlone || mustReposition) {
+            if (initiallyAlone || this.receivedInitialOtherUserDataFromHiFi) {
                 roomController.updateAllRoomSeats();
-                userDataController.myAvatar.positionSelfInRoom(roomController.lobby.name);
+
+                let startingRoomName = roomController.lobby.name;
+
+                let searchParams = new URLSearchParams(location.search);
+                if (searchParams.has("room")) {
+                    let searchParamsRoomName = searchParams.get("room");
+                    let searchParamsRoom = roomController.rooms.find((room) => { return room.name.toLowerCase() === searchParamsRoomName.toLowerCase(); });
+                    if (searchParamsRoom) {
+                        startingRoomName = searchParamsRoom.name;
+                    } else {
+                        console.warn(`Couldn't position self in room named \`${searchParamsRoomName}\`! Positioning self in \`${startingRoomName}\`...`);
+                    }
+                }
+                
+                userDataController.myAvatar.positionSelfInRoom(startingRoomName);
             }
         }
 
