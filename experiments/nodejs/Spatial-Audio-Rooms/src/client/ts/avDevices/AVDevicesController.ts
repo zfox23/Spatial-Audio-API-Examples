@@ -6,13 +6,14 @@ export class AVDevicesController {
     outputAudioElement: HTMLAudioElement;
     audioConstraints: MediaTrackConstraints;
     currentAudioInputDeviceID: string;
+    currentAudioOutputDeviceID: string;
     currentVideoDeviceID: string;
 
     constructor() {
         this.audioConstraints = getBestAudioConstraints();
         this.inputAudioMediaStream = undefined;
         this.outputAudioElement = document.createElement("audio");
-        this.outputAudioElement.classList.add("displayNone");
+        this.outputAudioElement.classList.add("outputAudioElement", "displayNone");
         this.outputAudioElement.setAttribute("autoplay", "true");
         document.body.appendChild(this.outputAudioElement);
     }
@@ -33,6 +34,41 @@ export class AVDevicesController {
 
         this.currentAudioInputDeviceID = newInputDeviceID;
         console.log(`Successfully changed audio input device!`);
+    }
+
+    changeAudioOutputDevice(newOutputDeviceID: string) {
+        console.log(`Attempting to change audio output device to device with ID \`${newOutputDeviceID}\`...`);
+        this.currentAudioOutputDeviceID = newOutputDeviceID;
+
+        let allAudioNodes = document.querySelectorAll("audio");
+        allAudioNodes.forEach((audioNode) => {
+            if (typeof (audioNode as any).sinkId !== 'undefined') {
+                (audioNode as any).setSinkId(this.currentAudioOutputDeviceID)
+                    .then(() => {
+                        console.log(`New audio output device with ID \`${this.currentAudioOutputDeviceID}\` successfully attached to \`${audioNode.classList[0]}\`.`);
+                    })
+                    .catch((error: any) => {
+                        console.error(`Error when setting output device on \`${audioNode}\`:\n${error}`);
+                    });
+            } else {
+                console.error('Your browser does not support output device selection.');
+            }
+        });
+    
+        let allVideoNodes = document.querySelectorAll("video");
+        allVideoNodes.forEach((videoNode) => {
+            if (typeof (videoNode as any).sinkId !== 'undefined') {
+                (videoNode as any).setSinkId(this.currentAudioOutputDeviceID)
+                    .then(() => {
+                        console.log(`New audio output device with ID \`${this.currentAudioOutputDeviceID}\` successfully attached to \`${videoNode.classList[0]}\`.`);
+                    })
+                    .catch((error: any) => {
+                        console.error(`Error when setting output device on \`${videoNode}\`:\n${error}`);
+                    });
+            } else {
+                console.error('Your browser does not support output device selection.');
+            }
+        });
     }
 
     async changeVideoDevice(newVideoDeviceID: string) {

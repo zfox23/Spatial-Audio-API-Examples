@@ -11,6 +11,7 @@ export class UserInputController {
     wasMutedBeforePTT: boolean = false;
     changeAudioInputDeviceButton: HTMLButtonElement;
     toggleInputMuteButton: HTMLButtonElement;
+    changeAudioOutputDeviceButton: HTMLButtonElement;
     toggleOutputMuteButton: HTMLButtonElement;
     changeVideoDeviceButton: HTMLButtonElement;
     toggleVideoButton: HTMLButtonElement;
@@ -34,6 +35,12 @@ export class UserInputController {
             this.toggleInputMute();
         });
         
+        this.changeAudioOutputDeviceButton = document.querySelector('.changeAudioOutputDeviceButton');
+        if (this.changeAudioOutputDeviceButton) {
+            this.changeAudioOutputDeviceButton.addEventListener("click", (e) => {
+                this.toggleShowChangeAudioOutputDeviceMenu();
+            });
+        }
         this.toggleOutputMuteButton = document.querySelector('.toggleOutputMuteButton');
         this.toggleOutputMuteButton.addEventListener("click", (e) => {
             this.toggleOutputMute();
@@ -127,6 +134,8 @@ export class UserInputController {
             this.hideChangeAudioInputDeviceMenu();
         } else {
             this.hideChangeVideoDeviceMenu();
+            this.hideChangeAudioInputDeviceMenu();
+            this.hideChangeAudioOutputDeviceMenu();
             navigator.mediaDevices.enumerateDevices()
                 .then((devices) => {
                     changeAudioInputDeviceMenu = document.createElement("div");
@@ -177,6 +186,71 @@ export class UserInputController {
         }
     }
 
+    hideChangeAudioOutputDeviceMenu() {
+        let changeAudioOutputDeviceMenu = document.querySelector(".changeAudioOutputDeviceMenu");
+        if (changeAudioOutputDeviceMenu) {
+            changeAudioOutputDeviceMenu.remove();
+        }
+    }
+
+    toggleShowChangeAudioOutputDeviceMenu() {
+        let changeAudioOutputDeviceMenu = document.querySelector(".changeAudioOutputDeviceMenu");
+        if (changeAudioOutputDeviceMenu) {
+            this.hideChangeAudioOutputDeviceMenu();
+        } else {
+            this.hideChangeVideoDeviceMenu();
+            this.hideChangeAudioInputDeviceMenu();
+            this.hideChangeAudioOutputDeviceMenu();
+            navigator.mediaDevices.enumerateDevices()
+                .then((devices) => {
+                    changeAudioOutputDeviceMenu = document.createElement("div");
+                    changeAudioOutputDeviceMenu.classList.add("changeDeviceMenu", "changeAudioOutputDeviceMenu");
+
+                    let changeAudioOutputDeviceMenu__header = document.createElement("h2");
+                    changeAudioOutputDeviceMenu__header.classList.add("changeDeviceMenu__header", "changeAudioOutputDeviceMenu__header");
+                    changeAudioOutputDeviceMenu__header.innerHTML = `Audio Output Device`;
+                    changeAudioOutputDeviceMenu.appendChild(changeAudioOutputDeviceMenu__header);
+        
+                    let changeAudioOutputDeviceMenu__select = document.createElement("select");
+                    changeAudioOutputDeviceMenu__select.classList.add("changeDeviceMenu__select", "changeAudioOutputDeviceMenu__select");
+
+                    let numAudioOutputDevices = 0;
+
+                    for (let i = 0; i < devices.length; i++) {
+                        if (devices[i].kind === "audiooutput") {
+                            let deviceLabel = devices[i].label;
+
+                            if (!deviceLabel || deviceLabel.length === 0) {
+                                deviceLabel = "Unknown Device";
+                            }
+
+                            let changeAudioOutputDeviceMenu__option = document.createElement("option");
+                            changeAudioOutputDeviceMenu__option.classList.add("changeDeviceMenu__option", "changeAudioOutputDeviceMenu__option");
+                            changeAudioOutputDeviceMenu__option.innerHTML = deviceLabel;
+                            changeAudioOutputDeviceMenu__option.value = devices[i].deviceId;
+
+                            changeAudioOutputDeviceMenu__select.appendChild(changeAudioOutputDeviceMenu__option);
+
+                            if (avDevicesController.currentAudioOutputDeviceID && avDevicesController.currentAudioOutputDeviceID === devices[i].deviceId) {
+                                changeAudioOutputDeviceMenu__select.selectedIndex = numAudioOutputDevices;
+                            }
+                            numAudioOutputDevices++;
+                        }
+                    };
+
+                    changeAudioOutputDeviceMenu__select.addEventListener("change", (e) => {
+                        avDevicesController.changeAudioOutputDevice((<HTMLSelectElement>e.target).value);
+                    });
+
+                    changeAudioOutputDeviceMenu.appendChild(changeAudioOutputDeviceMenu__select);
+                    document.body.appendChild(changeAudioOutputDeviceMenu);
+                })
+                .catch((err) => {
+                    console.error(`Error during \`enumerateDevices()\`: ${err}`);
+                });
+        }
+    }
+
     hideChangeVideoDeviceMenu() {
         let changeVideoDeviceMenu = document.querySelector(".changeVideoDeviceMenu");
         if (changeVideoDeviceMenu) {
@@ -189,7 +263,9 @@ export class UserInputController {
         if (changeVideoDeviceMenu) {
             this.hideChangeVideoDeviceMenu();
         } else {
+            this.hideChangeVideoDeviceMenu();
             this.hideChangeAudioInputDeviceMenu();
+            this.hideChangeAudioOutputDeviceMenu();
             navigator.mediaDevices.enumerateDevices()
                 .then((devices) => {
                     changeVideoDeviceMenu = document.createElement("div");
@@ -471,7 +547,6 @@ export class UserInputController {
         if (e.ctrlKey) {
             deltaY = e.deltaY * 10;
         } else {
-            // tslint:disable-next-line
             deltaY = (e as any).wheelDeltaY || (-e.deltaY * 10);
         }
 

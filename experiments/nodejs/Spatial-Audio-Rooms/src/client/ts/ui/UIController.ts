@@ -1,4 +1,4 @@
-import { connectionController, roomController, userDataController, userInputController } from '..';
+import { avDevicesController, connectionController, roomController, userDataController, userInputController } from '..';
 import '../../css/controls.scss';
 import { AudionetInitResponse, ConnectionController } from '../connection/ConnectionController';
 import { UserData } from '../userData/UserDataController';
@@ -68,6 +68,12 @@ export class UIController {
 
         let outputButtonsContainer = document.createElement("div");
         outputButtonsContainer.classList.add("controlButtonsContainer");
+        if ((avDevicesController.outputAudioElement as any).setSinkId) {
+            let changeAudioOutputDeviceButton = document.createElement("button");
+            changeAudioOutputDeviceButton.classList.add("bottomChangeButton", "changeAudioOutputDeviceButton");
+            changeAudioOutputDeviceButton.innerHTML = "^";
+            outputButtonsContainer.appendChild(changeAudioOutputDeviceButton);
+        }
         let toggleOutputMuteButton = document.createElement("button");
         toggleOutputMuteButton.classList.add("bottomToggleButton", "toggleOutputMuteButton");
         outputButtonsContainer.appendChild(toggleOutputMuteButton);
