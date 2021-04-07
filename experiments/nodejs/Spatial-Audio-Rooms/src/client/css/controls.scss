@@ -317,8 +317,8 @@ $bottom-controls-container-height: 72px;
     &__header {
         cursor: pointer;
         margin: 0 0 12px 0;
-        font-size: 22px;
-        line-height: 22px;
+        font-size: 18px;
+        line-height: 18px;
     }
 
     &__occupantsList {
@@ -329,8 +329,8 @@ $bottom-controls-container-height: 72px;
     }
     
     &__occupant {
-        margin: 4px 0;
-        font-size: 18px;
+        margin: 2px 0 2px 12px;
+        font-size: 14px;
         cursor: pointer;
         overflow: hidden;
         white-space: nowrap;

@@ -157,7 +157,7 @@ export class RoomController {
         this.rooms = [];
         
         this.lobby = new SpatialAudioRoom({
-            name: "Conference Room 1",
+            name: "Room 1",
             center: new Point3D({ x: 1, y: 0, z: 0 }),
             seatingRadiusM: 1.0,
             dimensions: new Point3D({x: 5.15, y: 0, z: 5.15 }),
@@ -165,26 +165,26 @@ export class RoomController {
         });
         this.rooms.push(this.lobby);
         this.rooms.push(new SpatialAudioRoom({
-            name: "Conference Room 2",
+            name: "Room 2",
             center: new Point3D({ x: 5.0, y: 0, z: 5.0 }),
             dimensions: new Point3D({x: 4.5, y: 0, z: 4.5 }),
             seatingRadiusM: 0.8,
             roomImageSRC: SeatingRadius1Image5
         }));
         this.rooms.push(new SpatialAudioRoom({
-            name: "Conference Room 3",
+            name: "Room 3",
             center: new Point3D({ x: -5, y: 0, z: 5 }),
             seatingRadiusM: 1.0,
             roomImageSRC: SeatingRadius1Image3
         }));
         this.rooms.push(new SpatialAudioRoom({
-            name: "Conference Room 4",
+            name: "Small Room",
             center: new Point3D({ x: 0, y: 0, z: 3.5 }),
             seatingRadiusM: 0.1,
             roomImageSRC: SeatingRadius10cmImage1
         }));
         this.rooms.push(new SpatialAudioRoom({
-            name: "Conference Room 5",
+            name: "Large Room",
             center: new Point3D({ x: 0, y: 0, z: -8 }),
             dimensions: new Point3D({x: 5.72, y: 0, z: 5.72 }),
             seatingRadiusM: 2.5,
