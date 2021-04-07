@@ -327,10 +327,6 @@ export class TwoDimensionalRenderer {
 
         this.translateAndRotateCanvas();
 
-        if (this.canvasScrimOpacity > 0.0) {
-            ctx.filter = 'blur(4px)';
-        }
-
         roomController.rooms.forEach((room) => {
             this.drawTableOrRoomGraphic(room);
 
@@ -342,10 +338,6 @@ export class TwoDimensionalRenderer {
                 this.drawUnoccupiedSeat(seat);
             });
         });
-
-        if (this.canvasScrimOpacity > 0.0) {
-            ctx.filter = 'none';
-        }
 
         this.maybeDrawScrim();
 
