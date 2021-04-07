@@ -5,12 +5,15 @@ import { AVATAR, ROOM, UI, } from "../constants/constants";
 import { UserData } from "../userData/UserDataController";
 import { Utilities } from "../utilities/Utilities";
 import { Seat, SpatialAudioRoom } from "../ui/RoomController";
-import SeatIcon from '../../images/seat.png';
+import SeatIconIdle from '../../images/seat-idle.png';
+import SeatIconHover from '../../images/seat-hover.png';
 import TableImage from '../../images/table.png';
 import { Point3D } from "hifi-spatial-audio";
 
-const seatIcon = new Image();
-seatIcon.src = SeatIcon;
+const seatIconIdle = new Image();
+seatIconIdle.src = SeatIconIdle;
+const seatIconHover = new Image();
+seatIconHover.src = SeatIconHover;
 const tableImage = new Image();
 tableImage.src = TableImage;
 
@@ -275,28 +278,12 @@ export class TwoDimensionalRenderer {
         let amountToRotateSeatImage = this.canvasRotationDegrees * Math.PI / 180;
         ctx.rotate(amountToRotateSeatImage);
 
+        const seatRadiusPX = ROOM.SEAT_RADIUS_M * pxPerM;
         if (userInputController.hoveredSeat && userInputController.hoveredSeat.uuid === seat.uuid) {
-            ctx.beginPath();
-            ctx.arc(0, 0, (ROOM.SEAT_RADIUS_M + UI.HOVER_HIGHLIGHT_RADIUS_ADDITION_M) * pxPerM, 0, 2 * Math.PI);
-            let grad = ctx.createRadialGradient(0, 0, 0, 0, 0, (ROOM.SEAT_RADIUS_M + UI.HOVER_HIGHLIGHT_RADIUS_ADDITION_M) * pxPerM);
-            grad.addColorStop(0.0, UI.HOVER_GLOW_HEX);
-            grad.addColorStop(1.0, UI.HOVER_GLOW_HEX + "00");
-            ctx.fillStyle = grad;
-            ctx.fill();
-            ctx.closePath();
+            ctx.drawImage(seatIconHover, -seatRadiusPX, -seatRadiusPX, seatRadiusPX * 2, seatRadiusPX * 2);
+        } else {
+            ctx.drawImage(seatIconIdle, -seatRadiusPX, -seatRadiusPX, seatRadiusPX * 2, seatRadiusPX * 2);
         }
-
-        ctx.lineWidth = ROOM.SEAT_STROKE_WIDTH_PX;
-        ctx.fillStyle = ROOM.SEAT_COLOR_HEX;
-        ctx.beginPath();
-        let seatRadiusPX = ROOM.SEAT_RADIUS_M * pxPerM;
-        ctx.arc(0, 0, seatRadiusPX, 0, 2 * Math.PI);
-        ctx.strokeStyle = ROOM.SEAT_STROKE_HEX;
-        ctx.stroke();
-        ctx.fill();
-        ctx.closePath();
-
-        ctx.drawImage(seatIcon, -seatRadiusPX / 2, -seatRadiusPX / 2, seatRadiusPX, seatRadiusPX);
 
         ctx.rotate(-amountToRotateSeatImage);
         ctx.translate(-seat.position.x * pxPerM, -seat.position.z * pxPerM);
@@ -321,7 +308,7 @@ export class TwoDimensionalRenderer {
         let ctx = this.ctx;
         let pxPerM = physicsController.pxPerMCurrent;
 
-        if (!(seatIcon.complete && tableImage.complete && ctx && pxPerM)) {
+        if (!(seatIconIdle.complete && tableImage.complete && ctx && pxPerM)) {
             return;
         }
 

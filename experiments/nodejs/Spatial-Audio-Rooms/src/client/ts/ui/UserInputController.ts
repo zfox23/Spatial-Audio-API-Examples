@@ -1,16 +1,18 @@
-import { connectionController, pathsController, physicsController, roomController, uiController, userDataController } from "..";
+import { avDevicesController, connectionController, pathsController, physicsController, roomController, uiController, userDataController } from "..";
 import { AVATAR, ROOM, CONTROLS, PHYSICS } from "../constants/constants";
 import { UserData } from "../userData/UserDataController";
 import { Utilities } from "../utilities/Utilities";
 import { Seat } from "../ui/RoomController";
-import { OrientationEuler3D, Point3D } from "hifi-spatial-audio";
+import { OrientationEuler3D } from "hifi-spatial-audio";
 
 export class UserInputController {
     mainCanvas: HTMLCanvasElement;
     keyboardEventCache: Array<KeyboardEvent>;
     wasMutedBeforePTT: boolean = false;
+    changeAudioInputDeviceButton: HTMLButtonElement;
     toggleInputMuteButton: HTMLButtonElement;
     toggleOutputMuteButton: HTMLButtonElement;
+    changeVideoDeviceButton: HTMLButtonElement;
     toggleVideoButton: HTMLButtonElement;
     rightClickStartPositionPX: any;
     lastDistanceBetweenRightClickEvents: number;
@@ -23,16 +25,24 @@ export class UserInputController {
         document.addEventListener('keydown', this.onUserKeyDown.bind(this), false);
         document.addEventListener('keyup', this.onUserKeyUp.bind(this), false);
 
+        this.changeAudioInputDeviceButton = document.querySelector('.changeAudioInputDeviceButton');
+        this.changeAudioInputDeviceButton.addEventListener("click", (e) => {
+            this.toggleShowChangeAudioInputDeviceMenu();
+        });
         this.toggleInputMuteButton = document.querySelector('.toggleInputMuteButton');
         this.toggleInputMuteButton.addEventListener("click", (e) => {
             this.toggleInputMute();
         });
-
+        
         this.toggleOutputMuteButton = document.querySelector('.toggleOutputMuteButton');
         this.toggleOutputMuteButton.addEventListener("click", (e) => {
             this.toggleOutputMute();
         });
-
+        
+        this.changeVideoDeviceButton = document.querySelector('.changeVideoDeviceButton');
+        this.changeVideoDeviceButton.addEventListener("click", (e) => {
+            this.toggleShowChangeVideoDeviceMenu();
+        });
         this.toggleVideoButton = document.querySelector('.toggleVideoButton');
 
         this.mainCanvas = document.querySelector('.mainCanvas');
@@ -47,7 +57,7 @@ export class UserInputController {
             this.mainCanvas.addEventListener('touchmove', this.handleGestureOnCanvasMove.bind(this), true);
             this.mainCanvas.addEventListener('touchend', this.handleGestureOnCanvasEnd.bind(this), true);
             this.mainCanvas.addEventListener("touchcancel", this.handleGestureOnCanvasCancel.bind(this), true);
-        
+
             this.mainCanvas.addEventListener("mousedown", this.handleGestureOnCanvasStart.bind(this), true);
         }
         this.mainCanvas.addEventListener("gesturestart", (e) => { e.preventDefault(); }, false);
@@ -69,7 +79,7 @@ export class UserInputController {
         if (shouldAddKeyEvent) {
             this.keyboardEventCache.unshift(event);
         }
-    
+
         switch (this.keyboardEventCache[0].code) {
             case CONTROLS.M_KEY_CODE:
                 this.toggleInputMute();
@@ -89,7 +99,7 @@ export class UserInputController {
                 this.keyboardEventCache.splice(i, 1);
             }
         }
-    
+
         switch (event.code) {
             case CONTROLS.SPACE_KEY_CODE:
                 if (this.wasMutedBeforePTT) {
@@ -98,9 +108,135 @@ export class UserInputController {
                 }
                 break;
         }
-    
+
         if (this.keyboardEventCache.length > 0) {
             this.onUserKeyDown(this.keyboardEventCache[0]);
+        }
+    }
+
+    hideChangeAudioInputDeviceMenu() {
+        let changeAudioInputDeviceMenu = document.querySelector(".changeAudioInputDeviceMenu");
+        if (changeAudioInputDeviceMenu) {
+            changeAudioInputDeviceMenu.remove();
+        }
+    }
+
+    toggleShowChangeAudioInputDeviceMenu() {
+        let changeAudioInputDeviceMenu = document.querySelector(".changeAudioInputDeviceMenu");
+        if (changeAudioInputDeviceMenu) {
+            this.hideChangeAudioInputDeviceMenu();
+        } else {
+            this.hideChangeVideoDeviceMenu();
+            navigator.mediaDevices.enumerateDevices()
+                .then((devices) => {
+                    changeAudioInputDeviceMenu = document.createElement("div");
+                    changeAudioInputDeviceMenu.classList.add("changeDeviceMenu", "changeAudioInputDeviceMenu");
+
+                    let changeAudioInputDeviceMenu__header = document.createElement("h2");
+                    changeAudioInputDeviceMenu__header.classList.add("changeDeviceMenu__header", "changeAudioInputDeviceMenu__header");
+                    changeAudioInputDeviceMenu__header.innerHTML = `Audio Input Device`;
+                    changeAudioInputDeviceMenu.appendChild(changeAudioInputDeviceMenu__header);
+        
+                    let changeAudioInputDeviceMenu__select = document.createElement("select");
+                    changeAudioInputDeviceMenu__select.classList.add("changeDeviceMenu__select", "changeAudioInputDeviceMenu__select");
+
+                    let numAudioInputDevices = 0;
+
+                    for (let i = 0; i < devices.length; i++) {
+                        if (devices[i].kind === "audioinput") {
+                            let deviceLabel = devices[i].label;
+
+                            if (!deviceLabel || deviceLabel.length === 0) {
+                                deviceLabel = "Unknown Device";
+                            }
+
+                            let changeAudioInputDeviceMenu__option = document.createElement("option");
+                            changeAudioInputDeviceMenu__option.classList.add("changeDeviceMenu__option", "changeAudioInputDeviceMenu__option");
+                            changeAudioInputDeviceMenu__option.innerHTML = deviceLabel;
+                            changeAudioInputDeviceMenu__option.value = devices[i].deviceId;
+
+                            changeAudioInputDeviceMenu__select.appendChild(changeAudioInputDeviceMenu__option);
+
+                            if (avDevicesController.currentAudioInputDeviceID && avDevicesController.currentAudioInputDeviceID === devices[i].deviceId) {
+                                changeAudioInputDeviceMenu__select.selectedIndex = numAudioInputDevices;
+                            }
+                            numAudioInputDevices++;
+                        }
+                    };
+
+                    changeAudioInputDeviceMenu__select.addEventListener("change", (e) => {
+                        avDevicesController.changeAudioInputDevice((<HTMLSelectElement>e.target).value);
+                    });
+
+                    changeAudioInputDeviceMenu.appendChild(changeAudioInputDeviceMenu__select);
+                    document.body.appendChild(changeAudioInputDeviceMenu);
+                })
+                .catch((err) => {
+                    console.error(`Error during \`enumerateDevices()\`: ${err}`);
+                });
+        }
+    }
+
+    hideChangeVideoDeviceMenu() {
+        let changeVideoDeviceMenu = document.querySelector(".changeVideoDeviceMenu");
+        if (changeVideoDeviceMenu) {
+            changeVideoDeviceMenu.remove();
+        }
+    }
+
+    toggleShowChangeVideoDeviceMenu() {
+        let changeVideoDeviceMenu = document.querySelector(".changeVideoDeviceMenu");
+        if (changeVideoDeviceMenu) {
+            this.hideChangeVideoDeviceMenu();
+        } else {
+            this.hideChangeAudioInputDeviceMenu();
+            navigator.mediaDevices.enumerateDevices()
+                .then((devices) => {
+                    changeVideoDeviceMenu = document.createElement("div");
+                    changeVideoDeviceMenu.classList.add("changeDeviceMenu", "changeVideoDeviceMenu");
+
+                    let changeVideoDeviceMenu__header = document.createElement("h2");
+                    changeVideoDeviceMenu__header.classList.add("changeDeviceMenu__header", "changeVideoDeviceMenu__header");
+                    changeVideoDeviceMenu__header.innerHTML = `Video Device`;
+                    changeVideoDeviceMenu.appendChild(changeVideoDeviceMenu__header);
+        
+                    let changeVideoDeviceMenu__select = document.createElement("select");
+                    changeVideoDeviceMenu__select.classList.add("changeDeviceMenu__select", "changeVideoDeviceMenu__select");
+
+                    let numVideoDevices = 0;
+
+                    for (let i = 0; i < devices.length; i++) {
+                        if (devices[i].kind === "videoinput") {
+                            let deviceLabel = devices[i].label;
+
+                            if (!deviceLabel || deviceLabel.length === 0) {
+                                deviceLabel = "Unknown Device";
+                            }
+
+                            let changeVideoDeviceMenu__option = document.createElement("option");
+                            changeVideoDeviceMenu__option.classList.add("changeDeviceMenu__option", "changeVideoDeviceMenu__option");
+                            changeVideoDeviceMenu__option.innerHTML = deviceLabel;
+                            changeVideoDeviceMenu__option.value = devices[i].deviceId;
+
+                            changeVideoDeviceMenu__select.appendChild(changeVideoDeviceMenu__option);
+
+                            if (avDevicesController.currentVideoDeviceID && avDevicesController.currentVideoDeviceID === devices[i].deviceId) {
+                                changeVideoDeviceMenu__select.selectedIndex = numVideoDevices;
+                            }
+                            numVideoDevices++;
+                        }
+                    };
+
+                    changeVideoDeviceMenu__select.addEventListener("change", (e) => {
+                        avDevicesController.changeVideoDevice((<HTMLSelectElement>e.target).value);
+                    });
+
+                    changeVideoDeviceMenu.appendChild(changeVideoDeviceMenu__select);
+                    document.body.appendChild(changeVideoDeviceMenu);
+                })
+                .catch((err) => {
+                    console.error(`Error during \`enumerateDevices()\`: ${err}`);
+                });
         }
     }
 
@@ -114,14 +250,14 @@ export class UserInputController {
         if (!hifiCommunicator) {
             return;
         }
-        
+
         if (userDataController.myAvatar.myUserData.isMuted === newMuteStatus) {
             return;
         }
-    
+
         if (await hifiCommunicator.setInputAudioMuted(newMuteStatus)) {
             userDataController.myAvatar.myUserData.isMuted = newMuteStatus;
-    
+
             if (userDataController.myAvatar.myUserData.isMuted) {
                 this.toggleInputMuteButton.classList.add("toggleInputMuteButton--muted");
             } else {
@@ -129,31 +265,31 @@ export class UserInputController {
             }
         }
     }
-    
+
     toggleOutputMute() {
-        this.setOutputMute(!connectionController.avDevicesController.outputAudioElement.muted);
+        this.setOutputMute(!avDevicesController.outputAudioElement.muted);
     }
-    
-    setOutputMute(newMuteStatus: boolean) {        
-        connectionController.avDevicesController.outputAudioElement.muted = !!newMuteStatus;
-        console.log(`Set output mute status to \`${connectionController.avDevicesController.outputAudioElement.muted}\``);
-    
-        if (connectionController.avDevicesController.outputAudioElement.muted) {
+
+    setOutputMute(newMuteStatus: boolean) {
+        avDevicesController.outputAudioElement.muted = !!newMuteStatus;
+        console.log(`Set output mute status to \`${avDevicesController.outputAudioElement.muted}\``);
+
+        if (avDevicesController.outputAudioElement.muted) {
             this.toggleOutputMuteButton.classList.add("toggleOutputMuteButton--muted");
         } else {
             this.toggleOutputMuteButton.classList.remove("toggleOutputMuteButton--muted");
             // We explicitly call `play()` here because certain browsers won't play the newly-set stream automatically.
-            connectionController.avDevicesController.outputAudioElement.play();
+            avDevicesController.outputAudioElement.play();
         }
     }
 
     setEchoCancellationStatus(newEchoCancellationStatus: boolean) {
-        connectionController.audioConstraints.echoCancellation = newEchoCancellationStatus;
+        avDevicesController.audioConstraints.echoCancellation = newEchoCancellationStatus;
         connectionController.setNewInputAudioMediaStream();
     }
 
     setAGCStatus(newAGCStatus: boolean) {
-        connectionController.audioConstraints.autoGainControl = newAGCStatus;
+        avDevicesController.audioConstraints.autoGainControl = newAGCStatus;
         connectionController.setNewInputAudioMediaStream();
     }
 
@@ -185,7 +321,7 @@ export class UserInputController {
             x: 0,
             y: 0
         };
-    
+
         if (typeof (TouchEvent) !== "undefined" && evt instanceof TouchEvent) {
             // Prefer Touch Events
             point.x = evt.targetTouches[0].clientX;
@@ -195,7 +331,7 @@ export class UserInputController {
             point.x = (<MouseEvent>evt).clientX;
             point.y = (<MouseEvent>evt).clientY;
         }
-    
+
         return point;
     }
 
@@ -214,23 +350,24 @@ export class UserInputController {
 
     handleGestureOnCanvasStart(event: TouchEvent | MouseEvent | PointerEvent) {
         event.preventDefault();
-        
+
         roomController.hideRoomList();
         uiController.hideAvatarContextMenu();
+        this.hideChangeAudioInputDeviceMenu();
 
         let target = <HTMLElement>event.target;
 
         target.focus();
-    
+
         if (window.PointerEvent && event instanceof PointerEvent) {
             target.setPointerCapture(event.pointerId);
         } else {
             this.mainCanvas.addEventListener('mousemove', this.handleGestureOnCanvasMove.bind(this), true);
             this.mainCanvas.addEventListener('mouseup', this.handleGestureOnCanvasEnd.bind(this), true);
         }
-    
+
         let gesturePointPX = this.getGesturePointFromEvent(event);
-    
+
         if ((event instanceof PointerEvent || event instanceof MouseEvent) && event.button === 2) {
             this.rightClickStartPositionPX = gesturePointPX;
         }
@@ -238,26 +375,26 @@ export class UserInputController {
 
     handleGestureOnCanvasMove(event: MouseEvent | PointerEvent) {
         event.preventDefault();
-    
+
         let gesturePointPX = this.getGesturePointFromEvent(event);
-        
+
         if (event.buttons === 2 && this.rightClickStartPositionPX !== undefined && !pathsController.currentPath) {
             let newDistance = gesturePointPX.x - this.rightClickStartPositionPX.x;
             let deltaDistance = newDistance - this.lastDistanceBetweenRightClickEvents;
             this.lastDistanceBetweenRightClickEvents = newDistance;
-    
+
             if (userDataController.myAvatar && userDataController.myAvatar.myUserData.orientationEulerCurrent) {
                 let newYawDegrees = userDataController.myAvatar.myUserData.orientationEulerCurrent.yawDegrees - deltaDistance * CONTROLS.RIGHT_CLICK_ROTATION_SENSITIVITY;
                 if (!isNaN(newYawDegrees)) {
                     userDataController.myAvatar.myUserData.orientationEulerCurrent.yawDegrees = newYawDegrees;
                     let hifiCommunicator = connectionController.hifiCommunicator;
                     if (hifiCommunicator) {
-                        hifiCommunicator.updateUserDataAndTransmit({orientationEuler: new OrientationEuler3D({yawDegrees: newYawDegrees})});
+                        hifiCommunicator.updateUserDataAndTransmit({ orientationEuler: new OrientationEuler3D({ yawDegrees: newYawDegrees }) });
                     }
                 }
             }
         } else {
-            let hoverM = Utilities.canvasPXToM({x: event.offsetX, y: event.offsetY});
+            let hoverM = Utilities.canvasPXToM({ x: event.offsetX, y: event.offsetY });
 
             let room = roomController.getRoomFromName(userDataController.myAvatar.myUserData.currentRoomName);
 
@@ -283,7 +420,7 @@ export class UserInputController {
                     if (this.hoveredSeat) {
                         break;
                     }
-                }                
+                }
             }
         }
 
@@ -298,7 +435,7 @@ export class UserInputController {
         event.preventDefault();
 
         let target = <HTMLElement>event.target;
-    
+
         // Remove Event Listeners
         if (window.PointerEvent) {
             if (event instanceof PointerEvent && event.pointerId) {
@@ -309,7 +446,7 @@ export class UserInputController {
             this.mainCanvas.removeEventListener('mousemove', this.handleGestureOnCanvasMove, true);
             this.mainCanvas.removeEventListener('mouseup', this.handleGestureOnCanvasEnd, true);
         }
-        
+
         if (event.button === 2 && this.rightClickStartPositionPX !== undefined) {
             this.rightClickStartPositionPX = undefined;
             this.lastDistanceBetweenRightClickEvents = 0;
@@ -319,14 +456,14 @@ export class UserInputController {
     handleGestureOnCanvasCancel(event: MouseEvent | PointerEvent) {
         this.handleGestureOnCanvasEnd(event);
     }
-    
+
     onWheel(e: WheelEvent) {
         e.preventDefault();
-    
+
         if (this.lastOnWheelTimestamp) {
             physicsController.onWheelTimestampDeltaMS = Date.now() - this.lastOnWheelTimestamp;
         }
-    
+
         let deltaY;
         // This is a nasty hack that all major browsers subscribe to:
         // "Pinch" gestures on multi-touch trackpads are rendered as wheel events
@@ -337,13 +474,13 @@ export class UserInputController {
             // tslint:disable-next-line
             deltaY = (e as any).wheelDeltaY || (-e.deltaY * 10);
         }
-    
+
         let scaleFactor = 1 + deltaY * CONTROLS.MOUSE_WHEEL_ZOOM_FACTOR;
 
         physicsController.smoothZoomDurationMS = PHYSICS.SMOOTH_ZOOM_DURATION_NORMAL_MS;
         physicsController.smoothZoomStartTimestamp = undefined;
         physicsController.pxPerMTarget = physicsController.pxPerMCurrent * scaleFactor;
-    
+
         this.lastOnWheelTimestamp = Date.now();
     }
 }

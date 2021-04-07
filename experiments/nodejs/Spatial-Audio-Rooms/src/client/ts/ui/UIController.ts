@@ -7,11 +7,6 @@ import { TwoDimensionalRenderer } from '../render/TwoDimensionalRenderer';
 
 export class UIController {
     playOverlay: HTMLElement;
-    bottomControlsContainer: HTMLElement;
-    toggleInputMuteButton: HTMLButtonElement;
-    toggleOutputMuteButton: HTMLButtonElement;
-    toggleVideoButton: HTMLButtonElement;
-    toggleRoomsDrawerButton: HTMLButtonElement;
     modalBackground: HTMLDivElement;
     avatarContextMenu: HTMLDivElement;
     hasCompletedTutorial: boolean;
@@ -56,26 +51,43 @@ export class UIController {
     }
 
     initMainUI() {
-        this.bottomControlsContainer = document.createElement("div");
-        this.bottomControlsContainer.classList.add("bottomControlsContainer");
-        document.body.appendChild(this.bottomControlsContainer);
+        let bottomControlsContainer = document.createElement("div");
+        bottomControlsContainer.classList.add("bottomControlsContainer");
+        document.body.appendChild(bottomControlsContainer);
 
-        this.toggleInputMuteButton = document.createElement("button");
-        this.toggleInputMuteButton.classList.add("toggleInputMuteButton");
-        this.bottomControlsContainer.appendChild(this.toggleInputMuteButton);
+        let inputButtonsContainer = document.createElement("div");
+        inputButtonsContainer.classList.add("controlButtonsContainer");
+        let changeAudioInputDeviceButton = document.createElement("button");
+        changeAudioInputDeviceButton.classList.add("bottomChangeButton", "changeAudioInputDeviceButton");
+        changeAudioInputDeviceButton.innerHTML = "^";
+        inputButtonsContainer.appendChild(changeAudioInputDeviceButton);
+        let toggleInputMuteButton = document.createElement("button");
+        toggleInputMuteButton.classList.add("bottomToggleButton", "toggleInputMuteButton");
+        inputButtonsContainer.appendChild(toggleInputMuteButton);
+        bottomControlsContainer.appendChild(inputButtonsContainer);
 
-        this.toggleOutputMuteButton = document.createElement("button");
-        this.toggleOutputMuteButton.classList.add("toggleOutputMuteButton");
-        this.bottomControlsContainer.appendChild(this.toggleOutputMuteButton);
+        let outputButtonsContainer = document.createElement("div");
+        outputButtonsContainer.classList.add("controlButtonsContainer");
+        let toggleOutputMuteButton = document.createElement("button");
+        toggleOutputMuteButton.classList.add("bottomToggleButton", "toggleOutputMuteButton");
+        outputButtonsContainer.appendChild(toggleOutputMuteButton);
+        bottomControlsContainer.appendChild(outputButtonsContainer);
 
-        this.toggleVideoButton = document.createElement("button");
-        this.toggleVideoButton.classList.add("toggleVideoButton");
-        this.bottomControlsContainer.appendChild(this.toggleVideoButton);
+        let videoButtonsContainer = document.createElement("div");
+        videoButtonsContainer.classList.add("controlButtonsContainer");
+        let changeVideoDeviceButton = document.createElement("button");
+        changeVideoDeviceButton.classList.add("bottomChangeButton", "changeVideoDeviceButton");
+        changeVideoDeviceButton.innerHTML = "^";
+        videoButtonsContainer.appendChild(changeVideoDeviceButton);
+        let toggleVideoButton = document.createElement("button");
+        toggleVideoButton.classList.add("bottomToggleButton", "toggleVideoButton");
+        videoButtonsContainer.appendChild(toggleVideoButton);
+        bottomControlsContainer.appendChild(videoButtonsContainer);
 
-        this.toggleRoomsDrawerButton = document.createElement("button");
-        this.toggleRoomsDrawerButton.classList.add("toggleRoomsDrawerButton");
-        this.toggleRoomsDrawerButton.addEventListener("click", roomController.toggleRoomList.bind(roomController));
-        this.bottomControlsContainer.appendChild(this.toggleRoomsDrawerButton);
+        let toggleRoomsDrawerButton = document.createElement("button");
+        toggleRoomsDrawerButton.classList.add("bottomToggleButton", "toggleRoomsDrawerButton", "controlButtonsContainer");
+        toggleRoomsDrawerButton.addEventListener("click", roomController.toggleRoomList.bind(roomController));
+        bottomControlsContainer.appendChild(toggleRoomsDrawerButton);
 
         this.modalBackground = document.createElement("div");
         this.modalBackground.classList.add("modalBackground", "displayNone");

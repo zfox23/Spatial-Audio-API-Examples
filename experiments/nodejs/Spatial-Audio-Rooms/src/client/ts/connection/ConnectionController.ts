@@ -1,6 +1,5 @@
 import { HiFiCommunicator, HiFiLogger, HiFiLogLevel, getBestAudioConstraints, HiFiUserDataStreamingScopes, ReceivedHiFiAudioAPIData, UserDataSubscription, AvailableUserDataSubscriptionComponents, OrientationEuler3D, Point3D } from 'hifi-spatial-audio';
-import { roomController, uiController, userDataController, videoController } from '..';
-import { AVDevicesController } from '../avDevices/AVDevicesController';
+import { avDevicesController, roomController, uiController, userDataController, videoController } from '..';
 import { Utilities } from '../utilities/Utilities';
 import { WebSocketConnectionController } from './WebSocketConnectionController';
 
@@ -20,15 +19,11 @@ export interface AudionetInitResponse {
 }
 
 export class ConnectionController {
-    avDevicesController: AVDevicesController;
     hifiCommunicator: HiFiCommunicator;
     webSocketConnectionController: WebSocketConnectionController;
     receivedInitialOtherUserDataFromHiFi: boolean = false;
-    audioConstraints: MediaTrackConstraints;
 
     constructor() {
-        this.audioConstraints = getBestAudioConstraints();
-        this.avDevicesController = new AVDevicesController();
         this.webSocketConnectionController = new WebSocketConnectionController();
         this.hifiCommunicator = new HiFiCommunicator({
             transmitRateLimitTimeoutMS: 10,
@@ -43,20 +38,20 @@ export class ConnectionController {
         return new Promise(async (resolve, reject) => {
             // Get the audio media stream associated with the user's default audio input device.
             try {
-                console.log(`Calling \`getUserMedia()\` with the following audio constraints:\n${JSON.stringify(this.audioConstraints)}`);
-                this.avDevicesController.inputAudioMediaStream = await navigator.mediaDevices.getUserMedia({ audio: this.audioConstraints, video: false });
+                console.log(`Calling \`getUserMedia()\` with the following audio constraints:\n${JSON.stringify(avDevicesController.audioConstraints)}`);
+                avDevicesController.inputAudioMediaStream = await navigator.mediaDevices.getUserMedia({ audio: avDevicesController.audioConstraints, video: false });
             } catch (e) {
                 reject(`Error calling \`getUserMedia()\`! Error:\n${e}`);
                 return;
             }
             
-            if (typeof (this.audioConstraints.echoCancellation) !== "undefined") {
-                let newEchoCancellationStatus = !!this.audioConstraints.echoCancellation.valueOf();
+            if (typeof (avDevicesController.audioConstraints.echoCancellation) !== "undefined") {
+                let newEchoCancellationStatus = !!avDevicesController.audioConstraints.echoCancellation.valueOf();
                 userDataController.myAvatar.myUserData.echoCancellationEnabled = newEchoCancellationStatus;
             }
             
-            if (typeof (this.audioConstraints.autoGainControl) !== "undefined") {
-                let newAGCStatus = !!this.audioConstraints.autoGainControl.valueOf();
+            if (typeof (avDevicesController.audioConstraints.autoGainControl) !== "undefined") {
+                let newAGCStatus = !!avDevicesController.audioConstraints.autoGainControl.valueOf();
                 userDataController.myAvatar.myUserData.agcEnabled = newAGCStatus;
             }
 
@@ -68,8 +63,8 @@ export class ConnectionController {
             // Set up our `HiFiCommunicator` object and supply our input media stream.
             console.log("Setting input audio stream on `this.hifiCommunicator`...");
             try {
-                await this.hifiCommunicator.setInputAudioMediaStream(this.avDevicesController.inputAudioMediaStream);
-                resolve(this.avDevicesController.inputAudioMediaStream);
+                await this.hifiCommunicator.setInputAudioMediaStream(avDevicesController.inputAudioMediaStream);
+                resolve(avDevicesController.inputAudioMediaStream);
             } catch (e) {
                 reject(e);
             }
@@ -133,9 +128,9 @@ export class ConnectionController {
             this.hifiCommunicator.addUserDataSubscription(newUserDataSubscription);
 
             // Set the `srcObject` on our `audio` DOM element to the final, mixed audio stream from the High Fidelity Audio API Server.
-            this.avDevicesController.outputAudioElement.srcObject = this.hifiCommunicator.getOutputAudioMediaStream();
+            avDevicesController.outputAudioElement.srcObject = this.hifiCommunicator.getOutputAudioMediaStream();
             // We explicitly call `play()` here because certain browsers won't play the newly-set stream automatically.
-            this.avDevicesController.outputAudioElement.play();
+            avDevicesController.outputAudioElement.play();
 
             userDataController.myAvatar.myUserData.visitIDHash = audionetInitResponse.visit_id_hash;
             userDataController.myAvatar.myUserData.colorHex = Utilities.hexColorFromString(userDataController.myAvatar.myUserData.visitIDHash);

@@ -1,4 +1,4 @@
-import { connectionController, roomController, uiController, userDataController, userInputController } from "..";
+import { avDevicesController, connectionController, roomController, uiController, userDataController, userInputController } from "..";
 declare var HIFI_SPACE_NAME: string;
 
 const io = require("socket.io-client");
@@ -87,25 +87,25 @@ export class WebSocketConnectionController {
 
         this.socket.on("onRequestToEnableEchoCancellation", ({ fromVisitIDHash }: { fromVisitIDHash: string }) => {
             console.warn(`Got a request from \`${fromVisitIDHash}\` to enable echo cancellation!`);
-            connectionController.audioConstraints.echoCancellation = true;
+            avDevicesController.audioConstraints.echoCancellation = true;
             connectionController.setNewInputAudioMediaStream();
         });
 
         this.socket.on("onRequestToDisableEchoCancellation", ({ fromVisitIDHash }: { fromVisitIDHash: string }) => {
             console.warn(`Got a request from \`${fromVisitIDHash}\` to disable echo cancellation!`);
-            connectionController.audioConstraints.echoCancellation = false;
+            avDevicesController.audioConstraints.echoCancellation = false;
             connectionController.setNewInputAudioMediaStream();
         });
 
         this.socket.on("onRequestToEnableAGC", ({ fromVisitIDHash }: { fromVisitIDHash: string }) => {
             console.warn(`Got a request from \`${fromVisitIDHash}\` to enable AGC!`);
-            connectionController.audioConstraints.autoGainControl = true;
+            avDevicesController.audioConstraints.autoGainControl = true;
             connectionController.setNewInputAudioMediaStream();
         });
 
         this.socket.on("onRequestToDisableAGC", ({ fromVisitIDHash }: { fromVisitIDHash: string }) => {
             console.warn(`Got a request from \`${fromVisitIDHash}\` to disable AGC!`);
-            connectionController.audioConstraints.autoGainControl = false;
+            avDevicesController.audioConstraints.autoGainControl = false;
             connectionController.setNewInputAudioMediaStream();
         });
 

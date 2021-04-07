@@ -159,7 +159,7 @@ export class RoomController {
         this.lobby = new SpatialAudioRoom({
             name: "Room 1",
             center: new Point3D({ x: 1, y: 0, z: 0 }),
-            seatingRadiusM: 1.0,
+            seatingRadiusM: 0.9,
             dimensions: new Point3D({x: 5.15, y: 0, z: 5.15 }),
             roomImageSRC: SeatingRadius1Image1
         });
