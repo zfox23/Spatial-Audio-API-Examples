@@ -240,6 +240,14 @@ class MyAvatar {
                     positionStart: step3PositionStart,
                     positionTarget: step3PositionEnd,
                     orientationEulerStart: orientationEulerInitial,
+                    orientationEulerTarget: orientationEulerInitial,
+                    durationMS: 800,
+                    easingFunction: EasingFunctions.easeOutQuad
+                }));
+                newPath.pathWaypoints.push(new Waypoint({
+                    positionStart: step3PositionStart,
+                    positionTarget: step3PositionEnd,
+                    orientationEulerStart: orientationEulerInitial,
                     orientationEulerTarget: orientationEulerFinal,
                     durationMS: 800,
                     easingFunction: EasingFunctions.easeOutQuad
