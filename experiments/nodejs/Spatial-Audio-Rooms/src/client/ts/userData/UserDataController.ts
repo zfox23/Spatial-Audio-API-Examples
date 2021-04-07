@@ -224,7 +224,7 @@ class MyAvatar {
                     positionTarget: step1PositionEnd,
                     orientationEulerStart: orientationEulerInitial,
                     orientationEulerTarget: orientationEulerInitial,
-                    durationMS: 800,
+                    durationMS: 750,
                     easingFunction: EasingFunctions.easeOutQuad
                 }));
                 newPath.pathWaypoints.push(new Waypoint({
@@ -232,25 +232,17 @@ class MyAvatar {
                     positionTarget: step2PositionEnd,
                     positionCircleCenter: transitionCircleCenter,
                     orientationEulerStart: orientationEulerInitial,
-                    orientationEulerTarget: orientationEulerInitial,
-                    durationMS: 1750,
-                    easingFunction: EasingFunctions.easeInOutCubic
+                    orientationEulerTarget: orientationEulerFinal,
+                    durationMS: 1600,
+                    easingFunction: EasingFunctions.easeInOutQuad
                 }));
                 newPath.pathWaypoints.push(new Waypoint({
                     positionStart: step3PositionStart,
                     positionTarget: step3PositionEnd,
-                    orientationEulerStart: orientationEulerInitial,
-                    orientationEulerTarget: orientationEulerInitial,
-                    durationMS: 800,
-                    easingFunction: EasingFunctions.easeOutQuad
-                }));
-                newPath.pathWaypoints.push(new Waypoint({
-                    positionStart: step3PositionEnd,
-                    positionTarget: step3PositionEnd,
-                    orientationEulerStart: orientationEulerInitial,
+                    orientationEulerStart: orientationEulerFinal,
                     orientationEulerTarget: orientationEulerFinal,
-                    durationMS: 800,
-                    easingFunction: EasingFunctions.easeInQuart
+                    durationMS: 750,
+                    easingFunction: EasingFunctions.easeOutQuad
                 }));
             } else {
                 newPath.pathWaypoints.push(new Waypoint({
