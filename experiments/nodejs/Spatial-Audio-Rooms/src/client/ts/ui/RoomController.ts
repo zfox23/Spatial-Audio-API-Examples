@@ -8,11 +8,13 @@ export class Seat {
     position: Point3D;
     orientation: OrientationEuler3D;
     occupiedUserData?: UserData;
+    uuid: string;
 
     constructor({ position, orientationEuler, occupiedUserData }: { position: Point3D, orientationEuler: OrientationEuler3D, occupiedUserData?: UserData }) {
         this.position = position;
         this.orientation = orientationEuler;
         this.occupiedUserData = occupiedUserData;
+        this.uuid = Utilities.generateUUID();
     }
 }
 

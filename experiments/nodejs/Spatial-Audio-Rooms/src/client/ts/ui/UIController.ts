@@ -3,11 +3,10 @@ import '../../css/controls.scss';
 import { AudionetInitResponse, ConnectionController } from '../connection/ConnectionController';
 import { UserData } from '../userData/UserDataController';
 import { Utilities } from '../utilities/Utilities';
-import { CanvasRenderer } from './CanvasRenderer';
+import { TwoDimensionalRenderer } from '../render/TwoDimensionalRenderer';
 
 export class UIController {
     playOverlay: HTMLElement;
-    canvasRenderer: CanvasRenderer;
     bottomControlsContainer: HTMLElement;
     toggleInputMuteButton: HTMLButtonElement;
     toggleOutputMuteButton: HTMLButtonElement;
@@ -19,7 +18,6 @@ export class UIController {
 
     constructor() {
         this.initPlayOverlay();
-        this.canvasRenderer = new CanvasRenderer();
         this.initMainUI();
         this.initContextMenu();
         this.hideLoadingOverlay();

@@ -2,7 +2,7 @@ import { OrientationEuler3D, Point3D } from "hifi-spatial-audio";
 import { connectionController, pathsController, roomController, uiController, userDataController, userInputController } from "..";
 import { AVATAR, PHYSICS } from "../constants/constants";
 import { SpatialAudioRoom } from "../ui/RoomController";
-import { Utilities, DataToTransmitToHiFi } from "../utilities/Utilities";
+import { Utilities, DataToTransmitToHiFi, EasingFunctions } from "../utilities/Utilities";
 
 export class PhysicsController {
     mainCanvas: HTMLCanvasElement;
@@ -45,7 +45,7 @@ export class PhysicsController {
         let allUserData = userDataController.allOtherUserData.concat(userDataController.myAvatar.myUserData);
         allUserData.forEach((userData) => {
             let isMine = userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash;
-            let easingFunction = isMine ? Utilities.easeOutQuad : Utilities.easeLinear;
+            let easingFunction = isMine ? EasingFunctions.easeOutQuad : EasingFunctions.easeLinear;
             let motionDurationMS = isMine ? PHYSICS.POSITION_TWEENING_DURATION_MS : PHYSICS.PHYSICS_TICKRATE_MS;
 
             if (isMine && pathsController.currentPath) {
@@ -246,7 +246,7 @@ export class PhysicsController {
             this.pxPerMTarget &&
             this.pxPerMStart &&
             (this.pxPerMTarget !== this.pxPerMStart)) {
-            this.pxPerMCurrent = Utilities.linearScale(Utilities.easeOutExponential((timestamp - this.smoothZoomStartTimestamp) / this.smoothZoomDurationMS), 0, 1, this.pxPerMStart, this.pxPerMTarget);
+            this.pxPerMCurrent = Utilities.linearScale(EasingFunctions.easeOutExponential((timestamp - this.smoothZoomStartTimestamp) / this.smoothZoomDurationMS), 0, 1, this.pxPerMStart, this.pxPerMTarget);
         } else {
             slam = true;
         }

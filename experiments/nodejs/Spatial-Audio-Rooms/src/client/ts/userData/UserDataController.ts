@@ -1,8 +1,8 @@
 import { OrientationEuler3D, Point3D } from "hifi-spatial-audio";
-import { userDataController, connectionController, roomController, physicsController, pathsController, uiController } from "..";
+import { userDataController, connectionController, roomController, physicsController, pathsController, uiController, twoDimensionalRenderer } from "..";
 import { Path, Waypoint } from "../ai/PathsController";
-import { AVATAR, PHYSICS } from "../constants/constants";
-import { DataToTransmitToHiFi, Utilities } from "../utilities/Utilities";
+import { AVATAR, PHYSICS, UI } from "../constants/constants";
+import { DataToTransmitToHiFi, EasingFunctions, Utilities } from "../utilities/Utilities";
 
 declare var HIFI_PROVIDED_USER_ID: string;
 
@@ -140,7 +140,9 @@ class MyAvatar {
         }
         
         let currentRoom = roomController.getRoomFromPoint3DInsideBoundaries(myUserData.positionCurrent);
-        let targetRoom = roomController.getRoomFromPoint3DOnCircle(targetSeatPosition);
+        let targetRoom = roomController.getRoomFromPoint3DInsideBoundaries(targetSeatPosition);
+
+        console.log(`User is moving from ${currentRoom.name} to ${targetRoom.name}...`);
 
         if (shouldTransmit || currentRoom !== targetRoom) {
             physicsController.autoComputePXPerMFromRoom(targetRoom);
@@ -157,13 +159,13 @@ class MyAvatar {
                     clearInterval(myUserData.tempData.scrimOpacityInterval);
                 }
 
-                uiController.canvasRenderer.canvasScrimOpacity = 0.0;
+                twoDimensionalRenderer.canvasScrimOpacity = 0.0;
 
                 myUserData.tempData.scrimOpacityInterval = setInterval(() => {
-                    if (uiController.canvasRenderer.canvasScrimOpacity < 0.8) {
-                        uiController.canvasRenderer.canvasScrimOpacity += 0.05;
+                    if (twoDimensionalRenderer.canvasScrimOpacity < UI.CANVAS_SCRIM_OPACITY_DURING_MOTION) {
+                        twoDimensionalRenderer.canvasScrimOpacity += 0.05;
                     } else {
-                        uiController.canvasRenderer.canvasScrimOpacity = 0.8;
+                        twoDimensionalRenderer.canvasScrimOpacity = UI.CANVAS_SCRIM_OPACITY_DURING_MOTION;
                         clearInterval(myUserData.tempData.scrimOpacityInterval);
                         myUserData.tempData.scrimOpacityInterval = undefined;
                     }
@@ -174,13 +176,13 @@ class MyAvatar {
                     clearInterval(myUserData.tempData.scrimOpacityInterval);
                 }
 
-                uiController.canvasRenderer.canvasScrimOpacity = 0.8;
+                twoDimensionalRenderer.canvasScrimOpacity = UI.CANVAS_SCRIM_OPACITY_DURING_MOTION;
 
                 myUserData.tempData.scrimOpacityInterval = setInterval(() => {
-                    if (uiController.canvasRenderer.canvasScrimOpacity > 0.0) {
-                        uiController.canvasRenderer.canvasScrimOpacity -= 0.05;
+                    if (twoDimensionalRenderer.canvasScrimOpacity > 0.0) {
+                        twoDimensionalRenderer.canvasScrimOpacity -= 0.05;
                     } else {
-                        uiController.canvasRenderer.canvasScrimOpacity = 0.0;
+                        twoDimensionalRenderer.canvasScrimOpacity = 0.0;
                         clearInterval(myUserData.tempData.scrimOpacityInterval);
                         myUserData.tempData.scrimOpacityInterval = undefined;
                     }
@@ -223,24 +225,24 @@ class MyAvatar {
                     orientationEulerStart: orientationEulerInitial,
                     orientationEulerTarget: orientationEulerInitial,
                     durationMS: 800,
-                    easingFunction: Utilities.easeOutQuad
+                    easingFunction: EasingFunctions.easeOutQuad
                 }));
                 newPath.pathWaypoints.push(new Waypoint({
                     positionStart: step2PositionStart,
                     positionTarget: step2PositionEnd,
                     positionCircleCenter: transitionCircleCenter,
                     orientationEulerStart: orientationEulerInitial,
-                    orientationEulerTarget: orientationEulerFinal,
+                    orientationEulerTarget: orientationEulerInitial,
                     durationMS: 1750,
-                    easingFunction: Utilities.easeInOutQuart
+                    easingFunction: EasingFunctions.easeInOutCubic
                 }));
                 newPath.pathWaypoints.push(new Waypoint({
                     positionStart: step3PositionStart,
                     positionTarget: step3PositionEnd,
-                    orientationEulerStart: orientationEulerFinal,
+                    orientationEulerStart: orientationEulerInitial,
                     orientationEulerTarget: orientationEulerFinal,
                     durationMS: 800,
-                    easingFunction: Utilities.easeOutQuad
+                    easingFunction: EasingFunctions.easeOutQuad
                 }));
             } else {
                 newPath.pathWaypoints.push(new Waypoint({
@@ -249,7 +251,7 @@ class MyAvatar {
                     orientationEulerStart: new OrientationEuler3D({yawDegrees: myUserData.orientationEulerCurrent.yawDegrees}),
                     orientationEulerTarget: new OrientationEuler3D({yawDegrees: targetSeatYawOrientationDegrees}),
                     durationMS: 2000,
-                    easingFunction: Utilities.easeOutQuad
+                    easingFunction: EasingFunctions.easeOutQuad
                 }));
             }
             pathsController.setCurrentPath(newPath);

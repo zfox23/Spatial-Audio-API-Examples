@@ -1,6 +1,6 @@
 declare module '*.png';
 
-import { physicsController, roomController, uiController, userDataController, videoController } from "..";
+import { physicsController, roomController, uiController, userDataController, userInputController, videoController } from "..";
 import { AVATAR, ROOM, UI, } from "../constants/constants";
 import { UserData } from "../userData/UserDataController";
 import { Utilities } from "../utilities/Utilities";
@@ -14,7 +14,7 @@ seatIcon.src = SeatIcon;
 const tableImage = new Image();
 tableImage.src = TableImage;
 
-export class CanvasRenderer {
+export class TwoDimensionalRenderer {
     mainCanvas: HTMLCanvasElement;
     ctx: CanvasRenderingContext2D;
     canvasOffsetPX: any;
@@ -70,10 +70,13 @@ export class CanvasRenderer {
         let amtToRotateAvatar = -userData.orientationEulerCurrent.yawDegrees * Math.PI / 180;
         ctx.rotate(amtToRotateAvatar);
 
-        if (roomController.currentlyHoveringOverVisitIDHash === userData.visitIDHash) {
-            ctx.fillStyle = "#FFFFFF";
+        if (roomController.currentlyHoveringOverVisitIDHash === userData.visitIDHash || (userInputController.hoveredUserData && userInputController.hoveredUserData.visitIDHash === userData.visitIDHash)) {
             ctx.beginPath();
-            ctx.arc(0, 0, (avatarRadiusM + AVATAR.AVATAR_HOVER_HIGHLIGHT_RADIUS_ADDITION_M) * pxPerM, 0, 2 * Math.PI);
+            ctx.arc(0, 0, (avatarRadiusM + UI.HOVER_HIGHLIGHT_RADIUS_ADDITION_M) * pxPerM, 0, 2 * Math.PI);
+            let grad = ctx.createRadialGradient(0, 0, 0, 0, 0, (avatarRadiusM + UI.HOVER_HIGHLIGHT_RADIUS_ADDITION_M) * pxPerM);
+            grad.addColorStop(0.0, UI.HOVER_GLOW_HEX);
+            grad.addColorStop(1.0, UI.HOVER_GLOW_HEX + "00");
+            ctx.fillStyle = grad;
             ctx.fill();
             ctx.closePath();
         }
@@ -271,6 +274,17 @@ export class CanvasRenderer {
         ctx.translate(seat.position.x * pxPerM, seat.position.z * pxPerM);
         let amountToRotateSeatImage = this.canvasRotationDegrees * Math.PI / 180;
         ctx.rotate(amountToRotateSeatImage);
+
+        if (userInputController.hoveredSeat && userInputController.hoveredSeat.uuid === seat.uuid) {
+            ctx.beginPath();
+            ctx.arc(0, 0, (ROOM.SEAT_RADIUS_M + UI.HOVER_HIGHLIGHT_RADIUS_ADDITION_M) * pxPerM, 0, 2 * Math.PI);
+            let grad = ctx.createRadialGradient(0, 0, 0, 0, 0, (ROOM.SEAT_RADIUS_M + UI.HOVER_HIGHLIGHT_RADIUS_ADDITION_M) * pxPerM);
+            grad.addColorStop(0.0, UI.HOVER_GLOW_HEX);
+            grad.addColorStop(1.0, UI.HOVER_GLOW_HEX + "00");
+            ctx.fillStyle = grad;
+            ctx.fill();
+            ctx.closePath();
+        }
 
         ctx.lineWidth = ROOM.SEAT_STROKE_WIDTH_PX;
         ctx.fillStyle = ROOM.SEAT_COLOR_HEX;

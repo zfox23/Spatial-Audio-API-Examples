@@ -3,7 +3,6 @@ import { AVATAR, ROOM, CONTROLS, PHYSICS } from "../constants/constants";
 import { UserData } from "../userData/UserDataController";
 import { Utilities } from "../utilities/Utilities";
 import { Seat } from "../ui/RoomController";
-import { Path, Waypoint } from "../ai/PathsController";
 import { OrientationEuler3D, Point3D } from "hifi-spatial-audio";
 
 export class UserInputController {
@@ -79,23 +78,6 @@ export class UserInputController {
                 if (userDataController.myAvatar.myUserData.isMuted) {
                     this.wasMutedBeforePTT = true;
                     this.setInputMute(false);
-                }
-                break;
-            case CONTROLS.P_KEY_CODE:
-                if (pathsController.currentPath) {
-                    pathsController.resetCurrentPath();
-                } else {
-                    let newPath = new Path();
-                    newPath.pathWaypoints.push(new Waypoint({
-                        positionStart: new Point3D({x: userDataController.myAvatar.myUserData.positionCurrent.x, z: userDataController.myAvatar.myUserData.positionCurrent.z}),
-                        positionTarget: new Point3D({x: userDataController.myAvatar.myUserData.positionCurrent.x + 5, z: userDataController.myAvatar.myUserData.positionCurrent.z + 5}),
-                        positionCircleCenter: new Point3D({x: userDataController.myAvatar.myUserData.positionCurrent.x + 2.5, z: userDataController.myAvatar.myUserData.positionCurrent.z + 2.5}),
-                        orientationEulerStart: userDataController.myAvatar.myUserData.orientationEulerCurrent,
-                        orientationEulerTarget: userDataController.myAvatar.myUserData.orientationEulerCurrent,
-                        durationMS: 2000,
-                        easingFunction: Utilities.easeLinear
-                    }));
-                    pathsController.setCurrentPath(newPath);
                 }
                 break;
         }

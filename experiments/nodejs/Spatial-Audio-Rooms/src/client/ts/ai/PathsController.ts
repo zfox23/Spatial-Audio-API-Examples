@@ -1,6 +1,6 @@
 import { OrientationEuler3D, Point3D } from "hifi-spatial-audio";
 import { pathsController, userDataController } from "..";
-import { Utilities } from "../utilities/Utilities";
+import { EasingFunctions } from "../utilities/Utilities";
 
 export class Waypoint {
     positionStart: Point3D;
@@ -11,7 +11,7 @@ export class Waypoint {
     durationMS: number;
     easingFunction?: (progressFraction: number) => number;
 
-    constructor({positionStart, positionTarget, positionCircleCenter, orientationEulerStart, orientationEulerTarget, durationMS, easingFunction = Utilities.easeInOutQuart}: {positionStart: Point3D, positionTarget: Point3D, positionCircleCenter?: Point3D, orientationEulerStart: OrientationEuler3D, orientationEulerTarget: OrientationEuler3D, durationMS: number, easingFunction?: (progressFraction: number) => number}) {
+    constructor({positionStart, positionTarget, positionCircleCenter, orientationEulerStart, orientationEulerTarget, durationMS, easingFunction = EasingFunctions.easeInOutQuart}: {positionStart: Point3D, positionTarget: Point3D, positionCircleCenter?: Point3D, orientationEulerStart: OrientationEuler3D, orientationEulerTarget: OrientationEuler3D, durationMS: number, easingFunction?: (progressFraction: number) => number}) {
         this.positionStart = positionStart;
         this.positionTarget = positionTarget;
         this.positionCircleCenter = positionCircleCenter;

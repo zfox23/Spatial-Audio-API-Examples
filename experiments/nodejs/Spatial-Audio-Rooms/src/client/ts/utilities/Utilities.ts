@@ -1,5 +1,5 @@
 import { Point3D, OrientationEuler3D } from "hifi-spatial-audio";
-import { physicsController, uiController } from "..";
+import { physicsController, twoDimensionalRenderer, uiController } from "..";
 
 export interface DataToTransmitToHiFi {
     position?: Point3D;
@@ -9,6 +9,38 @@ export interface DataToTransmitToHiFi {
 export interface CanvasPX {
     x: number;
     y: number;
+}
+
+// Adapted from https://gist.github.com/gre/1650294 and http://gizma.com/easing/
+export class EasingFunctions {
+    // no easing, no acceleration
+    static easeLinear = (t: number) => t;
+    // accelerating from zero velocity
+    static easeInQuad = (t: number) => t * t;
+    // decelerating to zero velocity
+    static easeOutQuad = (t: number) => t * (2 - t);
+    // acceleration until halfway; then deceleration
+    static easeInOutQuad = (t: number) => t < .5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+    // accelerating from zero velocity 
+    static easeInCubic = (t: number) => t * t * t;
+    // decelerating to zero velocity 
+    static easeOutCubic = (t: number) => (--t) * t * t + 1;
+    // acceleration until halfway; then deceleration 
+    static easeInOutCubic = (t: number) => t < .5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1;
+    // accelerating from zero velocity 
+    static easeInQuart = (t: number) => t * t * t * t;
+    // decelerating to zero velocity 
+    static easeOutQuart = (t: number) => 1 - (--t) * t * t * t;
+    // acceleration until halfway; then deceleration
+    static easeInOutQuart = (t: number) => t < .5 ? 8 * t * t * t * t : 1 - 8 * (--t) * t * t * t;
+    // accelerating from zero velocity
+    static easeInQuint = (t: number) => t * t * t * t * t;
+    // decelerating to zero velocity
+    static easeOutQuint = (t: number) => 1 + (--t) * t * t * t * t;
+    // acceleration until halfway; then deceleration 
+    static easeInOutQuint = (t: number) => t < .5 ? 16 * t * t * t * t * t : 1 + 16 * (--t) * t * t * t * t;
+    // decelerating to zero velocity
+    static easeOutExponential = (t: number) => t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
 }
 
 export class Utilities {
@@ -32,22 +64,6 @@ export class Utilities {
         let scale = (maxOutput - minOutput) / (maxInput - minInput);
 
         return Math.exp(minOutput + scale * (factor - minInput));
-    }
-
-    static easeLinear(progressFraction: number) {
-        return progressFraction;
-    }
-
-    static easeInOutQuart(progressFraction: number) {
-        return progressFraction < 0.5 ? 8 * progressFraction * progressFraction * progressFraction * progressFraction : 1 - Math.pow(-2 * progressFraction + 2, 4) / 2;
-    }
-
-    static easeOutQuad(progressFraction: number) {
-        return 1 - (1 - progressFraction) * (1 - progressFraction);
-    }
-
-    static easeOutExponential(progressFraction: number) {
-        return progressFraction === 1 ? 1 : 1 - Math.pow(2, -10 * progressFraction);
     }
 
     static getRandomFloat(min: number, max: number) {
@@ -138,7 +154,7 @@ export class Utilities {
         return (Math.random() * (max - min)) + min;
     }
 
-    static generateUUID(trimBrackets: boolean) {
+    static generateUUID(trimBrackets?: boolean) {
         let i = 0;
         let generatedUUID = "";
         let baseString;
@@ -166,9 +182,9 @@ export class Utilities {
 
     static canvasPXToM(canvasPX: CanvasPX) {
         let pxPerM = physicsController.pxPerMCurrent;
-        let canvasOffsetPX = uiController.canvasRenderer.canvasOffsetPX;
-        let cameraPositionNoOffsetM = uiController.canvasRenderer.cameraPositionNoOffsetM;
-        let yawOrientationRadians = uiController.canvasRenderer.canvasRotationDegrees * Math.PI / 180;
+        let canvasOffsetPX = twoDimensionalRenderer.canvasOffsetPX;
+        let cameraPositionNoOffsetM = twoDimensionalRenderer.cameraPositionNoOffsetM;
+        let yawOrientationRadians = twoDimensionalRenderer.canvasRotationDegrees * Math.PI / 180;
 
         if (pxPerM === undefined || canvasOffsetPX === undefined || cameraPositionNoOffsetM === undefined || yawOrientationRadians === undefined) {
             return;
