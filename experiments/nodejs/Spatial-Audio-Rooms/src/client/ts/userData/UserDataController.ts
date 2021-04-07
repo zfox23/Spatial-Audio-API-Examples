@@ -245,12 +245,12 @@ class MyAvatar {
                     easingFunction: EasingFunctions.easeOutQuad
                 }));
                 newPath.pathWaypoints.push(new Waypoint({
-                    positionStart: step3PositionStart,
+                    positionStart: step3PositionEnd,
                     positionTarget: step3PositionEnd,
                     orientationEulerStart: orientationEulerInitial,
                     orientationEulerTarget: orientationEulerFinal,
                     durationMS: 800,
-                    easingFunction: EasingFunctions.easeOutQuad
+                    easingFunction: EasingFunctions.easeInQuart
                 }));
             } else {
                 newPath.pathWaypoints.push(new Waypoint({
