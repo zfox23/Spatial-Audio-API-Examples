@@ -133,7 +133,9 @@ export class ConnectionController {
             avDevicesController.outputAudioElement.play();
 
             userDataController.myAvatar.myUserData.visitIDHash = audionetInitResponse.visit_id_hash;
-            userDataController.myAvatar.myUserData.colorHex = Utilities.hexColorFromString(userDataController.myAvatar.myUserData.visitIDHash);
+            if (!userDataController.myAvatar.myUserData.colorHex) {
+                userDataController.myAvatar.onMyColorHexChanged(Utilities.hexColorFromString(userDataController.myAvatar.myUserData.visitIDHash));
+            }
 
             resolve(audionetInitResponse);
         });
@@ -258,7 +260,6 @@ export class ConnectionController {
 
                 userDataController.allOtherUserData.push({
                     visitIDHash: currentVisitIDHash,
-                    colorHex: Utilities.hexColorFromString(currentVisitIDHash),
                     positionCurrent: currentDataFromServer.position,
                     orientationEulerCurrent: currentDataFromServer.orientationEuler,
                     volumeDecibels: currentDataFromServer.volumeDecibels,

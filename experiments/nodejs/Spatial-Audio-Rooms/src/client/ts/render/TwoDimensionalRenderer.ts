@@ -52,7 +52,7 @@ export class TwoDimensionalRenderer {
     }
 
     drawVolumeBubble({ userData }: { userData: UserData }) {
-        if (userData.volumeDecibels < userData.volumeThreshold) {
+        if (!userData.colorHex || userData.volumeDecibels < userData.volumeThreshold) {
             return;
         }
         let ctx = this.ctx;
@@ -64,6 +64,10 @@ export class TwoDimensionalRenderer {
     }
 
     drawAvatarBase({ userData }: { userData: UserData }) {
+        if (!userData.colorHex) {
+            return;
+        }
+
         let isMine = userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash;
         let ctx = this.ctx;
         let pxPerM = physicsController.pxPerMCurrent;
@@ -133,7 +137,7 @@ export class TwoDimensionalRenderer {
 
     drawAvatarLabel({ userData }: { userData: UserData }) {
         // Don't draw the avatar label if we're drawing that avatar's video.
-        if (videoController.providedUserIDToVideoElementMap.has(userData.providedUserID)) {
+        if (!userData.colorHex || videoController.providedUserIDToVideoElementMap.has(userData.providedUserID)) {
             return;
         }
 

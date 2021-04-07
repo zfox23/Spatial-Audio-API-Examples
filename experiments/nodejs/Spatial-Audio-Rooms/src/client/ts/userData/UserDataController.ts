@@ -73,6 +73,10 @@ class MyAvatar {
         } else {
             this.onMyDisplayNameChanged(HIFI_PROVIDED_USER_ID);
         }
+
+        if (localStorage.getItem('myColorHex')) {
+            this.onMyColorHexChanged(localStorage.getItem('myColorHex'));
+        }
     }
 
     positionSelfInRoom(targetRoomName: string) {
@@ -262,7 +266,16 @@ class MyAvatar {
         connectionController.webSocketConnectionController.updateMyUserDataOnWebSocketServer();
         try {
             roomController.updateRoomList();
-        } catch (e) { } 
+        } catch (e) { }
+    }
+
+    onMyColorHexChanged(newColorHex?: string) {
+        localStorage.setItem('myColorHex', newColorHex);
+        this.myUserData.colorHex = newColorHex;
+        connectionController.webSocketConnectionController.updateMyUserDataOnWebSocketServer();
+        try {
+            roomController.updateRoomList();
+        } catch (e) { }
     }
 }
 

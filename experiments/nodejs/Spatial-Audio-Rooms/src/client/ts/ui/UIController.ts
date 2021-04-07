@@ -171,6 +171,26 @@ export class UIController {
         this.avatarContextMenu.appendChild(displayName);
     }
 
+    generateColorHexUI(userData: UserData) {
+        let colorHexInput;
+        colorHexInput = document.createElement("input");
+        colorHexInput.type = "color";
+        colorHexInput.value = userData.colorHex;
+
+        if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash) {
+            colorHexInput.classList.add("avatarContextMenu__colorHexInput--mine");
+
+            colorHexInput.addEventListener('input', (e) => {
+                userDataController.myAvatar.onMyColorHexChanged((<HTMLInputElement>e.target).value);
+            });
+        } else {
+            colorHexInput.disabled = true;
+        }
+
+        colorHexInput.classList.add("avatarContextMenu__colorHexInput");
+        this.avatarContextMenu.appendChild(colorHexInput);
+    }
+
     generateEchoCancellationUI(userData: UserData) {
         if (typeof (userData.echoCancellationEnabled) !== "boolean") {
             return;
@@ -316,6 +336,7 @@ export class UIController {
 
         this.generateCloseButtonUI();
         this.generateDisplayNameUI(userData);
+        this.generateColorHexUI(userData);
         this.generateEchoCancellationUI(userData);
         this.generateAGCUI(userData);
         this.generateHiFiGainUI(userData);

@@ -451,13 +451,20 @@ export class RoomController {
                 let roomInfoContainer__occupant = document.createElement("p");
                 roomInfoContainer__occupant.classList.add("roomInfoContainer__occupant");
                 roomInfoContainer__occupant.setAttribute('data-visit-id-hash', userData.visitIDHash);
+                let occupantInnerHTML;
                 if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash) {
-                    roomInfoContainer__occupant.innerHTML = `(you) ${userData.displayName}`;
+                    occupantInnerHTML = `<span class="roomInfoContainer__occupantColorChip" style="background-color:${userDataController.myAvatar.myUserData.colorHex}"></span>`;
+                    occupantInnerHTML += `(you) ${userData.displayName}`;
                     document.querySelector(`[data-room-name="${userData.currentRoomName}"]`).prepend(roomInfoContainer__occupant);
                 } else {
-                    roomInfoContainer__occupant.innerHTML = userData.displayName && userData.displayName.length > 0 ? userData.displayName : "❓ Anonymous";
+                    occupantInnerHTML = ``;
+                    if (userData.colorHex) {
+                        occupantInnerHTML += `<span class="roomInfoContainer__occupantColorChip" style="background-color:${userData.colorHex}"></span>`;
+                    }
+                    occupantInnerHTML += userData.displayName && userData.displayName.length > 0 ? userData.displayName : "❓ Anonymous";
                     document.querySelector(`[data-room-name="${userData.currentRoomName}"]`).appendChild(roomInfoContainer__occupant);
                 }
+                roomInfoContainer__occupant.innerHTML = occupantInnerHTML;
 
                 roomInfoContainer__occupant.addEventListener("click", (e) => {
                     uiController.showAvatarContextMenu(userData);
