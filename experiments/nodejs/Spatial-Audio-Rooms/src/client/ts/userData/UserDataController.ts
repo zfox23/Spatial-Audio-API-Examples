@@ -127,6 +127,8 @@ class MyAvatar {
         }
 
         let shouldTransmit = dataToTransmit.position || dataToTransmit.orientationEuler;
+        let currentRoom = roomController.getRoomFromPoint3DInsideBoundaries(myUserData.positionCurrent);
+        let targetRoom = roomController.getRoomFromPoint3DInsideBoundaries(targetSeatPosition);
 
         if (shouldTransmit) {
             let hifiCommunicator = connectionController.hifiCommunicator;
@@ -137,16 +139,10 @@ class MyAvatar {
             }
 
             roomController.updateAllRoomSeats();
-        }
-        
-        let currentRoom = roomController.getRoomFromPoint3DInsideBoundaries(myUserData.positionCurrent);
-        let targetRoom = roomController.getRoomFromPoint3DInsideBoundaries(targetSeatPosition);
-
-        console.log(`User is moving from ${currentRoom.name} to ${targetRoom.name}...`);
-
-        if (shouldTransmit || currentRoom !== targetRoom) {
             physicsController.autoComputePXPerMFromRoom(targetRoom);
         }
+
+        console.log(`User is moving from ${currentRoom.name} to ${targetRoom.name}...`);
 
         if (!shouldTransmit) {
             if (pathsController.currentPath) {
@@ -154,7 +150,7 @@ class MyAvatar {
             }
 
             let newPath = new Path();
-            newPath.onActivated = () => {
+            newPath.onActivated.push(() => {
                 if (myUserData.tempData.scrimOpacityInterval) {
                     clearInterval(myUserData.tempData.scrimOpacityInterval);
                 }
@@ -170,8 +166,8 @@ class MyAvatar {
                         myUserData.tempData.scrimOpacityInterval = undefined;
                     }
                 }, PHYSICS.PHYSICS_TICKRATE_MS);
-            };
-            newPath.onDeactivated = () => {
+            });
+            newPath.onDeactivated.push(() => {
                 if (myUserData.tempData.scrimOpacityInterval) {
                     clearInterval(myUserData.tempData.scrimOpacityInterval);
                 }
@@ -187,7 +183,7 @@ class MyAvatar {
                         myUserData.tempData.scrimOpacityInterval = undefined;
                     }
                 }, PHYSICS.PHYSICS_TICKRATE_MS);
-            };
+            });
             if (currentRoom === targetRoom) {
                 let transitionCircleCenter = new Point3D({x: currentRoom.center.x, z: currentRoom.center.z});
 
@@ -245,6 +241,8 @@ class MyAvatar {
                     easingFunction: EasingFunctions.easeOutQuad
                 }));
             } else {
+                newPath.onDeactivated.push(() => { physicsController.autoComputePXPerMFromRoom(targetRoom); })
+
                 newPath.pathWaypoints.push(new Waypoint({
                     positionStart: new Point3D({x: myUserData.positionCurrent.x, z: myUserData.positionCurrent.z}),
                     positionTarget: new Point3D({x: targetSeatPosition.x, z: targetSeatPosition.z}),

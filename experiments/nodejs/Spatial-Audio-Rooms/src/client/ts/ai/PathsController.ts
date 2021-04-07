@@ -26,8 +26,8 @@ export class Path {
     pathWaypoints: Array<Waypoint>;
     currentWaypointIndex: number;
     repeats: boolean = false;
-    onActivated?: () => void;
-    onDeactivated?: () => void;
+    onActivated?: Array<() => void> = [];
+    onDeactivated?: Array<() => void> = [];
 
     constructor() {
         this.pathWaypoints = [];
@@ -58,8 +58,8 @@ export class PathsController {
         this.currentPath.incrementWaypointIndex();
         userDataController.myAvatar.myUserData.motionStartTimestamp = undefined;
 
-        if (this.currentPath.onActivated) {
-            this.currentPath.onActivated();
+        if (this.currentPath.onActivated.length > 0) {
+            this.currentPath.onActivated.forEach((func) => { func(); });
         }
     }
 
@@ -68,8 +68,8 @@ export class PathsController {
             this.currentPath.currentWaypointIndex = -1;
         }
 
-        if (this.currentPath.onDeactivated) {
-            this.currentPath.onDeactivated();
+        if (this.currentPath.onDeactivated.length > 0) {
+            this.currentPath.onDeactivated.forEach((func) => { func(); });
         }
 
         this.currentPath = undefined;
