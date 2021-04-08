@@ -15,8 +15,8 @@ export class UserInputController {
     toggleOutputMuteButton: HTMLButtonElement;
     changeVideoDeviceButton: HTMLButtonElement;
     toggleVideoButton: HTMLButtonElement;
-    rightClickStartPositionPX: any;
-    lastDistanceBetweenRightClickEvents: number;
+    leftClickStartPositionPX: any;
+    lastDistanceBetweenLeftClickEvents: number;
     hoveredUserData: UserData;
     hoveredSeat: SpatialAudioSeat;
     lastOnWheelTimestamp: number;
@@ -444,8 +444,8 @@ export class UserInputController {
 
         let gesturePointPX = this.getGesturePointFromEvent(event);
 
-        if ((event instanceof PointerEvent || event instanceof MouseEvent) && event.button === 2) {
-            this.rightClickStartPositionPX = gesturePointPX;
+        if ((event instanceof PointerEvent || event instanceof MouseEvent) && event.buttons === 1) {
+            this.leftClickStartPositionPX = gesturePointPX;
         }
     }
 
@@ -454,10 +454,10 @@ export class UserInputController {
 
         let gesturePointPX = this.getGesturePointFromEvent(event);
 
-        if (event.buttons === 2 && this.rightClickStartPositionPX !== undefined && !pathsController.currentPath) {
-            let newDistance = gesturePointPX.x - this.rightClickStartPositionPX.x;
-            let deltaDistance = newDistance - this.lastDistanceBetweenRightClickEvents;
-            this.lastDistanceBetweenRightClickEvents = newDistance;
+        if (event.buttons === 1 && this.leftClickStartPositionPX !== undefined && !pathsController.currentPath) {
+            let newDistance = gesturePointPX.x - this.leftClickStartPositionPX.x;
+            let deltaDistance = newDistance - this.lastDistanceBetweenLeftClickEvents;
+            this.lastDistanceBetweenLeftClickEvents = newDistance;
 
             if (userDataController.myAvatar && userDataController.myAvatar.myUserData.orientationEulerCurrent) {
                 let newYawDegrees = userDataController.myAvatar.myUserData.orientationEulerCurrent.yawDegrees - deltaDistance * CONTROLS.RIGHT_CLICK_ROTATION_SENSITIVITY;
@@ -521,9 +521,9 @@ export class UserInputController {
             this.mainCanvas.removeEventListener('mouseup', this.handleGestureOnCanvasEnd, true);
         }
 
-        if (event.button === 2 && this.rightClickStartPositionPX !== undefined) {
-            this.rightClickStartPositionPX = undefined;
-            this.lastDistanceBetweenRightClickEvents = 0;
+        if (event.buttons === 0 && this.leftClickStartPositionPX !== undefined) {
+            this.leftClickStartPositionPX = undefined;
+            this.lastDistanceBetweenLeftClickEvents = 0;
         }
     }
 
