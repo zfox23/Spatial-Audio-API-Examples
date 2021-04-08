@@ -353,14 +353,15 @@ export class TwoDimensionalRenderer {
 
         let pxPerM = physicsController.pxPerMCurrent;
 
+        const normalCameraOffsetYPX = this.mainCanvas.height / 2 - UI.AVATAR_PADDING_FOR_CAMERA * pxPerM;
+
         if (this.cameraOffsetYPX === undefined) {
-            this.cameraOffsetYPX = this.mainCanvas.height / 2 - 2 * AVATAR.RADIUS_M * pxPerM;
+            this.cameraOffsetYPX = normalCameraOffsetYPX;
         }
 
         this.cameraPositionNoOffsetM = userDataController.myAvatar.myUserData.positionCurrent;
         const currentRoom = myUserData.currentRoom;
         if (currentRoom) {
-            let normalCameraOffsetYPX = this.mainCanvas.height / 2 - 2 * AVATAR.RADIUS_M * pxPerM;
             let scaledOffsetPX = Utilities.linearScale(pxPerM, PHYSICS.MIN_PX_PER_M, physicsController.pxPerMMax, 0, normalCameraOffsetYPX, true);
             this.cameraOffsetYPX = scaledOffsetPX;
         }

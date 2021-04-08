@@ -1,6 +1,6 @@
 import { OrientationEuler3D, Point3D } from "hifi-spatial-audio";
 import { connectionController, pathsController, roomController, uiController, userDataController, userInputController } from "..";
-import { AVATAR, PHYSICS } from "../constants/constants";
+import { AVATAR, PHYSICS, UI } from "../constants/constants";
 import { SpatialAudioRoom } from "../ui/RoomController";
 import { Utilities, DataToTransmitToHiFi, EasingFunctions } from "../utilities/Utilities";
 
@@ -223,7 +223,7 @@ export class PhysicsController {
 
         this.smoothZoomDurationMS = PHYSICS.SMOOTH_ZOOM_DURATION_SWITCH_ROOMS_MS;
         this.smoothZoomStartTimestamp = undefined;
-        this.pxPerMTarget = Math.min(this.mainCanvas.width, this.mainCanvas.height) / (2 * room.seatingRadiusM + 4 * AVATAR.RADIUS_M);
+        this.pxPerMTarget = Math.min(this.mainCanvas.width, this.mainCanvas.height) / (2 * room.seatingRadiusM + 2 * UI.AVATAR_PADDING_FOR_CAMERA);
         this.pxPerMMax = this.pxPerMTarget;
     }
 
