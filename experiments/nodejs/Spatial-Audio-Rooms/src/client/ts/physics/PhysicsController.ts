@@ -214,10 +214,6 @@ export class PhysicsController {
                 hifiCommunicator.updateUserDataAndTransmit(dataToTransmit);
             }
         });
-
-        if (myAvatarMoved || otherAvatarMoved) {
-            roomController.updateAllRoomSeats();
-        }
     }
 
     autoComputePXPerMFromRoom(room: SpatialAudioRoom) {

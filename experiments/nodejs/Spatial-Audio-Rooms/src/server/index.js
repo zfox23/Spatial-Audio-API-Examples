@@ -86,10 +86,11 @@ class ServerSpaceInfo {
 }
 
 class Participant {
-    constructor({ socketID, spaceName, visitIDHash, displayName, colorHex, echoCancellationEnabled, agcEnabled, hiFiGainSliderValue, volumeThreshold, } = {}) {
+    constructor({ socketID, spaceName, visitIDHash, currentSeatID, displayName, colorHex, echoCancellationEnabled, agcEnabled, hiFiGainSliderValue, volumeThreshold, } = {}) {
         this.socketID = socketID;
         this.spaceName = spaceName;
         this.visitIDHash = visitIDHash;
+        this.currentSeatID = currentSeatID;
         this.displayName = displayName;
         this.colorHex = colorHex;
         this.echoCancellationEnabled = echoCancellationEnabled;
@@ -101,7 +102,7 @@ class Participant {
 
 let spaceInformation = {};
 socketIOServer.on("connection", (socket) => {
-    socket.on("addParticipant", ({ spaceName, visitIDHash, displayName, colorHex, echoCancellationEnabled, agcEnabled, hiFiGainSliderValue, volumeThreshold, } = {}) => {
+    socket.on("addParticipant", ({ spaceName, visitIDHash, currentSeatID, displayName, colorHex, echoCancellationEnabled, agcEnabled, hiFiGainSliderValue, volumeThreshold, } = {}) => {
         if (!spaceInformation[spaceName]) {
             spaceInformation[spaceName] = new ServerSpaceInfo({ spaceName });
         }
@@ -117,6 +118,7 @@ socketIOServer.on("connection", (socket) => {
             socketID: socket.id,
             spaceName,
             visitIDHash,
+            currentSeatID,
             displayName,
             colorHex,
             echoCancellationEnabled,
@@ -129,11 +131,11 @@ socketIOServer.on("connection", (socket) => {
 
         socket.join(spaceName);
 
-        socket.to(spaceName).emit("onParticipantAdded", [me]);
-        socket.emit("onParticipantAdded", spaceInformation[spaceName].participants.filter((participant) => { return participant.visitIDHash !== visitIDHash; }));
+        socket.to(spaceName).emit("onParticipantsAddedOrEdited", [me]);
+        socket.emit("onParticipantsAddedOrEdited", spaceInformation[spaceName].participants.filter((participant) => { return participant.visitIDHash !== visitIDHash; }));
     });
 
-    socket.on("editParticipant", ({ spaceName, visitIDHash, displayName, colorHex, echoCancellationEnabled, agcEnabled, hiFiGainSliderValue, volumeThreshold, } = {}) => {
+    socket.on("editParticipant", ({ spaceName, visitIDHash, currentSeatID, displayName, colorHex, echoCancellationEnabled, agcEnabled, hiFiGainSliderValue, volumeThreshold, } = {}) => {
         let participantToEdit = spaceInformation[spaceName].participants.find((participant) => {
             return participant.visitIDHash === visitIDHash;
         });
@@ -141,6 +143,9 @@ socketIOServer.on("connection", (socket) => {
         if (participantToEdit) {
             if (typeof (displayName) === "string") {
                 participantToEdit.displayName = displayName;
+            }
+            if (typeof (currentSeatID) === "string") {
+                participantToEdit.currentSeatID = currentSeatID;
             }
             if (typeof (colorHex) === "string") {
                 participantToEdit.colorHex = colorHex;
@@ -157,7 +162,7 @@ socketIOServer.on("connection", (socket) => {
             if (typeof (volumeThreshold) === "number") {
                 participantToEdit.volumeThreshold = volumeThreshold;
             }
-            socket.to(spaceName).emit("onParticipantAdded", [participantToEdit]);
+            socket.to(spaceName).emit("onParticipantsAddedOrEdited", [participantToEdit]);
         } else {
             console.error(`editParticipant: Couldn't get participant with visitIDHash: \`${visitIDHash}\`!`);
         }
@@ -165,7 +170,6 @@ socketIOServer.on("connection", (socket) => {
 
     socket.on("disconnect", () => {
         let allSpaces = Object.keys(spaceInformation);
-        let successfullyRemoved = false;
 
         for (let i = 0; i < allSpaces.length; i++) {
             let currentSpace = spaceInformation[allSpaces[i]];
@@ -173,7 +177,6 @@ socketIOServer.on("connection", (socket) => {
             if (participantToRemove) {
                 console.log(`${Date.now()}: In ${allSpaces[i]}, removing participant with Hashed Visit ID: \`${participantToRemove.visitIDHash}\`!`);
                 currentSpace.participants = currentSpace.participants.filter((participant) => { return participant.socketID !== socket.id; });
-                successfullyRemoved = true;
             }
         }
     });

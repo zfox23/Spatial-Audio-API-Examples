@@ -5,6 +5,7 @@ const io = require("socket.io-client");
 
 interface WebSocketParticipantData {
     visitIDHash: string;
+    currentSeatID: string;
     displayName: string;
     colorHex: string;
     echoCancellationEnabled: boolean;
@@ -16,6 +17,7 @@ interface WebSocketParticipantData {
 export class WebSocketConnectionController {
     socket: SocketIOClient.Socket;
     readyToSendWebSocketData: boolean = false;
+    retrievedInitialWebSocketServerData: boolean = false;
 
     constructor() {
         this.socket = io('', { path: '/spatial-audio-rooms/socket.io' });
@@ -29,11 +31,12 @@ export class WebSocketConnectionController {
             console.log(`Disconnected from Socket.IO WebSocket server!`);
         });
 
-        this.socket.on("onParticipantAdded", (participantArray: Array<WebSocketParticipantData>) => {
+        this.socket.on("onParticipantsAddedOrEdited", (participantArray: Array<WebSocketParticipantData>) => {
             console.log(`Retrieved information about ${participantArray.length} participant(s) from the server:\n${JSON.stringify(participantArray)}`);
             participantArray.forEach((participant) => {
                 let {
                     visitIDHash,
+                    currentSeatID,
                     displayName,
                     colorHex,
                     echoCancellationEnabled,
@@ -44,7 +47,6 @@ export class WebSocketConnectionController {
 
                 let localUserData = userDataController.allOtherUserData.find((userData) => { return userData.visitIDHash === visitIDHash; });
                 if (localUserData) {
-                    console.log(`Updating participant with hash \`${localUserData.visitIDHash}\`:\nDisplay Name: \`${displayName}\`\nColor: ${colorHex}\nechoCancellationEnabled: ${echoCancellationEnabled}\nagcEnabled: ${agcEnabled}\nhiFiGainSliderValue: ${hiFiGainSliderValue}\nvolumeThreshold:${volumeThreshold}\n`);
                     if (typeof (displayName) === "string") {
                         localUserData.displayName = displayName;
                     }
@@ -64,6 +66,20 @@ export class WebSocketConnectionController {
                     if (typeof (volumeThreshold) === "number") {
                         localUserData.volumeThreshold = volumeThreshold;
                     }
+                    if (typeof (currentSeatID) === "string") {
+                        if (localUserData.currentSeat) {
+                            localUserData.currentSeat.occupiedUserData = undefined;
+                        }
+                        localUserData.currentSeat = roomController.getSeatFromSeatID(currentSeatID);
+                        if (localUserData.currentSeat) {
+                            localUserData.currentSeat.occupiedUserData = localUserData;
+                            localUserData.currentRoom = localUserData.currentSeat.room;
+                        } else {
+                            localUserData.currentRoom = undefined;
+                        }
+                    }
+
+                    console.log(`Updated participant:\nVisit ID Hash \`${localUserData.visitIDHash}\`:\nDisplay Name: \`${displayName}\`\nColor: ${colorHex}\nCurrent Seat ID: ${localUserData.currentSeat ? localUserData.currentSeat.seatID : "undefined"}\nCurrent Room Name: ${localUserData.currentRoom ? localUserData.currentRoom.name : "undefined"}\nechoCancellationEnabled: ${echoCancellationEnabled}\nagcEnabled: ${agcEnabled}\nhiFiGainSliderValue: ${hiFiGainSliderValue}\nvolumeThreshold:${volumeThreshold}\n`);
                 } else if (visitIDHash && displayName) {
                     localUserData = {
                         visitIDHash,
@@ -76,13 +92,32 @@ export class WebSocketConnectionController {
                         tempData: {}
                     };
                     localUserData.hiFiGain = uiController.hiFiGainFromSliderValue(localUserData.hiFiGainSliderValue);
+
+                    if (localUserData.currentSeat) {
+                        localUserData.currentSeat.occupiedUserData = undefined;
+                    }
+                    localUserData.currentSeat = roomController.getSeatFromSeatID(currentSeatID);
+                    if (localUserData.currentSeat) {
+                        localUserData.currentSeat.occupiedUserData = localUserData;
+                        localUserData.currentRoom = localUserData.currentSeat.room;
+                    } else {
+                        localUserData.currentRoom = undefined;
+                    }
+
                     userDataController.allOtherUserData.push(localUserData);
                 }
 
-                uiController.maybeUpdateAvatarContextMenu(localUserData)
-
-                roomController.updateAllRoomSeats();
+                uiController.maybeUpdateAvatarContextMenu(localUserData);
+                roomController.updateRoomList();
             });
+
+            if (!this.retrievedInitialWebSocketServerData) {
+                this.retrievedInitialWebSocketServerData = true;
+                
+                if (connectionController.receivedInitialOtherUserDataFromHiFi) {
+                    userDataController.myAvatar.positionSelfInRoom(roomController.getStartingRoomName());
+                }
+            }
         });
 
         this.socket.on("onRequestToEnableEchoCancellation", ({ fromVisitIDHash }: { fromVisitIDHash: string }) => {
@@ -130,6 +165,7 @@ export class WebSocketConnectionController {
         this.socket.emit("addParticipant", {
             spaceName: HIFI_SPACE_NAME,
             visitIDHash: myUserData.visitIDHash,
+            currentSeatID: myUserData.currentSeat ? myUserData.currentSeat.seatID : "",
             displayName: myUserData.displayName,
             colorHex: myUserData.colorHex,
             echoCancellationEnabled: myUserData.echoCancellationEnabled,
@@ -149,6 +185,7 @@ export class WebSocketConnectionController {
         let dataToUpdate = {
             spaceName: HIFI_SPACE_NAME,
             visitIDHash: myUserData.visitIDHash,
+            currentSeatID: myUserData.currentSeat ? myUserData.currentSeat.seatID : "",
             displayName: myUserData.displayName,
             colorHex: myUserData.colorHex,
             echoCancellationEnabled: myUserData.echoCancellationEnabled,

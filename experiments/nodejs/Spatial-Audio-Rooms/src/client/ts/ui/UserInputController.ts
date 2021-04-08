@@ -2,7 +2,7 @@ import { avDevicesController, connectionController, pathsController, physicsCont
 import { AVATAR, ROOM, CONTROLS, PHYSICS } from "../constants/constants";
 import { UserData } from "../userData/UserDataController";
 import { Utilities } from "../utilities/Utilities";
-import { Seat } from "../ui/RoomController";
+import { SpatialAudioSeat } from "../ui/RoomController";
 import { OrientationEuler3D } from "hifi-spatial-audio";
 
 export class UserInputController {
@@ -18,7 +18,7 @@ export class UserInputController {
     rightClickStartPositionPX: any;
     lastDistanceBetweenRightClickEvents: number;
     hoveredUserData: UserData;
-    hoveredSeat: Seat;
+    hoveredSeat: SpatialAudioSeat;
     lastOnWheelTimestamp: number;
 
     constructor() {
@@ -53,7 +53,7 @@ export class UserInputController {
         this.toggleVideoButton = document.querySelector('.toggleVideoButton');
 
         this.mainCanvas = document.querySelector('.mainCanvas');
-        this.mainCanvas.addEventListener("click", this.onUserClick.bind(this));
+        this.mainCanvas.addEventListener("click", this.handleCanvasClick.bind(this));
         if (window.PointerEvent) {
             this.mainCanvas.addEventListener('pointerdown', this.handleGestureOnCanvasStart.bind(this), true);
             this.mainCanvas.addEventListener('pointermove', this.handleGestureOnCanvasMove.bind(this), true);
@@ -411,13 +411,13 @@ export class UserInputController {
         return point;
     }
 
-    onUserClick(event: TouchEvent | MouseEvent | PointerEvent) {
+    handleCanvasClick(event: TouchEvent | MouseEvent | PointerEvent) {
         if (this.hoveredUserData) {
             uiController.showAvatarContextMenu(this.hoveredUserData);
             this.hoveredUserData = undefined;
         } else if (this.hoveredSeat && !pathsController.currentPath) {
             console.log(`User clicked on a new seat at ${JSON.stringify(this.hoveredSeat.position)}! Target seat yaw orientation: ${JSON.stringify(this.hoveredSeat.orientation)} degrees.`);
-            userDataController.myAvatar.moveToNewSeat(this.hoveredSeat.position, this.hoveredSeat.orientation.yawDegrees);
+            userDataController.myAvatar.moveToNewSeat(this.hoveredSeat);
             this.hoveredSeat = undefined;
         }
 
@@ -472,9 +472,7 @@ export class UserInputController {
         } else {
             let hoverM = Utilities.canvasPXToM({ x: event.offsetX, y: event.offsetY });
 
-            let room = roomController.getRoomFromName(userDataController.myAvatar.myUserData.currentRoomName);
-
-            if (!(hoverM && room && userDataController.myAvatar.myUserData.positionCurrent)) {
+            if (!(hoverM && userDataController.myAvatar.myUserData.positionCurrent)) {
                 return;
             }
 

@@ -281,27 +281,10 @@ export class ConnectionController {
             }
 
             if (initiallyAlone || this.receivedInitialOtherUserDataFromHiFi) {
-                roomController.updateAllRoomSeats();
-
-                let startingRoomName = roomController.lobby.name;
-
-                let searchParams = new URLSearchParams(location.search);
-                if (searchParams.has("room")) {
-                    let searchParamsRoomName = searchParams.get("room");
-                    let searchParamsRoom = roomController.rooms.find((room) => { return room.name.toLowerCase() === searchParamsRoomName.toLowerCase(); });
-                    if (searchParamsRoom) {
-                        startingRoomName = searchParamsRoom.name;
-                    } else {
-                        console.warn(`Couldn't position self in room named \`${searchParamsRoomName}\`! Positioning self in \`${startingRoomName}\`...`);
-                    }
+                if (this.webSocketConnectionController.retrievedInitialWebSocketServerData) {
+                    userDataController.myAvatar.positionSelfInRoom(roomController.getStartingRoomName());
                 }
-                
-                userDataController.myAvatar.positionSelfInRoom(startingRoomName);
             }
-        }
-
-        if (receivedNewPositionData) {
-            roomController.updateAllRoomSeats();
         }
 
         if (!this.webSocketConnectionController.readyToSendWebSocketData) {
@@ -330,7 +313,5 @@ export class ConnectionController {
                 return localUserData.visitIDHash !== disconnectedUserData.hashedVisitID;
             });
         }
-
-        roomController.updateAllRoomSeats();
     }
 }

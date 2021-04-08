@@ -2,6 +2,7 @@ import { OrientationEuler3D, Point3D } from "hifi-spatial-audio";
 import { userDataController, connectionController, roomController, physicsController, pathsController, uiController, twoDimensionalRenderer } from "..";
 import { Path, Waypoint } from "../ai/PathsController";
 import { AVATAR, PHYSICS, UI } from "../constants/constants";
+import { SpatialAudioSeat, SpatialAudioRoom } from "../ui/RoomController";
 import { DataToTransmitToHiFi, EasingFunctions, Utilities } from "../utilities/Utilities";
 
 declare var HIFI_PROVIDED_USER_ID: string;
@@ -17,7 +18,8 @@ interface TempUserData {
 export interface UserData {
     visitIDHash?: string;
     providedUserID?: string;
-    currentRoomName?: string;
+    currentRoom?: SpatialAudioRoom;
+    currentSeat?: SpatialAudioSeat;
     displayName?: string;
     colorHex?: string;
     motionStartTimestamp?: number;
@@ -46,7 +48,8 @@ class MyAvatar {
         this.myUserData = {
             visitIDHash: undefined,
             providedUserID: HIFI_PROVIDED_USER_ID,
-            currentRoomName: undefined,
+            currentRoom: undefined,
+            currentSeat: undefined,
             displayName: undefined,
             colorHex: undefined,
             motionStartTimestamp: undefined,
@@ -84,23 +87,27 @@ class MyAvatar {
             return;
         }
 
-        let currentRoom = roomController.rooms.find((room) => {
+        let targetRoom = roomController.rooms.find((room) => {
             return room.name === targetRoomName;
         });
 
-        if (!currentRoom) {
+        if (!targetRoom) {
             console.error(`\`positionSelfInRoom()\`: Couldn't determine current room!`);
             return;
         }
         
-        console.log(`Positioning self in room ${currentRoom.name}...`);
+        console.log(`Positioning self in room ${targetRoom.name}...`);
 
-        let newSeat = currentRoom.findOpenSpotForSelf();
-        console.log(`Found an open spot in room ${currentRoom.name} at ${JSON.stringify(newSeat.position)} orientation ${JSON.stringify(newSeat.orientation)}.`);
-        this.moveToNewSeat(newSeat.position, newSeat.orientation.yawDegrees);
+        let newSeat = targetRoom.getFirstOpenSeat();
+        if (!newSeat) {
+            console.error(`\`positionSelfInRoom()\`: Couldn't get first open seat!`);
+            return;
+        }
+        console.log(`Found an open spot on seat \`${newSeat.seatID}\` in room ${newSeat.room.name} at ${JSON.stringify(newSeat.position)} with orientation ${JSON.stringify(newSeat.orientation)}.`);
+        this.moveToNewSeat(newSeat);
     }
 
-    moveToNewSeat(targetSeatPosition: Point3D, targetSeatYawOrientationDegrees: number) {
+    moveToNewSeat(targetSeat: SpatialAudioSeat) {
         if (!userDataController.myAvatar) {
             console.warn(`Can't move to new seat - \`userDataController.myAvatar\` is falsey!`);
             return;
@@ -115,7 +122,7 @@ class MyAvatar {
         if (!myUserData.positionCurrent) {
             myUserData.positionStart = undefined;
             myUserData.positionCurrent = new Point3D();
-            Object.assign(myUserData.positionCurrent, targetSeatPosition);
+            Object.assign(myUserData.positionCurrent, targetSeat.position);
             myUserData.positionTarget = undefined;
             
             dataToTransmit.position = myUserData.positionCurrent;
@@ -124,31 +131,30 @@ class MyAvatar {
         if (!myUserData.orientationEulerCurrent) {
             myUserData.orientationEulerStart = undefined;
             myUserData.orientationEulerCurrent = new OrientationEuler3D();
-            myUserData.orientationEulerCurrent.yawDegrees = targetSeatYawOrientationDegrees;
+            myUserData.orientationEulerCurrent.yawDegrees = targetSeat.orientation.yawDegrees;
             myUserData.orientationEulerTarget = undefined;
 
             dataToTransmit.orientationEuler = myUserData.orientationEulerCurrent;
         }
 
-        let shouldTransmit = dataToTransmit.position || dataToTransmit.orientationEuler;
-        let currentRoom = roomController.getRoomFromPoint3DInsideBoundaries(myUserData.positionCurrent);
-        let targetRoom = roomController.getRoomFromPoint3DInsideBoundaries(targetSeatPosition);
+        let isFirstMoveInNewSession = dataToTransmit.position || dataToTransmit.orientationEuler;
 
-        if (shouldTransmit) {
+        if (isFirstMoveInNewSession) {
             let hifiCommunicator = connectionController.hifiCommunicator;
             if (hifiCommunicator) {
                 hifiCommunicator.updateUserDataAndTransmit(dataToTransmit);
             } else {
                 console.warn(`\`moveToNewSeat()\`: Couldn't transmit user data!`);
             }
-
-            roomController.updateAllRoomSeats();
-            physicsController.autoComputePXPerMFromRoom(targetRoom);
+            physicsController.autoComputePXPerMFromRoom(targetSeat.room);
         }
 
-        console.log(`User is moving from ${currentRoom.name} to ${targetRoom.name}...`);
+        let currentRoom = myUserData.currentRoom;
+        let targetRoom = targetSeat.room;
 
-        if (!shouldTransmit) {
+        if (!isFirstMoveInNewSession) {
+            console.log(`User is moving from ${currentRoom.name} to ${targetRoom.name}...`);
+
             if (pathsController.currentPath) {
                 pathsController.resetCurrentPath();
             }
@@ -192,7 +198,7 @@ class MyAvatar {
                 let transitionCircleCenter = new Point3D({x: currentRoom.center.x, z: currentRoom.center.z});
 
                 let orientationEulerInitial = new OrientationEuler3D({yawDegrees: myUserData.orientationEulerCurrent.yawDegrees});
-                let orientationEulerFinal = new OrientationEuler3D({yawDegrees: targetSeatYawOrientationDegrees});
+                let orientationEulerFinal = new OrientationEuler3D({yawDegrees: targetSeat.orientation.yawDegrees});
 
                 let step1PositionStart = new Point3D({x: myUserData.positionCurrent.x, z: myUserData.positionCurrent.z});
                 let step1PositionTheta = Math.atan2(step1PositionStart.z - transitionCircleCenter.z, step1PositionStart.x - transitionCircleCenter.x);
@@ -200,7 +206,7 @@ class MyAvatar {
                     "x": (currentRoom.seatingRadiusM + AVATAR.RADIUS_M * 3) * Math.cos(step1PositionTheta) + transitionCircleCenter.x,
                     "z": (currentRoom.seatingRadiusM + AVATAR.RADIUS_M * 3) * Math.sin(step1PositionTheta) + transitionCircleCenter.z
                 });
-                let step3PositionEnd = new Point3D({x: targetSeatPosition.x, z: targetSeatPosition.z});
+                let step3PositionEnd = new Point3D({x: targetSeat.position.x, z: targetSeat.position.z});
                 let step2PositionTheta = Math.atan2(step3PositionEnd.z - transitionCircleCenter.z, step3PositionEnd.x - transitionCircleCenter.x);
 
                 while (step1PositionTheta > step2PositionTheta) {
@@ -249,15 +255,31 @@ class MyAvatar {
 
                 newPath.pathWaypoints.push(new Waypoint({
                     positionStart: new Point3D({x: myUserData.positionCurrent.x, z: myUserData.positionCurrent.z}),
-                    positionTarget: new Point3D({x: targetSeatPosition.x, z: targetSeatPosition.z}),
+                    positionTarget: new Point3D({x: targetSeat.position.x, z: targetSeat.position.z}),
                     orientationEulerStart: new OrientationEuler3D({yawDegrees: myUserData.orientationEulerCurrent.yawDegrees}),
-                    orientationEulerTarget: new OrientationEuler3D({yawDegrees: targetSeatYawOrientationDegrees}),
+                    orientationEulerTarget: new OrientationEuler3D({yawDegrees: targetSeat.orientation.yawDegrees}),
                     durationMS: 2000,
                     easingFunction: EasingFunctions.easeOutQuad
                 }));
             }
             pathsController.setCurrentPath(newPath);
         }
+
+        // We set the user's "current room" and "current seat" here
+        // and update that data for everyone else in the server.
+        // Technically, the user isn't necessarily yet _in that room_ or _in that seat_,
+        // but doing this here "reserves" the seat for this user.
+        if (myUserData.currentSeat) {
+            myUserData.currentSeat.occupiedUserData = undefined;
+        }
+        myUserData.currentRoom = targetSeat.room;
+        myUserData.currentSeat = targetSeat;
+        if (myUserData.currentSeat) {
+            myUserData.currentSeat.occupiedUserData = myUserData;
+        }
+        connectionController.webSocketConnectionController.updateMyUserDataOnWebSocketServer();
+
+        roomController.updateRoomList();
     }
 
     onMyDisplayNameChanged(newDisplayName?: string) {

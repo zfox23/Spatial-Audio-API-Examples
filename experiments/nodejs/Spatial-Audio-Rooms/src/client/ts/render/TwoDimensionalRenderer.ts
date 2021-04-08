@@ -4,7 +4,7 @@ import { physicsController, roomController, uiController, userDataController, us
 import { AVATAR, PHYSICS, ROOM, UI, } from "../constants/constants";
 import { UserData } from "../userData/UserDataController";
 import { Utilities } from "../utilities/Utilities";
-import { Seat, SpatialAudioRoom } from "../ui/RoomController";
+import { SpatialAudioSeat, SpatialAudioRoom } from "../ui/RoomController";
 import SeatIconIdle from '../../images/seat-idle.png';
 import SeatIconHover from '../../images/seat-hover.png';
 import TableImage from '../../images/table.png';
@@ -48,7 +48,7 @@ export class TwoDimensionalRenderer {
         this.mainCanvas.height = window.innerHeight - 72;
 
         try {
-            physicsController.autoComputePXPerMFromRoom(roomController.getRoomFromPoint3DOnCircle(userDataController.myAvatar.myUserData.positionCurrent));
+            physicsController.autoComputePXPerMFromRoom(userDataController.myAvatar.myUserData.currentRoom);
         } catch (e) { }
     }
 
@@ -274,7 +274,7 @@ export class TwoDimensionalRenderer {
         ctx.translate(-room.center.x * pxPerM, -room.center.z * pxPerM);
     }
 
-    drawUnoccupiedSeat(seat: Seat) {
+    drawUnoccupiedSeat(seat: SpatialAudioSeat) {
         let ctx = this.ctx;
         let pxPerM = physicsController.pxPerMCurrent;
         ctx.translate(seat.position.x * pxPerM, seat.position.z * pxPerM);
@@ -282,7 +282,7 @@ export class TwoDimensionalRenderer {
         ctx.rotate(amountToRotateSeatImage);
 
         const seatRadiusPX = ROOM.SEAT_RADIUS_M * pxPerM;
-        if (userInputController.hoveredSeat && userInputController.hoveredSeat.uuid === seat.uuid) {
+        if (userInputController.hoveredSeat && userInputController.hoveredSeat.seatID === seat.seatID) {
             ctx.drawImage(seatIconHover, -seatRadiusPX, -seatRadiusPX, seatRadiusPX * 2, seatRadiusPX * 2);
         } else {
             ctx.drawImage(seatIconIdle, -seatRadiusPX, -seatRadiusPX, seatRadiusPX * 2, seatRadiusPX * 2);
@@ -355,11 +355,10 @@ export class TwoDimensionalRenderer {
 
         if (this.cameraOffsetYPX === undefined) {
             this.cameraOffsetYPX = this.mainCanvas.height / 2 - 2 * AVATAR.RADIUS_M * pxPerM;
-            console.log(`ZRF HERE`)
         }
 
         this.cameraPositionNoOffsetM = userDataController.myAvatar.myUserData.positionCurrent;
-        const currentRoom = roomController.getRoomFromPoint3DInsideBoundaries(myUserData.positionCurrent);
+        const currentRoom = myUserData.currentRoom;
         if (currentRoom) {
             let normalCameraOffsetYPX = this.mainCanvas.height / 2 - 2 * AVATAR.RADIUS_M * pxPerM;
             let scaledOffsetPX = Utilities.linearScale(pxPerM, PHYSICS.MIN_PX_PER_M, physicsController.pxPerMMax, 0, normalCameraOffsetYPX, true);
