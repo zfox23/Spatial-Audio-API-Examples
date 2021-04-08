@@ -20,6 +20,7 @@ tableImage.src = TableImage;
 export class TwoDimensionalRenderer {
     mainCanvas: HTMLCanvasElement;
     ctx: CanvasRenderingContext2D;
+    cameraOffsetYPX: number;
     canvasOffsetPX: any;
     cameraPositionNoOffsetM: Point3D;
     canvasRotationDegrees: number = 0;
@@ -354,20 +355,22 @@ export class TwoDimensionalRenderer {
 
         let pxPerM = physicsController.pxPerMCurrent;
 
+        if (this.cameraOffsetYPX === undefined) {
+            this.cameraOffsetYPX = this.mainCanvas.height / 2 - 2 * AVATAR.RADIUS_M * pxPerM;
+            console.log(`ZRF HERE`)
+        }
+
         this.cameraPositionNoOffsetM = userDataController.myAvatar.myUserData.positionCurrent;
         const currentRoom = roomController.getRoomFromPoint3DInsideBoundaries(myUserData.positionCurrent);
-        let cameraOffsetYPX = 0;
         if (currentRoom) {
             let normalCameraOffsetYPX = this.mainCanvas.height / 2 - 2 * AVATAR.RADIUS_M * pxPerM;
             let scaledOffsetPX = Utilities.linearScale(pxPerM, PHYSICS.MIN_PX_PER_M, physicsController.pxPerMMax, 0, normalCameraOffsetYPX, true);
-            cameraOffsetYPX = scaledOffsetPX;
-        } else {
-            cameraOffsetYPX = this.mainCanvas.height / 2 - 2 * AVATAR.RADIUS_M * pxPerM;
+            this.cameraOffsetYPX = scaledOffsetPX;
         }
 
         this.canvasOffsetPX = {
             x: this.mainCanvas.width / 2 - this.cameraPositionNoOffsetM.x * pxPerM,
-            y: this.mainCanvas.height / 2 - this.cameraPositionNoOffsetM.z * pxPerM + cameraOffsetYPX
+            y: this.mainCanvas.height / 2 - this.cameraPositionNoOffsetM.z * pxPerM + this.cameraOffsetYPX
         };
 
         this.drawRooms();
