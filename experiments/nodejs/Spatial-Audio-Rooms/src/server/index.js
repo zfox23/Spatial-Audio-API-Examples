@@ -264,6 +264,11 @@ socketIOServer.on("connection", (socket) => {
         }
         socketIOServer.to(participant.socketID).emit("onRequestToChangeVolumeThreshold", { fromVisitIDHash, newVolumeThreshold });
     });
+
+    socket.on("addParticle", ({ visitIDHash, spaceName, particleData } = {}) => {
+        console.log(`In ${spaceName}, \`${visitIDHash}\` added a particle!.`);
+        socket.to(spaceName).emit("requestParticleAdd", { visitIDHash, particleData });
+    });
 });
 
 http.listen(PORT, (err) => {

@@ -1,5 +1,5 @@
 import { OrientationEuler3D, Point3D } from "hifi-spatial-audio";
-import { connectionController, pathsController, roomController, uiController, userDataController, userInputController } from "..";
+import { connectionController, particleController, pathsController, roomController, uiController, userDataController, userInputController } from "..";
 import { AVATAR, PHYSICS, UI } from "../constants/constants";
 import { SpatialAudioRoom } from "../ui/RoomController";
 import { Utilities, DataToTransmitToHiFi, EasingFunctions } from "../utilities/Utilities";
@@ -27,6 +27,7 @@ export class PhysicsController {
         this.lastNow = now;
 
         this.computeAvatarPositionsAndOrientations(now);
+        particleController.updateAllParticles(now, dt);
         this.computePXPerM(now);
     }
 

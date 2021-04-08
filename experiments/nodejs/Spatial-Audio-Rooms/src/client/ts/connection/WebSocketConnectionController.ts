@@ -1,4 +1,5 @@
-import { avDevicesController, connectionController, roomController, uiController, userDataController, userInputController } from "..";
+import { avDevicesController, connectionController, roomController, signalsController, uiController, userDataController, userInputController } from "..";
+import { SignalParams } from "../ui/SignalsController";
 declare var HIFI_SPACE_NAME: string;
 
 const io = require("socket.io-client");
@@ -152,6 +153,15 @@ export class WebSocketConnectionController {
         this.socket.on("onRequestToChangeVolumeThreshold", ({ fromVisitIDHash, newVolumeThreshold }: { fromVisitIDHash: string, newVolumeThreshold: number }) => {
             console.warn(`Got a request from \`${fromVisitIDHash}\` to change Volume Threshold to \`${newVolumeThreshold}\`!`);
             userInputController.setVolumeThreshold(newVolumeThreshold);
+        });
+
+        this.socket.on("requestParticleAdd", ({ visitIDHash, particleData }: { visitIDHash: string, particleData: string}) => {
+            let particleParams: SignalParams = JSON.parse(particleData);
+        
+            if (particleParams.name) {
+                console.log(`"${visitIDHash}" added a signal particle!`);
+                signalsController.addSignal(particleParams);
+            }
         });
     }
 

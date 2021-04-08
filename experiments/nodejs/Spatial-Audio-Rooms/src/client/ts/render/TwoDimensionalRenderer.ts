@@ -1,6 +1,6 @@
 declare module '*.png';
 
-import { physicsController, roomController, uiController, userDataController, userInputController, videoController } from "..";
+import { particleController, physicsController, roomController, uiController, userDataController, userInputController, videoController } from "..";
 import { AVATAR, PHYSICS, ROOM, UI, } from "../constants/constants";
 import { UserData } from "../userData/UserDataController";
 import { Utilities } from "../utilities/Utilities";
@@ -315,8 +315,6 @@ export class TwoDimensionalRenderer {
             return;
         }
 
-        this.translateAndRotateCanvas();
-
         roomController.rooms.forEach((room) => {
             this.drawTableOrRoomGraphic(room);
 
@@ -335,8 +333,40 @@ export class TwoDimensionalRenderer {
         allUserData.forEach((userData) => {
             this.drawAvatar({ userData });
         });
+    }
 
-        this.unTranslateAndRotateCanvas();
+    drawParticles() {
+        if (particleController.activeParticles.length === 0) {
+            return;
+        }
+
+        const ctx = this.ctx;
+        const pxPerM = physicsController.pxPerMCurrent;
+    
+        particleController.activeParticles.forEach((particle) => {
+            if (!particle.currentWorldPositionM.x || !particle.currentWorldPositionM.z ||
+                !particle.dimensionsM.x || !particle.dimensionsM.z ||
+                !particle.image.complete) {
+                return;
+            }    
+            ctx.translate(particle.currentWorldPositionM.x * pxPerM, particle.currentWorldPositionM.z * pxPerM);
+            let amtToRotateParticle = this.canvasRotationDegrees * Math.PI / 180;
+            ctx.rotate(amtToRotateParticle);
+    
+            let oldAlpha = ctx.globalAlpha;
+            ctx.globalAlpha = particle.opacity;
+    
+            ctx.drawImage(
+                particle.image,
+                -particle.dimensionsM.x * pxPerM / 2,
+                -particle.dimensionsM.z * pxPerM / 2,
+                particle.dimensionsM.x * pxPerM,
+                particle.dimensionsM.z * pxPerM);
+    
+            ctx.globalAlpha = oldAlpha;
+            ctx.rotate(-amtToRotateParticle);
+            ctx.translate(-particle.currentWorldPositionM.x * pxPerM, -particle.currentWorldPositionM.z * pxPerM);
+        });
     }
 
     draw() {
@@ -371,7 +401,10 @@ export class TwoDimensionalRenderer {
             y: this.mainCanvas.height / 2 - this.cameraPositionNoOffsetM.z * pxPerM + this.cameraOffsetYPX
         };
 
+        this.translateAndRotateCanvas();
         this.drawRooms();
+        this.drawParticles();
+        this.unTranslateAndRotateCanvas();
     }
 
     translateAndRotateCanvas() {

@@ -77,7 +77,7 @@ export class SpatialAudioRoom {
 
         this.tableRadiusM = this.seatingRadiusM - maxAvatarRadiusM;
         
-        this.initialNumSeats = initialNumSeats || Math.ceil(((Math.PI * this.seatingRadiusM * this.seatingRadiusM) / (4 * AVATAR.RADIUS_M)));
+        this.initialNumSeats = initialNumSeats || Math.ceil(((Math.PI * this.seatingRadiusM * this.seatingRadiusM) / (3 * AVATAR.RADIUS_M)));
         this.seats = [];
         this.generateInitialSeats();
 

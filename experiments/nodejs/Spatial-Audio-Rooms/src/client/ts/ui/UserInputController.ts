@@ -1,9 +1,10 @@
-import { avDevicesController, connectionController, pathsController, physicsController, roomController, uiController, userDataController } from "..";
-import { AVATAR, ROOM, CONTROLS, PHYSICS } from "../constants/constants";
+import { avDevicesController, connectionController, pathsController, physicsController, roomController, signalsController, twoDimensionalRenderer, uiController, userDataController } from "..";
+import { AVATAR, ROOM, CONTROLS, PHYSICS, PARTICLES } from "../constants/constants";
 import { UserData } from "../userData/UserDataController";
 import { Utilities } from "../utilities/Utilities";
 import { SpatialAudioSeat } from "../ui/RoomController";
-import { OrientationEuler3D } from "hifi-spatial-audio";
+import { OrientationEuler3D, Point3D } from "hifi-spatial-audio";
+import * as e from "express";
 
 export class UserInputController {
     mainCanvas: HTMLCanvasElement;
@@ -33,7 +34,7 @@ export class UserInputController {
         this.toggleInputMuteButton.addEventListener("click", (e) => {
             this.toggleInputMute();
         });
-        
+
         this.changeAudioOutputDeviceButton = document.querySelector('.changeAudioOutputDeviceButton');
         if (this.changeAudioOutputDeviceButton) {
             this.changeAudioOutputDeviceButton.addEventListener("click", (e) => {
@@ -44,7 +45,7 @@ export class UserInputController {
         this.toggleOutputMuteButton.addEventListener("click", (e) => {
             this.toggleOutputMute();
         });
-        
+
         this.changeVideoDeviceButton = document.querySelector('.changeVideoDeviceButton');
         this.changeVideoDeviceButton.addEventListener("click", (e) => {
             this.toggleShowChangeVideoDeviceMenu();
@@ -106,6 +107,15 @@ export class UserInputController {
                 physicsController.smoothZoomStartTimestamp = undefined;
                 physicsController.pxPerMTarget = (physicsController.pxPerMTarget || physicsController.pxPerMCurrent) + PHYSICS.PX_PER_M_STEP;
                 break;
+            case CONTROLS.DIGIT1_KEY_CODE:
+                signalsController.toggleActiveSignal(signalsController.supportedSignals.get("positive"));
+                break;
+            case CONTROLS.DIGIT2_KEY_CODE:
+                signalsController.toggleActiveSignal(signalsController.supportedSignals.get("negative"));
+                break;
+            case CONTROLS.ESC_KEY_CODE:
+                signalsController.setActiveSignal(undefined);
+                break;
         }
     }
 
@@ -154,7 +164,7 @@ export class UserInputController {
                     changeAudioInputDeviceMenu__header.classList.add("changeDeviceMenu__header", "changeAudioInputDeviceMenu__header");
                     changeAudioInputDeviceMenu__header.innerHTML = `Audio Input Device`;
                     changeAudioInputDeviceMenu.appendChild(changeAudioInputDeviceMenu__header);
-        
+
                     let changeAudioInputDeviceMenu__select = document.createElement("select");
                     changeAudioInputDeviceMenu__select.classList.add("changeDeviceMenu__select", "changeAudioInputDeviceMenu__select");
 
@@ -219,7 +229,7 @@ export class UserInputController {
                     changeAudioOutputDeviceMenu__header.classList.add("changeDeviceMenu__header", "changeAudioOutputDeviceMenu__header");
                     changeAudioOutputDeviceMenu__header.innerHTML = `Audio Output Device`;
                     changeAudioOutputDeviceMenu.appendChild(changeAudioOutputDeviceMenu__header);
-        
+
                     let changeAudioOutputDeviceMenu__select = document.createElement("select");
                     changeAudioOutputDeviceMenu__select.classList.add("changeDeviceMenu__select", "changeAudioOutputDeviceMenu__select");
 
@@ -284,7 +294,7 @@ export class UserInputController {
                     changeVideoDeviceMenu__header.classList.add("changeDeviceMenu__header", "changeVideoDeviceMenu__header");
                     changeVideoDeviceMenu__header.innerHTML = `Video Device`;
                     changeVideoDeviceMenu.appendChild(changeVideoDeviceMenu__header);
-        
+
                     let changeVideoDeviceMenu__select = document.createElement("select");
                     changeVideoDeviceMenu__select.classList.add("changeDeviceMenu__select", "changeVideoDeviceMenu__select");
 
@@ -356,7 +366,14 @@ export class UserInputController {
     }
 
     setOutputMute(newMuteStatus: boolean) {
-        avDevicesController.outputAudioElement.muted = !!newMuteStatus;
+        let allAudioNodes = document.querySelectorAll("audio");
+        allAudioNodes.forEach((audioNode) => {
+            audioNode.muted = !!newMuteStatus;
+        });
+        let allVideoNodes = document.querySelectorAll("video");
+        allVideoNodes.forEach((videoNode) => {
+            videoNode.muted = !!newMuteStatus;
+        });
         console.log(`Set output mute status to \`${avDevicesController.outputAudioElement.muted}\``);
 
         if (avDevicesController.outputAudioElement.muted) {
@@ -421,7 +438,18 @@ export class UserInputController {
     }
 
     handleCanvasClick(event: TouchEvent | MouseEvent | PointerEvent) {
-        if (this.hoveredUserData) {
+        if (signalsController.activeSignal && (event instanceof MouseEvent || event instanceof PointerEvent)) {
+            let clickM = new Point3D(Utilities.canvasPXToM({x: event.offsetX, y: event.offsetY}));
+
+            let isCloseEnough = false;
+            if (userDataController.myAvatar.myUserData && userDataController.myAvatar.myUserData.positionCurrent) {
+                isCloseEnough = Utilities.getDistanceBetween2DPoints(userDataController.myAvatar.myUserData.positionCurrent.x, userDataController.myAvatar.myUserData.positionCurrent.z, clickM.x, clickM.z) < PARTICLES.CLOSE_ENOUGH_ADD_M;
+            }
+
+            if (isCloseEnough) {
+                signalsController.addActiveSignal(clickM);
+            }
+        } else if (this.hoveredUserData) {
             uiController.showAvatarContextMenu(this.hoveredUserData);
             this.hoveredUserData = undefined;
         } else if (this.hoveredSeat && !pathsController.currentPath) {

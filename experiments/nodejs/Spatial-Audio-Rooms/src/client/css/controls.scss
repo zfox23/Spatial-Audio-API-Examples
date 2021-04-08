@@ -160,6 +160,14 @@ $bottom-controls-container-height: 72px;
     touch-action: none;
 }
 
+.mainCanvas--positiveCursor {
+    cursor: url('../images/signalStar.png') 10 10, auto;
+}
+
+.mainCanvas--negativeCursor {
+    cursor: url('../images/signalLine.png') 10 10, auto;
+}
+
 .bottomControlsContainer {
     height: $bottom-controls-container-height;
     position: fixed;
