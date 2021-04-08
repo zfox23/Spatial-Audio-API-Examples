@@ -29,6 +29,8 @@ Multiple users can connect simultaneously, move around and communicate using spa
 ## NodeJS Examples
 ### [DJ Bot](./examples/nodejs/djBot)
 Corresponds to the "Make a DJ Bot" guide at [highfidelity.com/api/guides/nodejs/djBot](https://www.highfidelity.com/api/guides/nodejs/djBot).
+### [Testing Bot](./examples/nodejs/testingbot)
+Add bots/npcs to a space which can be given specific properties or programmed to carry out actions.
 ### [Express Webapp](./examples/nodejs/express-webapp)
 Corresponds to the "Build a Web App with the Spatial Audio API, Express, and EJS" guide at [highfidelity.com/api/guides/nodejs/express](https://www.highfidelity.com/api/guides/nodejs/express).
 ### [Get a JWT](./examples/nodejs/express-webapp)
