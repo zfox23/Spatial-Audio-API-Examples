@@ -52,7 +52,11 @@ export class Utilities {
         return Math.min(Math.max(value, min), max);
     }
 
-    static linearScale(factor: number, minInput: number, maxInput: number, minOutput: number, maxOutput: number) {
+    static linearScale(factor: number, minInput: number, maxInput: number, minOutput: number, maxOutput: number, clampInput: boolean = false) {
+        if (clampInput) {
+            factor = Utilities.clamp(factor, minInput, maxInput);
+        }
+
         return minOutput + (maxOutput - minOutput) *
             (factor - minInput) / (maxInput - minInput);
     }

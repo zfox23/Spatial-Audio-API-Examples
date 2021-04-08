@@ -1,7 +1,7 @@
 declare module '*.png';
 
 import { physicsController, roomController, uiController, userDataController, userInputController, videoController } from "..";
-import { AVATAR, ROOM, UI, } from "../constants/constants";
+import { AVATAR, PHYSICS, ROOM, UI, } from "../constants/constants";
 import { UserData } from "../userData/UserDataController";
 import { Utilities } from "../utilities/Utilities";
 import { Seat, SpatialAudioRoom } from "../ui/RoomController";
@@ -353,13 +353,22 @@ export class TwoDimensionalRenderer {
         this.canvasRotationDegrees = -1 * userDataController.myAvatar.myUserData.orientationEulerCurrent.yawDegrees;
 
         let pxPerM = physicsController.pxPerMCurrent;
-        let cameraOffsetYPX = this.mainCanvas.height * UI.MY_AVATAR_Y_SCREEN_CENTER_OFFSET_RATIO;
-        this.canvasOffsetPX = {
-            x: (this.mainCanvas.width - roomController.lobby.dimensions.x * pxPerM) / 2 + (-myUserData.positionCurrent.x + roomController.lobby.dimensions.x / 2) * pxPerM,
-            y: (this.mainCanvas.height - roomController.lobby.dimensions.z * pxPerM) / 2 + (-myUserData.positionCurrent.z + roomController.lobby.dimensions.z / 2) * pxPerM + cameraOffsetYPX
-        };
 
         this.cameraPositionNoOffsetM = userDataController.myAvatar.myUserData.positionCurrent;
+        const currentRoom = roomController.getRoomFromPoint3DInsideBoundaries(myUserData.positionCurrent);
+        let cameraOffsetYPX = 0;
+        if (currentRoom) {
+            let normalCameraOffsetYPX = this.mainCanvas.height / 2 - 2 * AVATAR.RADIUS_M * pxPerM;
+            let scaledOffsetPX = Utilities.linearScale(pxPerM, PHYSICS.MIN_PX_PER_M, physicsController.pxPerMMax, 0, normalCameraOffsetYPX, true);
+            cameraOffsetYPX = scaledOffsetPX;
+        } else {
+            cameraOffsetYPX = this.mainCanvas.height / 2 - 2 * AVATAR.RADIUS_M * pxPerM;
+        }
+
+        this.canvasOffsetPX = {
+            x: this.mainCanvas.width / 2 - this.cameraPositionNoOffsetM.x * pxPerM,
+            y: this.mainCanvas.height / 2 - this.cameraPositionNoOffsetM.z * pxPerM + cameraOffsetYPX
+        };
 
         this.drawRooms();
     }
@@ -368,29 +377,27 @@ export class TwoDimensionalRenderer {
         let ctx = this.ctx;
         let pxPerM = physicsController.pxPerMCurrent;
 
-        const myUserData = userDataController.myAvatar.myUserData;
-        if (!myUserData.positionCurrent) {
+        if (!this.cameraPositionNoOffsetM) {
             return;
         }
 
         ctx.translate(this.canvasOffsetPX.x, this.canvasOffsetPX.y);
-        ctx.translate(myUserData.positionCurrent.x * pxPerM, myUserData.positionCurrent.z * pxPerM);
+        ctx.translate(this.cameraPositionNoOffsetM.x * pxPerM, this.cameraPositionNoOffsetM.z * pxPerM);
         ctx.rotate(-this.canvasRotationDegrees * Math.PI / 180);
-        ctx.translate(-myUserData.positionCurrent.x * pxPerM, -myUserData.positionCurrent.z * pxPerM);
+        ctx.translate(-this.cameraPositionNoOffsetM.x * pxPerM, -this.cameraPositionNoOffsetM.z * pxPerM);
     }
 
     unTranslateAndRotateCanvas() {
         let ctx = this.ctx;
         let pxPerM = physicsController.pxPerMCurrent;
 
-        const myUserData = userDataController.myAvatar.myUserData;
-        if (!myUserData.positionCurrent) {
+        if (!this.cameraPositionNoOffsetM) {
             return;
         }
 
-        ctx.translate(myUserData.positionCurrent.x * pxPerM, myUserData.positionCurrent.z * pxPerM);
+        ctx.translate(this.cameraPositionNoOffsetM.x * pxPerM, this.cameraPositionNoOffsetM.z * pxPerM);
         ctx.rotate(this.canvasRotationDegrees * Math.PI / 180);
-        ctx.translate(-myUserData.positionCurrent.x * pxPerM, -myUserData.positionCurrent.z * pxPerM);
+        ctx.translate(-this.cameraPositionNoOffsetM.x * pxPerM, -this.cameraPositionNoOffsetM.z * pxPerM);
         ctx.translate(-this.canvasOffsetPX.x, -this.canvasOffsetPX.y);
     }
 }

@@ -8,6 +8,7 @@ export class PhysicsController {
     mainCanvas: HTMLCanvasElement;
     lastNow: number = 0;
 
+    pxPerMMax: number = PHYSICS.MAX_PX_PER_M;
     pxPerMStart: number;
     pxPerMCurrent: number;
     pxPerMTarget: number;
@@ -226,7 +227,8 @@ export class PhysicsController {
 
         this.smoothZoomDurationMS = PHYSICS.SMOOTH_ZOOM_DURATION_SWITCH_ROOMS_MS;
         this.smoothZoomStartTimestamp = undefined;
-        this.pxPerMTarget = Math.min(this.mainCanvas.width, this.mainCanvas.height) / (2 * room.seatingRadiusM + 3 * AVATAR.RADIUS_M);
+        this.pxPerMTarget = Math.min(this.mainCanvas.width, this.mainCanvas.height) / (2 * room.seatingRadiusM + 4 * AVATAR.RADIUS_M);
+        this.pxPerMMax = this.pxPerMTarget;
     }
 
     computePXPerM(timestamp: number) {
@@ -234,7 +236,7 @@ export class PhysicsController {
             return;
         }
 
-        this.pxPerMTarget = Utilities.clamp(this.pxPerMTarget, PHYSICS.MIN_PX_PER_M, PHYSICS.MAX_PX_PER_M);
+        this.pxPerMTarget = Utilities.clamp(this.pxPerMTarget, PHYSICS.MIN_PX_PER_M, this.pxPerMMax);
 
         if (!this.smoothZoomStartTimestamp) {
             this.smoothZoomStartTimestamp = timestamp;
