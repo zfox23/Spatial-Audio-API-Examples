@@ -315,7 +315,7 @@ export class RoomController {
             let roomInfoContainer__header = document.createElement("h2");
             roomInfoContainer__header.classList.add("roomInfoContainer__header");
             let occupiedSeats = room.seats.filter((seat) => { return !!seat.occupiedUserData; });
-            roomInfoContainer__header.innerHTML = `${room.name} (${occupiedSeats.length})`;
+            roomInfoContainer__header.innerHTML = `${room.name} (${occupiedSeats.length}/${room.initialNumSeats})`;
             roomInfoContainer__header.addEventListener("click", (e) => {
                 if (userDataController.myAvatar.myUserData.currentRoom === room) {
                     console.log(`User is already in room \`${room.name}\`!`);

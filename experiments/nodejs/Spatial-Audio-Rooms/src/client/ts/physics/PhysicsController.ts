@@ -13,8 +13,6 @@ export class PhysicsController {
     pxPerMCurrent: number;
     pxPerMTarget: number;
 
-    onWheelTimestampDeltaMS: number;
-
     smoothZoomDurationMS: number = PHYSICS.SMOOTH_ZOOM_DURATION_NORMAL_MS;
     smoothZoomStartTimestamp: number;
 
@@ -239,21 +237,15 @@ export class PhysicsController {
             this.pxPerMStart = this.pxPerMCurrent;
         }
 
-        let slam = false;
-        if ((!this.onWheelTimestampDeltaMS || this.onWheelTimestampDeltaMS >= PHYSICS.SMOOTH_ZOOM_DURATION_NORMAL_MS) &&
-            this.pxPerMTarget &&
+        if (this.pxPerMTarget &&
             this.pxPerMStart &&
-            (this.pxPerMTarget !== this.pxPerMStart)) {
+            this.pxPerMTarget !== this.pxPerMStart &&
+            (timestamp <= (this.smoothZoomStartTimestamp + this.smoothZoomDurationMS))) {
             this.pxPerMCurrent = Utilities.linearScale(EasingFunctions.easeOutExponential((timestamp - this.smoothZoomStartTimestamp) / this.smoothZoomDurationMS), 0, 1, this.pxPerMStart, this.pxPerMTarget);
         } else {
-            slam = true;
-        }
-
-        if (slam || (this.smoothZoomStartTimestamp && (timestamp > (this.smoothZoomStartTimestamp + this.smoothZoomDurationMS)))) {
             this.pxPerMCurrent = this.pxPerMTarget;
             this.pxPerMTarget = undefined;
             this.pxPerMStart = undefined;
-            this.onWheelTimestampDeltaMS = undefined;
             this.smoothZoomStartTimestamp = undefined;
             this.smoothZoomDurationMS = PHYSICS.SMOOTH_ZOOM_DURATION_NORMAL_MS;
         }

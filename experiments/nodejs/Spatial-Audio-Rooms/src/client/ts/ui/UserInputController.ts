@@ -19,7 +19,6 @@ export class UserInputController {
     lastDistanceBetweenLeftClickEvents: number;
     hoveredUserData: UserData;
     hoveredSeat: SpatialAudioSeat;
-    lastOnWheelTimestamp: number;
 
     constructor() {
         this.keyboardEventCache = [];
@@ -96,6 +95,16 @@ export class UserInputController {
                     this.wasMutedBeforePTT = true;
                     this.setInputMute(false);
                 }
+                break;
+            case CONTROLS.MINUS_KEY_CODE:
+            case CONTROLS.NUMPAD_SUBTRACT_KEY_CODE:
+                physicsController.smoothZoomStartTimestamp = undefined;
+                physicsController.pxPerMTarget = (physicsController.pxPerMTarget || physicsController.pxPerMCurrent) - PHYSICS.PX_PER_M_STEP;
+                break;
+            case CONTROLS.EQUAL_KEY_CODE:
+            case CONTROLS.NUMPAD_ADD_KEY_CODE:
+                physicsController.smoothZoomStartTimestamp = undefined;
+                physicsController.pxPerMTarget = (physicsController.pxPerMTarget || physicsController.pxPerMCurrent) + PHYSICS.PX_PER_M_STEP;
                 break;
         }
     }
@@ -534,10 +543,6 @@ export class UserInputController {
     onWheel(e: WheelEvent) {
         e.preventDefault();
 
-        if (this.lastOnWheelTimestamp) {
-            physicsController.onWheelTimestampDeltaMS = Date.now() - this.lastOnWheelTimestamp;
-        }
-
         let deltaY;
         // This is a nasty hack that all major browsers subscribe to:
         // "Pinch" gestures on multi-touch trackpads are rendered as wheel events
@@ -548,12 +553,10 @@ export class UserInputController {
             deltaY = (e as any).wheelDeltaY || (-e.deltaY * 10);
         }
 
-        let scaleFactor = 1 + deltaY * CONTROLS.MOUSE_WHEEL_ZOOM_FACTOR;
+        let scaleFactor = deltaY * CONTROLS.MOUSE_WHEEL_ZOOM_FACTOR;
 
         physicsController.smoothZoomDurationMS = PHYSICS.SMOOTH_ZOOM_DURATION_NORMAL_MS;
         physicsController.smoothZoomStartTimestamp = undefined;
-        physicsController.pxPerMTarget = physicsController.pxPerMCurrent * scaleFactor;
-
-        this.lastOnWheelTimestamp = Date.now();
+        physicsController.pxPerMTarget = (physicsController.pxPerMTarget || physicsController.pxPerMCurrent) + scaleFactor;
     }
 }
