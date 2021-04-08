@@ -516,3 +516,49 @@ $bottom-controls-container-height: 72px;
     }
 }
 
+.zoomUIContainer {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    right: 0;
+    bottom: $bottom-controls-container-height;
+    margin: 10px;
+    z-index: map-get(z-indices.$z-index, ui);
+}
+
+.zoomButton {
+    width: 24px;
+    height: 24px;
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: center center;
+    cursor: pointer;
+    background-color: transparent;
+    border: none;
+    outline: none;
+    padding: 0;
+    margin: 0;
+
+    &:focus {
+        border: none;
+        outline: none;
+    }
+}
+
+.zoomInButton {
+    background-image: url('../images/button-zoom-in-idle.svg');
+    margin: 0 0 6px 0;
+
+    &:hover {
+        background-image: url('../images/button-zoom-in-hover.svg');
+    }
+}
+
+.zoomOutButton {
+    background-image: url('../images/button-zoom-out-idle.svg');
+
+    &:hover {
+        background-image: url('../images/button-zoom-out-hover.svg');
+    }
+}
+

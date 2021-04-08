@@ -1,9 +1,10 @@
-import { avDevicesController, connectionController, roomController, userDataController, userInputController } from '..';
+import { avDevicesController, connectionController, physicsController, roomController, userDataController, userInputController } from '..';
 import '../../css/controls.scss';
 import { AudionetInitResponse, ConnectionController } from '../connection/ConnectionController';
 import { UserData } from '../userData/UserDataController';
 import { Utilities } from '../utilities/Utilities';
 import { TwoDimensionalRenderer } from '../render/TwoDimensionalRenderer';
+import { PHYSICS } from '../constants/constants';
 
 export class UIController {
     playOverlay: HTMLElement;
@@ -14,6 +15,7 @@ export class UIController {
     constructor() {
         this.initPlayOverlay();
         this.initMainUI();
+        this.initZoomUI();
         this.initContextMenu();
         this.hideLoadingOverlay();
 
@@ -99,6 +101,28 @@ export class UIController {
         this.modalBackground.classList.add("modalBackground", "displayNone");
         this.modalBackground.addEventListener("click", this.hideAvatarContextMenu.bind(this));
         document.body.appendChild(this.modalBackground);
+    }
+
+    initZoomUI() {
+        let zoomUIContainer = document.createElement("div");
+        zoomUIContainer.classList.add("zoomUIContainer");
+        document.body.appendChild(zoomUIContainer);
+
+        let zoomInButton = document.createElement("button");
+        zoomInButton.classList.add("zoomButton", "zoomInButton");
+        zoomInButton.addEventListener("click", () => {
+            physicsController.smoothZoomStartTimestamp = undefined;
+            physicsController.pxPerMTarget = (physicsController.pxPerMTarget || physicsController.pxPerMCurrent) + PHYSICS.PX_PER_M_STEP;
+        });
+        zoomUIContainer.appendChild(zoomInButton);
+
+        let zoomOutButton = document.createElement("button");
+        zoomOutButton.classList.add("zoomButton", "zoomOutButton");
+        zoomOutButton.addEventListener("click", () => {
+            physicsController.smoothZoomStartTimestamp = undefined;
+            physicsController.pxPerMTarget = (physicsController.pxPerMTarget || physicsController.pxPerMCurrent) - PHYSICS.PX_PER_M_STEP;
+        });
+        zoomUIContainer.appendChild(zoomOutButton);
     }
 
     initContextMenu() {
