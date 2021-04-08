@@ -452,7 +452,7 @@ export class UserInputController {
         } else if (this.hoveredUserData) {
             uiController.showAvatarContextMenu(this.hoveredUserData);
             this.hoveredUserData = undefined;
-        } else if (this.hoveredSeat && !pathsController.currentPath) {
+        } else if (this.hoveredSeat && !this.hoveredSeat.occupiedUserData && !pathsController.currentPath) {
             console.log(`User clicked on a new seat at ${JSON.stringify(this.hoveredSeat.position)}! Target seat yaw orientation: ${JSON.stringify(this.hoveredSeat.orientation)} degrees.`);
             userDataController.myAvatar.moveToNewSeat(this.hoveredSeat);
             this.hoveredSeat = undefined;
@@ -525,7 +525,7 @@ export class UserInputController {
                 for (let i = 0; i < roomController.rooms.length; i++) {
                     let room = roomController.rooms[i];
                     this.hoveredSeat = room.seats.find((seat) => {
-                        return Utilities.getDistanceBetween2DPoints(seat.position.x, seat.position.z, hoverM.x, hoverM.z) < ROOM.SEAT_RADIUS_M;
+                        return !seat.occupiedUserData && Utilities.getDistanceBetween2DPoints(seat.position.x, seat.position.z, hoverM.x, hoverM.z) < ROOM.SEAT_RADIUS_M;
                     });
 
                     if (this.hoveredSeat) {
