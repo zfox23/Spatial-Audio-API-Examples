@@ -156,6 +156,7 @@ export class RoomController {
             center: new Point3D({ x: 1, y: 0, z: 0 }),
             seatingRadiusM: 0.9,
             dimensions: new Point3D({x: 5.15, y: 0, z: 5.15 }),
+            initialNumSeats: 8,
             roomImageSRC: SeatingRadius1Image1
         });
         this.rooms.push(this.lobby);
