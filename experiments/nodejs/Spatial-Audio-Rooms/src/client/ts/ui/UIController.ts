@@ -57,6 +57,11 @@ export class UIController {
         bottomControlsContainer.classList.add("bottomControlsContainer");
         document.body.appendChild(bottomControlsContainer);
 
+        let toggleRoomsDrawerButton = document.createElement("button");
+        toggleRoomsDrawerButton.classList.add("bottomToggleButton", "toggleRoomsDrawerButton", "controlButtonsContainer");
+        toggleRoomsDrawerButton.addEventListener("click", roomController.toggleRoomList.bind(roomController));
+        bottomControlsContainer.appendChild(toggleRoomsDrawerButton);
+
         let inputButtonsContainer = document.createElement("div");
         inputButtonsContainer.classList.add("controlButtonsContainer");
         let changeAudioInputDeviceButton = document.createElement("button");
@@ -91,11 +96,6 @@ export class UIController {
         toggleVideoButton.classList.add("bottomToggleButton", "toggleVideoButton");
         videoButtonsContainer.appendChild(toggleVideoButton);
         bottomControlsContainer.appendChild(videoButtonsContainer);
-
-        let toggleRoomsDrawerButton = document.createElement("button");
-        toggleRoomsDrawerButton.classList.add("bottomToggleButton", "toggleRoomsDrawerButton", "controlButtonsContainer");
-        toggleRoomsDrawerButton.addEventListener("click", roomController.toggleRoomList.bind(roomController));
-        bottomControlsContainer.appendChild(toggleRoomsDrawerButton);
 
         this.modalBackground = document.createElement("div");
         this.modalBackground.classList.add("modalBackground", "displayNone");
