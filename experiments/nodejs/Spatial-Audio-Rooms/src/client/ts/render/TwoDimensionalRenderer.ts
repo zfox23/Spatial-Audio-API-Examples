@@ -53,21 +53,18 @@ export class TwoDimensionalRenderer {
     }
 
     drawVolumeBubble({ userData }: { userData: UserData }) {
-        if (!userData.colorHex || userData.volumeDecibels < userData.volumeThreshold) {
+        if (userData.volumeDecibels < userData.volumeThreshold) {
             return;
         }
         let ctx = this.ctx;
         ctx.beginPath();
         ctx.arc(0, 0, Utilities.linearScale(userData.volumeDecibels, AVATAR.MIN_VOLUME_DB, AVATAR.MAX_VOLUME_DB, AVATAR.RADIUS_M, AVATAR.RADIUS_M * AVATAR.MAX_VOLUME_DB_AVATAR_RADIUS_MULTIPLIER) * physicsController.pxPerMCurrent, 0, 2 * Math.PI);
-        ctx.fillStyle = userData.colorHex;
+        ctx.fillStyle = userData.colorHex || Utilities.hexColorFromString(userData.visitIDHash);
         ctx.fill();
         ctx.closePath();
     }
 
     drawAvatarBase({ userData }: { userData: UserData }) {
-        if (!userData.colorHex) {
-            return;
-        }
 
         let isMine = userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash;
         let ctx = this.ctx;
@@ -92,14 +89,15 @@ export class TwoDimensionalRenderer {
         ctx.beginPath();
         ctx.arc(0, -avatarRadiusM * AVATAR.DIRECTION_CLOUD_RADIUS_MULTIPLIER * pxPerM, avatarRadiusM * AVATAR.DIRECTION_CLOUD_RADIUS_MULTIPLIER * pxPerM, 0, Math.PI, false);
         let grad = ctx.createLinearGradient(0, 0, 0, -avatarRadiusM * AVATAR.DIRECTION_CLOUD_RADIUS_MULTIPLIER * pxPerM);
-        grad.addColorStop(0.0, userData.colorHex);
-        grad.addColorStop(1.0, userData.colorHex + "00");
+        let colorHex = userData.colorHex || Utilities.hexColorFromString(userData.visitIDHash);
+        grad.addColorStop(0.0, colorHex);
+        grad.addColorStop(1.0, colorHex + "00");
         ctx.fillStyle = grad;
         ctx.fill();
         ctx.closePath();
 
         ctx.lineWidth = AVATAR.STROKE_WIDTH_PX;
-        ctx.fillStyle = userData.colorHex;
+        ctx.fillStyle = colorHex;
         ctx.beginPath();
         ctx.arc(0, 0, avatarRadiusPX, 0, 2 * Math.PI);
         if (isMine) {
@@ -138,7 +136,7 @@ export class TwoDimensionalRenderer {
 
     drawAvatarLabel({ userData }: { userData: UserData }) {
         // Don't draw the avatar label if we're drawing that avatar's video.
-        if (!userData.colorHex || videoController.providedUserIDToVideoElementMap.has(userData.providedUserID)) {
+        if (videoController.providedUserIDToVideoElementMap.has(userData.providedUserID)) {
             return;
         }
 
@@ -150,7 +148,7 @@ export class TwoDimensionalRenderer {
         ctx.rotate(amtToRotateAvatarLabel);
 
         ctx.font = AVATAR.AVATAR_LABEL_FONT;
-        ctx.fillStyle = Utilities.getConstrastingTextColor(Utilities.hexToRGB(userData.colorHex));
+        ctx.fillStyle = Utilities.getConstrastingTextColor(Utilities.hexToRGB(userData.colorHex || Utilities.hexColorFromString(userData.visitIDHash)));
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
 
