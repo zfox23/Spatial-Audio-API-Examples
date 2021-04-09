@@ -141,6 +141,8 @@ export class SpatialAudioRoom {
 import Room1 from "../../images/rooms/Room1.jpg";
 import Room2 from "../../images/rooms/Room2.jpg";
 import Room3 from "../../images/rooms/Room3.jpg";
+import Room4 from "../../images/rooms/Room4.jpg";
+import Room5 from "../../images/rooms/Room5.jpg";
 import SeatingRadius1Image2 from "../../images/rooms/room-with-seating-radius-1-bg-2.jpg";
 import SeatingRadius3Image1 from "../../images/rooms/room-with-seating-radius-3-bg-1.png";
 export class RoomController {
@@ -166,27 +168,37 @@ export class RoomController {
         this.rooms.push(this.lobby);
         this.rooms.push(new SpatialAudioRoom({
             name: "Room 2",
-            roomCenter: new Point3D({ x: 0, y: 0, z: 5.0 }),
+            roomCenter: new Point3D({ x: 0, y: 0, z: 4.59228515625 }),
             seatingCenter: new Point3D({ x: 0.05, y: 0, z: 4.68 }),
-            dimensions: new Point3D({x: 5.0, y: 0, z: 5.0 }),
+            dimensions: new Point3D({x: 5.0, y: 0, z: 4.1845703125 }),
             seatingRadiusM: 1.15,
             roomImageSRC: Room2
         }));
         this.rooms.push(new SpatialAudioRoom({
             name: "Room 3",
-            roomCenter: new Point3D({ x: -5, y: 0, z: 5 }),
+            roomCenter: new Point3D({ x: -5, y: 0, z: 4.59228515625 }),
             seatingCenter: new Point3D({ x: -4.32, y: 0, z: 4.825 }),
-            dimensions: new Point3D({x: 5.0, y: 0, z: 5.0 }),
+            dimensions: new Point3D({x: 5.0, y: 0, z: 4.1845703125 }),
             initialNumSeats: 4,
             seatingRadiusM: 0.7,
             roomImageSRC: Room3
         }));
         this.rooms.push(new SpatialAudioRoom({
-            name: "Large Room",
-            seatingCenter: new Point3D({ x: -6, y: 0, z: -2 }),
-            dimensions: new Point3D({x: 5.72, y: 0, z: 5.72 }),
-            seatingRadiusM: 2.5,
-            roomImageSRC: SeatingRadius3Image1
+            name: "Room 4",
+            roomCenter: new Point3D({ x: -5, y: 0, z: 8.75828515625 }),
+            seatingCenter: new Point3D({ x: -4.32, y: 0, z: 8.73 }),
+            dimensions: new Point3D({x: 5.0, y: 0, z: 4.1845703125 }),
+            initialNumSeats: 4,
+            seatingRadiusM: 0.7,
+            roomImageSRC: Room4
+        }));
+        this.rooms.push(new SpatialAudioRoom({
+            name: "Room 5",
+            roomCenter: new Point3D({ x: 0, y: 0, z: 9.182 }),
+            seatingCenter: new Point3D({x: 0.09221915190033814, z: 9.151794871794872}),
+            dimensions: new Point3D({x: 5.0, y: 0, z: 5.0 }),
+            seatingRadiusM: 1.7,
+            roomImageSRC: Room5
         }));
         this.rooms.push(new SpatialAudioRoom({
             name: "Private Room",
