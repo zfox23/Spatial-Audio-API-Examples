@@ -23,8 +23,12 @@
   },
   "homepage": "https://github.com/highfidelity/Spatial-Audio-API-Examples#readme",
   "dependencies": {
+    "audio-decode": "^1.4.0",
+    "audio-format": "^2.3.2",
     "express": "^4.17.1",
     "jose": "^3.11.1",
+    "node-fetch": "^2.6.1",
+    "pcm-convert": "^1.6.5",
     "process": "^0.11.10",
     "twilio-video": "^2.13.1",
     "util": "^0.12.3"

@@ -11,7 +11,8 @@ const auth = require('../../auth.json');
 /**
  * Play the audio from a file into a High Fidelity Space. The audio will loop indefinitely.
  *
- * @param {string} audioPath - Path to an `.mp3` or `.wav` audio file
+ * @param {string} providedUserID - The user ID of the audio bot
+ * @param {string} audioURL - URL to an `.mp3` or `.wav` audio file
  * @param {object} position - The {x, y, z} point at which to spatialize the audio.
  * @param {number} hiFiGain - Set above 1 to boost the volume of the bot, or set below 1 to attenuate the volume of the bot.
  */
