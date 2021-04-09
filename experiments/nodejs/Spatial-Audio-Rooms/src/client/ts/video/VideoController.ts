@@ -8,7 +8,7 @@ export class VideoController {
     toggleVideoButton: HTMLButtonElement;
     videoIsMuted: boolean;
     twilioRoom: Video.Room;
-    localTrack: Video.LocalTrack;
+    localVideoTrack: Video.LocalVideoTrack;
     providedUserIDToVideoElementMap: Map<string, HTMLVideoElement>;
     videoContainer: HTMLDivElement;
 
@@ -53,10 +53,8 @@ export class VideoController {
     disconnectFromTwilio() {
         this.providedUserIDToVideoElementMap.delete(userDataController.myAvatar.myUserData.providedUserID);
 
-        if (this.localTrack) {
-            let localVideoTrack = <Video.LocalVideoTrack>this.localTrack;
-    
-            const mediaElements = localVideoTrack.detach();
+        if (this.localVideoTrack) {
+            const mediaElements = this.localVideoTrack.detach();
             mediaElements.forEach(mediaElement => {
                 mediaElement.remove();
             });
@@ -84,15 +82,14 @@ export class VideoController {
     disableVideo() {
         console.log("Disabling local video...");
 
-        let localVideoTrack = <Video.LocalVideoTrack>this.localTrack;
-        this.twilioRoom.localParticipant.unpublishTrack(localVideoTrack);
-        localVideoTrack.stop();
+        this.twilioRoom.localParticipant.unpublishTrack(this.localVideoTrack);
+        this.localVideoTrack.stop();
         
         this.providedUserIDToVideoElementMap.delete(userDataController.myAvatar.myUserData.providedUserID);
         
-        this.localTrack = undefined;
+        this.localVideoTrack = undefined;
 
-        const mediaElements = localVideoTrack.detach();
+        const mediaElements = this.localVideoTrack.detach();
         mediaElements.forEach(mediaElement => {
             mediaElement.remove();
         });
@@ -111,17 +108,20 @@ export class VideoController {
             },
         });
 
-        this.localTrack = localTracks.find(track => { return track.kind === 'video'; });
+        this.localVideoTrack = <Video.LocalVideoTrack>localTracks.find(track => { return track.kind === 'video'; });
 
-        let localVideoTrack = <Video.LocalVideoTrack>this.localTrack;
+        if (!this.localVideoTrack) {
+            console.error("Couldn't get local video track!");
+            return;
+        }
 
-        let videoEl = localVideoTrack.attach();
+        let videoEl = this.localVideoTrack.attach();
         videoEl.id = userDataController.myAvatar.myUserData.providedUserID;
         this.videoContainer.appendChild(videoEl);
         videoEl.play();
         this.providedUserIDToVideoElementMap.set(userDataController.myAvatar.myUserData.providedUserID, videoEl);
 
-        this.twilioRoom.localParticipant.publishTrack(localVideoTrack);
+        this.twilioRoom.localParticipant.publishTrack(this.localVideoTrack);
         
         this.toggleVideoButton.classList.remove("toggleVideoButton--muted");
     }
