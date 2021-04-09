@@ -325,7 +325,7 @@ export class UIController {
         }
 
         let avatarContextMenu__volumeThresholdContainer = document.createElement("div");
-        avatarContextMenu__volumeThresholdContainer.classList.add("avatarContextMenu__avatarContextMenu__volumeThresholdContainer");
+        avatarContextMenu__volumeThresholdContainer.classList.add("avatarContextMenu__volumeThresholdContainer");
         this.avatarContextMenu.appendChild(avatarContextMenu__volumeThresholdContainer);
 
         let avatarContextMenu__volumeThresholdHeader = document.createElement("h3");
@@ -353,6 +353,22 @@ export class UIController {
         avatarContextMenu__volumeThresholdContainer.appendChild(avatarContextMenu__volumeThresholdSlider);
     }
 
+    generateMuteForAllUI(userData: UserData) {
+        if (typeof (userData.hiFiGain) !== "number") {
+            return;
+        }
+
+        let muteForAllButton;
+        muteForAllButton = document.createElement("button");
+        muteForAllButton.classList.add("avatarContextMenu__muteForAllButton");
+        muteForAllButton.innerHTML = "Mute this user's mic";
+        muteForAllButton.addEventListener('click', (e) => {
+            connectionController.webSocketConnectionController.requestToMuteAudioInputDevice(userData.visitIDHash);
+        });
+        muteForAllButton.classList.add("avatarContextMenu__muteForAllButton");
+        this.avatarContextMenu.appendChild(muteForAllButton);
+    }
+
     showAvatarContextMenu(userData: UserData) {
         roomController.hideRoomList();
 
@@ -365,6 +381,7 @@ export class UIController {
         this.generateAGCUI(userData);
         this.generateHiFiGainUI(userData);
         this.generateVolumeThresholdUI(userData);
+        this.generateMuteForAllUI(userData);
 
         this.avatarContextMenu.setAttribute('visit-id-hash', userData.visitIDHash);
 

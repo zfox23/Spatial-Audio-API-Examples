@@ -265,6 +265,20 @@ socketIOServer.on("connection", (socket) => {
         socketIOServer.to(participant.socketID).emit("onRequestToChangeVolumeThreshold", { fromVisitIDHash, newVolumeThreshold });
     });
 
+    socket.on("requestToMuteAudioInputDevice", ({ spaceName, toVisitIDHash, fromVisitIDHash } = {}) => {
+        if (!spaceInformation[spaceName]) { return; }
+        let participant = spaceInformation[spaceName].participants.find((participant) => { return participant.visitIDHash === toVisitIDHash; });
+        if (!participant) {
+            console.error(`requestToMuteAudioInputDevice: Couldn't get participant from \`spaceInformation[spaceName].participants[]\` with Visit ID Hash \`${toVisitIDHash}\`!`);
+            return;
+        }
+        if (!participant.socketID) {
+            console.error(`requestToMuteAudioInputDevice: Participant didn't have a \`socketID\`!`);
+            return;
+        }
+        socketIOServer.to(participant.socketID).emit("onRequestToMuteAudioInputDevice", { fromVisitIDHash });
+    });
+
     socket.on("addParticle", ({ visitIDHash, spaceName, particleData } = {}) => {
         console.log(`In ${spaceName}, \`${visitIDHash}\` added a particle!.`);
         socket.to(spaceName).emit("requestParticleAdd", { visitIDHash, particleData });

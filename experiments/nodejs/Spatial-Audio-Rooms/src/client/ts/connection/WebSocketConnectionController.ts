@@ -155,6 +155,11 @@ export class WebSocketConnectionController {
             userInputController.setVolumeThreshold(newVolumeThreshold);
         });
 
+        this.socket.on("onRequestToMuteAudioInputDevice", ({ fromVisitIDHash }: { fromVisitIDHash: string }) => {
+            console.warn(`Got a request from \`${fromVisitIDHash}\` to mute audio input device!`);
+            userInputController.setInputMute(true);
+        });
+
         this.socket.on("requestParticleAdd", ({ visitIDHash, particleData }: { visitIDHash: string, particleData: string}) => {
             let particleParams: SignalParams = JSON.parse(particleData);
         
@@ -231,6 +236,10 @@ export class WebSocketConnectionController {
 
     requestToChangeVolumeThreshold(visitIDHash: string, newVolumeThreshold: number) {
         this.socket.emit("requestToChangeVolumeThreshold", { spaceName: HIFI_SPACE_NAME, toVisitIDHash: visitIDHash, fromVisitIDHash: userDataController.myAvatar.myUserData.visitIDHash, newVolumeThreshold });
+    }
+
+    requestToMuteAudioInputDevice(visitIDHash: string) {
+        this.socket.emit("requestToMuteAudioInputDevice", { spaceName: HIFI_SPACE_NAME, toVisitIDHash: visitIDHash, fromVisitIDHash: userDataController.myAvatar.myUserData.visitIDHash });
     }
 
     stopWebSocketStuff() {
