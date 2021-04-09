@@ -127,5 +127,5 @@ async function startAudioBot(providedUserID, audioURL, position, hiFiGain) {
     console.log(`Audio bot started! Audio URL: ${audioURL}`);
 }
 
-startAudioBot("Tree Sounds", "https://hifi-content.s3.amazonaws.com/Audio/EnvSounds/WindandWater/ELWW%20Wind%20through%20large%20bamboo%20bush%2C%20movement%20leaves%20branches%20creak%2C%20very%20faint%20birds.mp3", new Point3D({x: -1.1937015896635599, z: 0.5384111441848216}), 0.6);
-startAudioBot("Tree Sounds", "https://hifi-content.s3.amazonaws.com/Audio/EnvSounds/WindandWater/ELWW%20Wind%20through%20bamboo%20bush%2C%20leaf%20and%20branch%20movement.mp3", new Point3D({x: 1.4091348594515265, z: 0.24351004935432052}), 0.6);
+startAudioBot("Tree Sounds", "https://hifi-content.s3.amazonaws.com/Audio/EnvSounds/WindandWater/ELWW%20Wind%20through%20large%20bamboo%20bush%2C%20movement%20leaves%20branches%20creak%2C%20very%20faint%20birds.mp3", new Point3D({x: -1.1937015896635599, z: 0.5384111441848216}), 0.12);
+startAudioBot("Tree Sounds", "https://hifi-content.s3.amazonaws.com/Audio/EnvSounds/WindandWater/ELWW%20Wind%20through%20bamboo%20bush%2C%20leaf%20and%20branch%20movement.mp3", new Point3D({x: 1.4091348594515265, z: 0.24351004935432052}), 0.12);
