@@ -165,9 +165,9 @@ export class VideoController {
     }
 
     participantDisconnected(participant: Video.RemoteParticipant) {
-        console.log(`Participant \`${participant.identity}\` disconnected.`);
+        console.log(`Participant \`${participant.identity}\` disconnected from video.`);
 
-        let videoEl = document.getElementById(participant.sid);
+        let videoEl = document.getElementById(participant.identity);
 
         if (videoEl) {
             videoEl.remove();
