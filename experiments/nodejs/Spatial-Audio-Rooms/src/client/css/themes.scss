@@ -1,6 +1,31 @@
-$theme: (
+$light-theme: (
+    play-overlay-scrim: rgba(0, 0, 0, 0.8),
+    play-overlay: #FFFFFF,
+    loading-background: #FFFFFF,
+    body-background: #FFFFFF,
+    on-body-background: #000000,
+    primary: #DDDDDD,
+    text-primary: #000000,
+    text-secondary: #007AFF,
+    text-faint: #000000AA,
+    room-list-container-background: #E4E4E4,
+    room-list-container-mine-background: #d7d7d7,
+    room-list-container: #000000,
+    bottom-controls-container-background: #DDDDDD,
+    modal-scrim: rgba(0, 0, 0, 0.3),
+    modal-background: #d7d7d7,
+    modal: #000000,
+
+    scrollbar-thumb: #ebebebAA,
+    scrollbar-track: #bcbcbc,
+
+    active-signal-button-background: rgba(0, 0, 0, 0.4),
+);
+
+$dark-theme: (
+    play-overlay-scrim: rgba(0, 0, 0, 0.6),
     loading-background: #000000,
-    body-background: #222222,
+    body-background: #000000,
     on-body-background: #FFFFFF,
     primary: #222222,
     text-primary: #FFFFFF,
@@ -10,9 +35,12 @@ $theme: (
     room-list-container-mine-background: #656565,
     room-list-container: #FFFFFF,
     bottom-controls-container-background: #000000,
+    modal-scrim: rgba(0, 0, 0, 0.3),
     modal-background: #656565,
     modal: #FFFFFF,
 
     scrollbar-thumb: #333333AA,
     scrollbar-track: #AAAAAA,
-)
+
+    active-signal-button-background: rgba(0, 0, 0, 0.4),
+);

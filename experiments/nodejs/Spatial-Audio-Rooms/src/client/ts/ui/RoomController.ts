@@ -27,10 +27,11 @@ class SpatialAudioRoomImage {
 
 export class SpatialAudioRoom {
     name: string;
-    center: Point3D;
+    seatingCenter: Point3D;
     dimensions: Point3D;
     tableRadiusM: number;
     seatingRadiusM: number;
+    roomCenter: Point3D;
     initialNumSeats: number;
     seats: Array<SpatialAudioSeat>;
     tableColorHex: string;
@@ -38,21 +39,25 @@ export class SpatialAudioRoom {
 
     constructor({
         name,
-        center,
+        seatingCenter,
         seatingRadiusM,
+        roomCenter,
         initialNumSeats,
         dimensions,
         roomImageSRC
         }: {
             name: string,
-            center: Point3D,
+            seatingCenter: Point3D,
             seatingRadiusM?: number,
+            roomCenter?: Point3D,
             initialNumSeats?: number,
             dimensions?: Point3D,
             roomImageSRC?: string
         }) {
         this.name = name;
-        this.center = center;
+        this.seatingCenter = seatingCenter;
+
+        this.roomCenter = roomCenter || this.seatingCenter;
 
         let maxAvatarRadiusM = AVATAR.RADIUS_M * AVATAR.MAX_VOLUME_DB_AVATAR_RADIUS_MULTIPLIER;
 
@@ -77,7 +82,7 @@ export class SpatialAudioRoom {
 
         this.tableRadiusM = this.seatingRadiusM - maxAvatarRadiusM;
         
-        this.initialNumSeats = initialNumSeats || Math.ceil(((Math.PI * this.seatingRadiusM * this.seatingRadiusM) / (3 * AVATAR.RADIUS_M)));
+        this.initialNumSeats = initialNumSeats || Math.ceil(((Math.PI * this.seatingRadiusM * this.seatingRadiusM) / (2.5 * AVATAR.RADIUS_M)));
         this.seats = [];
         this.generateInitialSeats();
 
@@ -98,14 +103,14 @@ export class SpatialAudioRoom {
     generateInitialSeats() {
         for (let theta = 0; theta < 2 * Math.PI; theta += ((2 * Math.PI) / this.initialNumSeats)) {
             let currentPotentialPosition = new Point3D({
-                "x": this.seatingRadiusM * Math.cos(theta) + this.center.x,
-                "z": this.seatingRadiusM * Math.sin(theta) + this.center.z
+                "x": this.seatingRadiusM * Math.cos(theta) + this.seatingCenter.x,
+                "z": this.seatingRadiusM * Math.sin(theta) + this.seatingCenter.z
             });
 
             currentPotentialPosition.x = Math.round((currentPotentialPosition.x + Number.EPSILON) * 100) / 100;
             currentPotentialPosition.z = Math.round((currentPotentialPosition.z + Number.EPSILON) * 100) / 100;
 
-            let orientationYawRadians = Math.atan2(currentPotentialPosition.x - this.center.x, currentPotentialPosition.z - this.center.z);
+            let orientationYawRadians = Math.atan2(currentPotentialPosition.x - this.seatingCenter.x, currentPotentialPosition.z - this.seatingCenter.z);
             let orientationYawDegrees = orientationYawRadians * 180 / Math.PI;
             orientationYawDegrees %= 360;
             orientationYawDegrees = Math.round((orientationYawDegrees + Number.EPSILON) * 100) / 100;
@@ -133,12 +138,15 @@ export class SpatialAudioRoom {
     }
 }
 
-import SeatingRadius1Image1 from "../../images/rooms/room-with-seating-radius-1-bg-1.jpg";
+//import SeatingRadius1Image1 from "../../images/rooms/room-with-seating-radius-1-bg-1.jpg";
+import Room1 from "../../images/rooms/Room1.jpg";
+import Room2 from "../../images/rooms/Room2.jpg";
+import Room3 from "../../images/rooms/Room3.jpg";
 import SeatingRadius1Image2 from "../../images/rooms/room-with-seating-radius-1-bg-2.jpg";
 import SeatingRadius1Image3 from "../../images/rooms/room-with-seating-radius-1-bg-3.jpg";
 // import SeatingRadius1Image4 from "../../images/rooms/room-with-seating-radius-1-bg-4.jpg";
 import SeatingRadius1Image5 from "../../images/rooms/room-with-seating-radius-1-bg-5.jpg";
-import SeatingRadius3Image1 from "../../images/rooms/room-with-seating-radius-3-bg-1.jpg";
+import SeatingRadius3Image1 from "../../images/rooms/room-with-seating-radius-3-bg-1.png";
 import SeatingRadius10cmImage1 from "../../images/rooms/room-with-seating-radius-10cm-bg-1.jpg"
 export class RoomController {
     lobby: SpatialAudioRoom;
@@ -153,42 +161,41 @@ export class RoomController {
         
         this.lobby = new SpatialAudioRoom({
             name: "Room 1",
-            center: new Point3D({ x: 1, y: 0, z: 0 }),
+            roomCenter: new Point3D({ x: 0, y: 0, z: 0 }),
+            seatingCenter: new Point3D({ x: 0.125, y: 0, z: 1.015 }),
             seatingRadiusM: 0.9,
-            dimensions: new Point3D({x: 5.15, y: 0, z: 5.15 }),
+            dimensions: new Point3D({x: 5.0, y: 0, z: 5.0 }),
             initialNumSeats: 8,
-            roomImageSRC: SeatingRadius1Image1
+            roomImageSRC: Room1
         });
         this.rooms.push(this.lobby);
         this.rooms.push(new SpatialAudioRoom({
             name: "Room 2",
-            center: new Point3D({ x: 5.0, y: 0, z: 5.0 }),
-            dimensions: new Point3D({x: 5.15, y: 0, z: 5.15 }),
-            seatingRadiusM: 0.9,
-            roomImageSRC: SeatingRadius1Image5
+            roomCenter: new Point3D({ x: 0, y: 0, z: 5.0 }),
+            seatingCenter: new Point3D({ x: 0.05, y: 0, z: 4.68 }),
+            dimensions: new Point3D({x: 5.0, y: 0, z: 5.0 }),
+            seatingRadiusM: 1.15,
+            roomImageSRC: Room2
         }));
         this.rooms.push(new SpatialAudioRoom({
             name: "Room 3",
-            center: new Point3D({ x: -5, y: 0, z: 5 }),
-            seatingRadiusM: 1.0,
-            roomImageSRC: SeatingRadius1Image3
-        }));
-        this.rooms.push(new SpatialAudioRoom({
-            name: "Small Room",
-            center: new Point3D({ x: 0, y: 0, z: 3.5 }),
-            seatingRadiusM: 0.1,
-            roomImageSRC: SeatingRadius10cmImage1
+            roomCenter: new Point3D({ x: -5, y: 0, z: 5 }),
+            seatingCenter: new Point3D({ x: -4.32, y: 0, z: 4.825 }),
+            dimensions: new Point3D({x: 5.0, y: 0, z: 5.0 }),
+            initialNumSeats: 4,
+            seatingRadiusM: 0.7,
+            roomImageSRC: Room3
         }));
         this.rooms.push(new SpatialAudioRoom({
             name: "Large Room",
-            center: new Point3D({ x: 0, y: 0, z: -8 }),
+            seatingCenter: new Point3D({ x: -6, y: 0, z: -2 }),
             dimensions: new Point3D({x: 5.72, y: 0, z: 5.72 }),
             seatingRadiusM: 2.5,
             roomImageSRC: SeatingRadius3Image1
         }));
         this.rooms.push(new SpatialAudioRoom({
             name: "Private Room",
-            center: new Point3D({ x: 100, y: 0, z: 100 }),
+            seatingCenter: new Point3D({ x: 100, y: 0, z: 100 }),
             dimensions: new Point3D({x: 3.6, y: 0, z: 3.6 }),
             seatingRadiusM: 1.0,
             roomImageSRC: SeatingRadius1Image2
@@ -239,7 +246,7 @@ export class RoomController {
         }
 
         return this.rooms.find((room) => {
-            return Math.abs(Utilities.getDistanceBetween2DPoints(point3D.x, point3D.z, room.center.x, room.center.z) - room.seatingRadiusM) <= MISC.CLOSE_ENOUGH_M;
+            return Math.abs(Utilities.getDistanceBetween2DPoints(point3D.x, point3D.z, room.seatingCenter.x, room.seatingCenter.z) - room.seatingRadiusM) <= MISC.CLOSE_ENOUGH_M;
         });
     }
 
@@ -254,7 +261,7 @@ export class RoomController {
             let room = this.rooms[i];
             let distanceFromCenterOfRoom = Utilities.pointIsWithinRectangle({
                 point: point3D,
-                rectCenter: room.center,
+                rectCenter: room.roomCenter,
                 rectDimensions: room.dimensions
             });
 

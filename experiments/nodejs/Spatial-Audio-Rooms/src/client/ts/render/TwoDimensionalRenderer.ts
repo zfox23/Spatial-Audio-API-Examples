@@ -234,7 +234,7 @@ export class TwoDimensionalRenderer {
         let ctx = this.ctx;
         let pxPerM = physicsController.pxPerMCurrent;
 
-        ctx.translate(room.center.x * pxPerM, room.center.z * pxPerM);
+        ctx.translate(room.roomCenter.x * pxPerM, room.roomCenter.z * pxPerM);
 
         let usingRoomImage = false;
         if (room.roomImage && room.roomImage.image.complete && room.roomImage.loaded) {
@@ -244,7 +244,13 @@ export class TwoDimensionalRenderer {
                 "z": room.dimensions.z * pxPerM
             };
             ctx.drawImage(room.roomImage.image, -roomDimensionsPX.x / 2, -roomDimensionsPX.z / 2, roomDimensionsPX.x, roomDimensionsPX.z);
-        } else {
+        }
+
+        ctx.translate(-room.roomCenter.x * pxPerM, -room.roomCenter.z * pxPerM);
+
+        ctx.translate(room.seatingCenter.x * pxPerM, room.seatingCenter.z * pxPerM);
+        
+        if (!usingRoomImage) {
             let tableRadiusPX = room.tableRadiusM * pxPerM;
 
             ctx.lineWidth = ROOM.TABLE_STROKE_WIDTH_PX;
@@ -271,7 +277,7 @@ export class TwoDimensionalRenderer {
         }
         ctx.rotate(-amtToRotateRoomLabel);
 
-        ctx.translate(-room.center.x * pxPerM, -room.center.z * pxPerM);
+        ctx.translate(-room.seatingCenter.x * pxPerM, -room.seatingCenter.z * pxPerM);
     }
 
     drawUnoccupiedSeat(seat: SpatialAudioSeat) {

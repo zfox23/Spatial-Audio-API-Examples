@@ -195,7 +195,7 @@ class MyAvatar {
                 }, PHYSICS.PHYSICS_TICKRATE_MS);
             });
             if (currentRoom === targetRoom) {
-                let transitionCircleCenter = new Point3D({x: currentRoom.center.x, z: currentRoom.center.z});
+                let transitionCircleCenter = new Point3D({x: currentRoom.seatingCenter.x, z: currentRoom.seatingCenter.z});
 
                 let orientationEulerInitial = new OrientationEuler3D({yawDegrees: myUserData.orientationEulerCurrent.yawDegrees});
                 let orientationEulerFinal = new OrientationEuler3D({yawDegrees: targetSeat.orientation.yawDegrees});
