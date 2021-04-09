@@ -65,14 +65,15 @@ export class TwoDimensionalRenderer {
     }
 
     drawAvatarBase({ userData }: { userData: UserData }) {
-
         let isMine = userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash;
         let ctx = this.ctx;
         let pxPerM = physicsController.pxPerMCurrent;
         let avatarRadiusM = AVATAR.RADIUS_M;
         let avatarRadiusPX = avatarRadiusM * pxPerM;
 
-        let amtToRotateAvatar = -userData.orientationEulerCurrent.yawDegrees * Math.PI / 180;
+        let yawDegrees = userData.orientationEulerCurrent ? userData.orientationEulerCurrent.yawDegrees : 0;
+
+        let amtToRotateAvatar = -yawDegrees * Math.PI / 180;
         ctx.rotate(amtToRotateAvatar);
 
         if (roomController.currentlyHoveringOverVisitIDHash === userData.visitIDHash || (userInputController.hoveredUserData && userInputController.hoveredUserData.visitIDHash === userData.visitIDHash)) {
@@ -86,15 +87,18 @@ export class TwoDimensionalRenderer {
             ctx.closePath();
         }
 
-        ctx.beginPath();
-        ctx.arc(0, -avatarRadiusM * AVATAR.DIRECTION_CLOUD_RADIUS_MULTIPLIER * pxPerM, avatarRadiusM * AVATAR.DIRECTION_CLOUD_RADIUS_MULTIPLIER * pxPerM, 0, Math.PI, false);
-        let grad = ctx.createLinearGradient(0, 0, 0, -avatarRadiusM * AVATAR.DIRECTION_CLOUD_RADIUS_MULTIPLIER * pxPerM);
         let colorHex = userData.colorHex || Utilities.hexColorFromString(userData.visitIDHash);
-        grad.addColorStop(0.0, colorHex);
-        grad.addColorStop(1.0, colorHex + "00");
-        ctx.fillStyle = grad;
-        ctx.fill();
-        ctx.closePath();
+
+        if (userData.orientationEulerCurrent) {
+            ctx.beginPath();
+            ctx.arc(0, -avatarRadiusM * AVATAR.DIRECTION_CLOUD_RADIUS_MULTIPLIER * pxPerM, avatarRadiusM * AVATAR.DIRECTION_CLOUD_RADIUS_MULTIPLIER * pxPerM, 0, Math.PI, false);
+            let grad = ctx.createLinearGradient(0, 0, 0, -avatarRadiusM * AVATAR.DIRECTION_CLOUD_RADIUS_MULTIPLIER * pxPerM);
+            grad.addColorStop(0.0, colorHex);
+            grad.addColorStop(1.0, colorHex + "00");
+            ctx.fillStyle = grad;
+            ctx.fill();
+            ctx.closePath();
+        }
 
         ctx.lineWidth = AVATAR.STROKE_WIDTH_PX;
         ctx.fillStyle = colorHex;
@@ -152,11 +156,11 @@ export class TwoDimensionalRenderer {
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
 
-        let textToDraw = userData.displayName && userData.displayName.length > 0 ? userData.displayName : "❓ Anonymous";
+        let textToDraw = userData.displayName && userData.displayName.length > 0 ? userData.displayName : userData.providedUserID;
         let textMetrics = ctx.measureText(textToDraw);
         let avatarRadiusPX = avatarRadiusM * pxPerM;
         if (textMetrics.width > avatarRadiusPX + 5) {
-            textToDraw = Utilities.getInitials(userData.displayName);
+            textToDraw = Utilities.getInitials(textToDraw);
         }
 
         ctx.fillText(textToDraw, 0, 0);
@@ -205,7 +209,7 @@ export class TwoDimensionalRenderer {
     }
 
     drawAvatar({ userData }: { userData: UserData }) {
-        if (!userData || !userData.positionCurrent || userData.positionCurrent.x === undefined || userData.positionCurrent.z === undefined || !userData.orientationEulerCurrent || userData.orientationEulerCurrent.yawDegrees === undefined) {
+        if (!userData || !userData.positionCurrent || userData.positionCurrent.x === undefined || userData.positionCurrent.z === undefined) {
             return;
         }
 

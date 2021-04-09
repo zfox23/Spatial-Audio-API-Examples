@@ -189,7 +189,7 @@ export class UIController {
             });
         } else {
             displayName = document.createElement("h1");
-            displayName.innerText = userData.displayName && userData.displayName.length > 0 ? userData.displayName : "❓ Anonymous";
+            displayName.innerText = userData.displayName && userData.displayName.length > 0 ? userData.displayName : userData.providedUserID;
         }
         displayName.classList.add("avatarContextMenu__displayName");
         this.avatarContextMenu.appendChild(displayName);
@@ -199,7 +199,7 @@ export class UIController {
         let colorHexInput;
         colorHexInput = document.createElement("input");
         colorHexInput.type = "color";
-        colorHexInput.value = userData.colorHex;
+        colorHexInput.value = userData.colorHex || Utilities.hexColorFromString(userData.visitIDHash);
 
         if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash) {
             colorHexInput.classList.add("avatarContextMenu__colorHexInput--mine");
@@ -382,7 +382,7 @@ export class UIController {
             return;
         }
 
-        (<HTMLHeadingElement>this.avatarContextMenu.querySelector('.avatarContextMenu__displayName')).innerText = userData.displayName;
+        (<HTMLHeadingElement>this.avatarContextMenu.querySelector('.avatarContextMenu__displayName')).innerText = userData.displayName ? userData.displayName : userData.providedUserID;
 
         let echoCancellationCheckbox = this.avatarContextMenu.querySelector(".echoCancellationCheckbox");
         if (echoCancellationCheckbox) {

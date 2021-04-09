@@ -350,7 +350,7 @@ export class RoomController {
                     if (userData.colorHex) {
                         occupantInnerHTML += `<span class="roomInfoContainer__occupantColorChip" style="background-color:${userData.colorHex}"></span>`;
                     }
-                    occupantInnerHTML += userData.displayName && userData.displayName.length > 0 ? userData.displayName : "❓ Anonymous";
+                    occupantInnerHTML += userData.displayName && userData.displayName.length > 0 ? userData.displayName : userData.providedUserID;
                     document.querySelector(`[data-room-name="${userData.currentRoom.name}"]`).appendChild(roomInfoContainer__occupant);
                 }
                 roomInfoContainer__occupant.innerHTML = occupantInnerHTML;

@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const { default: SignJWT } = require('jose/jwt/sign');
+const { default: SignJWT } = require('jose/dist/node/cjs/jwt/sign');
 const auth = require('../../auth.json');
 const twilio = require('twilio');
 

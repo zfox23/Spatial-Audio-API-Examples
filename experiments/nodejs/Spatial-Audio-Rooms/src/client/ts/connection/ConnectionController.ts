@@ -4,6 +4,7 @@ import { Utilities } from '../utilities/Utilities';
 import { WebSocketConnectionController } from './WebSocketConnectionController';
 
 declare var HIFI_JWT: string;
+declare var HIFI_ENDPOINT_URL: string;
 
 // For maximum visibility into what the API is doing.
 HiFiLogger.setHiFiLogLevel(HiFiLogLevel.Debug);
@@ -104,7 +105,7 @@ export class ConnectionController {
                 let stackURLOverride = searchParams.get("stack");
 
                 // Connect!
-                let connectionStatus = await this.hifiCommunicator.connectToHiFiAudioAPIServer(jwt, stackURLOverride);
+                let connectionStatus = await this.hifiCommunicator.connectToHiFiAudioAPIServer(jwt, stackURLOverride || HIFI_ENDPOINT_URL);
                 audionetInitResponse = connectionStatus.audionetInitResponse;
             } catch (e) {
                 reject(`Error connecting to High Fidelity:\n${e}`);
@@ -309,6 +310,15 @@ export class ConnectionController {
     onUsersDisconnected(allDisconnectedUserData: Array<ReceivedHiFiAudioAPIData>) {
         for (const disconnectedUserData of allDisconnectedUserData) {
             console.log(`HiFi User left: ${JSON.stringify(disconnectedUserData)}`);
+
+            let localUser = userDataController.allOtherUserData.find((localUserData) => {
+                return localUserData.visitIDHash === disconnectedUserData.hashedVisitID;
+            });
+
+            if (localUser && localUser.currentSeat) {
+                localUser.currentSeat.occupiedUserData = undefined;
+            }
+
             userDataController.allOtherUserData = userDataController.allOtherUserData.filter((localUserData) => {
                 return localUserData.visitIDHash !== disconnectedUserData.hashedVisitID;
             });

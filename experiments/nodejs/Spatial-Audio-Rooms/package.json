@@ -7,9 +7,10 @@
     "client": "webpack --env dev",
     "client:dev": "webpack --env dev",
     "client:prod": "webpack --env prod",
-    "server": "node ./src/server/index.js dev",
-    "server:dev": "node ./src/server/index.js dev",
-    "server:prod": "node ./src/server/index.js prod"
+    "server": "node -r esm ./src/server/index.js dev",
+    "server:dev": "node -r esm ./src/server/index.js dev",
+    "server:prod": "node -r esm ./src/server/index.js prod",
+    "audiobots": "node -r esm ./src/server/audioBots.js"
   },
   "repository": {
     "type": "git",
