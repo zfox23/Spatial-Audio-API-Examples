@@ -133,7 +133,7 @@ export class SpatialAudioRoom {
             }
         }
 
-        console.warn(`Couldn't get first open seat!`);
+        console.warn(`Couldn't get first open seat in room named \`${this.name}\`!`);
         return;
     }
 }

@@ -100,7 +100,25 @@ class MyAvatar {
 
         let newSeat = targetRoom.getFirstOpenSeat();
         if (!newSeat) {
-            console.error(`\`positionSelfInRoom()\`: Couldn't get first open seat!`);
+            console.warn(`\`positionSelfInRoom()\`: Couldn't get first open seat in room named \`${targetRoomName}\`! Searching for open seats in other rooms...`);
+
+            for (let i = 0; i < roomController.rooms.length; i++) {
+                targetRoom = roomController.rooms[i];
+
+                if (targetRoom.name === targetRoomName) {
+                    continue;
+                }
+
+                newSeat = targetRoom.getFirstOpenSeat();
+
+                if (newSeat) {
+                    break;
+                }
+            }
+        }
+
+        if (!newSeat) {
+            console.warn(`\`positionSelfInRoom()\`: Couldn't find any open seats in any room!`);
             return;
         }
         console.log(`Found an open spot on seat \`${newSeat.seatID}\` in room ${newSeat.room.name} at ${JSON.stringify(newSeat.position)} with orientation ${JSON.stringify(newSeat.orientation)}.`);
