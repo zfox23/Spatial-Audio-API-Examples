@@ -195,7 +195,7 @@ export class RoomController {
         this.rooms.push(new SpatialAudioRoom({
             name: "Room 5",
             roomCenter: new Point3D({ x: 0, y: 0, z: 9.182 }),
-            seatingCenter: new Point3D({x: 0.09221915190033814, z: 9.151794871794872}),
+            seatingCenter: new Point3D({x: 0.09221915190033814, z: 9.2}),
             dimensions: new Point3D({x: 5.0, y: 0, z: 5.0 }),
             seatingRadiusM: 1.7,
             roomImageSRC: Room5
