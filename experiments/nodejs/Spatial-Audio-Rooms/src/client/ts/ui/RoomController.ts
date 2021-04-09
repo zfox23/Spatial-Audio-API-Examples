@@ -138,16 +138,11 @@ export class SpatialAudioRoom {
     }
 }
 
-//import SeatingRadius1Image1 from "../../images/rooms/room-with-seating-radius-1-bg-1.jpg";
 import Room1 from "../../images/rooms/Room1.jpg";
 import Room2 from "../../images/rooms/Room2.jpg";
 import Room3 from "../../images/rooms/Room3.jpg";
 import SeatingRadius1Image2 from "../../images/rooms/room-with-seating-radius-1-bg-2.jpg";
-import SeatingRadius1Image3 from "../../images/rooms/room-with-seating-radius-1-bg-3.jpg";
-// import SeatingRadius1Image4 from "../../images/rooms/room-with-seating-radius-1-bg-4.jpg";
-import SeatingRadius1Image5 from "../../images/rooms/room-with-seating-radius-1-bg-5.jpg";
 import SeatingRadius3Image1 from "../../images/rooms/room-with-seating-radius-3-bg-1.png";
-import SeatingRadius10cmImage1 from "../../images/rooms/room-with-seating-radius-10cm-bg-1.jpg"
 export class RoomController {
     lobby: SpatialAudioRoom;
     rooms: Array<SpatialAudioRoom>;
