@@ -1,9 +1,9 @@
 import { HiFiCommunicator, HiFiUserDataStreamingScopes, OrientationEuler3D, Point3D } from "hifi-spatial-audio";
 import { AudionetInitResponse } from "../connection/ConnectionController";
-import { SpatialAudioRoom } from "../ui/RoomController";
+import { SpatialAudioSeat } from "../ui/RoomController";
 import { UserData } from "./UserDataController";
 import { DataToTransmitToHiFi } from "../utilities/Utilities";
-import { avDevicesController, userDataController } from "..";
+import { avDevicesController, connectionController, userDataController } from "..";
 declare var HIFI_JWT: string;
 declare var HIFI_ENDPOINT_URL: string;
 declare var HIFI_PROVIDED_USER_ID: string;
@@ -12,7 +12,7 @@ export class MyAvatarEars {
     hifiCommunicator: HiFiCommunicator;
     mouthUserData: UserData;
     earsOutputAudioElement: HTMLAudioElement;
-    currentRoom: SpatialAudioRoom;
+    currentSeat: SpatialAudioSeat;
     isConnected: boolean = false;
     isConnecting: boolean = false;
 
@@ -119,6 +119,7 @@ export class MyAvatarEars {
             this.isConnected = true;
             this.isConnecting = false;
 
+            this.resetMouthOrientation();
             this.transmitUserData();
             this.muteMyMouthForMyEars();
             this.muteMyOtherEars();
@@ -135,6 +136,15 @@ export class MyAvatarEars {
         this.isConnected = false;
         this.isConnecting = false;
         this.unmuteMyOtherEars();
+    }
+
+    resetMouthOrientation() {
+        let lockedYawDegrees = userDataController.myAvatar.myUserData.currentSeat.orientation.yawDegrees;
+        userDataController.myAvatar.myUserData.orientationEulerCurrent.yawDegrees = lockedYawDegrees;
+        let hifiCommunicator = connectionController.hifiCommunicator;
+        if (hifiCommunicator) {
+            hifiCommunicator.updateUserDataAndTransmit({ orientationEuler: new OrientationEuler3D({ yawDegrees: lockedYawDegrees }) });
+        }
     }
 
     muteMyOtherEars() {
@@ -155,10 +165,12 @@ export class MyAvatarEars {
         this.hifiCommunicator.setOtherUserGainForThisConnection(mouthVisitIDHash, 0);
     }
 
-    moveToRoom(targetRoom: SpatialAudioRoom) {
-        this.currentRoom = targetRoom;
+    onMouthMovedToNewSeat(targetSeat: SpatialAudioSeat) {
+        this.currentSeat = targetSeat;
 
-        console.log(`My ears have moved to the room named \`${this.currentRoom.name}\`.`);
+        console.log(`My ears have moved to the room named \`${this.currentSeat.room.name}\`.`);
+
+        this.resetMouthOrientation();
 
         this.transmitUserData();
     }
@@ -169,8 +181,8 @@ export class MyAvatarEars {
         }
 
         let dataToTransmit: DataToTransmitToHiFi = {
-            orientationEuler: new OrientationEuler3D({ yawDegrees: 0 }),
-            position: new Point3D({ x: this.currentRoom.seatingCenter.x, y: this.currentRoom.seatingCenter.y, z: this.currentRoom.seatingCenter.z })
+            orientationEuler: new OrientationEuler3D({ yawDegrees: this.currentSeat.orientation.yawDegrees }),
+            position: new Point3D({ x: this.currentSeat.room.seatingCenter.x, z: this.currentSeat.room.seatingCenter.z })
         };
 
         this.hifiCommunicator.updateUserDataAndTransmit(dataToTransmit);

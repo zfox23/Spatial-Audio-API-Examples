@@ -494,7 +494,7 @@ export class UserInputController {
 
         let gesturePointPX = this.getGesturePointFromEvent(event);
 
-        if (event.buttons === 1 && this.leftClickStartPositionPX !== undefined && !pathsController.currentPath) {
+        if (event.buttons === 1 && this.leftClickStartPositionPX !== undefined && !pathsController.currentPath && !(userDataController.myAvatarEars.isConnecting || userDataController.myAvatarEars.isConnected)) {
             let newDistance = gesturePointPX.x - this.leftClickStartPositionPX.x;
             let deltaDistance = newDistance - this.lastDistanceBetweenLeftClickEvents;
             this.lastDistanceBetweenLeftClickEvents = newDistance;

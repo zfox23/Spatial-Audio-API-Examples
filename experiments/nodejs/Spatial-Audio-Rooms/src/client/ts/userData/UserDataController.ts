@@ -300,7 +300,7 @@ class MyAvatar {
 
         roomController.updateRoomList();
 
-        userDataController.myAvatarEars.moveToRoom(targetSeat.room);
+        userDataController.myAvatarEars.onMouthMovedToNewSeat(targetSeat);
     }
 
     onMyDisplayNameChanged(newDisplayName?: string) {
