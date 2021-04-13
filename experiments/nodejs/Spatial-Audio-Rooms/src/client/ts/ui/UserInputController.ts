@@ -1,4 +1,4 @@
-import { avDevicesController, connectionController, pathsController, physicsController, roomController, signalsController, twoDimensionalRenderer, uiController, userDataController } from "..";
+import { avDevicesController, connectionController, pathsController, physicsController, roomController, signalsController, twoDimensionalRenderer, uiController, userDataController, webSocketConnectionController } from "..";
 import { AVATAR, ROOM, CONTROLS, PHYSICS, PARTICLES } from "../constants/constants";
 import { UserData } from "../userData/UserDataController";
 import { Utilities } from "../utilities/Utilities";
@@ -115,6 +115,9 @@ export class UserInputController {
                 break;
             case CONTROLS.ESC_KEY_CODE:
                 signalsController.setActiveSignal(undefined);
+                break;
+            case CONTROLS.U_KEY_CODE:
+                userDataController.myAvatarEars.toggleConnection();
                 break;
         }
     }
@@ -405,7 +408,7 @@ export class UserInputController {
             hiFiGain: newHiFiGain,
         });
         uiController.maybeUpdateAvatarContextMenu(userDataController.myAvatar.myUserData);
-        connectionController.webSocketConnectionController.updateMyUserDataOnWebSocketServer();
+        webSocketConnectionController.updateMyUserDataOnWebSocketServer();
     }
 
     setVolumeThreshold(newVolumeThreshold: number) {
@@ -415,7 +418,7 @@ export class UserInputController {
             volumeThreshold: newVolumeThreshold,
         });
         uiController.maybeUpdateAvatarContextMenu(userDataController.myAvatar.myUserData);
-        connectionController.webSocketConnectionController.updateMyUserDataOnWebSocketServer();
+        webSocketConnectionController.updateMyUserDataOnWebSocketServer();
     }
 
     getGesturePointFromEvent(evt: MouseEvent | TouchEvent) {

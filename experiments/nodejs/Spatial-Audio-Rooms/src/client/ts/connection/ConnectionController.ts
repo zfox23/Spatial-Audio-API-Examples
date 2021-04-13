@@ -1,5 +1,5 @@
 import { HiFiCommunicator, HiFiLogger, HiFiLogLevel, getBestAudioConstraints, HiFiUserDataStreamingScopes, ReceivedHiFiAudioAPIData, UserDataSubscription, AvailableUserDataSubscriptionComponents, OrientationEuler3D, Point3D } from 'hifi-spatial-audio';
-import { avDevicesController, roomController, uiController, userDataController, videoController } from '..';
+import { avDevicesController, roomController, uiController, userDataController, videoController, webSocketConnectionController } from '..';
 import { Utilities } from '../utilities/Utilities';
 import { WebSocketConnectionController } from './WebSocketConnectionController';
 
@@ -21,11 +21,9 @@ export interface AudionetInitResponse {
 
 export class ConnectionController {
     hifiCommunicator: HiFiCommunicator;
-    webSocketConnectionController: WebSocketConnectionController;
     receivedInitialOtherUserDataFromHiFi: boolean = false;
 
     constructor() {
-        this.webSocketConnectionController = new WebSocketConnectionController();
         this.hifiCommunicator = new HiFiCommunicator({
             transmitRateLimitTimeoutMS: 10,
             onUsersDisconnected: this.onUsersDisconnected,
@@ -56,8 +54,8 @@ export class ConnectionController {
                 userDataController.myAvatar.myUserData.agcEnabled = newAGCStatus;
             }
 
-            if (this.webSocketConnectionController) {
-                this.webSocketConnectionController.updateMyUserDataOnWebSocketServer();
+            if (webSocketConnectionController) {
+                webSocketConnectionController.updateMyUserDataOnWebSocketServer();
             }
             uiController.maybeUpdateAvatarContextMenu(userDataController.myAvatar.myUserData);
 
@@ -282,22 +280,22 @@ export class ConnectionController {
             }
 
             if (initiallyAlone || this.receivedInitialOtherUserDataFromHiFi) {
-                if (this.webSocketConnectionController.retrievedInitialWebSocketServerData) {
+                if (webSocketConnectionController.retrievedInitialWebSocketServerData) {
                     userDataController.myAvatar.positionSelfInRoom(roomController.getStartingRoomName());
                 }
             }
         }
 
-        if (!this.webSocketConnectionController.readyToSendWebSocketData) {
-            this.webSocketConnectionController.readyToSendWebSocketData = true;
-            this.webSocketConnectionController.maybeSendInitialWebSocketData();
+        if (!webSocketConnectionController.readyToSendWebSocketData) {
+            webSocketConnectionController.readyToSendWebSocketData = true;
+            webSocketConnectionController.maybeSendInitialWebSocketData();
         }
     }
 
     shutdown() {
         console.log(`Shutting down...`);
 
-        this.webSocketConnectionController.stopWebSocketStuff();
+        webSocketConnectionController.stopWebSocketStuff();
 
         videoController.disconnectFromTwilio();
 

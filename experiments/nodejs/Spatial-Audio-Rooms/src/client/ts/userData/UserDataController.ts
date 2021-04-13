@@ -1,9 +1,10 @@
 import { OrientationEuler3D, Point3D } from "hifi-spatial-audio";
-import { userDataController, connectionController, roomController, physicsController, pathsController, uiController, twoDimensionalRenderer } from "..";
+import { userDataController, connectionController, roomController, physicsController, pathsController, uiController, twoDimensionalRenderer, webSocketConnectionController } from "..";
 import { Path, Waypoint } from "../ai/PathsController";
 import { AVATAR, PHYSICS, UI } from "../constants/constants";
 import { SpatialAudioSeat, SpatialAudioRoom } from "../ui/RoomController";
 import { DataToTransmitToHiFi, EasingFunctions, Utilities } from "../utilities/Utilities";
+import { MyAvatarEars } from "./MyAvatarEars";
 
 declare var HIFI_PROVIDED_USER_ID: string;
 
@@ -295,15 +296,17 @@ class MyAvatar {
         if (myUserData.currentSeat) {
             myUserData.currentSeat.occupiedUserData = myUserData;
         }
-        connectionController.webSocketConnectionController.updateMyUserDataOnWebSocketServer();
+        webSocketConnectionController.updateMyUserDataOnWebSocketServer();
 
         roomController.updateRoomList();
+
+        userDataController.myAvatarEars.moveToRoom(targetSeat.room);
     }
 
     onMyDisplayNameChanged(newDisplayName?: string) {
         localStorage.setItem('myDisplayName', newDisplayName);
         this.myUserData.displayName = newDisplayName;
-        connectionController.webSocketConnectionController.updateMyUserDataOnWebSocketServer();
+        webSocketConnectionController.updateMyUserDataOnWebSocketServer();
         try {
             roomController.updateRoomList();
         } catch (e) { }
@@ -312,7 +315,7 @@ class MyAvatar {
     onMyColorHexChanged(newColorHex?: string) {
         localStorage.setItem('myColorHex', newColorHex);
         this.myUserData.colorHex = newColorHex;
-        connectionController.webSocketConnectionController.updateMyUserDataOnWebSocketServer();
+        webSocketConnectionController.updateMyUserDataOnWebSocketServer();
         try {
             roomController.updateRoomList();
         } catch (e) { }
@@ -322,9 +325,11 @@ class MyAvatar {
 export class UserDataController {
     allOtherUserData: Array<UserData>;
     myAvatar: MyAvatar;
+    myAvatarEars: MyAvatarEars;
 
     constructor() {
         this.allOtherUserData = [];
         this.myAvatar = new MyAvatar();
+        this.myAvatarEars = new MyAvatarEars();
     }
 }

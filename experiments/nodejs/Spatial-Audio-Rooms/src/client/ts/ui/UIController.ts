@@ -1,4 +1,4 @@
-import { avDevicesController, connectionController, physicsController, roomController, userDataController, userInputController } from '..';
+import { avDevicesController, connectionController, physicsController, roomController, userDataController, userInputController, webSocketConnectionController } from '..';
 import '../../css/controls.scss';
 import { AudionetInitResponse, ConnectionController } from '../connection/ConnectionController';
 import { UserData } from '../userData/UserDataController';
@@ -234,10 +234,10 @@ export class UIController {
             if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash) {
                 userInputController.setEchoCancellationStatus(newEchoCancellationStatus)
             } else {
-                if (connectionController.webSocketConnectionController && newEchoCancellationStatus) {
-                    connectionController.webSocketConnectionController.requestToEnableEchoCancellation(userData.visitIDHash);
-                } else if (connectionController.webSocketConnectionController && !newEchoCancellationStatus) {
-                    connectionController.webSocketConnectionController.requestToDisableEchoCancellation(userData.visitIDHash);
+                if (webSocketConnectionController && newEchoCancellationStatus) {
+                    webSocketConnectionController.requestToEnableEchoCancellation(userData.visitIDHash);
+                } else if (webSocketConnectionController && !newEchoCancellationStatus) {
+                    webSocketConnectionController.requestToDisableEchoCancellation(userData.visitIDHash);
                 }
             }
         });
@@ -269,10 +269,10 @@ export class UIController {
             if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash) {
                 userInputController.setAGCStatus(newAGCStatus)
             } else {
-                if (connectionController.webSocketConnectionController && newAGCStatus) {
-                    connectionController.webSocketConnectionController.requestToEnableAGC(userData.visitIDHash);
-                } else if (connectionController.webSocketConnectionController && !newAGCStatus) {
-                    connectionController.webSocketConnectionController.requestToDisableAGC(userData.visitIDHash);
+                if (webSocketConnectionController && newAGCStatus) {
+                    webSocketConnectionController.requestToEnableAGC(userData.visitIDHash);
+                } else if (webSocketConnectionController && !newAGCStatus) {
+                    webSocketConnectionController.requestToDisableAGC(userData.visitIDHash);
                 }
             }
         });
@@ -312,7 +312,7 @@ export class UIController {
             if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash) {
                 userInputController.setHiFiGainFromSliderValue(gainSliderValue);
             } else {
-                connectionController.webSocketConnectionController.requestToChangeHiFiGainSliderValue(userData.visitIDHash, gainSliderValue);
+                webSocketConnectionController.requestToChangeHiFiGainSliderValue(userData.visitIDHash, gainSliderValue);
             }
         });
 
@@ -346,7 +346,7 @@ export class UIController {
             if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash) {
                 userInputController.setVolumeThreshold(volumeThresholdSliderValue);
             } else {
-                connectionController.webSocketConnectionController.requestToChangeVolumeThreshold(userData.visitIDHash, volumeThresholdSliderValue);
+                webSocketConnectionController.requestToChangeVolumeThreshold(userData.visitIDHash, volumeThresholdSliderValue);
             }
         });
 
@@ -363,7 +363,7 @@ export class UIController {
         muteForAllButton.classList.add("avatarContextMenu__muteForAllButton");
         muteForAllButton.innerHTML = "Mute this user's mic";
         muteForAllButton.addEventListener('click', (e) => {
-            connectionController.webSocketConnectionController.requestToMuteAudioInputDevice(userData.visitIDHash);
+            webSocketConnectionController.requestToMuteAudioInputDevice(userData.visitIDHash);
         });
         muteForAllButton.classList.add("avatarContextMenu__muteForAllButton");
         this.avatarContextMenu.appendChild(muteForAllButton);

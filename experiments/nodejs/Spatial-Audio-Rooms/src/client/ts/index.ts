@@ -2,6 +2,7 @@ import '../css/main.scss';
 import { PathsController } from './ai/PathsController';
 import { AVDevicesController } from './avDevices/AVDevicesController';
 import { ConnectionController } from './connection/ConnectionController';
+import { WebSocketConnectionController } from './connection/WebSocketConnectionController';
 import { PhysicsController } from './physics/PhysicsController';
 import { TwoDimensionalRenderer } from './render/TwoDimensionalRenderer';
 import { ParticleController } from './ui/ParticleController';
@@ -13,6 +14,7 @@ import { UserDataController } from './userData/UserDataController';
 import { VideoController } from './video/VideoController';
 
 export const connectionController = new ConnectionController();
+export const webSocketConnectionController = new WebSocketConnectionController();
 export const avDevicesController = new AVDevicesController();
 export const userDataController = new UserDataController();
 export const roomController = new RoomController();

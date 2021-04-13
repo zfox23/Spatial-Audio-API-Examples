@@ -10,7 +10,7 @@ import NegativeDingDsharp2 from '../../audio/negativeDingDsharp2.mp3';
 import NegativeDingG2 from '../../audio/negativeDingG2.mp3';
 import { Utilities } from "../utilities/Utilities";
 import { PARTICLES, SIGNALS } from "../constants/constants";
-import { connectionController, particleController, userDataController } from "..";
+import { connectionController, particleController, userDataController, webSocketConnectionController } from "..";
 import { Particle } from "./ParticleController";
 declare var HIFI_SPACE_NAME: string;
 
@@ -213,8 +213,8 @@ export class SignalsController {
 
         this.addSignal(signalParams, true);
 
-        if (connectionController.webSocketConnectionController) {
-            connectionController.webSocketConnectionController.socket.emit("addParticle", { visitIDHash: userDataController.myAvatar.myUserData.visitIDHash, spaceName: HIFI_SPACE_NAME, particleData: JSON.stringify(signalParams)} );
+        if (webSocketConnectionController) {
+            webSocketConnectionController.socket.emit("addParticle", { visitIDHash: userDataController.myAvatar.myUserData.visitIDHash, spaceName: HIFI_SPACE_NAME, particleData: JSON.stringify(signalParams)} );
         }
     }
 }
