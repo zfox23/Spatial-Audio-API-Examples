@@ -33,6 +33,7 @@ export interface UserData {
     orientationEulerTarget?: OrientationEuler3D;
     volumeDecibels?: number;
     volumeDecibelsPeak?: number;
+    userGainForThisConnection?: number;
     hiFiGain?: number;
     hiFiGainSliderValue?: string;
     volumeThreshold?: number;
@@ -61,6 +62,7 @@ class MyAvatar {
             orientationEulerStart: undefined,
             orientationEulerCurrent: undefined,
             orientationEulerTarget: undefined,
+            userGainForThisConnection: 1.0,
             volumeDecibels: undefined,
             volumeDecibelsPeak: undefined,
             volumeThreshold: -60,
