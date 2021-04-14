@@ -1,6 +1,6 @@
 import { OrientationEuler3D, Point3D } from "hifi-spatial-audio";
 import { connectionController, particleController, pathsController, roomController, uiController, userDataController, userInputController } from "..";
-import { AVATAR, PHYSICS, UI } from "../constants/constants";
+import { PHYSICS, UI, ROOM } from "../constants/constants";
 import { SpatialAudioRoom } from "../ui/RoomController";
 import { Utilities, DataToTransmitToHiFi, EasingFunctions } from "../utilities/Utilities";
 
@@ -250,5 +250,12 @@ export class PhysicsController {
             this.smoothZoomStartTimestamp = undefined;
             this.smoothZoomDurationMS = PHYSICS.SMOOTH_ZOOM_DURATION_NORMAL_MS;
         }
+
+        this.determineCanHoverOverRooms();
+    }
+
+    determineCanHoverOverRooms() {
+        let roomSeatRadiusPX = ROOM.SEAT_RADIUS_M * this.pxPerMCurrent;
+        userInputController.canHoverOverRooms = roomSeatRadiusPX < UI.MIN_SEAT_RADIUS_FOR_SEAT_VISIBILITY_PX;
     }
 }

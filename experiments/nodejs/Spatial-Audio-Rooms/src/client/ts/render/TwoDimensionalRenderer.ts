@@ -285,6 +285,11 @@ export class TwoDimensionalRenderer {
     }
 
     drawUnoccupiedSeat(seat: SpatialAudioSeat) {
+        // Don't draw unoccupied seats if the seats are too small (determined by `userInputController.canHoverOverRooms`).
+        if (userInputController.canHoverOverRooms) {
+            return;
+        }
+
         let ctx = this.ctx;
         let pxPerM = physicsController.pxPerMCurrent;
         ctx.translate(seat.position.x * pxPerM, seat.position.z * pxPerM);

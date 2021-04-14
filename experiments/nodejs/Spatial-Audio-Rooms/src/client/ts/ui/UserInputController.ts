@@ -2,7 +2,7 @@ import { avDevicesController, connectionController, pathsController, physicsCont
 import { AVATAR, ROOM, CONTROLS, PHYSICS, PARTICLES } from "../constants/constants";
 import { UserData } from "../userData/UserDataController";
 import { Utilities } from "../utilities/Utilities";
-import { SpatialAudioSeat } from "../ui/RoomController";
+import { SpatialAudioRoom, SpatialAudioSeat } from "../ui/RoomController";
 import { OrientationEuler3D, Point3D } from "hifi-spatial-audio";
 import * as e from "express";
 
@@ -20,6 +20,8 @@ export class UserInputController {
     lastDistanceBetweenLeftClickEvents: number;
     hoveredUserData: UserData;
     hoveredSeat: SpatialAudioSeat;
+    canHoverOverRooms: boolean = false;
+    hoveredRoom: SpatialAudioRoom;
 
     constructor() {
         this.keyboardEventCache = [];
@@ -459,6 +461,10 @@ export class UserInputController {
             console.log(`User clicked on a new seat at ${JSON.stringify(this.hoveredSeat.position)}! Target seat yaw orientation: ${JSON.stringify(this.hoveredSeat.orientation)} degrees.`);
             userDataController.myAvatar.moveToNewSeat(this.hoveredSeat);
             this.hoveredSeat = undefined;
+        } else if (this.hoveredRoom && !pathsController.currentPath && this.hoveredRoom !== userDataController.myAvatar.myUserData.currentRoom) {
+            console.log(`User clicked on the room named ${this.hoveredRoom.name}!`);
+            userDataController.myAvatar.positionSelfInRoom(this.hoveredRoom.name);
+            this.hoveredRoom = undefined;
         }
 
         document.body.classList.remove("cursorPointer");
@@ -525,20 +531,39 @@ export class UserInputController {
             }
 
             if (!this.hoveredUserData) {
-                for (let i = 0; i < roomController.rooms.length; i++) {
-                    let room = roomController.rooms[i];
-                    this.hoveredSeat = room.seats.find((seat) => {
-                        return !seat.occupiedUserData && Utilities.getDistanceBetween2DPoints(seat.position.x, seat.position.z, hoverM.x, hoverM.z) < ROOM.SEAT_RADIUS_M;
-                    });
+                if (this.canHoverOverRooms) {
+                    this.hoveredSeat = undefined;
+                } else {
+                    for (let i = 0; i < roomController.rooms.length; i++) {
+                        let room = roomController.rooms[i];
+                        this.hoveredSeat = room.seats.find((seat) => {
+                            return !seat.occupiedUserData && Utilities.getDistanceBetween2DPoints(seat.position.x, seat.position.z, hoverM.x, hoverM.z) < ROOM.SEAT_RADIUS_M;
+                        });
+    
+                        if (this.hoveredSeat) {
+                            break;
+                        }
+                    }
+                }
+            }
 
-                    if (this.hoveredSeat) {
-                        break;
+            if (!(this.hoveredUserData && this.hoveredSeat)) {
+                this.hoveredRoom = undefined;
+
+                if (this.canHoverOverRooms) {
+                    for (let i = 0; i < roomController.rooms.length; i++) {
+                        let room = roomController.rooms[i];
+    
+                        if (Utilities.getDistanceBetween2DPoints(room.seatingCenter.x, room.seatingCenter.z, hoverM.x, hoverM.z) < room.seatingRadiusM) {
+                            this.hoveredRoom = room;
+                            break;
+                        }
                     }
                 }
             }
         }
 
-        if (this.hoveredUserData || this.hoveredSeat) {
+        if (this.hoveredUserData || this.hoveredSeat || (this.hoveredRoom && this.hoveredRoom !== userDataController.myAvatar.myUserData.currentRoom)) {
             document.body.classList.add("cursorPointer");
         } else {
             document.body.classList.remove("cursorPointer");
