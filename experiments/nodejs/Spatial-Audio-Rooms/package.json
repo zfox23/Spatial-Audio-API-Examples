@@ -10,7 +10,8 @@
     "server": "node -r esm ./src/server/index.js dev",
     "server:dev": "node -r esm ./src/server/index.js dev",
     "server:prod": "node -r esm ./src/server/index.js prod",
-    "audiobots": "node -r esm ./src/server/audioBots.js"
+    "audiobots": "node -r esm ./src/server/audioBots.js",
+    "discord": "tsc --p ./src/discordBot/ && node ./src/discordBot/dist/index.js"
   },
   "repository": {
     "type": "git",
