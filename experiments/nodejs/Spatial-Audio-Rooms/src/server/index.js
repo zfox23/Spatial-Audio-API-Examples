@@ -67,49 +67,55 @@ app.get('/spatial-audio-rooms', async (req, res, next) => {
 });
 
 app.post('/spatial-audio-rooms/create', (req, res, next) => {
-    console.log(req.body);
+    let spaceURL;
 
-    let stringToHash;
+    let slackCommandText = req.body.text;
+    if (slackCommandText && slackCommandText.length > 0) {
+        spaceURL = `https://experiments.highfidelity.com/spatial-audio-rooms/?spaceName=${hash}`;
 
-    let slackChannelID = req.body.channel_id;
-    if (slackChannelID) {
-        stringToHash = slackChannelID;
-    }
-
-    if (!stringToHash) {
-        console.error(`Couldn't generate Spatial Audio Room link. Request body:\n${JSON.stringify(req.body)}`);
         res.json({
-            "response_type": "ephemeral",
-            "text": "Sorry, I couldn't generate a Spatial Audio Room for you. Please contact Zach."
-        });
-        return;
-    }
-
-    let hash = crypto.createHash('md5').update(stringToHash).digest('hex');
-
-    const spaceURL = `https://experiments.highfidelity.com/spatial-audio-rooms/?spaceName=${hash}`;
-
-    res.json({
-        "blocks": [
-            {
-                "type": "header",
-                "text": {
-                    "type": "plain_text",
-                    "text": "This Channel's Spatial Audio Room",
-                    "emoji": true
-                }
-            },
-            {
-                "type": "section",
-                "fields": [
-                    {
+            "blocks": [
+                {
+                    "type": "section",
+                    "text": {
                         "type": "mrkdwn",
-                        "text": `*Link:*\n${spaceURL}`
-                    },
-                ]
-            },
-        ]
-    });
+                        "text": `<${spaceURL}|Click here to join the Spatial Audio Room named "${slackCommandText}".>`
+                    }
+                }
+            ]
+        });
+    } else {
+        let stringToHash;
+    
+        let slackChannelID = req.body.channel_id;
+        if (slackChannelID) {
+            stringToHash = slackChannelID;
+        }
+    
+        if (!stringToHash) {
+            console.error(`Couldn't generate Spatial Audio Room link. Request body:\n${JSON.stringify(req.body)}`);
+            res.json({
+                "response_type": "ephemeral",
+                "text": "Sorry, I couldn't generate a Spatial Audio Room for you. Please contact Zach."
+            });
+            return;
+        }
+    
+        let hash = crypto.createHash('md5').update(stringToHash).digest('hex');
+        spaceURL = `https://experiments.highfidelity.com/spatial-audio-rooms/?spaceName=${hash}`;
+
+        res.json({
+            "blocks": [
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": `<${spaceURL}|Click here to join the Spatial Audio Room associated with this Slack channel.>`
+                    }
+                }
+            ]
+        });
+    }
 });
 
 const http = require("http").createServer(app);
