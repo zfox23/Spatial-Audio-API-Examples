@@ -466,9 +466,6 @@ export class UserInputController {
             console.log(`User clicked on the room named ${this.hoveredRoom.name}!`);
             userDataController.myAvatar.positionSelfInRoom(this.hoveredRoom.name);
             this.hoveredRoom = undefined;
-        } else if (this.hoveredRoom && !pathsController.currentPath && (this.hoveredRoom === userDataController.myAvatar.myUserData.currentRoom && this.hoveredRoom.roomType === SpatialAudioRoomType.WatchParty) && userDataController.myAvatar.currentMode === MyAvatarModes.Normal) {
-            watchPartyController.joinWatchParty(this.hoveredRoom);
-            this.hoveredRoom = undefined;
         }
 
         document.body.classList.remove("cursorPointer");
@@ -559,9 +556,6 @@ export class UserInputController {
     
                         if (Utilities.getDistanceBetween2DPoints(room.seatingCenter.x, room.seatingCenter.z, hoverM.x, hoverM.z) < room.seatingRadiusM) {
                             if (this.zoomedOutTooFarToRenderSeats) {
-                                this.hoveredRoom = room;
-                                break;
-                            } else if (!this.zoomedOutTooFarToRenderSeats && room.roomType === SpatialAudioRoomType.WatchParty) {
                                 this.hoveredRoom = room;
                                 break;
                             }

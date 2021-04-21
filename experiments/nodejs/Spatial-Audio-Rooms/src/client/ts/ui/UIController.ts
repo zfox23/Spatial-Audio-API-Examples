@@ -97,6 +97,10 @@ export class UIController {
         videoButtonsContainer.appendChild(toggleVideoButton);
         bottomControlsContainer.appendChild(videoButtonsContainer);
 
+        let toggleJoinWatchPartyButton = document.createElement("button");
+        toggleJoinWatchPartyButton.classList.add("bottomToggleButton", "toggleJoinWatchPartyButton", "controlButtonsContainer");
+        bottomControlsContainer.appendChild(toggleJoinWatchPartyButton);
+
         this.modalBackground = document.createElement("div");
         this.modalBackground.classList.add("modalBackground", "displayNone");
         this.modalBackground.addEventListener("click", this.hideAvatarContextMenu.bind(this));

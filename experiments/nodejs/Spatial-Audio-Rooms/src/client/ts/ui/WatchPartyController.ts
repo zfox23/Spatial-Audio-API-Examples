@@ -20,6 +20,7 @@ export class WatchPartyController {
     youTubePlayer: any;
     currentWatchPartyRoom: SpatialAudioRoom;
     pxPerM: number;
+    toggleJoinWatchPartyButton: HTMLButtonElement;
 
     constructor() {
         this.normalModeCanvas = document.querySelector(".normalModeCanvas");
@@ -31,6 +32,15 @@ export class WatchPartyController {
 
         window.addEventListener("resize", this.updateWatchPartyCanvasDimensions.bind(this));
         this.updateWatchPartyCanvasDimensions();
+        
+        this.toggleJoinWatchPartyButton = document.querySelector('.toggleJoinWatchPartyButton');
+        this.toggleJoinWatchPartyButton.addEventListener("click", (e) => {
+            if (this.currentWatchPartyRoom) {
+                this.leaveWatchParty();
+            } else {
+                this.joinWatchParty(userDataController.myAvatar.myUserData.currentRoom);
+            }
+        });
 
         let youTubePlayerElement = document.createElement("div");
         youTubePlayerElement.classList.add("youTubePlayerElement", "displayNone");
