@@ -10,6 +10,7 @@ import { RoomController } from './ui/RoomController';
 import { SignalsController } from './ui/SignalsController';
 import { UIController } from "./ui/UIController";
 import { UserInputController } from './ui/UserInputController';
+import { WatchPartyController } from './ui/WatchPartyController';
 import { UserDataController } from './userData/UserDataController';
 import { VideoController } from './video/VideoController';
 
@@ -20,6 +21,7 @@ export const userDataController = new UserDataController();
 export const roomController = new RoomController();
 export const uiController = new UIController();
 export const twoDimensionalRenderer = new TwoDimensionalRenderer();
+export const watchPartyController = new WatchPartyController();
 export const particleController = new ParticleController();
 export const signalsController = new SignalsController();
 export const videoController = new VideoController();

@@ -152,19 +152,19 @@ $bottom-controls-container-height: 72px;
     }
 }
 
-.mainCanvas {
+.normalModeCanvas {
     width: 100%;
     height: calc(100vh - #{$bottom-controls-container-height});
     position: fixed;
-    z-index: map-get(z-indices.$z-index, mainCanvas);
+    z-index: map-get(z-indices.$z-index, normalModeCanvas);
     touch-action: none;
 }
 
-.mainCanvas--positiveCursor {
+.normalModeCanvas--positiveCursor {
     cursor: url('../images/signalStar.png') 10 10, auto;
 }
 
-.mainCanvas--negativeCursor {
+.normalModeCanvas--negativeCursor {
     cursor: url('../images/signalLine.png') 10 10, auto;
 }
 

@@ -1,4 +1,4 @@
-import { avDevicesController, connectionController, pathsController, physicsController, roomController, signalsController, twoDimensionalRenderer, uiController, userDataController, webSocketConnectionController } from "..";
+import { avDevicesController, connectionController, pathsController, physicsController, roomController, signalsController, twoDimensionalRenderer, uiController, userDataController, watchPartyController, webSocketConnectionController } from "..";
 import { AVATAR, ROOM, CONTROLS, PHYSICS, PARTICLES } from "../constants/constants";
 import { MyAvatarModes, UserData } from "../userData/UserDataController";
 import { Utilities } from "../utilities/Utilities";
@@ -7,7 +7,7 @@ import { OrientationEuler3D, Point3D } from "hifi-spatial-audio";
 import * as e from "express";
 
 export class UserInputController {
-    mainCanvas: HTMLCanvasElement;
+    normalModeCanvas: HTMLCanvasElement;
     keyboardEventCache: Array<KeyboardEvent>;
     wasMutedBeforePTT: boolean = false;
     changeAudioInputDeviceButton: HTMLButtonElement;
@@ -54,27 +54,27 @@ export class UserInputController {
         });
         this.toggleVideoButton = document.querySelector('.toggleVideoButton');
 
-        this.mainCanvas = document.querySelector('.mainCanvas');
-        this.mainCanvas.addEventListener("click", this.handleCanvasClick.bind(this));
+        this.normalModeCanvas = document.querySelector('.normalModeCanvas');
+        this.normalModeCanvas.addEventListener("click", this.handleCanvasClick.bind(this));
         if (window.PointerEvent) {
-            this.mainCanvas.addEventListener('pointerdown', this.handleGestureOnCanvasStart.bind(this), true);
-            this.mainCanvas.addEventListener('pointermove', this.handleGestureOnCanvasMove.bind(this), true);
-            this.mainCanvas.addEventListener('pointerup', this.handleGestureOnCanvasEnd.bind(this), true);
-            this.mainCanvas.addEventListener("pointerout", this.handleGestureOnCanvasCancel.bind(this), true);
+            this.normalModeCanvas.addEventListener('pointerdown', this.handleGestureOnCanvasStart.bind(this), true);
+            this.normalModeCanvas.addEventListener('pointermove', this.handleGestureOnCanvasMove.bind(this), true);
+            this.normalModeCanvas.addEventListener('pointerup', this.handleGestureOnCanvasEnd.bind(this), true);
+            this.normalModeCanvas.addEventListener("pointerout", this.handleGestureOnCanvasCancel.bind(this), true);
         } else {
-            this.mainCanvas.addEventListener('touchstart', this.handleGestureOnCanvasStart.bind(this), true);
-            this.mainCanvas.addEventListener('touchmove', this.handleGestureOnCanvasMove.bind(this), true);
-            this.mainCanvas.addEventListener('touchend', this.handleGestureOnCanvasEnd.bind(this), true);
-            this.mainCanvas.addEventListener("touchcancel", this.handleGestureOnCanvasCancel.bind(this), true);
+            this.normalModeCanvas.addEventListener('touchstart', this.handleGestureOnCanvasStart.bind(this), true);
+            this.normalModeCanvas.addEventListener('touchmove', this.handleGestureOnCanvasMove.bind(this), true);
+            this.normalModeCanvas.addEventListener('touchend', this.handleGestureOnCanvasEnd.bind(this), true);
+            this.normalModeCanvas.addEventListener("touchcancel", this.handleGestureOnCanvasCancel.bind(this), true);
 
-            this.mainCanvas.addEventListener("mousedown", this.handleGestureOnCanvasStart.bind(this), true);
+            this.normalModeCanvas.addEventListener("mousedown", this.handleGestureOnCanvasStart.bind(this), true);
         }
-        this.mainCanvas.addEventListener("gesturestart", (e) => { e.preventDefault(); }, false);
-        this.mainCanvas.addEventListener("gesturechange", (e) => { e.preventDefault(); }, false);
-        this.mainCanvas.addEventListener("gestureend", (e) => { e.preventDefault(); }, false);
-        this.mainCanvas.addEventListener("contextmenu", (e) => { e.preventDefault(); }, false);
+        this.normalModeCanvas.addEventListener("gesturestart", (e) => { e.preventDefault(); }, false);
+        this.normalModeCanvas.addEventListener("gesturechange", (e) => { e.preventDefault(); }, false);
+        this.normalModeCanvas.addEventListener("gestureend", (e) => { e.preventDefault(); }, false);
+        this.normalModeCanvas.addEventListener("contextmenu", (e) => { e.preventDefault(); }, false);
 
-        this.mainCanvas.addEventListener("wheel", this.onWheel.bind(this), false);
+        this.normalModeCanvas.addEventListener("wheel", this.onWheel.bind(this), false);
     }
 
     onUserKeyDown(event: KeyboardEvent) {
@@ -117,6 +117,7 @@ export class UserInputController {
                 break;
             case CONTROLS.ESC_KEY_CODE:
                 signalsController.setActiveSignal(undefined);
+                watchPartyController.leaveWatchParty();
                 break;
             case CONTROLS.U_KEY_CODE:
                 userDataController.myAvatarEars.toggleConnection();
@@ -461,13 +462,12 @@ export class UserInputController {
             console.log(`User clicked on a new seat at ${JSON.stringify(this.hoveredSeat.position)}! Target seat yaw orientation: ${JSON.stringify(this.hoveredSeat.orientation)} degrees.`);
             userDataController.myAvatar.moveToNewSeat(this.hoveredSeat);
             this.hoveredSeat = undefined;
-        } else if (this.hoveredRoom && !pathsController.currentPath && (this.hoveredRoom !== userDataController.myAvatar.myUserData.currentRoom && this.hoveredRoom.roomType === SpatialAudioRoomType.Normal)) {
+        } else if (this.hoveredRoom && !pathsController.currentPath && this.hoveredRoom !== userDataController.myAvatar.myUserData.currentRoom) {
             console.log(`User clicked on the room named ${this.hoveredRoom.name}!`);
             userDataController.myAvatar.positionSelfInRoom(this.hoveredRoom.name);
             this.hoveredRoom = undefined;
         } else if (this.hoveredRoom && !pathsController.currentPath && (this.hoveredRoom === userDataController.myAvatar.myUserData.currentRoom && this.hoveredRoom.roomType === SpatialAudioRoomType.WatchParty) && userDataController.myAvatar.currentMode === MyAvatarModes.Normal) {
-            console.log(`User joined the Watch Party in the room named ${this.hoveredRoom.name}!`);
-            userDataController.myAvatar.currentMode = MyAvatarModes.WatchParty;
+            watchPartyController.joinWatchParty(this.hoveredRoom);
             this.hoveredRoom = undefined;
         }
 
@@ -488,8 +488,8 @@ export class UserInputController {
         if (window.PointerEvent && event instanceof PointerEvent) {
             target.setPointerCapture(event.pointerId);
         } else {
-            this.mainCanvas.addEventListener('mousemove', this.handleGestureOnCanvasMove.bind(this), true);
-            this.mainCanvas.addEventListener('mouseup', this.handleGestureOnCanvasEnd.bind(this), true);
+            this.normalModeCanvas.addEventListener('mousemove', this.handleGestureOnCanvasMove.bind(this), true);
+            this.normalModeCanvas.addEventListener('mouseup', this.handleGestureOnCanvasEnd.bind(this), true);
         }
 
         let gesturePointPX = this.getGesturePointFromEvent(event);
@@ -572,7 +572,7 @@ export class UserInputController {
 
         if (this.hoveredUserData ||
             this.hoveredSeat ||
-            (this.hoveredRoom && ((this.hoveredRoom !== userDataController.myAvatar.myUserData.currentRoom && this.hoveredRoom.roomType === SpatialAudioRoomType.Normal) || (this.hoveredRoom === userDataController.myAvatar.myUserData.currentRoom && this.hoveredRoom.roomType === SpatialAudioRoomType.WatchParty)))) {
+            this.hoveredRoom) {
             document.body.classList.add("cursorPointer");
         } else {
             document.body.classList.remove("cursorPointer");
@@ -591,8 +591,8 @@ export class UserInputController {
             }
         } else {
             // Remove Mouse Listeners
-            this.mainCanvas.removeEventListener('mousemove', this.handleGestureOnCanvasMove, true);
-            this.mainCanvas.removeEventListener('mouseup', this.handleGestureOnCanvasEnd, true);
+            this.normalModeCanvas.removeEventListener('mousemove', this.handleGestureOnCanvasMove, true);
+            this.normalModeCanvas.removeEventListener('mouseup', this.handleGestureOnCanvasEnd, true);
         }
 
         if (event.buttons === 0 && this.leftClickStartPositionPX !== undefined) {

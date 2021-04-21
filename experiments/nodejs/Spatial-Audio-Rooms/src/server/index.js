@@ -87,12 +87,12 @@ app.post('/spatial-audio-rooms/create', (req, res, next) => {
         });
     } else {
         let stringToHash;
-    
+
         let slackChannelID = req.body.channel_id;
         if (slackChannelID) {
             stringToHash = slackChannelID;
         }
-    
+
         if (!stringToHash) {
             console.error(`Couldn't generate Spatial Audio Room link. Request body:\n${JSON.stringify(req.body)}`);
             res.json({
@@ -101,7 +101,7 @@ app.post('/spatial-audio-rooms/create', (req, res, next) => {
             });
             return;
         }
-    
+
         let hash = crypto.createHash('md5').update(stringToHash).digest('hex');
         spaceURL = `https://experiments.highfidelity.com/spatial-audio-rooms/?spaceName=${hash}`;
 
@@ -153,6 +153,30 @@ class Participant {
         this.agcEnabled = agcEnabled;
         this.hiFiGainSliderValue = hiFiGainSliderValue;
         this.volumeThreshold = volumeThreshold;
+    }
+}
+
+function onWatchNewVideo(newVideoURL, spaceName, roomName) {
+    if (!spaceInformation[spaceName][roomName]) {
+        console.error(`In \`onWatchNewVideo()\`, no \`spaceInformation["${spaceName}"]["${roomName}"]\`!`);
+        return;
+    }
+
+    let url = new URL(newVideoURL);
+
+    let youTubeVideoID;
+    if (url.hostname === "youtu.be") {
+        youTubeVideoID = url.pathname.substr(1);
+    } else if (url.hostname === "www.youtube.com" || url.hostname  === "youtube.com") {
+        const params = new URLSearchParams(url.search);
+        youTubeVideoID = params.get("v");
+    }
+    
+    if (youTubeVideoID) {
+        spaceInformation[spaceName][roomName].currentQueuedVideoURL = newVideoURL;
+        console.log(`Emitting \`watchNewYouTubeVideo\` with Video ID \`${youTubeVideoID}\` to all users in ${spaceName}/${roomName}...`);
+
+        socketIOServer.sockets.in(spaceName).emit("watchNewYouTubeVideo", roomName, youTubeVideoID, spaceInformation[spaceName].currentVideoSeekTime);
     }
 }
 
@@ -338,6 +362,89 @@ socketIOServer.on("connection", (socket) => {
     socket.on("addParticle", ({ visitIDHash, spaceName, particleData } = {}) => {
         console.log(`In ${spaceName}, \`${visitIDHash}\` added a particle!.`);
         socket.to(spaceName).emit("requestParticleAdd", { visitIDHash, particleData });
+    });
+
+    socket.on("watchPartyUserJoined", (providedUserID, spaceName, roomName) => {
+        console.log(`In ${spaceName}/${roomName}, adding watcher with ID \`${providedUserID}\`.`);
+
+        if (!spaceInformation[spaceName][roomName]) {
+            spaceInformation[spaceName][roomName] = {
+                currentQueuedVideoURL: undefined,
+                currentVideoSeekTime: undefined,
+                currentPlayerState: undefined,
+            };
+        }
+
+        if (spaceInformation[spaceName] && spaceInformation[spaceName][roomName] && spaceInformation[spaceName][roomName].currentQueuedVideoURL) {
+            onWatchNewVideo(spaceInformation[spaceName][roomName].currentQueuedVideoURL, spaceName, roomName);
+        }
+    });
+
+    socket.on("enqueueNewVideo", (providedUserID, newVideoURL, spaceName, roomName) => {
+        if (!spaceInformation[spaceName]) {
+            return;
+        }
+
+        if (!spaceInformation[spaceName][roomName]) {
+            return;
+        }
+
+        spaceInformation[spaceName][roomName].currentVideoSeekTime = 0;
+
+        console.log(`In ${spaceName}/${roomName}, \`${providedUserID}\` requested that a new video be played with URL \`${newVideoURL}\`.`);
+        
+        onWatchNewVideo(newVideoURL, spaceName, roomName);
+    });
+
+    socket.on("requestVideoSeek", (providedUserID, seekTimeSeconds, spaceName, roomName) => {
+        if (!spaceInformation[spaceName][roomName]) {
+            return;
+        }
+
+        spaceInformation[spaceName][roomName].currentVideoSeekTime = seekTimeSeconds;
+
+        console.log(`In ${spaceName}/${roomName}, \`${providedUserID}\` requested that the video be seeked to ${spaceInformation[spaceName][roomName].currentVideoSeekTime}s.`);
+
+        socketIOServer.sockets.in(spaceName).emit("videoSeek", roomName, providedUserID, spaceInformation[spaceName][roomName].currentVideoSeekTime);
+    });
+
+    socket.on("setSeekTime", (providedUserID, seekTimeSeconds, spaceName, roomName) => {
+        if (!spaceInformation[spaceName][roomName]) {
+            return;
+        }
+
+        spaceInformation[spaceName][roomName].currentVideoSeekTime = seekTimeSeconds;
+    });
+
+    socket.on("newPlayerState", (providedUserID, newPlayerState, seekTimeSeconds, spaceName, roomName) => {
+        if (!spaceInformation[spaceName][roomName]) {
+            return;
+        }
+
+        if (!(newPlayerState === 1 || newPlayerState === 2) || spaceInformation[spaceName].currentPlayerState === newPlayerState) {
+            return;
+        }
+
+        if (newPlayerState === 2) { // YT.PlayerState.PAUSED
+            console.log(`In ${spaceName}/${roomName}, \`${providedUserID}\` requested that the video be paused at ${seekTimeSeconds}s.`);
+            socket.broadcast.to(spaceName).emit("videoPause", roomName, providedUserID, seekTimeSeconds);
+        } else if (newPlayerState === 1) { // YT.PlayerState.PLAYING
+            console.log(`In ${spaceName}/${roomName}, \`${providedUserID}\` requested that the video be played starting at ${seekTimeSeconds}s.`);
+            socket.broadcast.to(spaceName).emit("videoPlay", roomName, providedUserID, seekTimeSeconds);
+        }
+
+        spaceInformation[spaceName].currentPlayerState = newPlayerState;
+    });
+
+    socket.on("stopVideo", (providedUserID, spaceName, roomName) => {
+        if (!spaceInformation[spaceName][roomName]) {
+            return;
+        }
+
+        spaceInformation[spaceName][roomName].currentVideoSeekTime = undefined;
+        spaceInformation[spaceName][roomName].currentQueuedVideoURL = undefined;
+        console.log(`In ${spaceName}/${roomName}, \`${providedUserID}\` requested that the video be stopped.`);
+        socketIOServer.sockets.in(spaceName).emit("stopVideoRequested", roomName, providedUserID);
     });
 });
 

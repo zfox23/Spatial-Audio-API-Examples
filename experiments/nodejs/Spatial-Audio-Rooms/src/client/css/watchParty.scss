@@ -1,0 +1,23 @@
+@use "./themes";
+@use "./z-indices";
+@import './include-media';
+$bottom-controls-container-height: 72px;
+$watch-party-mode-canvas-height: 100px;
+
+.watchPartyModeCanvas {
+    position: fixed;
+    width: 100%;
+    height: $watch-party-mode-canvas-height;
+    z-index: map-get(z-indices.$z-index, canvas);
+    bottom: $bottom-controls-container-height;
+    touch-action: none;
+}
+
+.youTubePlayerElement {
+    position: fixed;
+    z-index: map-get(z-indices.$z-index, canvas);
+    bottom: $bottom-controls-container-height;
+    top: 0;
+    width: 100%;
+    height: calc(100vh - #{$bottom-controls-container-height} - #{$watch-party-mode-canvas-height});
+}

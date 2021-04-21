@@ -18,8 +18,10 @@ const tableImage = new Image();
 tableImage.src = TableImage;
 
 export class TwoDimensionalRenderer {
-    mainCanvas: HTMLCanvasElement;
-    ctx: CanvasRenderingContext2D;
+    normalModeCanvas: HTMLCanvasElement;
+    normalModeCTX: CanvasRenderingContext2D;
+    watchPartyModeCanvas: HTMLCanvasElement;
+    watchPartyModeCTX: CanvasRenderingContext2D;
     cameraOffsetYPX: number;
     canvasOffsetPX: any;
     cameraPositionNoOffsetM: Point3D;
@@ -27,10 +29,15 @@ export class TwoDimensionalRenderer {
     canvasScrimOpacity: number = 0.0;
 
     constructor() {
-        this.mainCanvas = document.createElement("canvas");
-        this.mainCanvas.classList.add("mainCanvas");
-        document.body.appendChild(this.mainCanvas);
-        this.ctx = this.mainCanvas.getContext("2d");
+        this.normalModeCanvas = document.createElement("canvas");
+        this.normalModeCanvas.classList.add("normalModeCanvas");
+        document.body.appendChild(this.normalModeCanvas);
+        this.normalModeCTX = this.normalModeCanvas.getContext("2d");
+
+        this.watchPartyModeCanvas = document.createElement("canvas");
+        this.watchPartyModeCanvas.classList.add("watchPartyModeCanvas", "displayNone");
+        document.body.appendChild(this.watchPartyModeCanvas);
+        this.watchPartyModeCTX = this.watchPartyModeCanvas.getContext("2d");
 
         window.addEventListener("resize", this.updateCanvasDimensions.bind(this));
         this.updateCanvasDimensions();
@@ -44,8 +51,8 @@ export class TwoDimensionalRenderer {
     }
 
     updateCanvasDimensions() {
-        this.mainCanvas.width = window.innerWidth;
-        this.mainCanvas.height = window.innerHeight - 72;
+        this.normalModeCanvas.width = window.innerWidth;
+        this.normalModeCanvas.height = window.innerHeight - 72;
 
         try {
             physicsController.autoComputePXPerMFromRoom(userDataController.myAvatar.myUserData.currentRoom);
@@ -56,17 +63,17 @@ export class TwoDimensionalRenderer {
         if (userData.volumeDecibels < userData.volumeThreshold) {
             return;
         }
-        let ctx = this.ctx;
-        ctx.beginPath();
-        ctx.arc(0, 0, Utilities.linearScale(userData.volumeDecibels, AVATAR.MIN_VOLUME_DB, AVATAR.MAX_VOLUME_DB, AVATAR.RADIUS_M, AVATAR.RADIUS_M * AVATAR.MAX_VOLUME_DB_AVATAR_RADIUS_MULTIPLIER) * physicsController.pxPerMCurrent, 0, 2 * Math.PI);
-        ctx.fillStyle = userData.colorHex || Utilities.hexColorFromString(userData.visitIDHash);
-        ctx.fill();
-        ctx.closePath();
+        let normalModeCTX = this.normalModeCTX;
+        normalModeCTX.beginPath();
+        normalModeCTX.arc(0, 0, Utilities.linearScale(userData.volumeDecibels, AVATAR.MIN_VOLUME_DB, AVATAR.MAX_VOLUME_DB, AVATAR.RADIUS_M, AVATAR.RADIUS_M * AVATAR.MAX_VOLUME_DB_AVATAR_RADIUS_MULTIPLIER) * physicsController.pxPerMCurrent, 0, 2 * Math.PI);
+        normalModeCTX.fillStyle = userData.colorHex || Utilities.hexColorFromString(userData.visitIDHash);
+        normalModeCTX.fill();
+        normalModeCTX.closePath();
     }
 
     drawAvatarBase({ userData }: { userData: UserData }) {
         let isMine = userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash;
-        let ctx = this.ctx;
+        let normalModeCTX = this.normalModeCTX;
         let pxPerM = physicsController.pxPerMCurrent;
         let avatarRadiusM = AVATAR.RADIUS_M;
         let avatarRadiusPX = avatarRadiusM * pxPerM;
@@ -74,67 +81,67 @@ export class TwoDimensionalRenderer {
         let yawDegrees = userData.orientationEulerCurrent ? userData.orientationEulerCurrent.yawDegrees : 0;
 
         let amtToRotateAvatar = -yawDegrees * Math.PI / 180;
-        ctx.rotate(amtToRotateAvatar);
+        normalModeCTX.rotate(amtToRotateAvatar);
 
         if (roomController.currentlyHoveringOverVisitIDHash === userData.visitIDHash || (userInputController.hoveredUserData && userInputController.hoveredUserData.visitIDHash === userData.visitIDHash)) {
-            ctx.beginPath();
-            ctx.arc(0, 0, (avatarRadiusM + UI.HOVER_HIGHLIGHT_RADIUS_ADDITION_M) * pxPerM, 0, 2 * Math.PI);
-            let grad = ctx.createRadialGradient(0, 0, 0, 0, 0, (avatarRadiusM + UI.HOVER_HIGHLIGHT_RADIUS_ADDITION_M) * pxPerM);
+            normalModeCTX.beginPath();
+            normalModeCTX.arc(0, 0, (avatarRadiusM + UI.HOVER_HIGHLIGHT_RADIUS_ADDITION_M) * pxPerM, 0, 2 * Math.PI);
+            let grad = normalModeCTX.createRadialGradient(0, 0, 0, 0, 0, (avatarRadiusM + UI.HOVER_HIGHLIGHT_RADIUS_ADDITION_M) * pxPerM);
             grad.addColorStop(0.0, UI.HOVER_GLOW_HEX);
             grad.addColorStop(1.0, UI.HOVER_GLOW_HEX + "00");
-            ctx.fillStyle = grad;
-            ctx.fill();
-            ctx.closePath();
+            normalModeCTX.fillStyle = grad;
+            normalModeCTX.fill();
+            normalModeCTX.closePath();
         }
 
         let colorHex = userData.colorHex || Utilities.hexColorFromString(userData.visitIDHash);
 
         if (userData.orientationEulerCurrent) {
-            ctx.beginPath();
-            ctx.arc(0, -avatarRadiusM * AVATAR.DIRECTION_CLOUD_RADIUS_MULTIPLIER * pxPerM, avatarRadiusM * AVATAR.DIRECTION_CLOUD_RADIUS_MULTIPLIER * pxPerM, 0, Math.PI, false);
-            let grad = ctx.createLinearGradient(0, 0, 0, -avatarRadiusM * AVATAR.DIRECTION_CLOUD_RADIUS_MULTIPLIER * pxPerM);
+            normalModeCTX.beginPath();
+            normalModeCTX.arc(0, -avatarRadiusM * AVATAR.DIRECTION_CLOUD_RADIUS_MULTIPLIER * pxPerM, avatarRadiusM * AVATAR.DIRECTION_CLOUD_RADIUS_MULTIPLIER * pxPerM, 0, Math.PI, false);
+            let grad = normalModeCTX.createLinearGradient(0, 0, 0, -avatarRadiusM * AVATAR.DIRECTION_CLOUD_RADIUS_MULTIPLIER * pxPerM);
             grad.addColorStop(0.0, colorHex);
             grad.addColorStop(1.0, colorHex + "00");
-            ctx.fillStyle = grad;
-            ctx.fill();
-            ctx.closePath();
+            normalModeCTX.fillStyle = grad;
+            normalModeCTX.fill();
+            normalModeCTX.closePath();
         }
 
-        ctx.lineWidth = AVATAR.STROKE_WIDTH_PX;
-        ctx.fillStyle = colorHex;
-        ctx.beginPath();
-        ctx.arc(0, 0, avatarRadiusPX, 0, 2 * Math.PI);
+        normalModeCTX.lineWidth = AVATAR.STROKE_WIDTH_PX;
+        normalModeCTX.fillStyle = colorHex;
+        normalModeCTX.beginPath();
+        normalModeCTX.arc(0, 0, avatarRadiusPX, 0, 2 * Math.PI);
         if (isMine) {
             if (userData.isMuted) {
-                ctx.strokeStyle = AVATAR.AVATAR_STROKE_HEX_MUTED;
+                normalModeCTX.strokeStyle = AVATAR.AVATAR_STROKE_HEX_MUTED;
             } else {
-                ctx.strokeStyle = AVATAR.AVATAR_STROKE_HEX_UNMUTED;
+                normalModeCTX.strokeStyle = AVATAR.AVATAR_STROKE_HEX_UNMUTED;
             }
         } else {
-            ctx.strokeStyle = AVATAR.AVATAR_STROKE_HEX_UNMUTED;
+            normalModeCTX.strokeStyle = AVATAR.AVATAR_STROKE_HEX_UNMUTED;
         }
-        ctx.stroke();
-        ctx.fill();
-        ctx.closePath();
-        ctx.rotate(-amtToRotateAvatar);
+        normalModeCTX.stroke();
+        normalModeCTX.fill();
+        normalModeCTX.closePath();
+        normalModeCTX.rotate(-amtToRotateAvatar);
     }
 
     drawAvatarVideo({ userData }: { userData: UserData }) {
         if (videoController.providedUserIDToVideoElementMap.has(userData.providedUserID)) {
-            let ctx = this.ctx;
+            let normalModeCTX = this.normalModeCTX;
             let avatarRadiusM = AVATAR.RADIUS_M;
             let avatarRadiusPX = avatarRadiusM * physicsController.pxPerMCurrent;
 
             let amtToRotateVideo = this.canvasRotationDegrees * Math.PI / 180;
-            ctx.rotate(amtToRotateVideo);
-            ctx.save();
-            ctx.clip();
+            normalModeCTX.rotate(amtToRotateVideo);
+            normalModeCTX.save();
+            normalModeCTX.clip();
             if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash) {
-                ctx.scale(-1, 1);
+                normalModeCTX.scale(-1, 1);
             }
-            ctx.drawImage(videoController.providedUserIDToVideoElementMap.get(userData.providedUserID), -avatarRadiusPX, -avatarRadiusPX, avatarRadiusPX * 2, avatarRadiusPX * 2);
-            ctx.restore();
-            ctx.rotate(-amtToRotateVideo);
+            normalModeCTX.drawImage(videoController.providedUserIDToVideoElementMap.get(userData.providedUserID), -avatarRadiusPX, -avatarRadiusPX, avatarRadiusPX * 2, avatarRadiusPX * 2);
+            normalModeCTX.restore();
+            normalModeCTX.rotate(-amtToRotateVideo);
         }
     }
 
@@ -144,68 +151,68 @@ export class TwoDimensionalRenderer {
             return;
         }
 
-        let ctx = this.ctx;
+        let normalModeCTX = this.normalModeCTX;
         let pxPerM = physicsController.pxPerMCurrent;
         let avatarRadiusM = AVATAR.RADIUS_M;
 
         let amtToRotateAvatarLabel = this.canvasRotationDegrees * Math.PI / 180;
-        ctx.rotate(amtToRotateAvatarLabel);
+        normalModeCTX.rotate(amtToRotateAvatarLabel);
 
-        ctx.font = AVATAR.AVATAR_LABEL_FONT;
-        ctx.fillStyle = Utilities.getConstrastingTextColor(Utilities.hexToRGB(userData.colorHex || Utilities.hexColorFromString(userData.visitIDHash)));
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
+        normalModeCTX.font = AVATAR.AVATAR_LABEL_FONT;
+        normalModeCTX.fillStyle = Utilities.getConstrastingTextColor(Utilities.hexToRGB(userData.colorHex || Utilities.hexColorFromString(userData.visitIDHash)));
+        normalModeCTX.textAlign = "center";
+        normalModeCTX.textBaseline = "middle";
 
         let textToDraw = userData.displayName && userData.displayName.length > 0 ? userData.displayName : userData.providedUserID;
-        let textMetrics = ctx.measureText(textToDraw);
+        let textMetrics = normalModeCTX.measureText(textToDraw);
         let avatarRadiusPX = avatarRadiusM * pxPerM;
         if (textMetrics.width > avatarRadiusPX + 5) {
             textToDraw = Utilities.getInitials(textToDraw);
         }
 
-        ctx.fillText(textToDraw, 0, 0);
-        ctx.rotate(-amtToRotateAvatarLabel);
+        normalModeCTX.fillText(textToDraw, 0, 0);
+        normalModeCTX.rotate(-amtToRotateAvatarLabel);
     }
 
     drawTutorialGlow() {
-        let ctx = this.ctx;
+        let normalModeCTX = this.normalModeCTX;
         let pxPerM = physicsController.pxPerMCurrent;
 
         let tutorialRadiusPX = AVATAR.TUTORIAL_RADIUS_M * pxPerM;
 
-        ctx.beginPath();
-        ctx.arc(0, 0, tutorialRadiusPX, 0, 2 * Math.PI);
-        let grad = ctx.createRadialGradient(0, 0, 0, 0, 0, tutorialRadiusPX);
+        normalModeCTX.beginPath();
+        normalModeCTX.arc(0, 0, tutorialRadiusPX, 0, 2 * Math.PI);
+        let grad = normalModeCTX.createRadialGradient(0, 0, 0, 0, 0, tutorialRadiusPX);
         grad.addColorStop(0.0, AVATAR.AVATAR_TUTORIAL_GLOW_HEX);
         grad.addColorStop(0.75, AVATAR.AVATAR_TUTORIAL_GLOW_HEX + "00");
-        ctx.fillStyle = grad;
-        ctx.fill();
-        ctx.closePath();
+        normalModeCTX.fillStyle = grad;
+        normalModeCTX.fill();
+        normalModeCTX.closePath();
     }
 
     drawTutorialText() {
-        let ctx = this.ctx;
+        let normalModeCTX = this.normalModeCTX;
         let pxPerM = physicsController.pxPerMCurrent;
 
         let amtToRotateTutorialText = this.canvasRotationDegrees * Math.PI / 180;
-        ctx.rotate(amtToRotateTutorialText);
+        normalModeCTX.rotate(amtToRotateTutorialText);
 
-        ctx.font = UI.TUTORIAL_TEXT_FONT;
-        ctx.fillStyle = UI.TUTORIAL_TEXT_COLOR;
-        ctx.lineWidth = UI.TUTORIAL_TEXT_STROKE_WIDTH_PX;
-        ctx.strokeStyle = UI.TUTORIAL_TEXT_STROKE_COLOR;
+        normalModeCTX.font = UI.TUTORIAL_TEXT_FONT;
+        normalModeCTX.fillStyle = UI.TUTORIAL_TEXT_COLOR;
+        normalModeCTX.lineWidth = UI.TUTORIAL_TEXT_STROKE_WIDTH_PX;
+        normalModeCTX.strokeStyle = UI.TUTORIAL_TEXT_STROKE_COLOR;
 
-        ctx.textAlign = "right";
+        normalModeCTX.textAlign = "right";
         let textToDraw = "This is you.";
-        ctx.fillText(textToDraw, -AVATAR.RADIUS_M * pxPerM - 25, 0);
-        ctx.strokeText(textToDraw, -AVATAR.RADIUS_M * pxPerM - 25, 0);
+        normalModeCTX.fillText(textToDraw, -AVATAR.RADIUS_M * pxPerM - 25, 0);
+        normalModeCTX.strokeText(textToDraw, -AVATAR.RADIUS_M * pxPerM - 25, 0);
 
-        ctx.textAlign = "left";
+        normalModeCTX.textAlign = "left";
         textToDraw = "Try clicking yourself.";
-        ctx.fillText(textToDraw, AVATAR.RADIUS_M * pxPerM + 25, 0);
-        ctx.strokeText(textToDraw, AVATAR.RADIUS_M * pxPerM + 25, 0);
+        normalModeCTX.fillText(textToDraw, AVATAR.RADIUS_M * pxPerM + 25, 0);
+        normalModeCTX.strokeText(textToDraw, AVATAR.RADIUS_M * pxPerM + 25, 0);
 
-        ctx.rotate(-amtToRotateTutorialText);
+        normalModeCTX.rotate(-amtToRotateTutorialText);
     }
 
     drawAvatar({ userData }: { userData: UserData }) {
@@ -213,10 +220,10 @@ export class TwoDimensionalRenderer {
             return;
         }
 
-        let ctx = this.ctx;
+        let normalModeCTX = this.normalModeCTX;
         let pxPerM = physicsController.pxPerMCurrent;
 
-        ctx.translate(userData.positionCurrent.x * pxPerM, userData.positionCurrent.z * pxPerM);
+        normalModeCTX.translate(userData.positionCurrent.x * pxPerM, userData.positionCurrent.z * pxPerM);
 
         if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash && !uiController.hasCompletedTutorial) {
             this.drawTutorialGlow();
@@ -231,14 +238,14 @@ export class TwoDimensionalRenderer {
             this.drawTutorialText();
         }
 
-        ctx.translate(-userData.positionCurrent.x * pxPerM, -userData.positionCurrent.z * pxPerM);
+        normalModeCTX.translate(-userData.positionCurrent.x * pxPerM, -userData.positionCurrent.z * pxPerM);
     }
 
     drawTableOrRoomGraphic(room: SpatialAudioRoom) {
-        let ctx = this.ctx;
+        let normalModeCTX = this.normalModeCTX;
         let pxPerM = physicsController.pxPerMCurrent;
 
-        ctx.translate(room.roomCenter.x * pxPerM, room.roomCenter.z * pxPerM);
+        normalModeCTX.translate(room.roomCenter.x * pxPerM, room.roomCenter.z * pxPerM);
 
         let usingRoomImage = false;
         if (room.roomImage && room.roomImage.image.complete && room.roomImage.loaded) {
@@ -247,41 +254,41 @@ export class TwoDimensionalRenderer {
                 "x": room.dimensions.x * pxPerM,
                 "z": room.dimensions.z * pxPerM
             };
-            ctx.drawImage(room.roomImage.image, -roomDimensionsPX.x / 2, -roomDimensionsPX.z / 2, roomDimensionsPX.x, roomDimensionsPX.z);
+            normalModeCTX.drawImage(room.roomImage.image, -roomDimensionsPX.x / 2, -roomDimensionsPX.z / 2, roomDimensionsPX.x, roomDimensionsPX.z);
         }
 
-        ctx.translate(-room.roomCenter.x * pxPerM, -room.roomCenter.z * pxPerM);
+        normalModeCTX.translate(-room.roomCenter.x * pxPerM, -room.roomCenter.z * pxPerM);
 
-        ctx.translate(room.seatingCenter.x * pxPerM, room.seatingCenter.z * pxPerM);
+        normalModeCTX.translate(room.seatingCenter.x * pxPerM, room.seatingCenter.z * pxPerM);
         
         if (!usingRoomImage) {
             let tableRadiusPX = room.tableRadiusM * pxPerM;
 
-            ctx.lineWidth = ROOM.TABLE_STROKE_WIDTH_PX;
-            ctx.fillStyle = room.tableColorHex;
-            ctx.beginPath();
-            ctx.arc(0, 0, tableRadiusPX, 0, 2 * Math.PI);
-            ctx.strokeStyle = ROOM.TABLE_STROKE_HEX;
-            ctx.stroke();
-            ctx.fill();
-            ctx.closePath();
+            normalModeCTX.lineWidth = ROOM.TABLE_STROKE_WIDTH_PX;
+            normalModeCTX.fillStyle = room.tableColorHex;
+            normalModeCTX.beginPath();
+            normalModeCTX.arc(0, 0, tableRadiusPX, 0, 2 * Math.PI);
+            normalModeCTX.strokeStyle = ROOM.TABLE_STROKE_HEX;
+            normalModeCTX.stroke();
+            normalModeCTX.fill();
+            normalModeCTX.closePath();
 
-            ctx.drawImage(tableImage, -tableRadiusPX, -tableRadiusPX, tableRadiusPX * 2, tableRadiusPX * 2);
+            normalModeCTX.drawImage(tableImage, -tableRadiusPX, -tableRadiusPX, tableRadiusPX * 2, tableRadiusPX * 2);
         }
 
         let amtToRotateRoomLabel = this.canvasRotationDegrees * Math.PI / 180;
-        ctx.rotate(amtToRotateRoomLabel);
-        ctx.font = ROOM.ROOM_LABEL_FONT;
-        ctx.fillStyle = usingRoomImage ? ROOM.ROOM_WITH_IMAGE_LABEL_COLOR : Utilities.getConstrastingTextColor(Utilities.hexToRGB(room.tableColorHex));
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        let textMetrics = ctx.measureText(room.name);
+        normalModeCTX.rotate(amtToRotateRoomLabel);
+        normalModeCTX.font = ROOM.ROOM_LABEL_FONT;
+        normalModeCTX.fillStyle = usingRoomImage ? ROOM.ROOM_WITH_IMAGE_LABEL_COLOR : Utilities.getConstrastingTextColor(Utilities.hexToRGB(room.tableColorHex));
+        normalModeCTX.textAlign = "center";
+        normalModeCTX.textBaseline = "middle";
+        let textMetrics = normalModeCTX.measureText(room.name);
         if (textMetrics.width < Math.min(room.seatingRadiusM * pxPerM, room.seatingRadiusM * pxPerM)) {
-            ctx.fillText(room.name, 0, 0);
+            normalModeCTX.fillText(room.name, 0, 0);
         }
-        ctx.rotate(-amtToRotateRoomLabel);
+        normalModeCTX.rotate(-amtToRotateRoomLabel);
 
-        ctx.translate(-room.seatingCenter.x * pxPerM, -room.seatingCenter.z * pxPerM);
+        normalModeCTX.translate(-room.seatingCenter.x * pxPerM, -room.seatingCenter.z * pxPerM);
     }
 
     drawUnoccupiedSeat(seat: SpatialAudioSeat) {
@@ -290,43 +297,43 @@ export class TwoDimensionalRenderer {
             return;
         }
 
-        let ctx = this.ctx;
+        let normalModeCTX = this.normalModeCTX;
         let pxPerM = physicsController.pxPerMCurrent;
-        ctx.translate(seat.position.x * pxPerM, seat.position.z * pxPerM);
+        normalModeCTX.translate(seat.position.x * pxPerM, seat.position.z * pxPerM);
         let amountToRotateSeatImage = this.canvasRotationDegrees * Math.PI / 180;
-        ctx.rotate(amountToRotateSeatImage);
+        normalModeCTX.rotate(amountToRotateSeatImage);
 
         const seatRadiusPX = ROOM.SEAT_RADIUS_M * pxPerM;
         if (userInputController.hoveredSeat && userInputController.hoveredSeat.seatID === seat.seatID) {
-            ctx.drawImage(seatIconHover, -seatRadiusPX, -seatRadiusPX, seatRadiusPX * 2, seatRadiusPX * 2);
+            normalModeCTX.drawImage(seatIconHover, -seatRadiusPX, -seatRadiusPX, seatRadiusPX * 2, seatRadiusPX * 2);
         } else {
-            ctx.drawImage(seatIconIdle, -seatRadiusPX, -seatRadiusPX, seatRadiusPX * 2, seatRadiusPX * 2);
+            normalModeCTX.drawImage(seatIconIdle, -seatRadiusPX, -seatRadiusPX, seatRadiusPX * 2, seatRadiusPX * 2);
         }
 
-        ctx.rotate(-amountToRotateSeatImage);
-        ctx.translate(-seat.position.x * pxPerM, -seat.position.z * pxPerM);
+        normalModeCTX.rotate(-amountToRotateSeatImage);
+        normalModeCTX.translate(-seat.position.x * pxPerM, -seat.position.z * pxPerM);
     }
 
     maybeDrawScrim() {
         if (this.canvasScrimOpacity > 0.0) {
-            let ctx = this.ctx;
+            let normalModeCTX = this.normalModeCTX;
             this.unTranslateAndRotateCanvas();
 
-            ctx.fillStyle = `rgba(0, 0, 0, ${this.canvasScrimOpacity})`;
-            ctx.beginPath();
-            ctx.rect(0, 0, this.mainCanvas.width, this.mainCanvas.height);
-            ctx.fill();
-            ctx.closePath();
+            normalModeCTX.fillStyle = `rgba(0, 0, 0, ${this.canvasScrimOpacity})`;
+            normalModeCTX.beginPath();
+            normalModeCTX.rect(0, 0, this.normalModeCanvas.width, this.normalModeCanvas.height);
+            normalModeCTX.fill();
+            normalModeCTX.closePath();
 
             this.translateAndRotateCanvas();
         }
     }
 
     drawRooms() {
-        let ctx = this.ctx;
+        let normalModeCTX = this.normalModeCTX;
         let pxPerM = physicsController.pxPerMCurrent;
 
-        if (!(seatIconIdle.complete && tableImage.complete && ctx && pxPerM)) {
+        if (!(seatIconIdle.complete && tableImage.complete && normalModeCTX && pxPerM)) {
             return;
         }
 
@@ -355,7 +362,7 @@ export class TwoDimensionalRenderer {
             return;
         }
 
-        const ctx = this.ctx;
+        const normalModeCTX = this.normalModeCTX;
         const pxPerM = physicsController.pxPerMCurrent;
     
         particleController.activeParticles.forEach((particle) => {
@@ -364,33 +371,36 @@ export class TwoDimensionalRenderer {
                 !particle.image.complete) {
                 return;
             }    
-            ctx.translate(particle.currentWorldPositionM.x * pxPerM, particle.currentWorldPositionM.z * pxPerM);
+            normalModeCTX.translate(particle.currentWorldPositionM.x * pxPerM, particle.currentWorldPositionM.z * pxPerM);
             let amtToRotateParticle = this.canvasRotationDegrees * Math.PI / 180;
-            ctx.rotate(amtToRotateParticle);
+            normalModeCTX.rotate(amtToRotateParticle);
     
-            let oldAlpha = ctx.globalAlpha;
-            ctx.globalAlpha = particle.opacity;
+            let oldAlpha = normalModeCTX.globalAlpha;
+            normalModeCTX.globalAlpha = particle.opacity;
     
-            ctx.drawImage(
+            normalModeCTX.drawImage(
                 particle.image,
                 -particle.dimensionsM.x * pxPerM / 2,
                 -particle.dimensionsM.z * pxPerM / 2,
                 particle.dimensionsM.x * pxPerM,
                 particle.dimensionsM.z * pxPerM);
     
-            ctx.globalAlpha = oldAlpha;
-            ctx.rotate(-amtToRotateParticle);
-            ctx.translate(-particle.currentWorldPositionM.x * pxPerM, -particle.currentWorldPositionM.z * pxPerM);
+            normalModeCTX.globalAlpha = oldAlpha;
+            normalModeCTX.rotate(-amtToRotateParticle);
+            normalModeCTX.translate(-particle.currentWorldPositionM.x * pxPerM, -particle.currentWorldPositionM.z * pxPerM);
         });
     }
 
     drawNormalMode() {
+        let normalModeCTX = this.normalModeCTX;
+        normalModeCTX.clearRect(0, 0, this.normalModeCanvas.width, this.normalModeCanvas.height);
+        
         const myUserData = userDataController.myAvatar.myUserData;
         this.canvasRotationDegrees = -1 * userDataController.myAvatar.myUserData.orientationEulerCurrent.yawDegrees;
 
         let pxPerM = physicsController.pxPerMCurrent;
 
-        const normalCameraOffsetYPX = this.mainCanvas.height / 2 - UI.AVATAR_PADDING_FOR_CAMERA * pxPerM;
+        const normalCameraOffsetYPX = this.normalModeCanvas.height / 2 - UI.AVATAR_PADDING_FOR_CAMERA * pxPerM;
 
         if (this.cameraOffsetYPX === undefined) {
             this.cameraOffsetYPX = normalCameraOffsetYPX;
@@ -404,8 +414,8 @@ export class TwoDimensionalRenderer {
         }
 
         this.canvasOffsetPX = {
-            x: this.mainCanvas.width / 2 - this.cameraPositionNoOffsetM.x * pxPerM,
-            y: this.mainCanvas.height / 2 - this.cameraPositionNoOffsetM.z * pxPerM + this.cameraOffsetYPX
+            x: this.normalModeCanvas.width / 2 - this.cameraPositionNoOffsetM.x * pxPerM,
+            y: this.normalModeCanvas.height / 2 - this.cameraPositionNoOffsetM.z * pxPerM + this.cameraOffsetYPX
         };
 
         this.translateAndRotateCanvas();
@@ -415,14 +425,10 @@ export class TwoDimensionalRenderer {
     }
 
     drawWatchPartyMode() {
-        
+
     }
 
     draw() {
-        let ctx = this.ctx;
-
-        ctx.clearRect(0, 0, this.mainCanvas.width, this.mainCanvas.height);
-
         const myUserData = userDataController.myAvatar.myUserData;
         if (!(myUserData.positionCurrent && myUserData.orientationEulerCurrent)) {
             return;
@@ -436,30 +442,30 @@ export class TwoDimensionalRenderer {
     }
 
     translateAndRotateCanvas() {
-        let ctx = this.ctx;
+        let normalModeCTX = this.normalModeCTX;
         let pxPerM = physicsController.pxPerMCurrent;
 
         if (!this.cameraPositionNoOffsetM) {
             return;
         }
 
-        ctx.translate(this.canvasOffsetPX.x, this.canvasOffsetPX.y);
-        ctx.translate(this.cameraPositionNoOffsetM.x * pxPerM, this.cameraPositionNoOffsetM.z * pxPerM);
-        ctx.rotate(-this.canvasRotationDegrees * Math.PI / 180);
-        ctx.translate(-this.cameraPositionNoOffsetM.x * pxPerM, -this.cameraPositionNoOffsetM.z * pxPerM);
+        normalModeCTX.translate(this.canvasOffsetPX.x, this.canvasOffsetPX.y);
+        normalModeCTX.translate(this.cameraPositionNoOffsetM.x * pxPerM, this.cameraPositionNoOffsetM.z * pxPerM);
+        normalModeCTX.rotate(-this.canvasRotationDegrees * Math.PI / 180);
+        normalModeCTX.translate(-this.cameraPositionNoOffsetM.x * pxPerM, -this.cameraPositionNoOffsetM.z * pxPerM);
     }
 
     unTranslateAndRotateCanvas() {
-        let ctx = this.ctx;
+        let normalModeCTX = this.normalModeCTX;
         let pxPerM = physicsController.pxPerMCurrent;
 
         if (!this.cameraPositionNoOffsetM) {
             return;
         }
 
-        ctx.translate(this.cameraPositionNoOffsetM.x * pxPerM, this.cameraPositionNoOffsetM.z * pxPerM);
-        ctx.rotate(this.canvasRotationDegrees * Math.PI / 180);
-        ctx.translate(-this.cameraPositionNoOffsetM.x * pxPerM, -this.cameraPositionNoOffsetM.z * pxPerM);
-        ctx.translate(-this.canvasOffsetPX.x, -this.canvasOffsetPX.y);
+        normalModeCTX.translate(this.cameraPositionNoOffsetM.x * pxPerM, this.cameraPositionNoOffsetM.z * pxPerM);
+        normalModeCTX.rotate(this.canvasRotationDegrees * Math.PI / 180);
+        normalModeCTX.translate(-this.cameraPositionNoOffsetM.x * pxPerM, -this.cameraPositionNoOffsetM.z * pxPerM);
+        normalModeCTX.translate(-this.canvasOffsetPX.x, -this.canvasOffsetPX.y);
     }
 }

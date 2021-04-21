@@ -32,7 +32,7 @@ export interface SignalParams {
 }
 
 export class SignalsController {
-    mainCanvas: HTMLCanvasElement;
+    normalModeCanvas: HTMLCanvasElement;
     localAudio1: HTMLAudioElement;
     localAudio2: HTMLAudioElement;
     localAudioElToUse: HTMLAudioElement;
@@ -68,7 +68,7 @@ export class SignalsController {
             "volume": 0.35
         });
 
-        this.mainCanvas = document.querySelector('.mainCanvas');
+        this.normalModeCanvas = document.querySelector('.normalModeCanvas');
 
         this.localAudio1 = document.createElement("audio");
         this.localAudio1.classList.add("miscLocalAudio1");
@@ -105,8 +105,8 @@ export class SignalsController {
             children[i].classList.remove('signalButton--active');
         }
 
-        this.mainCanvas.classList.remove("mainCanvas--positiveCursor");
-        this.mainCanvas.classList.remove("mainCanvas--negativeCursor");
+        this.normalModeCanvas.classList.remove("normalModeCanvas--positiveCursor");
+        this.normalModeCanvas.classList.remove("normalModeCanvas--negativeCursor");
 
         if (!this.activeSignal) {
             return;
@@ -115,11 +115,11 @@ export class SignalsController {
         switch (this.activeSignal.name) {
             case this.supportedSignals.get("positive").name:
                 this.signalButton__positive.classList.add('signalButton--active');
-                this.mainCanvas.classList.add("mainCanvas--positiveCursor");
+                this.normalModeCanvas.classList.add("normalModeCanvas--positiveCursor");
                 break;
             case this.supportedSignals.get("negative").name:
                 this.signalButton__negative.classList.add('signalButton--active');
-                this.mainCanvas.classList.add("mainCanvas--negativeCursor");
+                this.normalModeCanvas.classList.add("normalModeCanvas--negativeCursor");
                 break;
             default:
                 break;

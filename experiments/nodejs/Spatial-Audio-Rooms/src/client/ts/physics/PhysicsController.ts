@@ -5,7 +5,7 @@ import { SpatialAudioRoom } from "../ui/RoomController";
 import { Utilities, DataToTransmitToHiFi, EasingFunctions } from "../utilities/Utilities";
 
 export class PhysicsController {
-    mainCanvas: HTMLCanvasElement;
+    normalModeCanvas: HTMLCanvasElement;
     lastNow: number = 0;
 
     pxPerMMax: number = PHYSICS.MAX_PX_PER_M;
@@ -18,7 +18,7 @@ export class PhysicsController {
 
     constructor() {
         setInterval(this.physicsLoop.bind(this), PHYSICS.PHYSICS_TICKRATE_MS);
-        this.mainCanvas = document.querySelector('.mainCanvas');
+        this.normalModeCanvas = document.querySelector('.normalModeCanvas');
     }
 
     physicsLoop() {
@@ -222,7 +222,7 @@ export class PhysicsController {
 
         this.smoothZoomDurationMS = PHYSICS.SMOOTH_ZOOM_DURATION_SWITCH_ROOMS_MS;
         this.smoothZoomStartTimestamp = undefined;
-        this.pxPerMTarget = Math.min(this.mainCanvas.width, this.mainCanvas.height) / (2 * room.seatingRadiusM + 2 * UI.AVATAR_PADDING_FOR_CAMERA);
+        this.pxPerMTarget = Math.min(this.normalModeCanvas.width, this.normalModeCanvas.height) / (2 * room.seatingRadiusM + 2 * UI.AVATAR_PADDING_FOR_CAMERA);
         this.pxPerMMax = this.pxPerMTarget;
     }
 
