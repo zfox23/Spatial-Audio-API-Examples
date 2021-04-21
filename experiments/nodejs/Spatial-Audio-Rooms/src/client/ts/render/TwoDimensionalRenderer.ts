@@ -2,7 +2,7 @@ declare module '*.png';
 
 import { particleController, physicsController, roomController, uiController, userDataController, userInputController, videoController } from "..";
 import { AVATAR, PHYSICS, ROOM, UI, } from "../constants/constants";
-import { UserData } from "../userData/UserDataController";
+import { MyAvatarModes, UserData } from "../userData/UserDataController";
 import { Utilities } from "../utilities/Utilities";
 import { SpatialAudioSeat, SpatialAudioRoom } from "../ui/RoomController";
 import SeatIconIdle from '../../images/seat-idle.png';
@@ -285,8 +285,8 @@ export class TwoDimensionalRenderer {
     }
 
     drawUnoccupiedSeat(seat: SpatialAudioSeat) {
-        // Don't draw unoccupied seats if the seats are too small (determined by `userInputController.canHoverOverRooms`).
-        if (userInputController.canHoverOverRooms) {
+        // Don't draw unoccupied seats if the seats are too small (determined by `userInputController.zoomedOutTooFarToRenderSeats`).
+        if (userInputController.zoomedOutTooFarToRenderSeats) {
             return;
         }
 
@@ -384,16 +384,8 @@ export class TwoDimensionalRenderer {
         });
     }
 
-    draw() {
-        let ctx = this.ctx;
-
-        ctx.clearRect(0, 0, this.mainCanvas.width, this.mainCanvas.height);
-
+    drawNormalMode() {
         const myUserData = userDataController.myAvatar.myUserData;
-        if (!(myUserData.positionCurrent && myUserData.orientationEulerCurrent)) {
-            return;
-        }
-
         this.canvasRotationDegrees = -1 * userDataController.myAvatar.myUserData.orientationEulerCurrent.yawDegrees;
 
         let pxPerM = physicsController.pxPerMCurrent;
@@ -420,6 +412,27 @@ export class TwoDimensionalRenderer {
         this.drawRooms();
         this.drawParticles();
         this.unTranslateAndRotateCanvas();
+    }
+
+    drawWatchPartyMode() {
+        
+    }
+
+    draw() {
+        let ctx = this.ctx;
+
+        ctx.clearRect(0, 0, this.mainCanvas.width, this.mainCanvas.height);
+
+        const myUserData = userDataController.myAvatar.myUserData;
+        if (!(myUserData.positionCurrent && myUserData.orientationEulerCurrent)) {
+            return;
+        }
+
+        if (userDataController.myAvatar.currentMode === MyAvatarModes.Normal) {
+            this.drawNormalMode();
+        } else if (userDataController.myAvatar.currentMode === MyAvatarModes.WatchParty) {
+            this.drawWatchPartyMode();
+        }
     }
 
     translateAndRotateCanvas() {

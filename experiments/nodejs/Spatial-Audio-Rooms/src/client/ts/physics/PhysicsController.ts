@@ -251,11 +251,11 @@ export class PhysicsController {
             this.smoothZoomDurationMS = PHYSICS.SMOOTH_ZOOM_DURATION_NORMAL_MS;
         }
 
-        this.determineCanHoverOverRooms();
+        this.determineZoomedOutTooFarToRenderSeats();
     }
 
-    determineCanHoverOverRooms() {
+    determineZoomedOutTooFarToRenderSeats() {
         let roomSeatRadiusPX = ROOM.SEAT_RADIUS_M * this.pxPerMCurrent;
-        userInputController.canHoverOverRooms = roomSeatRadiusPX < UI.MIN_SEAT_RADIUS_FOR_SEAT_VISIBILITY_PX;
+        userInputController.zoomedOutTooFarToRenderSeats = roomSeatRadiusPX < UI.MIN_SEAT_RADIUS_FOR_SEAT_VISIBILITY_PX;
     }
 }

@@ -43,8 +43,14 @@ export interface UserData {
     tempData?: TempUserData;
 }
 
+export enum MyAvatarModes {
+    Normal,
+    WatchParty,
+}
+
 class MyAvatar {
     myUserData: UserData;
+    currentMode: MyAvatarModes;
 
     constructor() {
         this.myUserData = {
@@ -73,6 +79,8 @@ class MyAvatar {
             agcEnabled: false,
             tempData: {},
         };
+
+        this.currentMode = MyAvatarModes.Normal;
 
         if (localStorage.getItem('myDisplayName')) {
             this.onMyDisplayNameChanged(localStorage.getItem('myDisplayName'));

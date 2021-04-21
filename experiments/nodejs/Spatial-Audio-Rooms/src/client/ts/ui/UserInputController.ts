@@ -1,8 +1,8 @@
 import { avDevicesController, connectionController, pathsController, physicsController, roomController, signalsController, twoDimensionalRenderer, uiController, userDataController, webSocketConnectionController } from "..";
 import { AVATAR, ROOM, CONTROLS, PHYSICS, PARTICLES } from "../constants/constants";
-import { UserData } from "../userData/UserDataController";
+import { MyAvatarModes, UserData } from "../userData/UserDataController";
 import { Utilities } from "../utilities/Utilities";
-import { SpatialAudioRoom, SpatialAudioSeat } from "../ui/RoomController";
+import { SpatialAudioRoom, SpatialAudioRoomType, SpatialAudioSeat } from "../ui/RoomController";
 import { OrientationEuler3D, Point3D } from "hifi-spatial-audio";
 import * as e from "express";
 
@@ -20,7 +20,7 @@ export class UserInputController {
     lastDistanceBetweenLeftClickEvents: number;
     hoveredUserData: UserData;
     hoveredSeat: SpatialAudioSeat;
-    canHoverOverRooms: boolean = false;
+    zoomedOutTooFarToRenderSeats: boolean = false;
     hoveredRoom: SpatialAudioRoom;
 
     constructor() {
@@ -461,9 +461,13 @@ export class UserInputController {
             console.log(`User clicked on a new seat at ${JSON.stringify(this.hoveredSeat.position)}! Target seat yaw orientation: ${JSON.stringify(this.hoveredSeat.orientation)} degrees.`);
             userDataController.myAvatar.moveToNewSeat(this.hoveredSeat);
             this.hoveredSeat = undefined;
-        } else if (this.hoveredRoom && !pathsController.currentPath && this.hoveredRoom !== userDataController.myAvatar.myUserData.currentRoom) {
+        } else if (this.hoveredRoom && !pathsController.currentPath && (this.hoveredRoom !== userDataController.myAvatar.myUserData.currentRoom && this.hoveredRoom.roomType === SpatialAudioRoomType.Normal)) {
             console.log(`User clicked on the room named ${this.hoveredRoom.name}!`);
             userDataController.myAvatar.positionSelfInRoom(this.hoveredRoom.name);
+            this.hoveredRoom = undefined;
+        } else if (this.hoveredRoom && !pathsController.currentPath && (this.hoveredRoom === userDataController.myAvatar.myUserData.currentRoom && this.hoveredRoom.roomType === SpatialAudioRoomType.WatchParty) && userDataController.myAvatar.currentMode === MyAvatarModes.Normal) {
+            console.log(`User joined the Watch Party in the room named ${this.hoveredRoom.name}!`);
+            userDataController.myAvatar.currentMode = MyAvatarModes.WatchParty;
             this.hoveredRoom = undefined;
         }
 
@@ -531,7 +535,7 @@ export class UserInputController {
             }
 
             if (!this.hoveredUserData) {
-                if (this.canHoverOverRooms) {
+                if (this.zoomedOutTooFarToRenderSeats) {
                     this.hoveredSeat = undefined;
                 } else {
                     for (let i = 0; i < roomController.rooms.length; i++) {
@@ -550,20 +554,25 @@ export class UserInputController {
             if (!(this.hoveredUserData && this.hoveredSeat)) {
                 this.hoveredRoom = undefined;
 
-                if (this.canHoverOverRooms) {
                     for (let i = 0; i < roomController.rooms.length; i++) {
                         let room = roomController.rooms[i];
     
                         if (Utilities.getDistanceBetween2DPoints(room.seatingCenter.x, room.seatingCenter.z, hoverM.x, hoverM.z) < room.seatingRadiusM) {
-                            this.hoveredRoom = room;
-                            break;
+                            if (this.zoomedOutTooFarToRenderSeats) {
+                                this.hoveredRoom = room;
+                                break;
+                            } else if (!this.zoomedOutTooFarToRenderSeats && room.roomType === SpatialAudioRoomType.WatchParty) {
+                                this.hoveredRoom = room;
+                                break;
+                            }
                         }
-                    }
                 }
             }
         }
 
-        if (this.hoveredUserData || this.hoveredSeat || (this.hoveredRoom && this.hoveredRoom !== userDataController.myAvatar.myUserData.currentRoom)) {
+        if (this.hoveredUserData ||
+            this.hoveredSeat ||
+            (this.hoveredRoom && ((this.hoveredRoom !== userDataController.myAvatar.myUserData.currentRoom && this.hoveredRoom.roomType === SpatialAudioRoomType.Normal) || (this.hoveredRoom === userDataController.myAvatar.myUserData.currentRoom && this.hoveredRoom.roomType === SpatialAudioRoomType.WatchParty)))) {
             document.body.classList.add("cursorPointer");
         } else {
             document.body.classList.remove("cursorPointer");

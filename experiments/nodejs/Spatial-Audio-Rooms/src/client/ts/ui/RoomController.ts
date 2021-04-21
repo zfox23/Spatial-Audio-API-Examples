@@ -25,6 +25,11 @@ class SpatialAudioRoomImage {
     loaded: boolean;
 }
 
+export enum SpatialAudioRoomType {
+    Normal,
+    WatchParty
+};
+
 export class SpatialAudioRoom {
     name: string;
     seatingCenter: Point3D;
@@ -36,6 +41,7 @@ export class SpatialAudioRoom {
     seats: Array<SpatialAudioSeat>;
     tableColorHex: string;
     roomImage: SpatialAudioRoomImage;
+    roomType: SpatialAudioRoomType;
 
     constructor({
         name,
@@ -44,7 +50,8 @@ export class SpatialAudioRoom {
         roomCenter,
         initialNumSeats,
         dimensions,
-        roomImageSRC
+        roomImageSRC,
+        roomType = SpatialAudioRoomType.Normal,
         }: {
             name: string,
             seatingCenter: Point3D,
@@ -52,12 +59,14 @@ export class SpatialAudioRoom {
             roomCenter?: Point3D,
             initialNumSeats?: number,
             dimensions?: Point3D,
-            roomImageSRC?: string
+            roomImageSRC?: string,
+            roomType?: SpatialAudioRoomType
         }) {
         this.name = name;
         this.seatingCenter = seatingCenter;
-
         this.roomCenter = roomCenter || this.seatingCenter;
+
+        this.roomType = roomType;
 
         let maxAvatarRadiusM = AVATAR.RADIUS_M * AVATAR.MAX_VOLUME_DB_AVATAR_RADIUS_MULTIPLIER;
 
@@ -82,7 +91,14 @@ export class SpatialAudioRoom {
 
         this.tableRadiusM = this.seatingRadiusM - maxAvatarRadiusM;
         
-        this.initialNumSeats = initialNumSeats || Math.ceil(((Math.PI * this.seatingRadiusM * this.seatingRadiusM) / (2.5 * AVATAR.RADIUS_M)));
+        if (initialNumSeats) {
+            this.initialNumSeats = initialNumSeats;
+        } else if (!initialNumSeats && roomType === SpatialAudioRoomType.Normal) {
+            this.initialNumSeats = Math.ceil(((Math.PI * this.seatingRadiusM * this.seatingRadiusM) / (2.5 * AVATAR.RADIUS_M)));
+        } else if (!initialNumSeats && roomType === SpatialAudioRoomType.WatchParty) {
+            this.initialNumSeats = Math.ceil(((Math.PI * this.seatingRadiusM * this.seatingRadiusM) / (2.5 * AVATAR.RADIUS_M))) / 2;
+        }
+        
         this.seats = [];
         this.generateInitialSeats();
 
@@ -101,7 +117,14 @@ export class SpatialAudioRoom {
     }
     
     generateInitialSeats() {
-        for (let theta = 0; theta < 2 * Math.PI; theta += ((2 * Math.PI) / this.initialNumSeats)) {
+        let thetaMax;
+        if (this.roomType === SpatialAudioRoomType.Normal) {
+            thetaMax = 2 * Math.PI;
+        } else if (this.roomType === SpatialAudioRoomType.WatchParty) {
+            thetaMax = Math.PI;
+        }
+
+        for (let theta = 0; theta <= thetaMax; theta += (thetaMax / (this.initialNumSeats - 1))) {
             let currentPotentialPosition = new Point3D({
                 "x": this.seatingRadiusM * Math.cos(theta) + this.seatingCenter.x,
                 "z": this.seatingRadiusM * Math.sin(theta) + this.seatingCenter.z
@@ -144,7 +167,7 @@ import Room3 from "../../images/rooms/Room3.jpg";
 import Room4 from "../../images/rooms/Room4.jpg";
 import Room5 from "../../images/rooms/Room5.jpg";
 import SeatingRadius1Image2 from "../../images/rooms/room-with-seating-radius-1-bg-2.jpg";
-import SeatingRadius3Image1 from "../../images/rooms/room-with-seating-radius-3-bg-1.png";
+import WatchPartyImage from "../../images/rooms/watchparty.png";
 export class RoomController {
     lobby: SpatialAudioRoom;
     rooms: Array<SpatialAudioRoom>;
@@ -206,6 +229,16 @@ export class RoomController {
             dimensions: new Point3D({x: 3.6, y: 0, z: 3.6 }),
             seatingRadiusM: 1.0,
             roomImageSRC: SeatingRadius1Image2
+        }));
+        this.rooms.push(new SpatialAudioRoom({
+            name: "Watch Party",
+            roomCenter: new Point3D({ x: 0, y: 0, z: 13.482 }),
+            seatingCenter: new Point3D({ x: 0.15, y: 0, z: 12.2 }),
+            dimensions: new Point3D({x: 8.098, y: 0, z: 3.6 }),
+            seatingRadiusM: 1.85,
+            roomImageSRC: WatchPartyImage,
+            roomType: SpatialAudioRoomType.WatchParty,
+            initialNumSeats: 7,
         }));
 
         this.showRoomListButton = document.createElement("button");
