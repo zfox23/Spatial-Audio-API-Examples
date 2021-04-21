@@ -71,7 +71,7 @@ app.post('/spatial-audio-rooms/create', (req, res, next) => {
 
     let slackCommandText = req.body.text;
     if (slackCommandText && slackCommandText.length > 0) {
-        spaceURL = `https://experiments.highfidelity.com/spatial-audio-rooms/?spaceName=${hash}`;
+        spaceURL = `https://experiments.highfidelity.com/spatial-audio-rooms/?spaceName=${slackCommandText}`;
 
         res.json({
             "blocks": [
