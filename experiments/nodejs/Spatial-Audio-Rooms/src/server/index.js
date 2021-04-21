@@ -5,6 +5,7 @@ console.warn(`*****\nServer production mode status: ${isInProdMode}\n*****\n`);
 const webpack = require('webpack');
 const path = require('path');
 const express = require('express');
+const crypto = require('crypto');
 
 const app = express();
 const PORT = 8180;
@@ -54,7 +55,7 @@ if (!isInProdMode) {
 
 const DIST_DIR = path.join(__dirname, "..", "..", "dist");
 app.use('/spatial-audio-rooms', express.static(DIST_DIR));
-app.use(require('body-parser').json());
+app.use(require('body-parser').urlencoded({ extended: true }));
 
 app.get('/spatial-audio-rooms', async (req, res, next) => {
     require('./serverRender')(isInProdMode, req, async (err, page) => {
@@ -67,7 +68,45 @@ app.get('/spatial-audio-rooms', async (req, res, next) => {
 
 app.post('/spatial-audio-rooms/create', (req, res, next) => {
     console.log(req.body);
-    res.sendStatus(200);
+
+    let stringToHash;
+
+    let slackChannelID = req.body.channel_id;
+    if (slackChannelID) {
+        stringToHash = slackChannelID;
+    }
+
+    if (!stringToHash) {
+        console.error(`Couldn't generate Spatial Audio Room link. Request body:\n${JSON.stringify(req.body)}`);
+        res.json({
+            "response_type": "ephemeral",
+            "text": "Sorry, I couldn't generate a Spatial Audio Room for you. Please contact Zach."
+        });
+        return;
+    }
+
+    let hash = crypto.createHash('md5').update(stringToHash).digest('hex');
+
+    const spaceURL = `https://experiments.highfidelity.com/spatial-audio-rooms/?spaceName=${hash}`;
+
+    res.json({
+        "blocks": [
+            {
+                "type": "section",
+                "response_type": "in_channel",
+                "text": {
+                    "text": "*This channel's Spatial Audio Room is located at:.*"
+                }
+            },
+            {
+                "type": "section",
+                "response_type": "in_channel",
+                "text": {
+                    "text": spaceURL
+                }
+            }
+        ]
+    });
 });
 
 const http = require("http").createServer(app);
