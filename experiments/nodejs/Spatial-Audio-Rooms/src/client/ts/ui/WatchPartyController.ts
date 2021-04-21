@@ -273,7 +273,7 @@ export class WatchPartyController {
 
     updateWatchPartyCanvasDimensions() {
         this.watchPartyModeCanvas.width = window.innerWidth;
-        this.watchPartyModeCanvas.height = 100;
+        this.watchPartyModeCanvas.height = 172;
 
         this.pxPerM = this.watchPartyModeCanvas.height / AVATAR.RADIUS_M * AVATAR.MAX_VOLUME_DB_AVATAR_RADIUS_MULTIPLIER / 4;
     }
