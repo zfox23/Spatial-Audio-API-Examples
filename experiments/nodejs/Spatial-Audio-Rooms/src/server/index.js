@@ -74,6 +74,7 @@ app.post('/spatial-audio-rooms/create', (req, res, next) => {
         spaceURL = `https://experiments.highfidelity.com/spatial-audio-rooms/?spaceName=${slackCommandText}`;
 
         res.json({
+            "response_type": 'in_channel',
             "blocks": [
                 {
                     "type": "section",
@@ -105,6 +106,7 @@ app.post('/spatial-audio-rooms/create', (req, res, next) => {
         spaceURL = `https://experiments.highfidelity.com/spatial-audio-rooms/?spaceName=${hash}`;
 
         res.json({
+            "response_type": 'in_channel',
             "blocks": [
                 {
                     "type": "section",
