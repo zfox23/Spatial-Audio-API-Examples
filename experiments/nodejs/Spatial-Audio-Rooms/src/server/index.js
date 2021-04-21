@@ -157,8 +157,8 @@ class Participant {
 }
 
 function onWatchNewVideo(newVideoURL, spaceName, roomName) {
-    if (!spaceInformation[spaceName][roomName]) {
-        console.error(`In \`onWatchNewVideo()\`, no \`spaceInformation["${spaceName}"]["${roomName}"]\`!`);
+    if (!spaceInformation[spaceName]["rooms"][roomName]) {
+        console.error(`In \`onWatchNewVideo()\`, no \`spaceInformation["${spaceName}"]["rooms"]["${roomName}"]\`!`);
         return;
     }
 
@@ -173,10 +173,39 @@ function onWatchNewVideo(newVideoURL, spaceName, roomName) {
     }
     
     if (youTubeVideoID) {
-        spaceInformation[spaceName][roomName].currentQueuedVideoURL = newVideoURL;
-        console.log(`Emitting \`watchNewYouTubeVideo\` with Video ID \`${youTubeVideoID}\` to all users in ${spaceName}/${roomName}...`);
+        spaceInformation[spaceName]["rooms"][roomName].currentQueuedVideoURL = newVideoURL;
+        let startTimestamp = (Date.now() - spaceInformation[spaceName]["rooms"][roomName].currentVideoSeekTimeSetTimestamp) / 1000 + spaceInformation[spaceName]["rooms"][roomName].currentVideoSeekTime;
+        console.log(`Emitting \`watchNewYouTubeVideo\` with Video ID \`${youTubeVideoID}\` to all users in ${spaceName}/${roomName}, starting at ${startTimestamp}s...`);
 
-        socketIOServer.sockets.in(spaceName).emit("watchNewYouTubeVideo", roomName, youTubeVideoID, spaceInformation[spaceName][roomName].currentVideoSeekTime);
+        socketIOServer.sockets.in(spaceName).emit("watchNewYouTubeVideo", roomName, youTubeVideoID, startTimestamp);
+    }
+}
+
+function onWatchPartyUserLeft(visitIDHash) {
+    console.log(`Removing watcher with ID \`${visitIDHash}\`.`);
+
+    let spaceInformationKeys = Object.keys(spaceInformation);
+    for (let i = 0; i < spaceInformationKeys.length; i++) {
+        let spaceName = spaceInformationKeys[i];
+        if (!spaceInformation[spaceName]["rooms"]) {
+            break;
+        }
+        let roomNameKeys = Object.keys(spaceInformation[spaceName]["rooms"]);
+        for (let j = 0; j < roomNameKeys.length; j++) {
+            let roomName = roomNameKeys[j];
+            if (spaceInformation[spaceName]["rooms"][roomName] && spaceInformation[spaceName]["rooms"][roomName].watcherVisitIDHashes) {
+                spaceInformation[spaceName]["rooms"][roomName].watcherVisitIDHashes.delete(visitIDHash);
+            
+                if (spaceInformation[spaceName]["rooms"][roomName].watcherVisitIDHashes.size === 0) {
+                    spaceInformation[spaceName]["rooms"][roomName].currentQueuedVideoURL = undefined;
+                    spaceInformation[spaceName]["rooms"][roomName].currentVideoSeekTime = undefined;
+                    spaceInformation[spaceName]["rooms"][roomName].currentVideoSeekTimeSetTimestamp = undefined;
+                    spaceInformation[spaceName]["rooms"][roomName].currentPlayerState = undefined;
+                }
+
+                console.log(`There are now ${spaceInformation[spaceName]["rooms"][roomName].watcherVisitIDHashes.size} watchers present in ${spaceName}/${roomName}`);
+            }
+        }
     }
 }
 
@@ -255,6 +284,7 @@ socketIOServer.on("connection", (socket) => {
             let currentSpace = spaceInformation[allSpaces[i]];
             let participantToRemove = currentSpace.participants.find((participant) => { return participant.socketID === socket.id; });
             if (participantToRemove) {
+                onWatchPartyUserLeft(participantToRemove.visitIDHash);
                 console.log(`${Date.now()}: In ${allSpaces[i]}, removing participant with Hashed Visit ID: \`${participantToRemove.visitIDHash}\`!`);
                 currentSpace.participants = currentSpace.participants.filter((participant) => { return participant.socketID !== socket.id; });
             }
@@ -364,60 +394,72 @@ socketIOServer.on("connection", (socket) => {
         socket.to(spaceName).emit("requestParticleAdd", { visitIDHash, particleData });
     });
 
-    socket.on("watchPartyUserJoined", (providedUserID, spaceName, roomName) => {
-        console.log(`In ${spaceName}/${roomName}, adding watcher with ID \`${providedUserID}\`.`);
+    socket.on("watchPartyUserJoined", (visitIDHash, spaceName, roomName) => {
+        console.log(`In ${spaceName}/${roomName}, adding watcher with ID \`${visitIDHash}\`.`);
 
-        if (!spaceInformation[spaceName][roomName]) {
-            spaceInformation[spaceName][roomName] = {
+        if (!spaceInformation[spaceName]["rooms"]) {
+            spaceInformation[spaceName]["rooms"] = {};
+            spaceInformation[spaceName]["rooms"][roomName] = {
                 currentQueuedVideoURL: undefined,
                 currentVideoSeekTime: undefined,
+                currentVideoSeekTimeSetTimestamp: undefined,
                 currentPlayerState: undefined,
+                watcherVisitIDHashes: new Set(),
             };
         }
 
-        if (spaceInformation[spaceName] && spaceInformation[spaceName][roomName] && spaceInformation[spaceName][roomName].currentQueuedVideoURL) {
-            onWatchNewVideo(spaceInformation[spaceName][roomName].currentQueuedVideoURL, spaceName, roomName);
+        spaceInformation[spaceName]["rooms"][roomName].watcherVisitIDHashes.add(visitIDHash);
+
+        if (spaceInformation[spaceName] && spaceInformation[spaceName]["rooms"][roomName] && spaceInformation[spaceName]["rooms"][roomName].currentQueuedVideoURL) {
+            onWatchNewVideo(spaceInformation[spaceName]["rooms"][roomName].currentQueuedVideoURL, spaceName, roomName);
         }
     });
 
-    socket.on("enqueueNewVideo", (providedUserID, newVideoURL, spaceName, roomName) => {
+    socket.on("watchPartyUserLeft", (visitIDHash) => {
+        onWatchPartyUserLeft(visitIDHash);
+    });
+
+    socket.on("enqueueNewVideo", (visitIDHash, newVideoURL, spaceName, roomName) => {
         if (!spaceInformation[spaceName]) {
             return;
         }
 
-        if (!spaceInformation[spaceName][roomName]) {
+        if (!spaceInformation[spaceName]["rooms"][roomName]) {
             return;
         }
 
-        spaceInformation[spaceName][roomName].currentVideoSeekTime = 0;
+        spaceInformation[spaceName]["rooms"][roomName].currentVideoSeekTime = 0;
+        spaceInformation[spaceName]["rooms"][roomName].currentVideoSeekTimeSetTimestamp = Date.now();
 
-        console.log(`In ${spaceName}/${roomName}, \`${providedUserID}\` requested that a new video be played with URL \`${newVideoURL}\`.`);
+        console.log(`In ${spaceName}/${roomName}, \`${visitIDHash}\` requested that a new video be played with URL \`${newVideoURL}\`.`);
         
         onWatchNewVideo(newVideoURL, spaceName, roomName);
     });
 
-    socket.on("requestVideoSeek", (providedUserID, seekTimeSeconds, spaceName, roomName) => {
-        if (!spaceInformation[spaceName][roomName]) {
+    socket.on("requestVideoSeek", (visitIDHash, seekTimeSeconds, spaceName, roomName) => {
+        if (!spaceInformation[spaceName]["rooms"][roomName]) {
             return;
         }
 
-        spaceInformation[spaceName][roomName].currentVideoSeekTime = seekTimeSeconds;
+        spaceInformation[spaceName]["rooms"][roomName].currentVideoSeekTime = seekTimeSeconds;
+        spaceInformation[spaceName]["rooms"][roomName].currentVideoSeekTimeSetTimestamp = Date.now();
 
-        console.log(`In ${spaceName}/${roomName}, \`${providedUserID}\` requested that the video be seeked to ${spaceInformation[spaceName][roomName].currentVideoSeekTime}s.`);
+        console.log(`In ${spaceName}/${roomName}, \`${visitIDHash}\` requested that the video be seeked to ${spaceInformation[spaceName]["rooms"][roomName].currentVideoSeekTime}s.`);
 
-        socketIOServer.sockets.in(spaceName).emit("videoSeek", roomName, providedUserID, spaceInformation[spaceName][roomName].currentVideoSeekTime);
+        socketIOServer.sockets.in(spaceName).emit("videoSeek", roomName, visitIDHash, spaceInformation[spaceName]["rooms"][roomName].currentVideoSeekTime);
     });
 
-    socket.on("setSeekTime", (providedUserID, seekTimeSeconds, spaceName, roomName) => {
-        if (!spaceInformation[spaceName][roomName]) {
+    socket.on("setSeekTime", (visitIDHash, seekTimeSeconds, spaceName, roomName) => {
+        if (!spaceInformation[spaceName]["rooms"][roomName]) {
             return;
         }
 
-        spaceInformation[spaceName][roomName].currentVideoSeekTime = seekTimeSeconds;
+        spaceInformation[spaceName]["rooms"][roomName].currentVideoSeekTime = seekTimeSeconds;
+        spaceInformation[spaceName]["rooms"][roomName].currentVideoSeekTimeSetTimestamp = Date.now();
     });
 
-    socket.on("newPlayerState", (providedUserID, newPlayerState, seekTimeSeconds, spaceName, roomName) => {
-        if (!spaceInformation[spaceName][roomName]) {
+    socket.on("newPlayerState", (visitIDHash, newPlayerState, seekTimeSeconds, spaceName, roomName) => {
+        if (!spaceInformation[spaceName]["rooms"][roomName]) {
             return;
         }
 
@@ -426,25 +468,26 @@ socketIOServer.on("connection", (socket) => {
         }
 
         if (newPlayerState === 2) { // YT.PlayerState.PAUSED
-            console.log(`In ${spaceName}/${roomName}, \`${providedUserID}\` requested that the video be paused at ${seekTimeSeconds}s.`);
-            socket.broadcast.to(spaceName).emit("videoPause", roomName, providedUserID, seekTimeSeconds);
+            console.log(`In ${spaceName}/${roomName}, \`${visitIDHash}\` requested that the video be paused at ${seekTimeSeconds}s.`);
+            socket.broadcast.to(spaceName).emit("videoPause", roomName, visitIDHash, seekTimeSeconds);
         } else if (newPlayerState === 1) { // YT.PlayerState.PLAYING
-            console.log(`In ${spaceName}/${roomName}, \`${providedUserID}\` requested that the video be played starting at ${seekTimeSeconds}s.`);
-            socket.broadcast.to(spaceName).emit("videoPlay", roomName, providedUserID, seekTimeSeconds);
+            console.log(`In ${spaceName}/${roomName}, \`${visitIDHash}\` requested that the video be played starting at ${seekTimeSeconds}s.`);
+            socket.broadcast.to(spaceName).emit("videoPlay", roomName, visitIDHash, seekTimeSeconds);
         }
 
         spaceInformation[spaceName].currentPlayerState = newPlayerState;
     });
 
-    socket.on("stopVideo", (providedUserID, spaceName, roomName) => {
-        if (!spaceInformation[spaceName][roomName]) {
+    socket.on("stopVideo", (visitIDHash, spaceName, roomName) => {
+        if (!spaceInformation[spaceName]["rooms"][roomName]) {
             return;
         }
 
-        spaceInformation[spaceName][roomName].currentVideoSeekTime = undefined;
-        spaceInformation[spaceName][roomName].currentQueuedVideoURL = undefined;
-        console.log(`In ${spaceName}/${roomName}, \`${providedUserID}\` requested that the video be stopped.`);
-        socketIOServer.sockets.in(spaceName).emit("stopVideoRequested", roomName, providedUserID);
+        spaceInformation[spaceName]["rooms"][roomName].currentVideoSeekTime = undefined;
+        spaceInformation[spaceName]["rooms"][roomName].currentVideoSeekTimeSetTimestamp = undefined;
+        spaceInformation[spaceName]["rooms"][roomName].currentQueuedVideoURL = undefined;
+        console.log(`In ${spaceName}/${roomName}, \`${visitIDHash}\` requested that the video be stopped.`);
+        socketIOServer.sockets.in(spaceName).emit("stopVideoRequested", roomName, visitIDHash);
     });
 });
 
