@@ -54,6 +54,7 @@ if (!isInProdMode) {
 
 const DIST_DIR = path.join(__dirname, "..", "..", "dist");
 app.use('/spatial-audio-rooms', express.static(DIST_DIR));
+app.use(require('body-parser').json());
 
 app.get('/spatial-audio-rooms', async (req, res, next) => {
     require('./serverRender')(isInProdMode, req, async (err, page) => {
@@ -62,6 +63,11 @@ app.get('/spatial-audio-rooms', async (req, res, next) => {
         }
         res.send(page);
     });
+});
+
+app.post('/spatial-audio-rooms/create', (req, res, next) => {
+    console.log(req.body);
+    res.sendStatus(200);
 });
 
 const http = require("http").createServer(app);
