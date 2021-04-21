@@ -86,13 +86,13 @@ export class VideoController {
         this.localVideoTrack.stop();
         
         this.providedUserIDToVideoElementMap.delete(userDataController.myAvatar.myUserData.providedUserID);
-        
-        this.localVideoTrack = undefined;
 
         const mediaElements = this.localVideoTrack.detach();
         mediaElements.forEach(mediaElement => {
             mediaElement.remove();
         });
+        
+        this.localVideoTrack = undefined;
 
         this.toggleVideoButton.classList.add("toggleVideoButton--muted");
     }

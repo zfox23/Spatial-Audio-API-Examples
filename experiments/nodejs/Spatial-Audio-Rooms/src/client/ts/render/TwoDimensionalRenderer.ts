@@ -1,6 +1,6 @@
 declare module '*.png';
 
-import { particleController, physicsController, roomController, uiController, userDataController, userInputController, videoController } from "..";
+import { particleController, physicsController, roomController, uiController, userDataController, userInputController, videoController, watchPartyController } from "..";
 import { AVATAR, PHYSICS, ROOM, UI, } from "../constants/constants";
 import { MyAvatarModes, UserData } from "../userData/UserDataController";
 import { Utilities } from "../utilities/Utilities";
@@ -20,8 +20,6 @@ tableImage.src = TableImage;
 export class TwoDimensionalRenderer {
     normalModeCanvas: HTMLCanvasElement;
     normalModeCTX: CanvasRenderingContext2D;
-    watchPartyModeCanvas: HTMLCanvasElement;
-    watchPartyModeCTX: CanvasRenderingContext2D;
     cameraOffsetYPX: number;
     canvasOffsetPX: any;
     cameraPositionNoOffsetM: Point3D;
@@ -33,11 +31,6 @@ export class TwoDimensionalRenderer {
         this.normalModeCanvas.classList.add("normalModeCanvas");
         document.body.appendChild(this.normalModeCanvas);
         this.normalModeCTX = this.normalModeCanvas.getContext("2d");
-
-        this.watchPartyModeCanvas = document.createElement("canvas");
-        this.watchPartyModeCanvas.classList.add("watchPartyModeCanvas", "displayNone");
-        document.body.appendChild(this.watchPartyModeCanvas);
-        this.watchPartyModeCTX = this.watchPartyModeCanvas.getContext("2d");
 
         window.addEventListener("resize", this.updateCanvasDimensions.bind(this));
         this.updateCanvasDimensions();
@@ -394,7 +387,7 @@ export class TwoDimensionalRenderer {
     drawNormalMode() {
         let normalModeCTX = this.normalModeCTX;
         normalModeCTX.clearRect(0, 0, this.normalModeCanvas.width, this.normalModeCanvas.height);
-        
+
         const myUserData = userDataController.myAvatar.myUserData;
         this.canvasRotationDegrees = -1 * userDataController.myAvatar.myUserData.orientationEulerCurrent.yawDegrees;
 
@@ -425,7 +418,7 @@ export class TwoDimensionalRenderer {
     }
 
     drawWatchPartyMode() {
-
+        watchPartyController.draw();
     }
 
     draw() {

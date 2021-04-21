@@ -176,7 +176,7 @@ function onWatchNewVideo(newVideoURL, spaceName, roomName) {
         spaceInformation[spaceName][roomName].currentQueuedVideoURL = newVideoURL;
         console.log(`Emitting \`watchNewYouTubeVideo\` with Video ID \`${youTubeVideoID}\` to all users in ${spaceName}/${roomName}...`);
 
-        socketIOServer.sockets.in(spaceName).emit("watchNewYouTubeVideo", roomName, youTubeVideoID, spaceInformation[spaceName].currentVideoSeekTime);
+        socketIOServer.sockets.in(spaceName).emit("watchNewYouTubeVideo", roomName, youTubeVideoID, spaceInformation[spaceName][roomName].currentVideoSeekTime);
     }
 }
 

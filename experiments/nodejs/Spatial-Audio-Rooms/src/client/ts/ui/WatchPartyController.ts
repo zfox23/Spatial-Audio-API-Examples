@@ -1,7 +1,10 @@
 import '../../css/watchParty.scss';
-import { userDataController, webSocketConnectionController } from "..";
+import { connectionController, userDataController, videoController, webSocketConnectionController } from "..";
 import { SpatialAudioRoom } from "./RoomController";
-import { MyAvatarModes } from "../userData/UserDataController";
+import { MyAvatarModes, UserData } from "../userData/UserDataController";
+import { Utilities } from '../utilities/Utilities';
+import { AVATAR } from '../constants/constants';
+import { OrientationEuler3D } from 'hifi-spatial-audio';
 
 declare var HIFI_PROVIDED_USER_ID: string;
 declare var HIFI_SPACE_NAME: string;
@@ -12,14 +15,23 @@ const CHECK_PLAYER_TIME_TIMEOUT_MS = 1000;
 export class WatchPartyController {
     normalModeCanvas: HTMLCanvasElement;
     watchPartyModeCanvas: HTMLCanvasElement;
+    watchPartyModeCTX: CanvasRenderingContext2D;
     seekTimeout: NodeJS.Timeout;
     lastPlayerTime: number = -1;
     youTubePlayer: any;
     currentWatchPartyRoom: SpatialAudioRoom;
+    pxPerM: number;
 
     constructor() {
         this.normalModeCanvas = document.querySelector(".normalModeCanvas");
-        this.watchPartyModeCanvas = document.querySelector(".watchPartyModeCanvas");
+
+        this.watchPartyModeCanvas = document.createElement("canvas");
+        this.watchPartyModeCanvas.classList.add("watchPartyModeCanvas", "displayNone");
+        document.body.appendChild(this.watchPartyModeCanvas);
+        this.watchPartyModeCTX = this.watchPartyModeCanvas.getContext("2d");
+        
+        window.addEventListener("resize", this.updateWatchPartyCanvasDimensions.bind(this));
+        this.updateWatchPartyCanvasDimensions();
 
         let youTubePlayerElement = document.createElement("div");
         youTubePlayerElement.classList.add("youTubePlayerElement", "displayNone");
@@ -120,6 +132,15 @@ export class WatchPartyController {
         });
     }
 
+    resetMouthOrientation() {
+        let lockedYawDegrees = userDataController.myAvatar.myUserData.currentSeat.orientation.yawDegrees;
+        userDataController.myAvatar.myUserData.orientationEulerCurrent.yawDegrees = lockedYawDegrees;
+        let hifiCommunicator = connectionController.hifiCommunicator;
+        if (hifiCommunicator) {
+            hifiCommunicator.updateUserDataAndTransmit({ orientationEuler: new OrientationEuler3D({ yawDegrees: lockedYawDegrees }) });
+        }
+    }
+
     joinWatchParty(watchPartyRoom: SpatialAudioRoom) {
         console.log(`User joined the Watch Party in the room named ${watchPartyRoom.name}!`);
         this.currentWatchPartyRoom = watchPartyRoom;
@@ -130,6 +151,7 @@ export class WatchPartyController {
         document.querySelector(".zoomUIContainer").classList.add("displayNone");
         document.querySelector(".signalButtonContainer").classList.add("displayNone");
         webSocketConnectionController.socket.emit("watchPartyUserJoined", HIFI_PROVIDED_USER_ID, HIFI_SPACE_NAME, this.currentWatchPartyRoom.name);
+        this.resetMouthOrientation();
     }
 
     leaveWatchParty() {
@@ -141,6 +163,8 @@ export class WatchPartyController {
         document.querySelector(".youTubePlayerElement").classList.add("displayNone");
         document.querySelector(".zoomUIContainer").classList.remove("displayNone");
         document.querySelector(".signalButtonContainer").classList.remove("displayNone");
+        this.youTubePlayer.stopVideo();
+        this.stopSeekDetector();
     }
 
     onPlayerReady(event: any){
@@ -191,6 +215,11 @@ export class WatchPartyController {
     runSeekDetector() {
         this.seekTimeout = undefined;
 
+        if (!this.currentWatchPartyRoom) {
+            this.stopSeekDetector();
+            return;
+        }        
+
         if (this.lastPlayerTime !== -1) {
             if (this.youTubePlayer.getPlayerState() === YT.PlayerState.PLAYING) {
                 let currentTime = this.youTubePlayer.getCurrentTime();
@@ -227,5 +256,125 @@ export class WatchPartyController {
         this.youTubePlayer.stopVideo();
 
         this.stopSeekDetector();
+    }
+
+    updateWatchPartyCanvasDimensions() {
+        this.watchPartyModeCanvas.width = window.innerWidth;
+        this.watchPartyModeCanvas.height = 100;
+        
+        this.pxPerM = this.watchPartyModeCanvas.height / AVATAR.RADIUS_M * AVATAR.MAX_VOLUME_DB_AVATAR_RADIUS_MULTIPLIER / 4;
+    }
+
+    drawVolumeBubble({ userData }: { userData: UserData }) {
+        if (userData.volumeDecibels < userData.volumeThreshold) {
+            return;
+        }
+        let pxPerM = this.pxPerM;
+        let watchPartyModeCTX = this.watchPartyModeCTX;
+        watchPartyModeCTX.beginPath();
+        watchPartyModeCTX.arc(0, 0, Utilities.linearScale(userData.volumeDecibels, AVATAR.MIN_VOLUME_DB, AVATAR.MAX_VOLUME_DB, AVATAR.RADIUS_M, AVATAR.RADIUS_M * AVATAR.MAX_VOLUME_DB_AVATAR_RADIUS_MULTIPLIER) * pxPerM, 0, 2 * Math.PI);
+        watchPartyModeCTX.fillStyle = userData.colorHex || Utilities.hexColorFromString(userData.visitIDHash);
+        watchPartyModeCTX.fill();
+        watchPartyModeCTX.closePath();
+    }
+
+    drawAvatarBase({ userData }: { userData: UserData }) {
+        let isMine = userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash;
+        let watchPartyModeCTX = this.watchPartyModeCTX;
+        let pxPerM = this.pxPerM;
+        let avatarRadiusM = AVATAR.RADIUS_M;
+        let avatarRadiusPX = avatarRadiusM * pxPerM;
+
+        let colorHex = userData.colorHex || Utilities.hexColorFromString(userData.visitIDHash);
+
+        watchPartyModeCTX.lineWidth = AVATAR.STROKE_WIDTH_PX;
+        watchPartyModeCTX.fillStyle = colorHex;
+        watchPartyModeCTX.beginPath();
+        watchPartyModeCTX.arc(0, 0, avatarRadiusPX, 0, 2 * Math.PI);
+        if (isMine) {
+            if (userData.isMuted) {
+                watchPartyModeCTX.strokeStyle = AVATAR.AVATAR_STROKE_HEX_MUTED;
+            } else {
+                watchPartyModeCTX.strokeStyle = AVATAR.AVATAR_STROKE_HEX_UNMUTED;
+            }
+        } else {
+            watchPartyModeCTX.strokeStyle = AVATAR.AVATAR_STROKE_HEX_UNMUTED;
+        }
+        watchPartyModeCTX.stroke();
+        watchPartyModeCTX.fill();
+        watchPartyModeCTX.closePath();
+    }
+
+    drawAvatarVideo({ userData }: { userData: UserData }) {
+        if (videoController.providedUserIDToVideoElementMap.has(userData.providedUserID)) {
+            let watchPartyModeCTX = this.watchPartyModeCTX;
+            let avatarRadiusM = AVATAR.RADIUS_M;
+            let pxPerM = this.pxPerM;
+            let avatarRadiusPX = avatarRadiusM * pxPerM;
+
+            watchPartyModeCTX.save();
+            watchPartyModeCTX.clip();
+            if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash) {
+                watchPartyModeCTX.scale(-1, 1);
+            }
+            watchPartyModeCTX.drawImage(videoController.providedUserIDToVideoElementMap.get(userData.providedUserID), -avatarRadiusPX, -avatarRadiusPX, avatarRadiusPX * 2, avatarRadiusPX * 2);
+            watchPartyModeCTX.restore();
+        }
+    }
+
+    drawAvatarLabel({ userData }: { userData: UserData }) {
+        // Don't draw the avatar label if we're drawing that avatar's video.
+        if (videoController.providedUserIDToVideoElementMap.has(userData.providedUserID)) {
+            return;
+        }
+
+        let watchPartyModeCTX = this.watchPartyModeCTX;
+        let pxPerM = this.pxPerM;
+        let avatarRadiusM = AVATAR.RADIUS_M;
+
+        watchPartyModeCTX.font = AVATAR.AVATAR_LABEL_FONT;
+        watchPartyModeCTX.fillStyle = Utilities.getConstrastingTextColor(Utilities.hexToRGB(userData.colorHex || Utilities.hexColorFromString(userData.visitIDHash)));
+        watchPartyModeCTX.textAlign = "center";
+        watchPartyModeCTX.textBaseline = "middle";
+
+        let textToDraw = userData.displayName && userData.displayName.length > 0 ? userData.displayName : userData.providedUserID;
+        let textMetrics = watchPartyModeCTX.measureText(textToDraw);
+        let avatarRadiusPX = avatarRadiusM * pxPerM;
+        if (textMetrics.width > avatarRadiusPX + 5) {
+            textToDraw = Utilities.getInitials(textToDraw);
+        }
+
+        watchPartyModeCTX.fillText(textToDraw, 0, 0);
+    }
+
+    drawAvatar({ userData }: { userData: UserData }) {
+        this.drawVolumeBubble({ userData });
+        this.drawAvatarBase({ userData });
+        this.drawAvatarVideo({ userData });
+        this.drawAvatarLabel({ userData });
+    }
+
+    draw() {
+        let watchPartyModeCTX = this.watchPartyModeCTX;
+        watchPartyModeCTX.clearRect(0, 0, this.watchPartyModeCanvas.width, this.watchPartyModeCanvas.height);
+
+        let room = this.currentWatchPartyRoom;
+
+        if (!room) {
+            return;
+        }
+
+        let userDataInWatchPartyRoom = userDataController.allOtherUserData.concat(userDataController.myAvatar.myUserData);
+        userDataInWatchPartyRoom = userDataInWatchPartyRoom.filter((userData) => {
+            return userData.currentRoom === room;
+        });
+
+        watchPartyModeCTX.translate(0, this.watchPartyModeCanvas.height / 2);
+        let widthIncrementor = this.watchPartyModeCanvas.width / (userDataInWatchPartyRoom.length + 1);
+        for (let i = 0; i < userDataInWatchPartyRoom.length; i++) {
+            watchPartyModeCTX.translate(widthIncrementor, 0);
+            this.drawAvatar({ userData: userDataInWatchPartyRoom[i] });
+        }
+        watchPartyModeCTX.translate(-widthIncrementor * userDataInWatchPartyRoom.length, -this.watchPartyModeCanvas.height / 2);
     }
 }
