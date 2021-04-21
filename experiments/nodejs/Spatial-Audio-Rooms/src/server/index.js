@@ -92,19 +92,22 @@ app.post('/spatial-audio-rooms/create', (req, res, next) => {
     res.json({
         "blocks": [
             {
-                "type": "section",
-                "response_type": "in_channel",
+                "type": "header",
                 "text": {
-                    "text": "*This channel's Spatial Audio Room is located at:.*"
+                    "type": "plain_text",
+                    "text": "This Channel's Spatial Audio Room",
+                    "emoji": true
                 }
             },
             {
                 "type": "section",
-                "response_type": "in_channel",
-                "text": {
-                    "text": spaceURL
-                }
-            }
+                "fields": [
+                    {
+                        "type": "mrkdwn",
+                        "text": `*Link:*\n${spaceURL}`
+                    },
+                ]
+            },
         ]
     });
 });
