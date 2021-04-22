@@ -97,7 +97,7 @@ app.post('/spatial-audio-rooms/create', (req, res, next) => {
             console.error(`Couldn't generate Spatial Audio Room link. Request body:\n${JSON.stringify(req.body)}`);
             res.json({
                 "response_type": "ephemeral",
-                "text": "Sorry, I couldn't generate a Spatial Audio Room for you. Please contact Zach."
+                "text": "Sorry, I couldn't generate a Spatial Audio Room for you."
             });
             return;
         }
