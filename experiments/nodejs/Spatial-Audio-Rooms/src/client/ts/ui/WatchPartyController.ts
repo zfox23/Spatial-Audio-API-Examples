@@ -1,5 +1,5 @@
 import '../../css/watchParty.scss';
-import { connectionController, roomController, userDataController, userInputController, videoController, webSocketConnectionController } from "..";
+import { connectionController, roomController, uiController, userDataController, userInputController, videoController, webSocketConnectionController } from "..";
 import { SpatialAudioRoom } from "./RoomController";
 import { MyAvatarModes, UserData } from "../userData/UserDataController";
 import { Utilities } from '../utilities/Utilities';
@@ -22,6 +22,7 @@ export class WatchPartyController {
     pxPerM: number;
     toggleJoinWatchPartyButton: HTMLButtonElement;
     currentYouTubeVideoID: string;
+    hoveredUserData: UserData;
 
     constructor() {
         this.normalModeCanvas = document.querySelector(".normalModeCanvas");
@@ -30,6 +31,25 @@ export class WatchPartyController {
         this.watchPartyModeCanvas.classList.add("watchPartyModeCanvas", "displayNone");
         document.body.appendChild(this.watchPartyModeCanvas);
         this.watchPartyModeCTX = this.watchPartyModeCanvas.getContext("2d");
+        
+        this.watchPartyModeCanvas.addEventListener("click", this.handleCanvasClick.bind(this));
+        if (window.PointerEvent) {
+            this.watchPartyModeCanvas.addEventListener('pointerdown', this.handleGestureOnCanvasStart.bind(this), true);
+            this.watchPartyModeCanvas.addEventListener('pointermove', this.handleGestureOnCanvasMove.bind(this), true);
+            this.watchPartyModeCanvas.addEventListener('pointerup', this.handleGestureOnCanvasEnd.bind(this), true);
+            this.watchPartyModeCanvas.addEventListener("pointerout", this.handleGestureOnCanvasCancel.bind(this), true);
+        } else {
+            this.watchPartyModeCanvas.addEventListener('touchstart', this.handleGestureOnCanvasStart.bind(this), true);
+            this.watchPartyModeCanvas.addEventListener('touchmove', this.handleGestureOnCanvasMove.bind(this), true);
+            this.watchPartyModeCanvas.addEventListener('touchend', this.handleGestureOnCanvasEnd.bind(this), true);
+            this.watchPartyModeCanvas.addEventListener("touchcancel", this.handleGestureOnCanvasCancel.bind(this), true);
+
+            this.watchPartyModeCanvas.addEventListener("mousedown", this.handleGestureOnCanvasStart.bind(this), true);
+        }
+        this.watchPartyModeCanvas.addEventListener("gesturestart", (e) => { e.preventDefault(); }, false);
+        this.watchPartyModeCanvas.addEventListener("gesturechange", (e) => { e.preventDefault(); }, false);
+        this.watchPartyModeCanvas.addEventListener("gestureend", (e) => { e.preventDefault(); }, false);
+        this.watchPartyModeCanvas.addEventListener("contextmenu", (e) => { e.preventDefault(); }, false);
 
         window.addEventListener("resize", this.updateWatchPartyCanvasDimensions.bind(this));
         this.updateWatchPartyCanvasDimensions();
@@ -122,6 +142,83 @@ export class WatchPartyController {
         webSocketConnectionController.socket.on("videoClear", (roomName: string, visitIDHash: string) => {
             this.videoClear(roomName, visitIDHash);
         });
+    }    
+
+    handleCanvasClick(event: TouchEvent | MouseEvent | PointerEvent) {
+        if (this.hoveredUserData) {
+            uiController.showAvatarContextMenu(this.hoveredUserData);
+            this.hoveredUserData = undefined;
+        }
+
+        document.body.classList.remove("cursorPointer");
+    }
+
+    handleGestureOnCanvasStart(event: TouchEvent | MouseEvent | PointerEvent) {
+        event.preventDefault();
+
+        roomController.hideRoomList();
+        uiController.hideAvatarContextMenu();
+        userInputController.hideChangeAudioInputDeviceMenu();
+
+        let target = <HTMLElement>event.target;
+
+        target.focus();
+
+        if (window.PointerEvent && event instanceof PointerEvent) {
+            target.setPointerCapture(event.pointerId);
+        } else {
+            this.normalModeCanvas.addEventListener('mousemove', this.handleGestureOnCanvasMove.bind(this), true);
+            this.normalModeCanvas.addEventListener('mouseup', this.handleGestureOnCanvasEnd.bind(this), true);
+        }
+    }
+
+    handleGestureOnCanvasMove(event: MouseEvent | PointerEvent) {
+        event.preventDefault();
+
+        return;
+
+        // TODO: Implement the below so users can hover over avatars in the small canvas
+
+        // let hoverM = Utilities.watchPartyModeCanvasPXToM({ x: event.offsetX, y: event.offsetY });
+
+        // if (!(hoverM && userDataController.myAvatar.myUserData.positionCurrent)) {
+        //     return;
+        // }
+
+        // this.hoveredUserData = userDataController.allOtherUserData.find((userData) => {
+        //     return userData.positionCurrent && Utilities.getDistanceBetween2DPoints(userData.positionCurrent.x, userData.positionCurrent.z, hoverM.x, hoverM.z) < AVATAR.RADIUS_M;
+        // });
+
+        // if (!this.hoveredUserData && Utilities.getDistanceBetween2DPoints(userDataController.myAvatar.myUserData.positionCurrent.x, userDataController.myAvatar.myUserData.positionCurrent.z, hoverM.x, hoverM.z) < AVATAR.RADIUS_M) {
+        //     this.hoveredUserData = userDataController.myAvatar.myUserData;
+        // }
+
+        // if (this.hoveredUserData) {
+        //     document.body.classList.add("cursorPointer");
+        // } else {
+        //     document.body.classList.remove("cursorPointer");
+        // }
+    }
+
+    handleGestureOnCanvasEnd(event: MouseEvent | PointerEvent) {
+        event.preventDefault();
+
+        let target = <HTMLElement>event.target;
+
+        // Remove Event Listeners
+        if (window.PointerEvent) {
+            if (event instanceof PointerEvent && event.pointerId) {
+                target.releasePointerCapture(event.pointerId);
+            }
+        } else {
+            // Remove Mouse Listeners
+            this.normalModeCanvas.removeEventListener('mousemove', this.handleGestureOnCanvasMove, true);
+            this.normalModeCanvas.removeEventListener('mouseup', this.handleGestureOnCanvasEnd, true);
+        }
+    }
+
+    handleGestureOnCanvasCancel(event: MouseEvent | PointerEvent) {
+        this.handleGestureOnCanvasEnd(event);
     }
 
     videoPlay(roomName: string, visitIDHash: string, seekTimeSeconds: number) {
@@ -177,6 +274,7 @@ export class WatchPartyController {
         if (!this.currentWatchPartyRoom) {
             return;
         }
+        this.videoClear(this.currentWatchPartyRoom.name, userDataController.myAvatar.myUserData.visitIDHash);
         console.log(`User left the Watch Party!`);
         webSocketConnectionController.socket.emit("watchPartyUserLeft", userDataController.myAvatar.myUserData.visitIDHash);
         this.currentWatchPartyRoom = undefined;
@@ -186,9 +284,6 @@ export class WatchPartyController {
         document.querySelector(".youTubePlayerElement").classList.add("displayNone");
         document.querySelector(".zoomUIContainer").classList.remove("displayNone");
         document.querySelector(".signalButtonContainer").classList.remove("displayNone");
-        this.youTubePlayer.stopVideo();
-        this.stopSeekDetector();
-        this.currentYouTubeVideoID = undefined;
     }
 
     onPlayerReady(event: any) {
@@ -278,9 +373,12 @@ export class WatchPartyController {
             return;
         }
 
-        console.log(`\`${visitIDHash}\` requested that video playback be stopped.`);
+        console.log(`\`${visitIDHash}\` requested that the video be cleared.`);
         
         this.currentYouTubeVideoID = undefined;
+        
+        this.stopSeekDetector();
+        this.youTubePlayer.stopVideo();
 
         this.youTubePlayer.destroy();
         

@@ -184,7 +184,7 @@ export class Utilities {
         return [nx, ny];
     }
 
-    static canvasPXToM(canvasPX: CanvasPX) {
+    static normalModeCanvasPXToM(canvasPX: CanvasPX) {
         let pxPerM = physicsController.pxPerMCurrent;
         let canvasOffsetPX = twoDimensionalRenderer.canvasOffsetPX;
         let cameraPositionNoOffsetM = twoDimensionalRenderer.cameraPositionNoOffsetM;
@@ -234,5 +234,24 @@ export class Utilities {
         } else {
             return undefined;
         }
+    }
+    
+    static getGesturePointFromEvent(evt: MouseEvent | TouchEvent) {
+        let point = {
+            x: 0,
+            y: 0
+        };
+
+        if (typeof (TouchEvent) !== "undefined" && evt instanceof TouchEvent) {
+            // Prefer Touch Events
+            point.x = evt.targetTouches[0].clientX;
+            point.y = evt.targetTouches[0].clientY;
+        } else {
+            // Either Mouse event or Pointer Event
+            point.x = (<MouseEvent>evt).clientX;
+            point.y = (<MouseEvent>evt).clientY;
+        }
+
+        return point;
     }
 }

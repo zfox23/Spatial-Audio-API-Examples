@@ -424,28 +424,9 @@ export class UserInputController {
         webSocketConnectionController.updateMyUserDataOnWebSocketServer();
     }
 
-    getGesturePointFromEvent(evt: MouseEvent | TouchEvent) {
-        let point = {
-            x: 0,
-            y: 0
-        };
-
-        if (typeof (TouchEvent) !== "undefined" && evt instanceof TouchEvent) {
-            // Prefer Touch Events
-            point.x = evt.targetTouches[0].clientX;
-            point.y = evt.targetTouches[0].clientY;
-        } else {
-            // Either Mouse event or Pointer Event
-            point.x = (<MouseEvent>evt).clientX;
-            point.y = (<MouseEvent>evt).clientY;
-        }
-
-        return point;
-    }
-
     handleCanvasClick(event: TouchEvent | MouseEvent | PointerEvent) {
         if (signalsController.activeSignal && (event instanceof MouseEvent || event instanceof PointerEvent)) {
-            let clickM = new Point3D(Utilities.canvasPXToM({x: event.offsetX, y: event.offsetY}));
+            let clickM = new Point3D(Utilities.normalModeCanvasPXToM({x: event.offsetX, y: event.offsetY}));
 
             let isCloseEnough = false;
             if (userDataController.myAvatar.myUserData && userDataController.myAvatar.myUserData.positionCurrent) {
@@ -489,7 +470,7 @@ export class UserInputController {
             this.normalModeCanvas.addEventListener('mouseup', this.handleGestureOnCanvasEnd.bind(this), true);
         }
 
-        let gesturePointPX = this.getGesturePointFromEvent(event);
+        let gesturePointPX = Utilities.getGesturePointFromEvent(event);
 
         if ((event instanceof PointerEvent || event instanceof MouseEvent) && event.buttons === 1) {
             this.leftClickStartPositionPX = gesturePointPX;
@@ -499,7 +480,7 @@ export class UserInputController {
     handleGestureOnCanvasMove(event: MouseEvent | PointerEvent) {
         event.preventDefault();
 
-        let gesturePointPX = this.getGesturePointFromEvent(event);
+        let gesturePointPX = Utilities.getGesturePointFromEvent(event);
 
         if (event.buttons === 1 && this.leftClickStartPositionPX !== undefined && !pathsController.currentPath && !(userDataController.myAvatarEars.isConnecting || userDataController.myAvatarEars.isConnected)) {
             let newDistance = gesturePointPX.x - this.leftClickStartPositionPX.x;
@@ -517,7 +498,7 @@ export class UserInputController {
                 }
             }
         } else {
-            let hoverM = Utilities.canvasPXToM({ x: event.offsetX, y: event.offsetY });
+            let hoverM = Utilities.normalModeCanvasPXToM({ x: event.offsetX, y: event.offsetY });
 
             if (!(hoverM && userDataController.myAvatar.myUserData.positionCurrent)) {
                 return;

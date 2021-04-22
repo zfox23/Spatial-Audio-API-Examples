@@ -399,6 +399,9 @@ socketIOServer.on("connection", (socket) => {
 
         if (!spaceInformation[spaceName]["rooms"]) {
             spaceInformation[spaceName]["rooms"] = {};
+        }
+
+        if (!spaceInformation[spaceName]["rooms"][roomName]) {
             spaceInformation[spaceName]["rooms"][roomName] = {
                 currentQueuedVideoURL: undefined,
                 currentVideoSeekTime: undefined,
@@ -474,7 +477,7 @@ socketIOServer.on("connection", (socket) => {
             console.log(`In ${spaceName}/${roomName}, \`${visitIDHash}\` requested that the video be played starting at ${seekTimeSeconds}s.`);
             socket.broadcast.to(spaceName).emit("videoPlay", roomName, visitIDHash, seekTimeSeconds);
         }
-        
+
         spaceInformation[spaceName]["rooms"][roomName].currentVideoSeekTime = seekTimeSeconds;
         spaceInformation[spaceName]["rooms"][roomName].currentVideoSeekTimeSetTimestamp = Date.now();
         spaceInformation[spaceName]["rooms"][roomName].currentPlayerState = newPlayerState;

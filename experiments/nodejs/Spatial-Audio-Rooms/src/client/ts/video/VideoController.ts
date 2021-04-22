@@ -41,6 +41,7 @@ export class VideoController {
             this.twilioRoom.participants.forEach(this.participantConnected.bind(this));
             this.twilioRoom.on('participantConnected', this.participantConnected.bind(this));
 
+            this.twilioRoom.on('trackUnpublished', this.trackUnpublished.bind(this));
             this.twilioRoom.on('participantDisconnected', this.participantDisconnected.bind(this));
             this.twilioRoom.once('disconnected', error => this.twilioRoom.participants.forEach(this.participantDisconnected.bind(this)));
 
@@ -162,6 +163,18 @@ export class VideoController {
                 this.trackSubscribed(participant.identity, publication.track);
             }
         });
+    }
+
+    trackUnpublished(publication: Video.RemoteTrackPublication, participant: Video.RemoteParticipant) {
+        console.log(`Participant \`${participant.identity}\` unpublished their video.`);
+
+        let videoEl = document.getElementById(participant.identity);
+
+        if (videoEl) {
+            videoEl.remove();
+        }
+
+        this.providedUserIDToVideoElementMap.delete(participant.identity);
     }
 
     participantDisconnected(participant: Video.RemoteParticipant) {
