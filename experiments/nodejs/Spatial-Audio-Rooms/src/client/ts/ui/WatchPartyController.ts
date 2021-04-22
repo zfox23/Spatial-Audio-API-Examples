@@ -91,16 +91,7 @@ export class WatchPartyController {
         firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
         (window as any).onYouTubeIframeAPIReady = () => {
-            this.youTubePlayer = new YT.Player('youTubePlayerElement', {
-                height: '100%',
-                width: '100%',
-                playerVars: { 'autoplay': false, 'controls': true },
-                events: {
-                    'onReady': this.onPlayerReady.bind(this),
-                    'onStateChange': this.onPlayerStateChange.bind(this),
-                    'onError': this.onPlayerError.bind(this)
-                }
-            });
+            this.createYouTubePlayer();
         }
 
         webSocketConnectionController.socket.on("watchNewYouTubeVideo", (roomName: string, youTubeVideoID: string, seekTimeSeconds: number, playerState: number) => {
@@ -367,6 +358,19 @@ export class WatchPartyController {
 
         this.seekTimeout = setTimeout(this.runSeekDetector.bind(this), CHECK_PLAYER_TIME_TIMEOUT_MS);
     }
+
+    createYouTubePlayer() {
+        this.youTubePlayer = new YT.Player('youTubePlayerElement', {
+            height: '100%',
+            width: '100%',
+            playerVars: { 'autoplay': false, 'controls': true, 'modestbranding': true, 'origin': "https://experiments.highfidelity.com", 'playsinline': 1 },
+            events: {
+                'onReady': this.onPlayerReady.bind(this),
+                'onStateChange': this.onPlayerStateChange.bind(this),
+                'onError': this.onPlayerError.bind(this)
+            }
+        });
+    }
     
     videoClear(roomName: string, visitIDHash: string) {
         if (!this.currentWatchPartyRoom || this.currentWatchPartyRoom.name !== roomName) {
@@ -376,22 +380,12 @@ export class WatchPartyController {
         console.log(`\`${visitIDHash}\` requested that the video be cleared.`);
         
         this.currentYouTubeVideoID = undefined;
-        
+
         this.stopSeekDetector();
         this.youTubePlayer.stopVideo();
 
         this.youTubePlayer.destroy();
-        
-        this.youTubePlayer = new YT.Player('youTubePlayerElement', {
-            height: '100%',
-            width: '100%',
-            playerVars: { 'autoplay': false, 'controls': true },
-            events: {
-                'onReady': this.onPlayerReady.bind(this),
-                'onStateChange': this.onPlayerStateChange.bind(this),
-                'onError': this.onPlayerError.bind(this)
-            }
-        });
+        this.createYouTubePlayer();
         
         document.querySelector(".youTubePlayerElement").classList.remove("displayNone");
 
