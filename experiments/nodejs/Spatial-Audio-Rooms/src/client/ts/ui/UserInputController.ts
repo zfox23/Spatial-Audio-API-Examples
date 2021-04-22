@@ -458,6 +458,8 @@ export class UserInputController {
         roomController.hideRoomList();
         uiController.hideAvatarContextMenu();
         this.hideChangeAudioInputDeviceMenu();
+        this.hideChangeAudioOutputDeviceMenu();
+        this.hideChangeVideoDeviceMenu();
 
         let target = <HTMLElement>event.target;
 
