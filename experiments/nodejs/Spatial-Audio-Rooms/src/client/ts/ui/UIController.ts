@@ -1,4 +1,4 @@
-import { avDevicesController, connectionController, physicsController, roomController, userDataController, userInputController, webSocketConnectionController } from '..';
+import { avDevicesController, connectionController, physicsController, roomController, twoDimensionalRenderer, userDataController, userInputController, webSocketConnectionController } from '..';
 import '../../css/controls.scss';
 import { AudionetInitResponse, ConnectionController } from '../connection/ConnectionController';
 import { UserData } from '../userData/UserDataController';

@@ -425,6 +425,7 @@ export class UserInputController {
     }
 
     handleCanvasClick(event: TouchEvent | MouseEvent | PointerEvent) {
+        console.log(event)
         if (signalsController.activeSignal && (event instanceof MouseEvent || event instanceof PointerEvent)) {
             let clickM = new Point3D(Utilities.normalModeCanvasPXToM({x: event.offsetX, y: event.offsetY}));
 

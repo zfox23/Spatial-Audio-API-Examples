@@ -44,8 +44,28 @@ export class TwoDimensionalRenderer {
     }
 
     updateCanvasDimensions() {
+        let learnMoreContainer = document.querySelector('.learnMoreContainer');
+        let learnMoreContainerHeight = 0;
+        if (learnMoreContainer) {
+            learnMoreContainerHeight = learnMoreContainer.clientHeight;
+            let showRoomListButton = <HTMLElement>document.querySelector(".showRoomListButton");
+            if (showRoomListButton) {
+                showRoomListButton.style.top = `${learnMoreContainerHeight}px`;
+            }
+            let roomListInnerContainer = <HTMLElement>document.querySelector(".roomListInnerContainer");
+            if (roomListInnerContainer) {
+                roomListInnerContainer.style.margin = `${72 + learnMoreContainerHeight}px 0 0 0`;
+            }
+            let signalButtonContainer = <HTMLElement>document.querySelector(".signalButtonContainer");
+            if (signalButtonContainer) {
+                signalButtonContainer.style.top = `${learnMoreContainerHeight}px`;
+            }
+        }
+
         this.normalModeCanvas.width = window.innerWidth;
-        this.normalModeCanvas.height = window.innerHeight - 72;
+        this.normalModeCanvas.style.height = `${window.innerHeight - 72 - learnMoreContainerHeight}px`;
+        this.normalModeCanvas.style.top = `${learnMoreContainerHeight}px`
+        this.normalModeCanvas.height = window.innerHeight - 72 - learnMoreContainerHeight;
 
         try {
             physicsController.autoComputePXPerMFromRoom(userDataController.myAvatar.myUserData.currentRoom);

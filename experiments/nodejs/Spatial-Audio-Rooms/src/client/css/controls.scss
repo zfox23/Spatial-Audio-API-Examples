@@ -152,6 +152,25 @@ $bottom-controls-container-height: 72px;
     }
 }
 
+.learnMoreContainer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    text-align: center;
+    z-index: map-get(z-indices.$z-index, ui);
+    background-color: map-get(themes.$light-theme, body-background);
+    padding: 8px;
+    color: map-get(themes.$light-theme, text-secondary);
+    border-bottom: 1px black solid;
+
+    &__link {
+        color: map-get(themes.$light-theme, text-secondary);
+        font-family: 'Graphik-Semibold', 'Helvetica', 'Arial', sans-serif;
+        font-size: 18px;
+    }
+}
+
 .normalModeCanvas {
     width: 100%;
     height: calc(100vh - #{$bottom-controls-container-height});
