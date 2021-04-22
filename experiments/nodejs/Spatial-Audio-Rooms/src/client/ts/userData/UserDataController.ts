@@ -1,5 +1,5 @@
 import { OrientationEuler3D, Point3D } from "hifi-spatial-audio";
-import { userDataController, connectionController, roomController, physicsController, pathsController, uiController, twoDimensionalRenderer, webSocketConnectionController } from "..";
+import { userDataController, connectionController, roomController, physicsController, pathsController, uiController, twoDimensionalRenderer, webSocketConnectionController, watchPartyController } from "..";
 import { Path, Waypoint } from "../ai/PathsController";
 import { AVATAR, PHYSICS, UI } from "../constants/constants";
 import { SpatialAudioSeat, SpatialAudioRoom } from "../ui/RoomController";
@@ -187,6 +187,8 @@ class MyAvatar {
             if (pathsController.currentPath) {
                 pathsController.resetCurrentPath();
             }
+
+            watchPartyController.leaveWatchParty();
 
             let newPath = new Path();
             newPath.onActivated.push(() => {

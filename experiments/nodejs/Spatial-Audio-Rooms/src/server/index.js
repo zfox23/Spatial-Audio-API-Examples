@@ -175,9 +175,9 @@ function onWatchNewVideo(newVideoURL, spaceName, roomName) {
     if (youTubeVideoID) {
         spaceInformation[spaceName]["rooms"][roomName].currentQueuedVideoURL = newVideoURL;
         let startTimestamp = (Date.now() - spaceInformation[spaceName]["rooms"][roomName].currentVideoSeekTimeSetTimestamp) / 1000 + spaceInformation[spaceName]["rooms"][roomName].currentVideoSeekTime;
-        console.log(`Emitting \`watchNewYouTubeVideo\` with Video ID \`${youTubeVideoID}\` to all users in ${spaceName}/${roomName}, starting at ${startTimestamp}s...`);
+        console.log(`Emitting \`watchNewYouTubeVideo\` with Video ID \`${youTubeVideoID}\` to all users in ${spaceName}/${roomName}, starting at ${startTimestamp}s with state ${spaceInformation[spaceName]["rooms"][roomName].currentPlayerState}...`);
 
-        socketIOServer.sockets.in(spaceName).emit("watchNewYouTubeVideo", roomName, youTubeVideoID, startTimestamp);
+        socketIOServer.sockets.in(spaceName).emit("watchNewYouTubeVideo", roomName, youTubeVideoID, startTimestamp, spaceInformation[spaceName]["rooms"][roomName].currentPlayerState);
     }
 }
 
@@ -200,7 +200,7 @@ function onWatchPartyUserLeft(visitIDHash) {
                     spaceInformation[spaceName]["rooms"][roomName].currentQueuedVideoURL = undefined;
                     spaceInformation[spaceName]["rooms"][roomName].currentVideoSeekTime = undefined;
                     spaceInformation[spaceName]["rooms"][roomName].currentVideoSeekTimeSetTimestamp = undefined;
-                    spaceInformation[spaceName]["rooms"][roomName].currentPlayerState = undefined;
+                    spaceInformation[spaceName]["rooms"][roomName].currentPlayerState = 1;
                 }
 
                 console.log(`There are now ${spaceInformation[spaceName]["rooms"][roomName].watcherVisitIDHashes.size} watchers present in ${spaceName}/${roomName}`);
@@ -403,7 +403,7 @@ socketIOServer.on("connection", (socket) => {
                 currentQueuedVideoURL: undefined,
                 currentVideoSeekTime: undefined,
                 currentVideoSeekTimeSetTimestamp: undefined,
-                currentPlayerState: undefined,
+                currentPlayerState: 1,
                 watcherVisitIDHashes: new Set(),
             };
         }
@@ -463,7 +463,7 @@ socketIOServer.on("connection", (socket) => {
             return;
         }
 
-        if (!(newPlayerState === 1 || newPlayerState === 2) || spaceInformation[spaceName].currentPlayerState === newPlayerState) {
+        if (!(newPlayerState === 1 || newPlayerState === 2) || spaceInformation[spaceName]["rooms"][roomName].currentPlayerState === newPlayerState) {
             return;
         }
 
@@ -474,20 +474,23 @@ socketIOServer.on("connection", (socket) => {
             console.log(`In ${spaceName}/${roomName}, \`${visitIDHash}\` requested that the video be played starting at ${seekTimeSeconds}s.`);
             socket.broadcast.to(spaceName).emit("videoPlay", roomName, visitIDHash, seekTimeSeconds);
         }
-
-        spaceInformation[spaceName].currentPlayerState = newPlayerState;
+        
+        spaceInformation[spaceName]["rooms"][roomName].currentVideoSeekTime = seekTimeSeconds;
+        spaceInformation[spaceName]["rooms"][roomName].currentVideoSeekTimeSetTimestamp = Date.now();
+        spaceInformation[spaceName]["rooms"][roomName].currentPlayerState = newPlayerState;
     });
 
-    socket.on("stopVideo", (visitIDHash, spaceName, roomName) => {
-        if (!spaceInformation[spaceName]["rooms"][roomName]) {
+    socket.on("youTubeVideoEnded", (visitIDHash, spaceName, roomName) => {
+        if (!(spaceInformation[spaceName] && spaceInformation[spaceName]["rooms"][roomName])) {
             return;
         }
 
+        spaceInformation[spaceName]["rooms"][roomName].currentQueuedVideoURL = undefined;
         spaceInformation[spaceName]["rooms"][roomName].currentVideoSeekTime = undefined;
         spaceInformation[spaceName]["rooms"][roomName].currentVideoSeekTimeSetTimestamp = undefined;
         spaceInformation[spaceName]["rooms"][roomName].currentQueuedVideoURL = undefined;
-        console.log(`In ${spaceName}/${roomName}, \`${visitIDHash}\` requested that the video be stopped.`);
-        socketIOServer.sockets.in(spaceName).emit("stopVideoRequested", roomName, visitIDHash);
+        console.log(`In ${spaceName}/${roomName}, \`${visitIDHash}\` reported that the video ended.`);
+        socketIOServer.sockets.in(spaceName).emit("videoClear", roomName, visitIDHash);
     });
 });
 

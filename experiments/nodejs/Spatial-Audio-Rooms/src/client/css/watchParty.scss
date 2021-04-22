@@ -2,7 +2,7 @@
 @use "./z-indices";
 @import './include-media';
 $bottom-controls-container-height: 72px;
-$watch-party-mode-canvas-height: 172px;
+$watch-party-mode-canvas-height: 150px;
 
 .watchPartyModeCanvas {
     position: fixed;
@@ -11,6 +11,7 @@ $watch-party-mode-canvas-height: 172px;
     z-index: map-get(z-indices.$z-index, canvas);
     bottom: $bottom-controls-container-height;
     touch-action: none;
+    background-color: map-get(themes.$light-theme, watch-party-canvas-background);
 }
 
 .youTubePlayerElement {

@@ -1,9 +1,9 @@
 import '../../css/watchParty.scss';
-import { connectionController, userDataController, videoController, webSocketConnectionController } from "..";
+import { connectionController, roomController, userDataController, userInputController, videoController, webSocketConnectionController } from "..";
 import { SpatialAudioRoom } from "./RoomController";
 import { MyAvatarModes, UserData } from "../userData/UserDataController";
 import { Utilities } from '../utilities/Utilities';
-import { AVATAR } from '../constants/constants';
+import { AVATAR, UI } from '../constants/constants';
 import { OrientationEuler3D } from 'hifi-spatial-audio';
 
 declare var HIFI_SPACE_NAME: string;
@@ -21,6 +21,7 @@ export class WatchPartyController {
     currentWatchPartyRoom: SpatialAudioRoom;
     pxPerM: number;
     toggleJoinWatchPartyButton: HTMLButtonElement;
+    currentYouTubeVideoID: string;
 
     constructor() {
         this.normalModeCanvas = document.querySelector(".normalModeCanvas");
@@ -82,20 +83,21 @@ export class WatchPartyController {
             });
         }
 
-        webSocketConnectionController.socket.on("watchNewYouTubeVideo", (roomName: string, youTubeVideoID: string, seekTimeSeconds: number) => {
-            if (!this.currentWatchPartyRoom || this.currentWatchPartyRoom.name !== roomName) {
+        webSocketConnectionController.socket.on("watchNewYouTubeVideo", (roomName: string, youTubeVideoID: string, seekTimeSeconds: number, playerState: number) => {
+            if (!this.currentWatchPartyRoom || this.currentWatchPartyRoom.name !== roomName || this.currentYouTubeVideoID === youTubeVideoID) {
                 return;
             }
 
-            if (this.youTubePlayer.getPlayerState() === YT.PlayerState.PLAYING) {
-                return;
-            }
-
-            console.log(`Loading YouTube video with ID \`${youTubeVideoID}\`...`);
+            console.log(`Loading YouTube video with ID \`${youTubeVideoID}\` at ${seekTimeSeconds}s...`);
             this.youTubePlayer.loadVideoById(youTubeVideoID, seekTimeSeconds);
-
+            this.currentYouTubeVideoID = youTubeVideoID;
+            
             this.stopSeekDetector();
             this.seekTimeout = setTimeout(this.runSeekDetector.bind(this), CHECK_PLAYER_TIME_TIMEOUT_MS); // Delay the detector start.
+
+            if (playerState !== 1) { // YT.PlayerState.PLAYING
+                this.videoPause(roomName, undefined, seekTimeSeconds);
+            }
         });
 
         webSocketConnectionController.socket.on("videoSeek", (roomName: string, visitIDHash: string, seekTimeSeconds: number) => {
@@ -110,35 +112,38 @@ export class WatchPartyController {
         });
 
         webSocketConnectionController.socket.on("videoPause", (roomName: string, visitIDHash: string, seekTimeSeconds: number) => {
-            if (!this.currentWatchPartyRoom || this.currentWatchPartyRoom.name !== roomName) {
-                return;
-            }
-
-            this.stopSeekDetector();
-            console.log(`\`${visitIDHash}\` paused the video.`);
-            this.youTubePlayer.pauseVideo();
-            this.youTubePlayer.seekTo(seekTimeSeconds);
+            this.videoPause(roomName, visitIDHash, seekTimeSeconds);
         });
 
         webSocketConnectionController.socket.on("videoPlay", (roomName: string, visitIDHash: string, seekTimeSeconds: number) => {
-            if (!this.currentWatchPartyRoom || this.currentWatchPartyRoom.name !== roomName) {
-                return;
-            }
-
-            this.stopSeekDetector();
-            this.seekTimeout = setTimeout(this.runSeekDetector.bind(this), CHECK_PLAYER_TIME_TIMEOUT_MS); // Delay the detector start.
-            console.log(`\`${visitIDHash}\` started playing the video.`);
-            this.youTubePlayer.seekTo(seekTimeSeconds);
-            this.youTubePlayer.playVideo();
+            this.videoPlay(roomName, visitIDHash, seekTimeSeconds);
         });
 
-        webSocketConnectionController.socket.on("stopVideoRequested", (roomName: string, visitIDHash: string) => {
-            if (!this.currentWatchPartyRoom || this.currentWatchPartyRoom.name !== roomName) {
-                return;
-            }
-
-            this.onStopVideoRequested(visitIDHash);
+        webSocketConnectionController.socket.on("videoClear", (roomName: string, visitIDHash: string) => {
+            this.videoClear(roomName, visitIDHash);
         });
+    }
+
+    videoPlay(roomName: string, visitIDHash: string, seekTimeSeconds: number) {
+        if (!this.currentWatchPartyRoom || this.currentWatchPartyRoom.name !== roomName || this.youTubePlayer.getPlayerState() === YT.PlayerState.PLAYING) {
+            return;
+        }
+
+        this.stopSeekDetector();
+        this.seekTimeout = setTimeout(this.runSeekDetector.bind(this), CHECK_PLAYER_TIME_TIMEOUT_MS); // Delay the detector start.
+        console.log(`\`${visitIDHash || "Someone"}\` started playing the video at ${seekTimeSeconds}s.`);
+        this.youTubePlayer.seekTo(seekTimeSeconds);
+        this.youTubePlayer.playVideo();
+    }
+
+    videoPause(roomName: string, visitIDHash: string, seekTimeSeconds: number) {
+        if (!this.currentWatchPartyRoom || this.currentWatchPartyRoom.name !== roomName) {
+            return;
+        }
+
+        this.stopSeekDetector();
+        console.log(`\`${visitIDHash}\` paused the video at ${seekTimeSeconds}s.`);
+        this.youTubePlayer.pauseVideo();
     }
 
     resetMouthOrientation() {
@@ -151,6 +156,10 @@ export class WatchPartyController {
     }
 
     joinWatchParty(watchPartyRoom: SpatialAudioRoom) {
+        if (!watchPartyRoom) {
+            return;
+        }
+
         console.log(`User joined the Watch Party in the room named ${watchPartyRoom.name}!`);
         this.currentWatchPartyRoom = watchPartyRoom;
         userDataController.myAvatar.currentMode = MyAvatarModes.WatchParty;
@@ -161,6 +170,7 @@ export class WatchPartyController {
         document.querySelector(".signalButtonContainer").classList.add("displayNone");
         webSocketConnectionController.socket.emit("watchPartyUserJoined", userDataController.myAvatar.myUserData.visitIDHash, HIFI_SPACE_NAME, this.currentWatchPartyRoom.name);
         this.resetMouthOrientation();
+        roomController.hideRoomList();
     }
 
     leaveWatchParty() {
@@ -178,6 +188,7 @@ export class WatchPartyController {
         document.querySelector(".signalButtonContainer").classList.remove("displayNone");
         this.youTubePlayer.stopVideo();
         this.stopSeekDetector();
+        this.currentYouTubeVideoID = undefined;
     }
 
     onPlayerReady(event: any) {
@@ -191,16 +202,23 @@ export class WatchPartyController {
             return;
         }
 
-        console.log(`New YouTube Player State: ${event.data}`);
-
-        webSocketConnectionController.socket.emit("newPlayerState", userDataController.myAvatar.myUserData.visitIDHash, event.data, this.youTubePlayer.getCurrentTime(), HIFI_SPACE_NAME, this.currentWatchPartyRoom.name);
-
         switch (event.data) {
             case (YT.PlayerState.PLAYING):
+            case (YT.PlayerState.PAUSED):
+                this.stopSeekDetector();
+                this.seekTimeout = setTimeout(this.runSeekDetector.bind(this), CHECK_PLAYER_TIME_TIMEOUT_MS); // Delay the detector start.
                 break;
-            case (YT.PlayerState.CUED):
+            case (YT.PlayerState.ENDED):
+                webSocketConnectionController.socket.emit("youTubeVideoEnded", userDataController.myAvatar.myUserData.visitIDHash, HIFI_SPACE_NAME, this.currentWatchPartyRoom.name);
                 break;
+            default:
+                return;
         }
+
+        let seekTimeSeconds = this.youTubePlayer.getCurrentTime();
+        console.log(`New YouTube Player State: ${event.data}. Seek time: ${seekTimeSeconds}s`);
+
+        webSocketConnectionController.socket.emit("newPlayerState", userDataController.myAvatar.myUserData.visitIDHash, event.data, seekTimeSeconds, HIFI_SPACE_NAME, this.currentWatchPartyRoom.name);
     }
 
     maybeEnqueueNewVideo(url: URL) {
@@ -254,6 +272,33 @@ export class WatchPartyController {
 
         this.seekTimeout = setTimeout(this.runSeekDetector.bind(this), CHECK_PLAYER_TIME_TIMEOUT_MS);
     }
+    
+    videoClear(roomName: string, visitIDHash: string) {
+        if (!this.currentWatchPartyRoom || this.currentWatchPartyRoom.name !== roomName) {
+            return;
+        }
+
+        console.log(`\`${visitIDHash}\` requested that video playback be stopped.`);
+        
+        this.currentYouTubeVideoID = undefined;
+
+        this.youTubePlayer.destroy();
+        
+        this.youTubePlayer = new YT.Player('youTubePlayerElement', {
+            height: '100%',
+            width: '100%',
+            playerVars: { 'autoplay': false, 'controls': true },
+            events: {
+                'onReady': this.onPlayerReady.bind(this),
+                'onStateChange': this.onPlayerStateChange.bind(this),
+                'onError': this.onPlayerError.bind(this)
+            }
+        });
+        
+        document.querySelector(".youTubePlayerElement").classList.remove("displayNone");
+
+        this.stopSeekDetector();
+    }
 
     stopSeekDetector() {
         if (this.seekTimeout) {
@@ -263,19 +308,11 @@ export class WatchPartyController {
         this.lastPlayerTime = -1;
     }
 
-    onStopVideoRequested(visitIDHash: string) {
-        console.log(`\`${visitIDHash}\` requested that video playback be stopped.`);
-
-        this.youTubePlayer.stopVideo();
-
-        this.stopSeekDetector();
-    }
-
     updateWatchPartyCanvasDimensions() {
         this.watchPartyModeCanvas.width = window.innerWidth;
-        this.watchPartyModeCanvas.height = 172;
+        this.watchPartyModeCanvas.height = 150; // Must be the same as $watch-party-mode-canvas-height.
 
-        this.pxPerM = this.watchPartyModeCanvas.height / AVATAR.RADIUS_M * AVATAR.MAX_VOLUME_DB_AVATAR_RADIUS_MULTIPLIER / 4;
+        this.pxPerM = this.watchPartyModeCanvas.height / (AVATAR.RADIUS_M + UI.HOVER_HIGHLIGHT_RADIUS_ADDITION_M) / 2;
     }
 
     drawVolumeBubble({ userData }: { userData: UserData }) {
@@ -297,6 +334,17 @@ export class WatchPartyController {
         let pxPerM = this.pxPerM;
         let avatarRadiusM = AVATAR.RADIUS_M;
         let avatarRadiusPX = avatarRadiusM * pxPerM;
+
+        if (roomController.currentlyHoveringOverVisitIDHash === userData.visitIDHash || (userInputController.hoveredUserData && userInputController.hoveredUserData.visitIDHash === userData.visitIDHash)) {
+            watchPartyModeCTX.beginPath();
+            watchPartyModeCTX.arc(0, 0, (avatarRadiusM + UI.HOVER_HIGHLIGHT_RADIUS_ADDITION_M) * pxPerM, 0, 2 * Math.PI);
+            let grad = watchPartyModeCTX.createRadialGradient(0, 0, 0, 0, 0, (avatarRadiusM + UI.HOVER_HIGHLIGHT_RADIUS_ADDITION_M) * pxPerM);
+            grad.addColorStop(0.0, UI.HOVER_GLOW_HEX);
+            grad.addColorStop(1.0, UI.HOVER_GLOW_HEX + "00");
+            watchPartyModeCTX.fillStyle = grad;
+            watchPartyModeCTX.fill();
+            watchPartyModeCTX.closePath();
+        }
 
         let colorHex = userData.colorHex || Utilities.hexColorFromString(userData.visitIDHash);
 
