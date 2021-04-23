@@ -52,7 +52,7 @@ class AudioWorker {
         this.audioTrack = this.audioSource.createTrack();
         this.inputAudioMediaStream = new MediaStream([this.audioTrack ]);
         
-        this.hifiCommunicator = new HiFiCommunicator({initialHiFiAudioAPIData });        
+        this.hifiCommunicator = new HiFiCommunicator({ initialHiFiAudioAPIData });        
         await this.hifiCommunicator.setInputAudioMediaStream(this.inputAudioMediaStream);
 
         let connectResponse;
