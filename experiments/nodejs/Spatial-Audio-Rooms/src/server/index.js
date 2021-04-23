@@ -86,7 +86,7 @@ app.get('/spatial-audio-rooms/slack', (req, res, next) => {
         .then(json => {
             console.log(json);
             if (json && json.ok) {
-                let okString = `<p>The HiFi Helper bot has been successfully added to the Slack workspace named ${json.team.name}! Try typing <code>/hifi</code> in any Slack channel.</p>`;
+                let okString = `<p>The HiFi Helper bot has been successfully added to the Slack workspace named "${json.team.name}"! Try typing <code>/hifi</code> in any Slack channel.</p>`;
                 console.log(okString);
                 res.status(200).send(okString)
             } else {
