@@ -48,19 +48,28 @@ export class TwoDimensionalRenderer {
         let learnMoreContainerHeight = 0;
         if (learnMoreContainer) {
             learnMoreContainerHeight = learnMoreContainer.clientHeight;
+
             let showRoomListButton = <HTMLElement>document.querySelector(".showRoomListButton");
             if (showRoomListButton) {
                 showRoomListButton.style.top = `${learnMoreContainerHeight}px`;
             }
+
             let roomListInnerContainer = <HTMLElement>document.querySelector(".roomListInnerContainer");
             if (roomListInnerContainer) {
                 let topMarginPX = 72 + learnMoreContainerHeight;
                 roomListInnerContainer.style.margin = `${topMarginPX}px 0 0 0`;
                 roomListInnerContainer.style.height = `calc(100vh - 72px - ${topMarginPX}px - ${learnMoreContainerHeight}px)`;
             }
+
             let signalButtonContainer = <HTMLElement>document.querySelector(".signalButtonContainer");
             if (signalButtonContainer) {
                 signalButtonContainer.style.top = `${learnMoreContainerHeight}px`;
+            }
+
+            let youTubePlayerElement = <HTMLElement>document.querySelector(".youTubePlayerElement");
+            if (youTubePlayerElement) {
+                youTubePlayerElement.style.top = `${learnMoreContainerHeight}px`;
+                youTubePlayerElement.style.height = `calc(100vh - 72px - 150px - ${learnMoreContainerHeight}px)`;
             }
         }
 

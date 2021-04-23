@@ -55,7 +55,11 @@ export class UIThemeController {
         this.addThemedElementFromClassName("learnMoreContainer");
         this.addThemedElementFromClassName("learnMoreContainer__link");
         this.addThemedElementFromClassName("bottomBar");
-        this.addThemedElementFromClassName("changeDeviceMenu");
+        this.addThemedElementFromClassName("settingsMenu");
+        this.addThemedElementFromClassName("settingsMenu__closeButton");
+        this.addThemedElementFromClassName("settingsMenu__select");
+        this.addThemedElementFromClassName("settingsMenu__h1");
+        this.addThemedElementFromClassName("settingsMenu__h2");
         this.addThemedElementFromClassName("roomListOuterContainer");
         this.addThemedElementFromClassName("roomListInnerContainer");
         this.addThemedElementFromClassName("roomListInnerContainer__header");
@@ -66,6 +70,7 @@ export class UIThemeController {
         this.addThemedElementFromClassName("avatarContextMenu__closeButton");
         this.addThemedElementFromClassName("body");
         this.addThemedElementFromClassName("loadingScreen--text");
+        this.addThemedElementFromClassName("loadingScreen--icon");
         this.addThemedElementFromClassName("signalButton--active");
         this.addThemedElementFromClassName("watchPartyModeCanvas");
         this.addThemedElementFromClassName("toggleInputMuteButton--unmuted");
@@ -76,8 +81,10 @@ export class UIThemeController {
         this.addThemedElementFromClassName("toggleVideoButton--unmuted");
         this.addThemedElementFromClassName("toggleVideoButton--muted");
         this.addThemedElementFromClassName("toggleVideoButton--disabled");
+        this.addThemedElementFromClassName("toggleSettingsButton");
         this.addThemedElementFromClassName("toggleJoinWatchPartyButton");
         this.addThemedElementFromClassName("showRoomListButton");
+        this.addThemedElementFromClassName("avatarContextMenu__displayName--mine");
 
         this.themedElements.forEach((themedElementArray, baseClassName) => {
             themedElementArray.forEach((themedElement) => {

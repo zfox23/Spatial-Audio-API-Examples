@@ -149,9 +149,7 @@ export class WatchPartyController {
 
         roomController.hideRoomList();
         uiController.hideAvatarContextMenu();
-        userInputController.hideChangeAudioInputDeviceMenu();
-        userInputController.hideChangeAudioOutputDeviceMenu();
-        userInputController.hideChangeVideoDeviceMenu();
+        userInputController.hideSettingsMenu();
 
         let target = <HTMLElement>event.target;
 

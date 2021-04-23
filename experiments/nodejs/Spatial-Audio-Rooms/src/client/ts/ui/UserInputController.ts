@@ -13,6 +13,7 @@ export class UserInputController {
     toggleInputMuteButton: HTMLButtonElement;
     toggleOutputMuteButton: HTMLButtonElement;
     toggleVideoButton: HTMLButtonElement;
+    toggleSettingsButton: HTMLButtonElement;
     leftClickStartPositionPX: any;
     lastDistanceBetweenLeftClickEvents: number;
     hoveredUserData: UserData;
@@ -36,6 +37,11 @@ export class UserInputController {
         });
 
         this.toggleVideoButton = document.querySelector('.toggleVideoButton');
+
+        this.toggleSettingsButton = document.querySelector('.toggleSettingsButton');
+        this.toggleSettingsButton.addEventListener("click", (e) => {
+            this.toggleShowSettingsMenu();
+        });
 
         this.normalModeCanvas = document.querySelector('.normalModeCanvas');
         this.normalModeCanvas.addEventListener("click", this.handleCanvasClick.bind(this));
@@ -132,36 +138,64 @@ export class UserInputController {
         }
     }
 
-    hideChangeAudioInputDeviceMenu() {
-        let changeAudioInputDeviceMenu = document.querySelector(".changeAudioInputDeviceMenu");
-        if (changeAudioInputDeviceMenu) {
-            changeAudioInputDeviceMenu.remove();
+    hideSettingsMenu() {
+        let settingsMenu = document.querySelector(".settingsMenu");
+        if (settingsMenu) {
+            settingsMenu.remove();
         }
     }
 
-    toggleShowChangeAudioInputDeviceMenu() {
-        let changeAudioInputDeviceMenu = document.querySelector(".changeAudioInputDeviceMenu");
-        if (changeAudioInputDeviceMenu) {
-            this.hideChangeAudioInputDeviceMenu();
+    toggleShowSettingsMenu() {
+        roomController.hideRoomList();
+
+        let settingsMenu = document.querySelector(".settingsMenu");
+        if (settingsMenu) {
+            this.hideSettingsMenu();
         } else {
-            this.hideChangeVideoDeviceMenu();
-            this.hideChangeAudioInputDeviceMenu();
-            this.hideChangeAudioOutputDeviceMenu();
             navigator.mediaDevices.enumerateDevices()
                 .then((devices) => {
-                    changeAudioInputDeviceMenu = document.createElement("div");
-                    changeAudioInputDeviceMenu.classList.add("changeDeviceMenu", "changeAudioInputDeviceMenu");
-                    uiThemeController.refreshThemedElements();
+                    settingsMenu = document.createElement("div");
+                    settingsMenu.classList.add("settingsMenu");
+
+                    let closeButton = document.createElement("button");
+                    closeButton.innerHTML = "X";
+                    closeButton.classList.add("settingsMenu__closeButton");
+                    closeButton.addEventListener("click", (e) => {
+                        this.hideSettingsMenu();
+                    });
+                    settingsMenu.appendChild(closeButton);
+
+                    let settingsMenu__header = document.createElement("h2");
+                    settingsMenu__header.classList.add("settingsMenu__h1");
+                    settingsMenu__header.innerHTML = "DEVICES";
+                    settingsMenu.appendChild(settingsMenu__header);
 
                     let changeAudioInputDeviceMenu__header = document.createElement("h2");
-                    changeAudioInputDeviceMenu__header.classList.add("changeDeviceMenu__header", "changeAudioInputDeviceMenu__header");
-                    changeAudioInputDeviceMenu__header.innerHTML = `Audio Input Device`;
-                    changeAudioInputDeviceMenu.appendChild(changeAudioInputDeviceMenu__header);
+                    changeAudioInputDeviceMenu__header.classList.add("settingsMenu__h2");
+                    changeAudioInputDeviceMenu__header.innerHTML = `AUDIO INPUT DEVICE`;
 
                     let changeAudioInputDeviceMenu__select = document.createElement("select");
-                    changeAudioInputDeviceMenu__select.classList.add("changeDeviceMenu__select", "changeAudioInputDeviceMenu__select");
+                    changeAudioInputDeviceMenu__select.classList.add("settingsMenu__select");
 
                     let numAudioInputDevices = 0;
+
+                    let changeAudioOutputDeviceMenu__header = document.createElement("h2");
+                    changeAudioOutputDeviceMenu__header.classList.add("settingsMenu__h2");
+                    changeAudioOutputDeviceMenu__header.innerHTML = `AUDIO OUTPUT DEVICE`;
+
+                    let changeAudioOutputDeviceMenu__select = document.createElement("select");
+                    changeAudioOutputDeviceMenu__select.classList.add("settingsMenu__select");
+
+                    let numAudioOutputDevices = 0;
+
+                    let changeVideoDeviceMenu__header = document.createElement("h2");
+                    changeVideoDeviceMenu__header.classList.add("settingsMenu__h2");
+                    changeVideoDeviceMenu__header.innerHTML = `VIDEO DEVICE`;
+
+                    let changeVideoDeviceMenu__select = document.createElement("select");
+                    changeVideoDeviceMenu__select.classList.add("settingsMenu__select");
+
+                    let numVideoDevices = 0;
 
                     for (let i = 0; i < devices.length; i++) {
                         if (devices[i].kind === "audioinput") {
@@ -172,7 +206,7 @@ export class UserInputController {
                             }
 
                             let changeAudioInputDeviceMenu__option = document.createElement("option");
-                            changeAudioInputDeviceMenu__option.classList.add("changeDeviceMenu__option", "changeAudioInputDeviceMenu__option");
+                            changeAudioInputDeviceMenu__option.classList.add("settingsMenu__option");
                             changeAudioInputDeviceMenu__option.innerHTML = deviceLabel;
                             changeAudioInputDeviceMenu__option.value = devices[i].deviceId;
 
@@ -182,55 +216,7 @@ export class UserInputController {
                                 changeAudioInputDeviceMenu__select.selectedIndex = numAudioInputDevices;
                             }
                             numAudioInputDevices++;
-                        }
-                    };
-
-                    changeAudioInputDeviceMenu__select.addEventListener("change", (e) => {
-                        avDevicesController.changeAudioInputDevice((<HTMLSelectElement>e.target).value);
-                    });
-
-                    changeAudioInputDeviceMenu.appendChild(changeAudioInputDeviceMenu__select);
-                    document.body.appendChild(changeAudioInputDeviceMenu);
-                })
-                .catch((err) => {
-                    console.error(`Error during \`enumerateDevices()\`: ${err}`);
-                });
-        }
-    }
-
-    hideChangeAudioOutputDeviceMenu() {
-        let changeAudioOutputDeviceMenu = document.querySelector(".changeAudioOutputDeviceMenu");
-        if (changeAudioOutputDeviceMenu) {
-            changeAudioOutputDeviceMenu.remove();
-        }
-    }
-
-    toggleShowChangeAudioOutputDeviceMenu() {
-        let changeAudioOutputDeviceMenu = document.querySelector(".changeAudioOutputDeviceMenu");
-        if (changeAudioOutputDeviceMenu) {
-            this.hideChangeAudioOutputDeviceMenu();
-        } else {
-            this.hideChangeVideoDeviceMenu();
-            this.hideChangeAudioInputDeviceMenu();
-            this.hideChangeAudioOutputDeviceMenu();
-            navigator.mediaDevices.enumerateDevices()
-                .then((devices) => {
-                    changeAudioOutputDeviceMenu = document.createElement("div");
-                    changeAudioOutputDeviceMenu.classList.add("changeDeviceMenu", "changeAudioOutputDeviceMenu");
-                    uiThemeController.refreshThemedElements();
-
-                    let changeAudioOutputDeviceMenu__header = document.createElement("h2");
-                    changeAudioOutputDeviceMenu__header.classList.add("changeDeviceMenu__header", "changeAudioOutputDeviceMenu__header");
-                    changeAudioOutputDeviceMenu__header.innerHTML = `Audio Output Device`;
-                    changeAudioOutputDeviceMenu.appendChild(changeAudioOutputDeviceMenu__header);
-
-                    let changeAudioOutputDeviceMenu__select = document.createElement("select");
-                    changeAudioOutputDeviceMenu__select.classList.add("changeDeviceMenu__select", "changeAudioOutputDeviceMenu__select");
-
-                    let numAudioOutputDevices = 0;
-
-                    for (let i = 0; i < devices.length; i++) {
-                        if (devices[i].kind === "audiooutput") {
+                        } else if (devices[i].kind === "audiooutput") {
                             let deviceLabel = devices[i].label;
 
                             if (!deviceLabel || deviceLabel.length === 0) {
@@ -238,7 +224,7 @@ export class UserInputController {
                             }
 
                             let changeAudioOutputDeviceMenu__option = document.createElement("option");
-                            changeAudioOutputDeviceMenu__option.classList.add("changeDeviceMenu__option", "changeAudioOutputDeviceMenu__option");
+                            changeAudioOutputDeviceMenu__option.classList.add("settingsMenu__option");
                             changeAudioOutputDeviceMenu__option.innerHTML = deviceLabel;
                             changeAudioOutputDeviceMenu__option.value = devices[i].deviceId;
 
@@ -248,55 +234,7 @@ export class UserInputController {
                                 changeAudioOutputDeviceMenu__select.selectedIndex = numAudioOutputDevices;
                             }
                             numAudioOutputDevices++;
-                        }
-                    };
-
-                    changeAudioOutputDeviceMenu__select.addEventListener("change", (e) => {
-                        avDevicesController.changeAudioOutputDevice((<HTMLSelectElement>e.target).value);
-                    });
-
-                    changeAudioOutputDeviceMenu.appendChild(changeAudioOutputDeviceMenu__select);
-                    document.body.appendChild(changeAudioOutputDeviceMenu);
-                })
-                .catch((err) => {
-                    console.error(`Error during \`enumerateDevices()\`: ${err}`);
-                });
-        }
-    }
-
-    hideChangeVideoDeviceMenu() {
-        let changeVideoDeviceMenu = document.querySelector(".changeVideoDeviceMenu");
-        if (changeVideoDeviceMenu) {
-            changeVideoDeviceMenu.remove();
-        }
-    }
-
-    toggleShowChangeVideoDeviceMenu() {
-        let changeVideoDeviceMenu = document.querySelector(".changeVideoDeviceMenu");
-        if (changeVideoDeviceMenu) {
-            this.hideChangeVideoDeviceMenu();
-        } else {
-            this.hideChangeVideoDeviceMenu();
-            this.hideChangeAudioInputDeviceMenu();
-            this.hideChangeAudioOutputDeviceMenu();
-            navigator.mediaDevices.enumerateDevices()
-                .then((devices) => {
-                    changeVideoDeviceMenu = document.createElement("div");
-                    changeVideoDeviceMenu.classList.add("changeDeviceMenu", "changeVideoDeviceMenu");
-                    uiThemeController.refreshThemedElements();
-
-                    let changeVideoDeviceMenu__header = document.createElement("h2");
-                    changeVideoDeviceMenu__header.classList.add("changeDeviceMenu__header", "changeVideoDeviceMenu__header");
-                    changeVideoDeviceMenu__header.innerHTML = `Video Device`;
-                    changeVideoDeviceMenu.appendChild(changeVideoDeviceMenu__header);
-
-                    let changeVideoDeviceMenu__select = document.createElement("select");
-                    changeVideoDeviceMenu__select.classList.add("changeDeviceMenu__select", "changeVideoDeviceMenu__select");
-
-                    let numVideoDevices = 0;
-
-                    for (let i = 0; i < devices.length; i++) {
-                        if (devices[i].kind === "videoinput") {
+                        } else if (devices[i].kind === "videoinput") {
                             let deviceLabel = devices[i].label;
 
                             if (!deviceLabel || deviceLabel.length === 0) {
@@ -304,7 +242,7 @@ export class UserInputController {
                             }
 
                             let changeVideoDeviceMenu__option = document.createElement("option");
-                            changeVideoDeviceMenu__option.classList.add("changeDeviceMenu__option", "changeVideoDeviceMenu__option");
+                            changeVideoDeviceMenu__option.classList.add("settingsMenu__option");
                             changeVideoDeviceMenu__option.innerHTML = deviceLabel;
                             changeVideoDeviceMenu__option.value = devices[i].deviceId;
 
@@ -317,12 +255,29 @@ export class UserInputController {
                         }
                     };
 
+                    changeAudioInputDeviceMenu__select.addEventListener("change", (e) => {
+                        avDevicesController.changeAudioInputDevice((<HTMLSelectElement>e.target).value);
+                    });
+
+                    changeAudioOutputDeviceMenu__select.addEventListener("change", (e) => {
+                        avDevicesController.changeAudioOutputDevice((<HTMLSelectElement>e.target).value);
+                    });
+
                     changeVideoDeviceMenu__select.addEventListener("change", (e) => {
                         avDevicesController.changeVideoDevice((<HTMLSelectElement>e.target).value);
                     });
 
-                    changeVideoDeviceMenu.appendChild(changeVideoDeviceMenu__select);
-                    document.body.appendChild(changeVideoDeviceMenu);
+                    settingsMenu.appendChild(changeAudioInputDeviceMenu__header);
+                    settingsMenu.appendChild(changeAudioInputDeviceMenu__select);
+                    
+                    settingsMenu.appendChild(changeAudioOutputDeviceMenu__header);
+                    settingsMenu.appendChild(changeAudioOutputDeviceMenu__select);
+                    
+                    settingsMenu.appendChild(changeVideoDeviceMenu__header);
+                    settingsMenu.appendChild(changeVideoDeviceMenu__select);
+
+                    document.body.appendChild(settingsMenu);
+                    uiThemeController.refreshThemedElements();
                 })
                 .catch((err) => {
                     console.error(`Error during \`enumerateDevices()\`: ${err}`);
@@ -460,9 +415,7 @@ export class UserInputController {
 
         roomController.hideRoomList();
         uiController.hideAvatarContextMenu();
-        this.hideChangeAudioInputDeviceMenu();
-        this.hideChangeAudioOutputDeviceMenu();
-        this.hideChangeVideoDeviceMenu();
+        this.hideSettingsMenu();
 
         let target = <HTMLElement>event.target;
 

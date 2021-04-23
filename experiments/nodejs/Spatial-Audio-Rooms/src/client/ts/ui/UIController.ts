@@ -77,7 +77,7 @@ export class UIController {
         myDisplayName.classList.add("myDisplayName");
         myProfileContainer.appendChild(myDisplayName);
 
-        let editMyProfileLink = document.createElement('a');
+        let editMyProfileLink = document.createElement("a");
         editMyProfileLink.innerHTML = "Edit My Profile";
         editMyProfileLink.classList.add("editMyProfileLink");
         editMyProfileLink.addEventListener("click", (e) => {
@@ -99,11 +99,21 @@ export class UIController {
         toggleVideoButton.classList.add("bottomControlButton", "toggleVideoButton");
         bottomControlsContainer.appendChild(toggleVideoButton);
 
-        let toggleJoinWatchPartyButton = document.createElement("button");
-        toggleJoinWatchPartyButton.classList.add("bottomControlButton", "toggleJoinWatchPartyButton");
-        bottomControlsContainer.appendChild(toggleJoinWatchPartyButton);
+        let toggleSettingsButton = document.createElement("button");
+        toggleSettingsButton.classList.add("bottomControlButton", "toggleSettingsButton");
+        bottomControlsContainer.appendChild(toggleSettingsButton);
         
         bottomBar.appendChild(bottomControlsContainer);
+
+        let watchPartyControlsContainer = document.createElement("div");
+        watchPartyControlsContainer.classList.add("watchPartyControlsContainer");
+
+        let toggleJoinWatchPartyButton = document.createElement("button");
+        toggleJoinWatchPartyButton.classList.add("toggleJoinWatchPartyButton");
+        toggleJoinWatchPartyButton.innerHTML = `Join/Leave Watch Party`;
+        watchPartyControlsContainer.appendChild(toggleJoinWatchPartyButton);
+
+        bottomBar.appendChild(watchPartyControlsContainer);
 
         this.modalBackground = document.createElement("div");
         this.modalBackground.classList.add("modalBackground", "displayNone");
@@ -216,6 +226,8 @@ export class UIController {
         }
         displayName.classList.add("avatarContextMenu__displayName");
         this.avatarContextMenu.appendChild(displayName);
+
+        uiThemeController.refreshThemedElements();
     }
 
     generateColorHexUI(userData: UserData) {

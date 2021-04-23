@@ -12,13 +12,28 @@ $light-theme: (
     text-secondary: #007AFF,
     text-faint: #B9BBBE,
 
+    link: #FFFFFF,
+    link-hover: #7289DA,
+
     room-list-container-background: #E4E4E4,
     room-list-container-mine-background: #d7d7d7,
     room-list-container: #000000,
 
     bottom-controls-container-background: #DDDDDD,
+    settings-menu-background: #37393E,
+    settings-menu-h1: #FFFFFF,
+    settings-menu-h2: #8F9297,
+    
+    text-input-background: #FFFFFF,
+    text-input: #DADADA,
+
+    select-background: #FFFFFF,
+    select: #DADADA,
+    select-border: #FFFFFF,
 
     watch-party-canvas-background: #000000,
+    watch-party-join-button-background: radial-gradient(95.59% 206.12% at 47.81% -44.9%, #9054E3 0%, #5C33AD 100%),
+    watch-party-join-button-background-hover: #9054E3,
 
     modal-scrim: rgba(0, 0, 0, 0.3),
     modal-background: #d7d7d7,
@@ -43,17 +58,32 @@ $dark-theme: (
     text-primary: #FFFFFF,
     text-secondary: #007AFF,
     text-faint: #B9BBBE,
+
+    link: #222222,
+    link-hover: #7289DA,
     
     room-list-container-background: #292B2F,
     room-list-container-mine-background: #656565,
     room-list-container: #FFFFFF,
 
     bottom-controls-container-background: #292B2F,
+    settings-menu-background: #37393E,
+    settings-menu-h1: #FFFFFF,
+    settings-menu-h2: #8F9297,
+    
+    text-input-background: #4e5054,
+    text-input: #DADADA,
+
+    select-background: #303237,
+    select: #DADADA,
+    select-border: #000000,
 
     watch-party-canvas-background: #000000,
+    watch-party-join-button-background: radial-gradient(95.59% 206.12% at 47.81% -44.9%, #9054E3 0%, #5C33AD 100%),
+    watch-party-join-button-background-hover: #9054E3,
 
     modal-scrim: rgba(0, 0, 0, 0.3),
-    modal-background: #656565,
+    modal-background: #37393E,
     modal: #FFFFFF,
 
     scrollbar-thumb: #333333AA,

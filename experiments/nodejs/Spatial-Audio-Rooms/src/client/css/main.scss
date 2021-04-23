@@ -45,10 +45,9 @@ body {
     z-index: map-get(z-indices.$z-index, aboveModal);
 
     &--icon {
-        background: url('../images/icons/light-theme/hifi.svg') no-repeat center center;
         background-size: 200px;
-        width: 100%;
-        height: 100%;
+        width: 250px;
+        height: 250px;
         position: fixed;
         z-index: 1;
 
@@ -56,6 +55,14 @@ body {
         animation-duration: 4000ms;
         animation-iteration-count: infinite;
         animation-timing-function: linear;
+
+        &--light-theme {
+            background: url('../images/icons/light-theme/hifi.svg') no-repeat center center;
+        }
+    
+        &--dark-theme {
+            background: url('../images/icons/dark-theme/hifi-dark.svg') no-repeat center center;
+        }
     }
 
     @keyframes spin { 

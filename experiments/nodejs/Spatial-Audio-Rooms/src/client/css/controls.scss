@@ -49,7 +49,7 @@ $bottom-controls-container-height: 72px;
         &--light-theme {
             color: map-get(themes.$light-theme, play-overlay);
         }
-    
+
         &--dark-theme {
             color: map-get(themes.$dark-theme, play-overlay);
         }
@@ -95,7 +95,7 @@ $bottom-controls-container-height: 72px;
         &--light-theme {
             color: map-get(themes.$light-theme, text-secondary);
         }
-    
+
         &--dark-theme {
             color: map-get(themes.$dark-theme, text-secondary);
         }
@@ -161,7 +161,7 @@ $bottom-controls-container-height: 72px;
         &--light-theme {
             background-color: map-get(themes.$light-theme, text-secondary);
         }
-    
+
         &--dark-theme {
             background-color: map-get(themes.$dark-theme, text-secondary);
         }
@@ -207,7 +207,7 @@ $bottom-controls-container-height: 72px;
         &--light-theme {
             color: map-get(themes.$light-theme, text-secondary);
         }
-    
+
         &--dark-theme {
             color: map-get(themes.$dark-theme, text-secondary);
         }
@@ -262,6 +262,7 @@ $bottom-controls-container-height: 72px;
     background-repeat: no-repeat;
     background-size: contain;
     background-position: center center;
+    margin: 0 8px;
 
     &:focus {
         border: none;
@@ -270,13 +271,27 @@ $bottom-controls-container-height: 72px;
 }
 
 .toggleInputMuteButton {
+    &--disabled {
+        &--light-theme {
+            background-image: url('../images/icons/light-theme/grey-mic.svg');
+        }
+
+        &--dark-theme {
+            background-image: url('../images/icons/dark-theme/grey-mic.svg');
+        }
+    }
+
     &--unmuted {
         &--light-theme {
             background-image: url('../images/icons/light-theme/mic.svg');
         }
-    
+
         &--dark-theme {
-            background-image: url('../images/icons/dark-theme/mic-dark.svg');
+            background-image: url('../images/icons/dark-theme/mic-on-idle-dark.svg');
+
+            &:hover {
+                background-image: url('../images/icons/dark-theme/mic-on-hover-dark.svg');
+            }
         }
     }
 
@@ -284,20 +299,14 @@ $bottom-controls-container-height: 72px;
         &--light-theme {
             background-image: url('../images/icons/light-theme/red-mic-with-cross.svg');
         }
-    
+
         &--dark-theme {
-            background-image: url('../images/icons/dark-theme/red-mic-with-cross-dark.svg');
+            background-image: url('../images/icons/dark-theme/mic-off-idle-dark.svg');
+
+            &:hover {
+                background-image: url('../images/icons/dark-theme/mic-off-hover-dark.svg');
+            }
         }
-    }
-}
-
-.toggleInputMuteButton--disabled {
-    &--light-theme {
-        background-image: url('../images/icons/light-theme/grey-mic.svg');
-    }
-
-    &--dark-theme {
-        background-image: url('../images/icons/dark-theme/grey-mic.svg');
     }
 }
 
@@ -306,9 +315,13 @@ $bottom-controls-container-height: 72px;
         &--light-theme {
             background-image: url('../images/icons/light-theme/headphones.svg');
         }
-    
+
         &--dark-theme {
-            background-image: url('../images/icons/dark-theme/headphones-dark.svg');
+            background-image: url('../images/icons/dark-theme/headphones-on-idle-dark.svg');
+
+            &:hover {
+                background-image: url('../images/icons/dark-theme/headphones-on-hover-dark.svg');
+            }
         }
     }
 
@@ -316,9 +329,13 @@ $bottom-controls-container-height: 72px;
         &--light-theme {
             background-image: url('../images/icons/light-theme/red-headphones-with-x.svg');
         }
-    
+
         &--dark-theme {
-            background-image: url('../images/icons/dark-theme/red-headphones-with-x.svg');
+            background-image: url('../images/icons/dark-theme/headphones-off-idle-dark.svg');
+
+            &:hover {
+                background-image: url('../images/icons/dark-theme/headphones-off-hover-dark.svg');
+            }
         }
     }
 }
@@ -328,7 +345,7 @@ $bottom-controls-container-height: 72px;
         &--light-theme {
             background-image: url('../images/icons/light-theme/grey-cam-with-cross.svg');
         }
-    
+
         &--dark-theme {
             background-image: url('../images/icons/dark-theme/grey-cam-with-cross.svg');
         }
@@ -338,9 +355,13 @@ $bottom-controls-container-height: 72px;
         &--light-theme {
             background-image: url('../images/icons/light-theme/cam.svg');
         }
-    
+
         &--dark-theme {
-            background-image: url('../images/icons/dark-theme/cam-dark.svg');
+            background-image: url('../images/icons/dark-theme/video-on-idle-dark.svg');
+
+            &:hover {
+                background-image: url('../images/icons/dark-theme/video-on-hover-dark.svg');
+            }
         }
     }
 
@@ -348,61 +369,167 @@ $bottom-controls-container-height: 72px;
         &--light-theme {
             background-image: url('../images/icons/light-theme/red-cam-with-cross.svg');
         }
-    
+
         &--dark-theme {
-            background-image: url('../images/icons/dark-theme/red-cam-with-cross.svg');
+            background-image: url('../images/icons/dark-theme/video-off-idle-dark.svg');
+
+            &:hover {
+                background-image: url('../images/icons/dark-theme/video-off-hover-dark.svg');
+            }
+        }
+    }
+}
+
+.toggleSettingsButton {
+    &--light-theme {
+        background-image: url('../images/icons/light-theme/devices-idle.svg');
+    }
+
+    &--dark-theme {
+        background-image: url('../images/icons/dark-theme/devices-idle-dark.svg');
+
+        &:hover {
+            background-image: url('../images/icons/dark-theme/devices-hover-dark.svg');
         }
     }
 }
 
 .toggleJoinWatchPartyButton {
+    cursor: pointer;
+    background-color: transparent;
+    border: none;
+    outline: none;
+    height: 35px;
+    border-radius: 7px;
+    color: #FFFFFF;
+    font-family: 'Roboto-Bold', 'Helvetica', 'Arial', sans-serif;
+    padding: 0 12px;
+    font-size: 15px;
+    margin: 0 20px 0 0;
+
+    &:focus {
+        border: none;
+        outline: none;
+    }
+
     // Television by ProSymbols from the Noun Project
     &--light-theme {
-        background-image: url('../images/icons/light-theme/television.svg');
+        background: map-get(themes.$light-theme, watch-party-join-button-background);
+
+        &:hover {
+            background: map-get(themes.$dark-theme, watch-party-join-button-background-hover);
+        }
     }
 
     &--dark-theme {
-        background-image: url('../images/icons/dark-theme/television-dark.svg');
+        background: map-get(themes.$dark-theme, watch-party-join-button-background);
+
+        &:hover {
+            background: map-get(themes.$dark-theme, watch-party-join-button-background-hover);
+        }
     }
 }
 
-.changeDeviceMenu {
+.settingsMenu {
     position: fixed;
     width: 340px;
     bottom: $bottom-controls-container-height;
-    right: 0;
+    left: 20px;
     display: flex;
     flex-direction: column;
     z-index: map-get(z-indices.$z-index, modalBackground);
     padding: 20px;
-    border-radius: 8px 0 0 0;
+    border-radius: 5px 5px 0 0;
 
     &--light-theme {
-        background-color: map-get(themes.$light-theme, bottom-controls-container-background);
+        background-color: map-get(themes.$light-theme, settings-menu-background);
         color: map-get(themes.$light-theme, modal);
     }
 
     &--dark-theme {
-        background-color: map-get(themes.$dark-theme, bottom-controls-container-background);
+        background-color: map-get(themes.$dark-theme, settings-menu-background);
         color: map-get(themes.$dark-theme, modal);
     }
 
-    &__header {
-        width: 100%;
-        text-align: center;
-        margin: 0 0 12px 0;
-        padding: 0;
+    &__closeButton {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        width: 42px;
+        height: 42px;
+        margin: 0;
+        font-size: 18px;
         font-family: 'Roboto-Bold', 'Helvetica', 'Arial', sans-serif;
-        font-size: 22px;
+        border: none;
+        outline: none;
+        background-color: transparent;
+        padding: 0;
+        cursor: pointer;
+
+        &--light-theme {
+            color: map-get(themes.$light-theme, modal);
+        }
+
+        &--dark-theme {
+            color: map-get(themes.$dark-theme, modal);
+        }
+    }
+
+    &__h1 {
+        width: 100%;
+        text-align: left;
+        margin: 0 0 16px 0;
+        padding: 0;
+        font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+        font-size: 20px;
+        font-weight: 500;
+
+        &--light-theme {
+            color: map-get(themes.$light-theme, settings-menu-h1);
+        }
+
+        &--dark-theme {
+            color: map-get(themes.$dark-theme, settings-menu-h1);
+        }
+    }
+
+    &__h2 {
+        width: 100%;
+        text-align: left;
+        margin: 0 0 4px 0;
+        padding: 0;
+        font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+        font-size: 12px;
+        font-weight: 500;
+
+        &--light-theme {
+            color: map-get(themes.$light-theme, settings-menu-h2);
+        }
+
+        &--dark-theme {
+            color: map-get(themes.$dark-theme, settings-menu-h2);
+        }
     }
 
     &__select {
-        margin: 12px;
+        margin: 0 0 12px 0;
         font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
         font-weight: normal;
         font-size: 16px;
         padding: 4px;
         height: 36px;
+        border-radius: 5px;
+
+        &--light-theme {
+            background-color: map-get(themes.$light-theme, select-background);
+            color: map-get(themes.$light-theme, select);
+        }
+
+        &--dark-theme {
+            background-color: map-get(themes.$dark-theme, select-background);
+            color: map-get(themes.$dark-theme, select);
+            border-color: map-get(themes.$dark-theme, select-border);
+        }
     }
 }
 
@@ -490,7 +617,7 @@ $bottom-controls-container-height: 72px;
         &--light-theme {
             color: map-get(themes.$light-theme, room-list-container);
         }
-    
+
         &--dark-theme {
             color: map-get(themes.$dark-theme, room-list-container);
         }
@@ -525,7 +652,7 @@ $bottom-controls-container-height: 72px;
         &--light-theme {
             background-color: map-get(themes.$light-theme, room-list-container-mine-background);
         }
-    
+
         &--dark-theme {
             background-color: map-get(themes.$dark-theme, room-list-container-mine-background);
         }
@@ -544,7 +671,7 @@ $bottom-controls-container-height: 72px;
         margin: 0;
         padding: 0;
     }
-    
+
     &__occupant {
         margin: 5px 0 5px 0;
         font-size: 16px;
@@ -623,7 +750,7 @@ $bottom-controls-container-height: 72px;
         &--light-theme {
             color: map-get(themes.$light-theme, modal);
         }
-    
+
         &--dark-theme {
             color: map-get(themes.$dark-theme, modal);
         }
@@ -640,6 +767,16 @@ $bottom-controls-container-height: 72px;
 
         &--mine {
             padding: 4px;
+
+            &--light-theme {
+                background-color: map-get(themes.$light-theme, text-input-background);
+                color: map-get(themes.$light-theme, text-input);
+            }
+        
+            &--dark-theme {
+                background-color: map-get(themes.$dark-theme, text-input-background);
+                color: map-get(themes.$dark-theme, text-input);
+            }
         }
     }
 
@@ -656,7 +793,7 @@ $bottom-controls-container-height: 72px;
             cursor: pointer;
         }
     }
-    
+
     &__userGainForThisConnection,
     &__hiFiGain,
     &__volumeThreshold {
