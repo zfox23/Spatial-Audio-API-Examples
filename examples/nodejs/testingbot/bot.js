@@ -42,7 +42,11 @@ class Bot {
             position: initialPosition,
             orientationEuler: this.makeEuler({pitchDegrees, yawDegrees, rollDegrees})
         });
-        this.communicator = new HiFiCommunicator({transmitRateLimitTimeoutMS, initialHiFiAudioAPIData, serverShouldSendUserData});
+        this.communicator = new HiFiCommunicator({
+            transmitRateLimitTimeoutMS: transmitRateLimitTimeoutMS,
+            initialHiFiAudioAPIData: initialHiFiAudioAPIData,
+            serverShouldSendUserData: serverShouldSendUserData
+        });
         // This promise will never resolve, unless someone calls this.resolve().
         this.stopped = new Promise(resolve => this.resolve = resolve);
     }

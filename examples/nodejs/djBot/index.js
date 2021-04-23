@@ -101,7 +101,7 @@ async function startDJBot(audioPath, position, hiFiGain) {
             hiFiGain: hiFiGain
         }),
         // Set up the HiFiCommunicator used to communicate with the Spatial Audio API.
-        hifiCommunicator = new HiFiCommunicator({ initialHiFiAudioAPIData });
+        hifiCommunicator = new HiFiCommunicator({ initialHiFiAudioAPIData: initialHiFiAudioAPIData });
 
     // Set the Input Audio Media Stream to the `MediaStream` we created above. We'll fill it up with data below.
     await hifiCommunicator.setInputAudioMediaStream(inputAudioMediaStream);
