@@ -10,11 +10,8 @@ export class UserInputController {
     normalModeCanvas: HTMLCanvasElement;
     keyboardEventCache: Array<KeyboardEvent>;
     wasMutedBeforePTT: boolean = false;
-    changeAudioInputDeviceButton: HTMLButtonElement;
     toggleInputMuteButton: HTMLButtonElement;
-    changeAudioOutputDeviceButton: HTMLButtonElement;
     toggleOutputMuteButton: HTMLButtonElement;
-    changeVideoDeviceButton: HTMLButtonElement;
     toggleVideoButton: HTMLButtonElement;
     leftClickStartPositionPX: any;
     lastDistanceBetweenLeftClickEvents: number;
@@ -28,30 +25,16 @@ export class UserInputController {
         document.addEventListener('keydown', this.onUserKeyDown.bind(this), false);
         document.addEventListener('keyup', this.onUserKeyUp.bind(this), false);
 
-        this.changeAudioInputDeviceButton = document.querySelector('.changeAudioInputDeviceButton');
-        this.changeAudioInputDeviceButton.addEventListener("click", (e) => {
-            this.toggleShowChangeAudioInputDeviceMenu();
-        });
         this.toggleInputMuteButton = document.querySelector('.toggleInputMuteButton');
         this.toggleInputMuteButton.addEventListener("click", (e) => {
             this.toggleInputMute();
         });
 
-        this.changeAudioOutputDeviceButton = document.querySelector('.changeAudioOutputDeviceButton');
-        if (this.changeAudioOutputDeviceButton) {
-            this.changeAudioOutputDeviceButton.addEventListener("click", (e) => {
-                this.toggleShowChangeAudioOutputDeviceMenu();
-            });
-        }
         this.toggleOutputMuteButton = document.querySelector('.toggleOutputMuteButton');
         this.toggleOutputMuteButton.addEventListener("click", (e) => {
             this.toggleOutputMute();
         });
 
-        this.changeVideoDeviceButton = document.querySelector('.changeVideoDeviceButton');
-        this.changeVideoDeviceButton.addEventListener("click", (e) => {
-            this.toggleShowChangeVideoDeviceMenu();
-        });
         this.toggleVideoButton = document.querySelector('.toggleVideoButton');
 
         this.normalModeCanvas = document.querySelector('.normalModeCanvas');
@@ -367,8 +350,10 @@ export class UserInputController {
 
             if (userDataController.myAvatar.myUserData.isMuted) {
                 this.toggleInputMuteButton.classList.add("toggleInputMuteButton--muted");
+                this.toggleInputMuteButton.classList.remove("toggleInputMuteButton--unmuted");
             } else {
                 this.toggleInputMuteButton.classList.remove("toggleInputMuteButton--muted");
+                this.toggleInputMuteButton.classList.add("toggleInputMuteButton--unmuted");
             }
             uiThemeController.refreshThemedElements();
         }
@@ -391,8 +376,10 @@ export class UserInputController {
 
         if (avDevicesController.outputAudioElement.muted) {
             this.toggleOutputMuteButton.classList.add("toggleOutputMuteButton--muted");
+            this.toggleOutputMuteButton.classList.remove("toggleOutputMuteButton--unmuted");
         } else {
             this.toggleOutputMuteButton.classList.remove("toggleOutputMuteButton--muted");
+            this.toggleOutputMuteButton.classList.add("toggleOutputMuteButton--unmuted");
             // We explicitly call `play()` here because certain browsers won't play the newly-set stream automatically.
             avDevicesController.outputAudioElement.play();
         }

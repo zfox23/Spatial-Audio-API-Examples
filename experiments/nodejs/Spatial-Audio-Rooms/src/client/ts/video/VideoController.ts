@@ -1,5 +1,5 @@
 import * as Video from 'twilio-video';
-import { avDevicesController, userDataController } from '..';
+import { avDevicesController, uiThemeController, userDataController } from '..';
 
 declare var HIFI_SPACE_NAME: string;
 declare var TWILIO_JWT: string;
@@ -21,6 +21,7 @@ export class VideoController {
 
         this.toggleVideoButton = document.querySelector('.toggleVideoButton');
         this.toggleVideoButton.classList.add("toggleVideoButton--muted");
+        this.toggleVideoButton.classList.remove("toggleVideoButton--unmuted");
         this.disableVideoButton();
         this.toggleVideoButton.addEventListener("click", async (e) => {
             await this.toggleVideo();
@@ -96,6 +97,8 @@ export class VideoController {
         this.localVideoTrack = undefined;
 
         this.toggleVideoButton.classList.add("toggleVideoButton--muted");
+        this.toggleVideoButton.classList.remove("toggleVideoButton--unmuted");
+        uiThemeController.refreshThemedElements();
     }
 
     async enableVideo() {
@@ -125,6 +128,8 @@ export class VideoController {
         this.twilioRoom.localParticipant.publishTrack(this.localVideoTrack);
         
         this.toggleVideoButton.classList.remove("toggleVideoButton--muted");
+        this.toggleVideoButton.classList.add("toggleVideoButton--unmuted");
+        uiThemeController.refreshThemedElements();
     }
 
     async toggleVideo() {

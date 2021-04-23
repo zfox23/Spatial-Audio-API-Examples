@@ -81,7 +81,9 @@ class MyAvatar {
         };
 
         this.currentMode = MyAvatarModes.Normal;
+    }
 
+    init() {
         if (localStorage.getItem('myDisplayName')) {
             this.onMyDisplayNameChanged(localStorage.getItem('myDisplayName'));
         } else {
@@ -318,6 +320,7 @@ class MyAvatar {
     onMyDisplayNameChanged(newDisplayName?: string) {
         localStorage.setItem('myDisplayName', newDisplayName);
         this.myUserData.displayName = newDisplayName;
+        uiController.updateMyDisplayName();
         webSocketConnectionController.updateMyUserDataOnWebSocketServer();
         try {
             roomController.updateRoomList();
@@ -327,6 +330,7 @@ class MyAvatar {
     onMyColorHexChanged(newColorHex?: string) {
         localStorage.setItem('myColorHex', newColorHex);
         this.myUserData.colorHex = newColorHex;
+        uiController.updateMyProfileImage();
         webSocketConnectionController.updateMyUserDataOnWebSocketServer();
         try {
             roomController.updateRoomList();
@@ -343,5 +347,9 @@ export class UserDataController {
         this.allOtherUserData = [];
         this.myAvatar = new MyAvatar();
         this.myAvatarEars = new MyAvatarEars();
+    }
+
+    init() {
+        this.myAvatar.init();
     }
 }

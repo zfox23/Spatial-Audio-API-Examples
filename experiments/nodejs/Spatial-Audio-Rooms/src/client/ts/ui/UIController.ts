@@ -53,58 +53,70 @@ export class UIController {
     }
 
     initMainUI() {
+        let bottomBar = document.createElement("div");
+        bottomBar.classList.add("bottomBar");
+        document.body.appendChild(bottomBar);
+
         let bottomControlsContainer = document.createElement("div");
         bottomControlsContainer.classList.add("bottomControlsContainer");
-        document.body.appendChild(bottomControlsContainer);
 
-        let toggleRoomsDrawerButton = document.createElement("button");
-        toggleRoomsDrawerButton.classList.add("bottomToggleButton", "toggleRoomsDrawerButton", "controlButtonsContainer");
-        toggleRoomsDrawerButton.addEventListener("click", roomController.toggleRoomList.bind(roomController));
-        bottomControlsContainer.appendChild(toggleRoomsDrawerButton);
+        let myProfileContainer = document.createElement("div");
+        myProfileContainer.classList.add("myProfileContainer");
 
-        let inputButtonsContainer = document.createElement("div");
-        inputButtonsContainer.classList.add("controlButtonsContainer");
-        let changeAudioInputDeviceButton = document.createElement("button");
-        changeAudioInputDeviceButton.classList.add("bottomChangeButton", "changeAudioInputDeviceButton");
-        changeAudioInputDeviceButton.innerHTML = "^";
-        inputButtonsContainer.appendChild(changeAudioInputDeviceButton);
+        let myProfileImageContainer = document.createElement("div");
+        myProfileImageContainer.classList.add("myProfileImageContainer");
+        let myProfileImage = document.createElement("div");
+        myProfileImage.classList.add("myProfileImage");
+        myProfileImageContainer.appendChild(myProfileImage);
+        myProfileContainer.appendChild(myProfileImageContainer);
+
+        let myDisplayName = document.createElement("span");
+        myDisplayName.classList.add("myDisplayName");
+        myProfileContainer.appendChild(myDisplayName);
+
+        let editMyProfileLink = document.createElement('a');
+        editMyProfileLink.innerHTML = "Edit My Profile";
+        editMyProfileLink.classList.add("editMyProfileLink");
+        myProfileContainer.appendChild(editMyProfileLink);
+
+        bottomControlsContainer.appendChild(myProfileContainer);
+
         let toggleInputMuteButton = document.createElement("button");
-        toggleInputMuteButton.classList.add("bottomToggleButton", "toggleInputMuteButton");
-        inputButtonsContainer.appendChild(toggleInputMuteButton);
-        bottomControlsContainer.appendChild(inputButtonsContainer);
+        toggleInputMuteButton.classList.add("bottomControlButton", "toggleInputMuteButton", "toggleInputMuteButton--unmuted");
+        bottomControlsContainer.appendChild(toggleInputMuteButton);
 
-        let outputButtonsContainer = document.createElement("div");
-        outputButtonsContainer.classList.add("controlButtonsContainer");
-        if ((avDevicesController.outputAudioElement as any).setSinkId) {
-            let changeAudioOutputDeviceButton = document.createElement("button");
-            changeAudioOutputDeviceButton.classList.add("bottomChangeButton", "changeAudioOutputDeviceButton");
-            changeAudioOutputDeviceButton.innerHTML = "^";
-            outputButtonsContainer.appendChild(changeAudioOutputDeviceButton);
-        }
         let toggleOutputMuteButton = document.createElement("button");
-        toggleOutputMuteButton.classList.add("bottomToggleButton", "toggleOutputMuteButton");
-        outputButtonsContainer.appendChild(toggleOutputMuteButton);
-        bottomControlsContainer.appendChild(outputButtonsContainer);
+        toggleOutputMuteButton.classList.add("bottomControlButton", "toggleOutputMuteButton", "toggleOutputMuteButton--unmuted");
+        bottomControlsContainer.appendChild(toggleOutputMuteButton);
 
-        let videoButtonsContainer = document.createElement("div");
-        videoButtonsContainer.classList.add("controlButtonsContainer");
-        let changeVideoDeviceButton = document.createElement("button");
-        changeVideoDeviceButton.classList.add("bottomChangeButton", "changeVideoDeviceButton");
-        changeVideoDeviceButton.innerHTML = "^";
-        videoButtonsContainer.appendChild(changeVideoDeviceButton);
         let toggleVideoButton = document.createElement("button");
-        toggleVideoButton.classList.add("bottomToggleButton", "toggleVideoButton");
-        videoButtonsContainer.appendChild(toggleVideoButton);
-        bottomControlsContainer.appendChild(videoButtonsContainer);
+        toggleVideoButton.classList.add("bottomControlButton", "toggleVideoButton", "toggleVideoButton--muted");
+        bottomControlsContainer.appendChild(toggleVideoButton);
 
         let toggleJoinWatchPartyButton = document.createElement("button");
-        toggleJoinWatchPartyButton.classList.add("bottomToggleButton", "toggleJoinWatchPartyButton", "controlButtonsContainer");
+        toggleJoinWatchPartyButton.classList.add("bottomControlButton", "toggleJoinWatchPartyButton");
         bottomControlsContainer.appendChild(toggleJoinWatchPartyButton);
+        
+        bottomBar.appendChild(bottomControlsContainer);
 
         this.modalBackground = document.createElement("div");
         this.modalBackground.classList.add("modalBackground", "displayNone");
         this.modalBackground.addEventListener("click", this.hideAvatarContextMenu.bind(this));
         document.body.appendChild(this.modalBackground);
+    }
+
+    updateMyProfileImage() {
+        let myProfileImage = document.querySelector(".myProfileImage");
+        if (myProfileImage) {
+            (<HTMLElement>myProfileImage).style.backgroundColor = userDataController.myAvatar.myUserData.colorHex;
+        }
+    }
+
+    updateMyDisplayName() {
+        let myDisplayName = document.querySelector(".myDisplayName");
+        if (myDisplayName) {
+            myDisplayName.innerHTML = userDataController.myAvatar.myUserData.displayName;
+        }
     }
 
     initZoomUI() {

@@ -43,7 +43,7 @@ $bottom-controls-container-height: 72px;
     }
 
     &__playText {
-        font-family: 'Graphik-Semibold', 'Helvetica', 'Arial', sans-serif;
+        font-family: 'Roboto-Bold', 'Helvetica', 'Arial', sans-serif;
         width: 100%;
 
         &--light-theme {
@@ -201,7 +201,7 @@ $bottom-controls-container-height: 72px;
     }
 
     &__link {
-        font-family: 'Graphik-Semibold', 'Helvetica', 'Arial', sans-serif;
+        font-family: 'Roboto-Bold', 'Helvetica', 'Arial', sans-serif;
         font-size: 18px;
 
         &--light-theme {
@@ -230,7 +230,7 @@ $bottom-controls-container-height: 72px;
     cursor: url('../images/signalLine.png') 10 10, auto;
 }
 
-.bottomControlsContainer {
+.bottomBar {
     height: $bottom-controls-container-height;
     position: fixed;
     bottom: 0;
@@ -238,7 +238,7 @@ $bottom-controls-container-height: 72px;
     right: 0;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
     z-index: map-get(z-indices.$z-index, ui);
 
     &--light-theme {
@@ -250,45 +250,16 @@ $bottom-controls-container-height: 72px;
     }
 }
 
-.controlButtonsContainer {
-    width: 40px;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    flex-direction: column;
-    margin: 0 16px;
-}
-
-.bottomChangeButton {
-    width: 40px;
-    height: 20px;
-    margin: 0 0 2px 0;
-    font-family: 'Graphik', 'Helvetica', 'Arial', sans-serif;
-    font-size: 18px;
-
-    &--light-theme {
-        color: map-get(themes.$light-theme, text-primary);
-    }
-
-    &--dark-theme {
-        color: map-get(themes.$dark-theme, text-primary);
-    }
-}
-
-.bottomToggleButton {
+.bottomControlButton {
+    cursor: pointer;
+    background-color: transparent;
+    border: none;
+    outline: none;
     width: 40px;
     height: 40px;
     background-repeat: no-repeat;
     background-size: contain;
     background-position: center center;
-}
-
-.bottomChangeButton,
-.bottomToggleButton {
-    cursor: pointer;
-    background-color: transparent;
-    border: none;
-    outline: none;
 
     &:focus {
         border: none;
@@ -297,22 +268,24 @@ $bottom-controls-container-height: 72px;
 }
 
 .toggleInputMuteButton {
-    &--light-theme {
-        background-image: url('../images/icons/light-theme/mic.svg');
+    &--unmuted {
+        &--light-theme {
+            background-image: url('../images/icons/light-theme/mic.svg');
+        }
+    
+        &--dark-theme {
+            background-image: url('../images/icons/dark-theme/mic-dark.svg');
+        }
     }
 
-    &--dark-theme {
-        background-image: url('../images/icons/dark-theme/mic-dark.svg');
-    }
-}
-
-.toggleInputMuteButton--muted {
-    &--light-theme {
-        background-image: url('../images/icons/light-theme/red-mic-with-cross.svg');
-    }
-
-    &--dark-theme {
-        background-image: url('../images/icons/dark-theme/red-mic-with-cross.svg');
+    &--muted {
+        &--light-theme {
+            background-image: url('../images/icons/light-theme/red-mic-with-cross.svg');
+        }
+    
+        &--dark-theme {
+            background-image: url('../images/icons/dark-theme/red-mic-with-cross.svg');
+        }
     }
 }
 
@@ -327,42 +300,46 @@ $bottom-controls-container-height: 72px;
 }
 
 .toggleOutputMuteButton {
-    &--light-theme {
-        background-image: url('../images/icons/light-theme/headphones.svg');
+    &--unmuted {
+        &--light-theme {
+            background-image: url('../images/icons/light-theme/headphones.svg');
+        }
+    
+        &--dark-theme {
+            background-image: url('../images/icons/dark-theme/headphones-dark.svg');
+        }
     }
 
-    &--dark-theme {
-        background-image: url('../images/icons/dark-theme/headphones-dark.svg');
-    }
-}
-
-.toggleOutputMuteButton--muted {
-    &--light-theme {
-        background-image: url('../images/icons/light-theme/red-headphones-with-x.svg');
-    }
-
-    &--dark-theme {
-        background-image: url('../images/icons/dark-theme/red-headphones-with-x.svg');
-    }
-}
-
-.toggleVideoButton {
-    &--light-theme {
-        background-image: url('../images/icons/light-theme/cam.svg');
-    }
-
-    &--dark-theme {
-        background-image: url('../images/icons/dark-theme/cam-dark.svg');
+    &--muted {
+        &--light-theme {
+            background-image: url('../images/icons/light-theme/red-headphones-with-x.svg');
+        }
+    
+        &--dark-theme {
+            background-image: url('../images/icons/dark-theme/red-headphones-with-x.svg');
+        }
     }
 }
 
 .toggleVideoButton--muted {
-    &--light-theme {
-        background-image: url('../images/icons/light-theme/red-cam-with-cross.svg');
+    &--unmuted {
+        &--light-theme {
+            background-image: url('../images/icons/light-theme/cam.svg');
+        }
+    
+        &--dark-theme {
+            background-image: url('../images/icons/dark-theme/cam-dark.svg');
+        }
     }
 
-    &--dark-theme {
-        background-image: url('../images/icons/dark-theme/red-cam-with-cross.svg');
+    &--muted {
+        &--light-theme {
+            background-image: url('../images/icons/light-theme/red-cam-with-cross.svg');
+        }
+    
+        &--dark-theme {
+            background-image: url('../images/icons/dark-theme/red-cam-with-cross.svg');
+        }
     }
 }
 
@@ -373,16 +350,6 @@ $bottom-controls-container-height: 72px;
 
     &--dark-theme {
         background-image: url('../images/icons/dark-theme/grey-cam-with-cross.svg');
-    }
-}
-
-.toggleRoomsDrawerButton {
-    &--light-theme {
-        background-image: url('../images/icons/light-theme/people.svg');
-    }
-
-    &--dark-theme {
-        background-image: url('../images/icons/dark-theme/people-dark.svg');
     }
 }
 
@@ -423,13 +390,13 @@ $bottom-controls-container-height: 72px;
         text-align: center;
         margin: 0 0 12px 0;
         padding: 0;
-        font-family: 'Graphik-Semibold', 'Helvetica', 'Arial', sans-serif;
+        font-family: 'Roboto-Bold', 'Helvetica', 'Arial', sans-serif;
         font-size: 22px;
     }
 
     &__select {
         margin: 12px;
-        font-family: 'Graphik', 'Helvetica', 'Arial', sans-serif;
+        font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
         font-weight: normal;
         font-size: 16px;
         padding: 4px;
@@ -505,7 +472,7 @@ $bottom-controls-container-height: 72px;
     }
 
     &__header {
-        font-family: 'Graphik', 'Helvetica', 'Arial', sans-serif;
+        font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
         font-weight: normal;
         font-size: 24px;
         margin: 0 0 24px 0;
@@ -637,7 +604,7 @@ $bottom-controls-container-height: 72px;
         height: 42px;
         margin: 0;
         font-size: 18px;
-        font-family: 'Graphik-Semibold', 'Helvetica', 'Arial', sans-serif;
+        font-family: 'Roboto-Bold', 'Helvetica', 'Arial', sans-serif;
         border: none;
         outline: none;
         background-color: transparent;
@@ -658,7 +625,7 @@ $bottom-controls-container-height: 72px;
         height: 32px;
         margin: 0 0 4px 0;
         font-size: 24px;
-        font-family: 'Graphik-Semibold', 'Helvetica', 'Arial', sans-serif;
+        font-family: 'Roboto-Bold', 'Helvetica', 'Arial', sans-serif;
         border-radius: 4px;
         border: none;
 
@@ -704,7 +671,7 @@ $bottom-controls-container-height: 72px;
         margin: 8px 0 4px 0;
         font-size: 16px;
         line-height: 16px;
-        font-family: 'Graphik', 'Helvetica', 'Arial', sans-serif;
+        font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
         border-radius: 4px;
         border: none;
         cursor: pointer;
@@ -780,3 +747,47 @@ $bottom-controls-container-height: 72px;
     }
 }
 
+.bottomControlsContainer {
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+.myProfileContainer {
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    flex-wrap: wrap;
+    height: 100%;
+    width: 100%;
+    margin: 0 24px;
+}
+
+.myProfileImage {
+    &Container {
+        flex-basis: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 0 8px 0 0;
+    }
+
+    height: 42px;
+    width: 42px;
+    border-radius: 42px;
+
+    &:hover {
+        cursor: pointer;
+    }
+}
+
+.myDisplayName {
+    font-size: 14px;
+    font-family: 'Roboto-Bold', 'Helvetica', 'Arial', sans-serif;
+}
+
+.editMyProfileLink {
+    color: #B9BBBE;
+    text-decoration: underline;
+    cursor: pointer;
+}
