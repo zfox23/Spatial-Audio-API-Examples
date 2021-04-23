@@ -6,5 +6,8 @@
 
     "TWILIO_ACCOUNT_SID": "",
     "TWILIO_API_KEY_SID": "",
-    "TWILIO_API_KEY_SECRET": ""
+    "TWILIO_API_KEY_SECRET": "",
+
+    "SLACK_CLIENT_ID": "",
+    "SLACK_CLIENT_SECRET": ""
 }

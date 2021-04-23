@@ -13,6 +13,8 @@ Zach Fox
 4. Populate your credentials inside `./auth.json`.
     - Obtain `HIFI_*` credentials from the [High Fidelity Spatial Audio API Developer Console](https://account.highfidelity.com/dev/account)
     - Obtain `TWILIO_*` credentials from the [Twilio Console](https://www.twilio.com/console)
+    - _Optionally,_ obtain `SLACK_*` credentials from the [Slack Apps Console](https://api.slack.com/apps)
+        - This is only necessary if you want to develop a Slack app which links users to Spatial Audio Rooms. Detailed instructions for doing this are not included in this README.
 5. Open `./node_modules/webpack-hot-middleware/process-update.js` in a text editor. Change `ignoreUnaccepted: true,` to `ignoreUnaccepted: false,`.
     - This is a bug that occurs between webpack-hot-middleware and webpack 5.
 6. Open `./node_modules/util/util.js` in a text editor. Change `if (process.env.NODE_DEBUG) {` to `if (typeof (process) !== "undefined" && process.env.NODE_DEBUG) {`.

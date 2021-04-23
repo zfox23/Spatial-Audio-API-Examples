@@ -8,6 +8,7 @@ const express = require('express');
 const crypto = require('crypto');
 const fetch = require('node-fetch');
 const { URLSearchParams } = require('url');
+const auth = require('../../auth.json');
 
 const app = express();
 const PORT = 8180;
@@ -69,7 +70,7 @@ app.get('/spatial-audio-rooms', async (req, res, next) => {
 });
 
 app.get('/spatial-audio-rooms/slack', (req, res, next) => {
-    let code = req.body.code;
+    let code = req.query.code;
     if (!code) {
         res.sendStatus(500);
         return;
@@ -77,6 +78,8 @@ app.get('/spatial-audio-rooms/slack', (req, res, next) => {
 
     const params = new URLSearchParams();
     params.append('code', code);
+    params.append('client_id', auth.SLACK_CLIENT_ID);
+    params.append('client_secret', auth.SLACK_CLIENT_SECRET);
 
     fetch("https://slack.com/api/oauth.v2.access", { method: 'POST', body: params })
         .then(res => res.json())
