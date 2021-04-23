@@ -22,26 +22,20 @@ export class UserInputController {
     hoveredRoom: SpatialAudioRoom;
 
     constructor() {
-        this.keyboardEventCache = [];
-        document.addEventListener('keydown', this.onUserKeyDown.bind(this), false);
-        document.addEventListener('keyup', this.onUserKeyUp.bind(this), false);
-
         this.toggleInputMuteButton = document.querySelector('.toggleInputMuteButton');
-        this.toggleInputMuteButton.addEventListener("click", (e) => {
-            this.toggleInputMute();
-        });
+        this.toggleInputMuteButton.addEventListener("click", (e) => { this.toggleInputMute(); });
+        this.toggleInputMuteButton.addEventListener("contextmenu", (e) => { this.toggleShowSettingsMenu(); e.preventDefault(); }, false);
 
         this.toggleOutputMuteButton = document.querySelector('.toggleOutputMuteButton');
-        this.toggleOutputMuteButton.addEventListener("click", (e) => {
-            this.toggleOutputMute();
-        });
+        this.toggleOutputMuteButton.addEventListener("click", (e) => { this.toggleOutputMute(); });
+        this.toggleOutputMuteButton.addEventListener("contextmenu", (e) => { this.toggleShowSettingsMenu(); e.preventDefault(); }, false);
 
         this.toggleVideoButton = document.querySelector('.toggleVideoButton');
+        this.toggleVideoButton.addEventListener("contextmenu", (e) => { this.toggleShowSettingsMenu(); e.preventDefault(); }, false);
 
         this.toggleSettingsButton = document.querySelector('.toggleSettingsButton');
-        this.toggleSettingsButton.addEventListener("click", (e) => {
-            this.toggleShowSettingsMenu();
-        });
+        this.toggleSettingsButton.addEventListener("click", (e) => { this.toggleShowSettingsMenu(); });
+        this.toggleSettingsButton.addEventListener("contextmenu", (e) => { this.toggleShowSettingsMenu(); e.preventDefault(); }, false);
 
         this.normalModeCanvas = document.querySelector('.normalModeCanvas');
         this.normalModeCanvas.addEventListener("click", this.handleCanvasClick.bind(this));
@@ -64,9 +58,13 @@ export class UserInputController {
         this.normalModeCanvas.addEventListener("contextmenu", (e) => { e.preventDefault(); }, false);
 
         this.normalModeCanvas.addEventListener("wheel", this.onWheel.bind(this), false);
+
+        this.keyboardEventCache = [];
+        document.addEventListener('keydown', this.onDocumentKeyDown.bind(this), false);
+        document.addEventListener('keyup', this.onDocumentKeyUp.bind(this), false);
     }
 
-    onUserKeyDown(event: KeyboardEvent) {
+    onDocumentKeyDown(event: KeyboardEvent) {
         let shouldAddKeyEvent = true;
         for (let i = 0; i < this.keyboardEventCache.length; i++) {
             if (this.keyboardEventCache[i].code === event.code) {
@@ -117,7 +115,7 @@ export class UserInputController {
         }
     }
 
-    onUserKeyUp(event: KeyboardEvent) {
+    onDocumentKeyUp(event: KeyboardEvent) {
         for (let i = this.keyboardEventCache.length - 1; i >= 0; i--) {
             if (this.keyboardEventCache[i].code === event.code) {
                 this.keyboardEventCache.splice(i, 1);
@@ -134,7 +132,7 @@ export class UserInputController {
         }
 
         if (this.keyboardEventCache.length > 0) {
-            this.onUserKeyDown(this.keyboardEventCache[0]);
+            this.onDocumentKeyDown(this.keyboardEventCache[0]);
         }
     }
 
@@ -306,12 +304,10 @@ export class UserInputController {
             if (userDataController.myAvatar.myUserData.isMuted) {
                 this.toggleInputMuteButton.classList.add("toggleInputMuteButton--muted");
                 this.toggleInputMuteButton.classList.remove("toggleInputMuteButton--unmuted");
-                this.toggleInputMuteButton.classList.remove("toggleInputMuteButton--unmuted--dark-theme");
-                this.toggleInputMuteButton.classList.remove("toggleInputMuteButton--unmuted--light-theme");
+                uiThemeController.clearThemesFromElement(<HTMLElement>this.toggleInputMuteButton, 'toggleInputMuteButton--unmuted', false);
             } else {
                 this.toggleInputMuteButton.classList.remove("toggleInputMuteButton--muted");
-                this.toggleInputMuteButton.classList.remove("toggleInputMuteButton--muted--dark-theme");
-                this.toggleInputMuteButton.classList.remove("toggleInputMuteButton--muted--light-theme");
+                uiThemeController.clearThemesFromElement(<HTMLElement>this.toggleInputMuteButton, 'toggleInputMuteButton--muted', false);
                 this.toggleInputMuteButton.classList.add("toggleInputMuteButton--unmuted");
             }
             uiThemeController.refreshThemedElements();
@@ -335,13 +331,11 @@ export class UserInputController {
 
         if (avDevicesController.outputAudioElement.muted) {
             this.toggleOutputMuteButton.classList.remove("toggleOutputMuteButton--unmuted");
-            this.toggleOutputMuteButton.classList.remove("toggleOutputMuteButton--unmuted--dark-theme");
-            this.toggleOutputMuteButton.classList.remove("toggleOutputMuteButton--unmuted--light-theme");
+            uiThemeController.clearThemesFromElement(<HTMLElement>this.toggleOutputMuteButton, 'toggleOutputMuteButton--unmuted', false);
             this.toggleOutputMuteButton.classList.add("toggleOutputMuteButton--muted");
         } else {
             this.toggleOutputMuteButton.classList.remove("toggleOutputMuteButton--muted");
-            this.toggleOutputMuteButton.classList.remove("toggleOutputMuteButton--muted--dark-theme");
-            this.toggleOutputMuteButton.classList.remove("toggleOutputMuteButton--muted--light-theme");
+            uiThemeController.clearThemesFromElement(<HTMLElement>this.toggleOutputMuteButton, 'toggleOutputMuteButton--muted', false);
             this.toggleOutputMuteButton.classList.add("toggleOutputMuteButton--unmuted");
             // We explicitly call `play()` here because certain browsers won't play the newly-set stream automatically.
             avDevicesController.outputAudioElement.play();

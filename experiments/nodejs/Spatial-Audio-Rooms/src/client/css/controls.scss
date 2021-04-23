@@ -220,6 +220,10 @@ $bottom-controls-container-height: 72px;
     position: fixed;
     z-index: map-get(z-indices.$z-index, normalModeCanvas);
     touch-action: none;
+
+    &:focus {
+        outline-style: none;
+    }
 }
 
 .normalModeCanvas--positiveCursor {
@@ -512,10 +516,10 @@ $bottom-controls-container-height: 72px;
     }
 
     &__select {
-        margin: 0 0 12px 0;
+        margin: 0 0 14px 0;
         font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
         font-weight: normal;
-        font-size: 16px;
+        font-size: 14px;
         padding: 4px;
         height: 36px;
         border-radius: 5px;
@@ -959,4 +963,20 @@ $bottom-controls-container-height: 72px;
     text-decoration: underline;
     cursor: pointer;
     font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+
+    &--light-theme {
+        color: map-get(themes.$light-theme, edit-my-profile-link);
+
+        &:hover {
+            color: map-get(themes.$light-theme, edit-my-profile-link-hover);
+        }
+    }
+
+    &--dark-theme {
+        color: map-get(themes.$dark-theme, edit-my-profile-link);
+
+        &:hover {
+            color: map-get(themes.$dark-theme, edit-my-profile-link-hover);
+        }
+    }
 }

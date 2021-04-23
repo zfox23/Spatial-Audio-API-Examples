@@ -28,6 +28,7 @@ export class WatchPartyController {
         this.normalModeCanvas = document.querySelector(".normalModeCanvas");
 
         this.watchPartyModeCanvas = document.createElement("canvas");
+        this.watchPartyModeCanvas.tabIndex = 1;
         this.watchPartyModeCanvas.classList.add("watchPartyModeCanvas", "displayNone");
         document.body.appendChild(this.watchPartyModeCanvas);
         this.watchPartyModeCTX = this.watchPartyModeCanvas.getContext("2d");

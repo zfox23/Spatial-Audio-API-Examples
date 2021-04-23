@@ -103,8 +103,7 @@ export class SignalsController {
         let children = this.signalButtonContainer.children;
         for (let i = 0; i < children.length; i++) {
             children[i].classList.remove('signalButton--active');
-            children[i].classList.remove('signalButton--active--dark-theme');
-            children[i].classList.remove('signalButton--active--light-theme');
+            uiThemeController.clearThemesFromElement(<HTMLElement>children[i], 'signalButton--active', false);
         }
 
         this.normalModeCanvas.classList.remove("normalModeCanvas--positiveCursor");

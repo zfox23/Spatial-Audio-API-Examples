@@ -29,6 +29,7 @@ export class TwoDimensionalRenderer {
     constructor() {
         this.normalModeCanvas = document.createElement("canvas");
         this.normalModeCanvas.classList.add("normalModeCanvas");
+        this.normalModeCanvas.tabIndex = 0;
         document.body.appendChild(this.normalModeCanvas);
         this.normalModeCTX = this.normalModeCanvas.getContext("2d");
 

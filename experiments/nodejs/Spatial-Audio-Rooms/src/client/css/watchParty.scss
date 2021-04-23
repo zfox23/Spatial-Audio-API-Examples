@@ -12,6 +12,10 @@ $watch-party-mode-canvas-height: 150px;
     bottom: $bottom-controls-container-height;
     touch-action: none;
 
+    &:focus {
+        outline-style: none;
+    }
+
     &--light-theme {
         background-color: map-get(themes.$light-theme, watch-party-canvas-background);
     }

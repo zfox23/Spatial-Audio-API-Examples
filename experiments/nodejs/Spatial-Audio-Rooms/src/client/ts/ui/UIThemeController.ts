@@ -85,18 +85,26 @@ export class UIThemeController {
         this.addThemedElementFromClassName("toggleJoinWatchPartyButton");
         this.addThemedElementFromClassName("showRoomListButton");
         this.addThemedElementFromClassName("avatarContextMenu__displayName--mine");
+        this.addThemedElementFromClassName("editMyProfileLink");
 
         this.themedElements.forEach((themedElementArray, baseClassName) => {
             themedElementArray.forEach((themedElement) => {
-                for (const themeEnumValue of Utilities.enumKeys(UITheme)) {
-                    if (UITheme[themeEnumValue] !== this.currentTheme) {
-                        themedElement.classList.remove(`${baseClassName}${UITheme[themeEnumValue]}`);
-                    }
+                if (themedElement.classList.contains(`${baseClassName}${this.currentTheme}`)) {
+                    return;
                 }
-    
+
+                this.clearThemesFromElement(themedElement, baseClassName, true);    
                 themedElement.classList.add(`${baseClassName}${this.currentTheme}`);
             });
         });
+    }
+
+    clearThemesFromElement(themedElement: HTMLElement, baseClassName: string, keepCurrentTheme: boolean = false) {
+        for (const themeEnumValue of Utilities.enumKeys(UITheme)) {
+            if (!keepCurrentTheme || (keepCurrentTheme && UITheme[themeEnumValue] !== this.currentTheme)) {
+                themedElement.classList.remove(`${baseClassName}${UITheme[themeEnumValue]}`);
+            }
+        }
     }
 
     setTheme(newTheme: UITheme) {

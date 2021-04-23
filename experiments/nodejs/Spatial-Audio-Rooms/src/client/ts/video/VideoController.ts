@@ -78,18 +78,15 @@ export class VideoController {
 
     disableVideoButton() {
         this.toggleVideoButton.classList.remove("toggleVideoButton--muted");
-        this.toggleVideoButton.classList.remove("toggleVideoButton--unmuted--dark-theme");
-        this.toggleVideoButton.classList.remove("toggleVideoButton--unmuted--light-theme");
-        this.toggleVideoButton.classList.remove("toggleVideoButton--muted--dark-theme");
-        this.toggleVideoButton.classList.remove("toggleVideoButton--muted--light-theme");
+        uiThemeController.clearThemesFromElement(<HTMLElement>this.toggleVideoButton, 'toggleVideoButton--unmuted', false);
+        uiThemeController.clearThemesFromElement(<HTMLElement>this.toggleVideoButton, 'toggleVideoButton--muted', false);
         this.toggleVideoButton.classList.add("toggleVideoButton--disabled");
         uiThemeController.refreshThemedElements();
     }
 
     enableVideoButton() {
         this.toggleVideoButton.classList.remove("toggleVideoButton--disabled");
-        this.toggleVideoButton.classList.remove("toggleVideoButton--disabled--dark-theme");
-        this.toggleVideoButton.classList.remove("toggleVideoButton--disabled--light-theme");
+        uiThemeController.clearThemesFromElement(<HTMLElement>this.toggleVideoButton, 'toggleVideoButton--disabled', false);
         uiThemeController.refreshThemedElements();
     }
 
@@ -110,8 +107,7 @@ export class VideoController {
 
         this.toggleVideoButton.classList.add("toggleVideoButton--muted");
         this.toggleVideoButton.classList.remove("toggleVideoButton--unmuted");
-        this.toggleVideoButton.classList.remove("toggleVideoButton--unmuted--dark-theme");
-        this.toggleVideoButton.classList.remove("toggleVideoButton--unmuted--light-theme");
+        uiThemeController.clearThemesFromElement(<HTMLElement>this.toggleVideoButton, 'toggleVideoButton--unmuted', false);
         uiThemeController.refreshThemedElements();
     }
 
@@ -142,8 +138,7 @@ export class VideoController {
         this.twilioRoom.localParticipant.publishTrack(this.localVideoTrack);
         
         this.toggleVideoButton.classList.remove("toggleVideoButton--muted");
-        this.toggleVideoButton.classList.remove("toggleVideoButton--muted--dark-theme");
-        this.toggleVideoButton.classList.remove("toggleVideoButton--muted--light-theme");
+        uiThemeController.clearThemesFromElement(<HTMLElement>this.toggleVideoButton, 'toggleVideoButton--muted', false);
         this.toggleVideoButton.classList.add("toggleVideoButton--unmuted");
         uiThemeController.refreshThemedElements();
     }

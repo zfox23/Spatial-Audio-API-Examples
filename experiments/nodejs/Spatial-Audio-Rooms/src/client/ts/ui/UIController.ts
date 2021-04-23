@@ -55,6 +55,7 @@ export class UIController {
     initMainUI() {
         let bottomBar = document.createElement("div");
         bottomBar.classList.add("bottomBar");
+        bottomBar.addEventListener("click", (e) => { userInputController.hideSettingsMenu(); });
         document.body.appendChild(bottomBar);
 
         let bottomControlsContainer = document.createElement("div");
