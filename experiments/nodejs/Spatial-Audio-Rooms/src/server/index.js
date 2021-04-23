@@ -6,6 +6,8 @@ const webpack = require('webpack');
 const path = require('path');
 const express = require('express');
 const crypto = require('crypto');
+const fetch = require('node-fetch');
+const { URLSearchParams } = require('url');
 
 const app = express();
 const PORT = 8180;
@@ -64,6 +66,29 @@ app.get('/spatial-audio-rooms', async (req, res, next) => {
         }
         res.send(page);
     });
+});
+
+app.get('/spatial-audio-rooms/slack', (req, res, next) => {
+    let code = req.body.code;
+    if (!code) {
+        res.sendStatus(500);
+        return;
+    }
+
+    const params = new URLSearchParams();
+    params.append('code', code);
+
+    fetch("https://slack.com/api/oauth.v2.access", { method: 'POST', body: params })
+        .then(res => res.json())
+        .then(json => {
+            console.log(json);
+            res.send(json);
+        })
+        .catch(e => {
+            let errorString = `There was an error when contacting Slack. More information:\n${JSON.stringify(e)}`;
+            console.error(errorString)
+            res.send(errorString);
+        });
 });
 
 app.post('/spatial-audio-rooms/create', (req, res, next) => {
@@ -167,11 +192,11 @@ function onWatchNewVideo(newVideoURL, spaceName, roomName) {
     let youTubeVideoID;
     if (url.hostname === "youtu.be") {
         youTubeVideoID = url.pathname.substr(1);
-    } else if (url.hostname === "www.youtube.com" || url.hostname  === "youtube.com") {
+    } else if (url.hostname === "www.youtube.com" || url.hostname === "youtube.com") {
         const params = new URLSearchParams(url.search);
         youTubeVideoID = params.get("v");
     }
-    
+
     if (youTubeVideoID) {
         spaceInformation[spaceName]["rooms"][roomName].currentQueuedVideoURL = newVideoURL;
         let startTimestamp = (Date.now() - spaceInformation[spaceName]["rooms"][roomName].currentVideoSeekTimeSetTimestamp) / 1000 + spaceInformation[spaceName]["rooms"][roomName].currentVideoSeekTime;
@@ -195,7 +220,7 @@ function onWatchPartyUserLeft(visitIDHash) {
             let roomName = roomNameKeys[j];
             if (spaceInformation[spaceName]["rooms"][roomName] && spaceInformation[spaceName]["rooms"][roomName].watcherVisitIDHashes) {
                 spaceInformation[spaceName]["rooms"][roomName].watcherVisitIDHashes.delete(visitIDHash);
-            
+
                 if (spaceInformation[spaceName]["rooms"][roomName].watcherVisitIDHashes.size === 0) {
                     spaceInformation[spaceName]["rooms"][roomName].currentQueuedVideoURL = undefined;
                     spaceInformation[spaceName]["rooms"][roomName].currentVideoSeekTime = undefined;
@@ -435,7 +460,7 @@ socketIOServer.on("connection", (socket) => {
         spaceInformation[spaceName]["rooms"][roomName].currentVideoSeekTimeSetTimestamp = Date.now();
 
         console.log(`In ${spaceName}/${roomName}, \`${visitIDHash}\` requested that a new video be played with URL \`${newVideoURL}\`.`);
-        
+
         onWatchNewVideo(newVideoURL, spaceName, roomName);
     });
 
