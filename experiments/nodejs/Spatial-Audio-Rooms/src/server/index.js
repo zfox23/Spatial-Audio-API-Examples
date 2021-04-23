@@ -94,7 +94,6 @@ app.get('/spatial-audio-rooms/slack', (req, res, next) => {
                 console.error(errorString);
                 res.status(500).send(errorString);
             }
-            res.send(json);
         })
         .catch(e => {
             let errorString = `There was an error when contacting Slack. More information:\n${JSON.stringify(e)}`;
