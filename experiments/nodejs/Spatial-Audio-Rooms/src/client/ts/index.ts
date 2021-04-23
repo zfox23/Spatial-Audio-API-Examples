@@ -9,6 +9,7 @@ import { ParticleController } from './ui/ParticleController';
 import { RoomController } from './ui/RoomController';
 import { SignalsController } from './ui/SignalsController';
 import { UIController } from "./ui/UIController";
+import { UIThemeController } from './ui/UIThemeController';
 import { UserInputController } from './ui/UserInputController';
 import { WatchPartyController } from './ui/WatchPartyController';
 import { UserDataController } from './userData/UserDataController';
@@ -43,3 +44,5 @@ function addLearnMoreLink() {
 
 addLearnMoreLink();
 twoDimensionalRenderer.updateCanvasDimensions();
+
+export const uiThemeController = new UIThemeController();

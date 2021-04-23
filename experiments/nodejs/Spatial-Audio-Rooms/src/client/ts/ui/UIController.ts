@@ -1,4 +1,4 @@
-import { avDevicesController, connectionController, physicsController, roomController, twoDimensionalRenderer, userDataController, userInputController, webSocketConnectionController } from '..';
+import { avDevicesController, connectionController, physicsController, roomController, twoDimensionalRenderer, uiThemeController, userDataController, userInputController, webSocketConnectionController } from '..';
 import '../../css/controls.scss';
 import { AudionetInitResponse, ConnectionController } from '../connection/ConnectionController';
 import { UserData } from '../userData/UserDataController';
@@ -174,6 +174,7 @@ export class UIController {
         let closeButton = document.createElement("button");
         closeButton.innerHTML = "X";
         closeButton.classList.add("avatarContextMenu__closeButton");
+        uiThemeController.refreshThemedElements();
         closeButton.addEventListener("click", (e) => {
             this.hideAvatarContextMenu();
         });

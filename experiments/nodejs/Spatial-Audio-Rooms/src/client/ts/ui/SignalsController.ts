@@ -10,7 +10,7 @@ import NegativeDingDsharp2 from '../../audio/negativeDingDsharp2.mp3';
 import NegativeDingG2 from '../../audio/negativeDingG2.mp3';
 import { Utilities } from "../utilities/Utilities";
 import { PARTICLES, SIGNALS } from "../constants/constants";
-import { connectionController, particleController, userDataController, webSocketConnectionController } from "..";
+import { connectionController, particleController, uiThemeController, userDataController, webSocketConnectionController } from "..";
 import { Particle } from "./ParticleController";
 declare var HIFI_SPACE_NAME: string;
 
@@ -116,10 +116,12 @@ export class SignalsController {
             case this.supportedSignals.get("positive").name:
                 this.signalButton__positive.classList.add('signalButton--active');
                 this.normalModeCanvas.classList.add("normalModeCanvas--positiveCursor");
+                uiThemeController.refreshThemedElements();
                 break;
             case this.supportedSignals.get("negative").name:
                 this.signalButton__negative.classList.add('signalButton--active');
                 this.normalModeCanvas.classList.add("normalModeCanvas--negativeCursor");
+                uiThemeController.refreshThemedElements();
                 break;
             default:
                 break;

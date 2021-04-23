@@ -1,5 +1,5 @@
 import { OrientationEuler3D, Point3D } from "hifi-spatial-audio";
-import { uiController, userDataController } from "..";
+import { uiController, uiThemeController, userDataController } from "..";
 import { AVATAR, ROOM, MISC } from "../constants/constants";
 import { UserData } from "../userData/UserDataController";
 import { Utilities } from "../utilities/Utilities";
@@ -349,6 +349,7 @@ export class RoomController {
 
         let roomListInnerContainer__header = document.createElement("h1");
         roomListInnerContainer__header.classList.add("roomListInnerContainer__header");
+        uiThemeController.refreshThemedElements();
         roomListInnerContainer__header.innerHTML = `Rooms`;
         this.roomListInnerContainer.appendChild(roomListInnerContainer__header);
 
@@ -358,6 +359,7 @@ export class RoomController {
             if (userDataController.myAvatar.myUserData.currentRoom === room) {
                 roomInfoContainer.classList.add("roomInfoContainer--mine");
             }
+            uiThemeController.refreshThemedElements();
             this.roomListInnerContainer.appendChild(roomInfoContainer);
 
             let roomInfoContainer__header = document.createElement("h2");

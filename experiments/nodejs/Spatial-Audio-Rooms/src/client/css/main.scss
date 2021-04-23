@@ -27,8 +27,17 @@ body {
     width: 100vw;
     height: 100vh;
     overflow: hidden;
-    background-color: map-get(themes.$light-theme, body-background);
     font-family: 'Graphik', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.body {
+    &--light-theme {
+        background-color: map-get(themes.$light-theme, body-background);
+    }
+
+    &--dark-theme {
+        background-color: map-get(themes.$dark-theme, body-background);
+    }
 }
 
 .loadingScreen {
@@ -68,8 +77,15 @@ body {
     }
 
     &--text {
-        color: map-get(themes.$light-theme, on-body-background);
         z-index: 2;
+
+        &--light-theme {
+            color: map-get(themes.$light-theme, on-body-background);
+        }
+    
+        &--dark-theme {
+            color: map-get(themes.$dark-theme, on-body-background);
+        }
     }
 }
 

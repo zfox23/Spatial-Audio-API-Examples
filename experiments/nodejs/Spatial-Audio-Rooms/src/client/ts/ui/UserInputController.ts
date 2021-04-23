@@ -1,4 +1,4 @@
-import { avDevicesController, connectionController, pathsController, physicsController, roomController, signalsController, twoDimensionalRenderer, uiController, userDataController, watchPartyController, webSocketConnectionController } from "..";
+import { avDevicesController, connectionController, pathsController, physicsController, roomController, signalsController, twoDimensionalRenderer, uiController, uiThemeController, userDataController, watchPartyController, webSocketConnectionController } from "..";
 import { AVATAR, ROOM, CONTROLS, PHYSICS, PARTICLES } from "../constants/constants";
 import { MyAvatarModes, UserData } from "../userData/UserDataController";
 import { Utilities } from "../utilities/Utilities";
@@ -122,6 +122,9 @@ export class UserInputController {
             case CONTROLS.U_KEY_CODE:
                 userDataController.myAvatarEars.toggleConnection();
                 break;
+            case CONTROLS.T_KEY_CODE:
+                uiThemeController.cycleThemes();
+                break;
         }
     }
 
@@ -165,6 +168,7 @@ export class UserInputController {
                 .then((devices) => {
                     changeAudioInputDeviceMenu = document.createElement("div");
                     changeAudioInputDeviceMenu.classList.add("changeDeviceMenu", "changeAudioInputDeviceMenu");
+                    uiThemeController.refreshThemedElements();
 
                     let changeAudioInputDeviceMenu__header = document.createElement("h2");
                     changeAudioInputDeviceMenu__header.classList.add("changeDeviceMenu__header", "changeAudioInputDeviceMenu__header");
@@ -230,6 +234,7 @@ export class UserInputController {
                 .then((devices) => {
                     changeAudioOutputDeviceMenu = document.createElement("div");
                     changeAudioOutputDeviceMenu.classList.add("changeDeviceMenu", "changeAudioOutputDeviceMenu");
+                    uiThemeController.refreshThemedElements();
 
                     let changeAudioOutputDeviceMenu__header = document.createElement("h2");
                     changeAudioOutputDeviceMenu__header.classList.add("changeDeviceMenu__header", "changeAudioOutputDeviceMenu__header");
@@ -295,6 +300,7 @@ export class UserInputController {
                 .then((devices) => {
                     changeVideoDeviceMenu = document.createElement("div");
                     changeVideoDeviceMenu.classList.add("changeDeviceMenu", "changeVideoDeviceMenu");
+                    uiThemeController.refreshThemedElements();
 
                     let changeVideoDeviceMenu__header = document.createElement("h2");
                     changeVideoDeviceMenu__header.classList.add("changeDeviceMenu__header", "changeVideoDeviceMenu__header");
@@ -364,6 +370,7 @@ export class UserInputController {
             } else {
                 this.toggleInputMuteButton.classList.remove("toggleInputMuteButton--muted");
             }
+            uiThemeController.refreshThemedElements();
         }
     }
 
@@ -389,6 +396,7 @@ export class UserInputController {
             // We explicitly call `play()` here because certain browsers won't play the newly-set stream automatically.
             avDevicesController.outputAudioElement.play();
         }
+        uiThemeController.refreshThemedElements();
     }
 
     setEchoCancellationStatus(newEchoCancellationStatus: boolean) {
@@ -425,7 +433,6 @@ export class UserInputController {
     }
 
     handleCanvasClick(event: TouchEvent | MouseEvent | PointerEvent) {
-        console.log(event)
         if (signalsController.activeSignal && (event instanceof MouseEvent || event instanceof PointerEvent)) {
             let clickM = new Point3D(Utilities.normalModeCanvasPXToM({x: event.offsetX, y: event.offsetY}));
 

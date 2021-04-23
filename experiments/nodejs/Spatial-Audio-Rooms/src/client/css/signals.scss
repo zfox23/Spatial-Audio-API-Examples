@@ -42,6 +42,13 @@
 }
 
 .signalButton--active {
-    background-color: map-get(themes.$light-theme, active-signal-button-background);
     border-radius: 4px;
+
+    &--light-theme {
+        background-color: map-get(themes.$light-theme, active-signal-button-background);
+    }
+
+    &--dark-theme {
+        background-color: map-get(themes.$dark-theme, active-signal-button-background);
+    }
 }

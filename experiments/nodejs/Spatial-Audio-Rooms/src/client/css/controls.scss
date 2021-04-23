@@ -9,8 +9,15 @@ $bottom-controls-container-height: 72px;
     left: 0;
     width: 100vw;
     height: 100vh;
-    background-color: map-get(themes.$light-theme, play-overlay-scrim);
     z-index: map-get(z-indices.$z-index, aboveModal);
+
+    &--light-theme {
+        background-color: map-get(themes.$light-theme, play-overlay-scrim);
+    }
+
+    &--dark-theme {
+        background-color: map-get(themes.$dark-theme, play-overlay-scrim);
+    }
 
     &__container {
         height: calc(100% - 24px);
@@ -37,8 +44,15 @@ $bottom-controls-container-height: 72px;
 
     &__playText {
         font-family: 'Graphik-Semibold', 'Helvetica', 'Arial', sans-serif;
-        color: map-get(themes.$light-theme, play-overlay);
         width: 100%;
+
+        &--light-theme {
+            color: map-get(themes.$light-theme, play-overlay);
+        }
+    
+        &--dark-theme {
+            color: map-get(themes.$dark-theme, play-overlay);
+        }
 
         @include media(">tablet") {
             margin: 24px 0 0 0;
@@ -76,8 +90,15 @@ $bottom-controls-container-height: 72px;
     }
 
     &__thenPress {
-        color: map-get(themes.$light-theme, text-secondary);
         position: relative;
+
+        &--light-theme {
+            color: map-get(themes.$light-theme, text-secondary);
+        }
+    
+        &--dark-theme {
+            color: map-get(themes.$dark-theme, text-secondary);
+        }
 
         @include media(">tablet") {
             top: 6px;
@@ -131,12 +152,19 @@ $bottom-controls-container-height: 72px;
     &__playAnimation {
         border-radius: 50%;
         position: relative;
-        background-color: map-get(themes.$light-theme, text-secondary);
         width: 100%;
         height: 100%;
         opacity: 0;
         z-index: -1;
         animation: scaleIn 2s infinite cubic-bezier(.17, .67, .83, .67);
+
+        &--light-theme {
+            background-color: map-get(themes.$light-theme, text-secondary);
+        }
+    
+        &--dark-theme {
+            background-color: map-get(themes.$dark-theme, text-secondary);
+        }
 
         @keyframes scaleIn {
             from {
@@ -159,15 +187,30 @@ $bottom-controls-container-height: 72px;
     width: 100vw;
     text-align: center;
     z-index: map-get(z-indices.$z-index, ui);
-    background-color: map-get(themes.$light-theme, body-background);
     padding: 8px;
-    color: map-get(themes.$light-theme, text-secondary);
     border-bottom: 1px black solid;
 
-    &__link {
+    &--light-theme {
+        background-color: map-get(themes.$light-theme, body-background);
         color: map-get(themes.$light-theme, text-secondary);
+    }
+
+    &--dark-theme {
+        background-color: map-get(themes.$dark-theme, body-background);
+        color: map-get(themes.$dark-theme, text-secondary);
+    }
+
+    &__link {
         font-family: 'Graphik-Semibold', 'Helvetica', 'Arial', sans-serif;
         font-size: 18px;
+
+        &--light-theme {
+            color: map-get(themes.$light-theme, text-secondary);
+        }
+    
+        &--dark-theme {
+            color: map-get(themes.$dark-theme, text-secondary);
+        }
     }
 }
 
@@ -193,11 +236,18 @@ $bottom-controls-container-height: 72px;
     bottom: 0;
     left: 0;
     right: 0;
-    background-color: map-get(themes.$light-theme, bottom-controls-container-background);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: map-get(z-indices.$z-index, ui);
+
+    &--light-theme {
+        background-color: map-get(themes.$light-theme, bottom-controls-container-background);
+    }
+
+    &--dark-theme {
+        background-color: map-get(themes.$dark-theme, bottom-controls-container-background);
+    }
 }
 
 .controlButtonsContainer {
@@ -215,7 +265,14 @@ $bottom-controls-container-height: 72px;
     margin: 0 0 2px 0;
     font-family: 'Graphik', 'Helvetica', 'Arial', sans-serif;
     font-size: 18px;
-    color: map-get(themes.$light-theme, text-primary);
+
+    &--light-theme {
+        color: map-get(themes.$light-theme, text-primary);
+    }
+
+    &--dark-theme {
+        color: map-get(themes.$dark-theme, text-primary);
+    }
 }
 
 .bottomToggleButton {
@@ -240,44 +297,104 @@ $bottom-controls-container-height: 72px;
 }
 
 .toggleInputMuteButton {
-    background-image: url('../images/icons/light-theme/mic.svg');
+    &--light-theme {
+        background-image: url('../images/icons/light-theme/mic.svg');
+    }
+
+    &--dark-theme {
+        background-image: url('../images/icons/dark-theme/mic-dark.svg');
+    }
 }
 
 .toggleInputMuteButton--muted {
-    background-image: url('../images/icons/light-theme/red-mic-with-cross.svg');
+    &--light-theme {
+        background-image: url('../images/icons/light-theme/red-mic-with-cross.svg');
+    }
+
+    &--dark-theme {
+        background-image: url('../images/icons/dark-theme/red-mic-with-cross.svg');
+    }
 }
 
 .toggleInputMuteButton--disabled {
-    background-image: url('../images/icons/light-theme/grey-mic.svg');
+    &--light-theme {
+        background-image: url('../images/icons/light-theme/grey-mic.svg');
+    }
+
+    &--dark-theme {
+        background-image: url('../images/icons/dark-theme/grey-mic.svg');
+    }
 }
 
 .toggleOutputMuteButton {
-    background-image: url('../images/icons/light-theme/headphones.svg');
+    &--light-theme {
+        background-image: url('../images/icons/light-theme/headphones.svg');
+    }
+
+    &--dark-theme {
+        background-image: url('../images/icons/dark-theme/headphones-dark.svg');
+    }
 }
 
 .toggleOutputMuteButton--muted {
-    background-image: url('../images/icons/light-theme/red-headphones-with-x.svg');
+    &--light-theme {
+        background-image: url('../images/icons/light-theme/red-headphones-with-x.svg');
+    }
+
+    &--dark-theme {
+        background-image: url('../images/icons/dark-theme/red-headphones-with-x.svg');
+    }
 }
 
 .toggleVideoButton {
-    background-image: url('../images/icons/light-theme/cam.svg');
+    &--light-theme {
+        background-image: url('../images/icons/light-theme/cam.svg');
+    }
+
+    &--dark-theme {
+        background-image: url('../images/icons/dark-theme/cam-dark.svg');
+    }
 }
 
 .toggleVideoButton--muted {
-    background-image: url('../images/icons/light-theme/red-cam-with-cross.svg');
+    &--light-theme {
+        background-image: url('../images/icons/light-theme/red-cam-with-cross.svg');
+    }
+
+    &--dark-theme {
+        background-image: url('../images/icons/dark-theme/red-cam-with-cross.svg');
+    }
 }
 
 .toggleVideoButton--disabled {
-    background-image: url('../images/icons/light-theme/grey-cam-with-cross.svg');
+    &--light-theme {
+        background-image: url('../images/icons/light-theme/grey-cam-with-cross.svg');
+    }
+
+    &--dark-theme {
+        background-image: url('../images/icons/dark-theme/grey-cam-with-cross.svg');
+    }
 }
 
 .toggleRoomsDrawerButton {
-    background-image: url('../images/icons/light-theme/people.svg');
+    &--light-theme {
+        background-image: url('../images/icons/light-theme/people.svg');
+    }
+
+    &--dark-theme {
+        background-image: url('../images/icons/dark-theme/people-dark.svg');
+    }
 }
 
 .toggleJoinWatchPartyButton {
     // Television by ProSymbols from the Noun Project
-    background-image: url('../images/icons/light-theme/television.svg');
+    &--light-theme {
+        background-image: url('../images/icons/light-theme/television.svg');
+    }
+
+    &--dark-theme {
+        background-image: url('../images/icons/dark-theme/television-dark.svg');
+    }
 }
 
 .changeDeviceMenu {
@@ -287,11 +404,19 @@ $bottom-controls-container-height: 72px;
     right: 0;
     display: flex;
     flex-direction: column;
-    background-color: map-get(themes.$light-theme, bottom-controls-container-background);
-    color: map-get(themes.$light-theme, modal);
     z-index: map-get(z-indices.$z-index, modalBackground);
     padding: 20px;
     border-radius: 8px 0 0 0;
+
+    &--light-theme {
+        background-color: map-get(themes.$light-theme, bottom-controls-container-background);
+        color: map-get(themes.$light-theme, modal);
+    }
+
+    &--dark-theme {
+        background-color: map-get(themes.$dark-theme, bottom-controls-container-background);
+        color: map-get(themes.$dark-theme, modal);
+    }
 
     &__header {
         width: 100%;
@@ -335,10 +460,17 @@ $bottom-controls-container-height: 72px;
     width: 280px;
     max-width: 95vw;
     height: calc(100vh - #{$bottom-controls-container-height});
-    background-color: map-get(themes.$light-theme, room-list-container-background);
     z-index: map-get(z-indices.$z-index, hamburger);
     animation-name: slideIn;
     animation-duration: 0.25s;
+
+    &--light-theme {
+        background-color: map-get(themes.$light-theme, room-list-container-background);
+    }
+
+    &--dark-theme {
+        background-color: map-get(themes.$dark-theme, room-list-container-background);
+    }
 }
 
 .roomListInnerContainer {
@@ -348,7 +480,14 @@ $bottom-controls-container-height: 72px;
     flex-direction: column;
     overflow-y: auto;
     scrollbar-width: thin;
-    scrollbar-color: map-get(themes.$light-theme, scrollbar-thumb) "transparent";
+
+    &--light-theme {
+        scrollbar-color: map-get(themes.$light-theme, scrollbar-thumb) "transparent";
+    }
+
+    &--dark-theme {
+        scrollbar-color: map-get(themes.$dark-theme, scrollbar-thumb) "transparent";
+    }
 
     &::-webkit-scrollbar {
         width: 12px;
@@ -366,12 +505,19 @@ $bottom-controls-container-height: 72px;
     }
 
     &__header {
-        color: map-get(themes.$light-theme, room-list-container);
         font-family: 'Graphik', 'Helvetica', 'Arial', sans-serif;
         font-weight: normal;
         font-size: 24px;
         margin: 0 0 24px 0;
         padding: 0 12px;
+
+        &--light-theme {
+            color: map-get(themes.$light-theme, room-list-container);
+        }
+    
+        &--dark-theme {
+            color: map-get(themes.$dark-theme, room-list-container);
+        }
     }
 }
 
@@ -388,12 +534,25 @@ $bottom-controls-container-height: 72px;
 .roomInfoContainer {
     display: flex;
     flex-direction: column;
-    color: map-get(themes.$light-theme, room-list-container);
     margin: 0 0 24px 0;
     padding: 12px;
 
+    &--light-theme {
+        color: map-get(themes.$light-theme, room-list-container);
+    }
+
+    &--dark-theme {
+        color: map-get(themes.$dark-theme, room-list-container);
+    }
+
     &--mine {
-        background-color: map-get(themes.$light-theme, room-list-container-mine-background);
+        &--light-theme {
+            background-color: map-get(themes.$light-theme, room-list-container-mine-background);
+        }
+    
+        &--dark-theme {
+            background-color: map-get(themes.$dark-theme, room-list-container-mine-background);
+        }
     }
 
     &__header {
@@ -433,7 +592,6 @@ $bottom-controls-container-height: 72px;
 }
 
 .modalBackground {
-    background-color: map-get(themes.$light-theme, modal-scrim);
     position: fixed;
     display: flex;
     justify-content: center;
@@ -443,17 +601,33 @@ $bottom-controls-container-height: 72px;
     width: 100vw;
     height: calc(100vh - #{$bottom-controls-container-height});
     z-index: map-get(z-indices.$z-index, modalBackground);
+
+    &--light-theme {
+        background-color: map-get(themes.$light-theme, modal-scrim);
+    }
+
+    &--dark-theme {
+        background-color: map-get(themes.$dark-theme, modal-scrim);
+    }
 }
 
 .avatarContextMenu {
-    background-color: map-get(themes.$light-theme, modal-background);
     max-width: 80%;
     max-height: 80%;
     z-index: map-get(z-indices.$z-index, modalBackground);
-    color: map-get(themes.$light-theme, modal);
     padding: 48px;
     position: absolute;
     border-radius: 4px;
+
+    &--light-theme {
+        background-color: map-get(themes.$light-theme, modal-background);
+        color: map-get(themes.$light-theme, modal);
+    }
+
+    &--dark-theme {
+        background-color: map-get(themes.$dark-theme, modal-background);
+        color: map-get(themes.$dark-theme, modal);
+    }
 
     &__closeButton {
         position: absolute;
@@ -469,7 +643,14 @@ $bottom-controls-container-height: 72px;
         background-color: transparent;
         padding: 0;
         cursor: pointer;
-        color: map-get(themes.$light-theme, modal);
+
+        &--light-theme {
+            color: map-get(themes.$light-theme, modal);
+        }
+    
+        &--dark-theme {
+            color: map-get(themes.$dark-theme, modal);
+        }
     }
 
     &__displayName {

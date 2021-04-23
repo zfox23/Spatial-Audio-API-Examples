@@ -11,7 +11,14 @@ $watch-party-mode-canvas-height: 150px;
     z-index: map-get(z-indices.$z-index, canvas);
     bottom: $bottom-controls-container-height;
     touch-action: none;
-    background-color: map-get(themes.$light-theme, watch-party-canvas-background);
+
+    &--light-theme {
+        background-color: map-get(themes.$light-theme, watch-party-canvas-background);
+    }
+
+    &--dark-theme {
+        background-color: map-get(themes.$dark-theme, watch-party-canvas-background);
+    }
 }
 
 .youTubePlayerElement {
