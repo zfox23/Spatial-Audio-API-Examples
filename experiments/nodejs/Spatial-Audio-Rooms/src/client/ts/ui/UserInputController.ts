@@ -351,8 +351,12 @@ export class UserInputController {
             if (userDataController.myAvatar.myUserData.isMuted) {
                 this.toggleInputMuteButton.classList.add("toggleInputMuteButton--muted");
                 this.toggleInputMuteButton.classList.remove("toggleInputMuteButton--unmuted");
+                this.toggleInputMuteButton.classList.remove("toggleInputMuteButton--unmuted--dark-theme");
+                this.toggleInputMuteButton.classList.remove("toggleInputMuteButton--unmuted--light-theme");
             } else {
                 this.toggleInputMuteButton.classList.remove("toggleInputMuteButton--muted");
+                this.toggleInputMuteButton.classList.remove("toggleInputMuteButton--muted--dark-theme");
+                this.toggleInputMuteButton.classList.remove("toggleInputMuteButton--muted--light-theme");
                 this.toggleInputMuteButton.classList.add("toggleInputMuteButton--unmuted");
             }
             uiThemeController.refreshThemedElements();
@@ -375,10 +379,14 @@ export class UserInputController {
         console.log(`Set output mute status to \`${avDevicesController.outputAudioElement.muted}\``);
 
         if (avDevicesController.outputAudioElement.muted) {
-            this.toggleOutputMuteButton.classList.add("toggleOutputMuteButton--muted");
             this.toggleOutputMuteButton.classList.remove("toggleOutputMuteButton--unmuted");
+            this.toggleOutputMuteButton.classList.remove("toggleOutputMuteButton--unmuted--dark-theme");
+            this.toggleOutputMuteButton.classList.remove("toggleOutputMuteButton--unmuted--light-theme");
+            this.toggleOutputMuteButton.classList.add("toggleOutputMuteButton--muted");
         } else {
             this.toggleOutputMuteButton.classList.remove("toggleOutputMuteButton--muted");
+            this.toggleOutputMuteButton.classList.remove("toggleOutputMuteButton--muted--dark-theme");
+            this.toggleOutputMuteButton.classList.remove("toggleOutputMuteButton--muted--light-theme");
             this.toggleOutputMuteButton.classList.add("toggleOutputMuteButton--unmuted");
             // We explicitly call `play()` here because certain browsers won't play the newly-set stream automatically.
             avDevicesController.outputAudioElement.play();

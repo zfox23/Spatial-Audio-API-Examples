@@ -20,7 +20,6 @@ export const webSocketConnectionController = new WebSocketConnectionController()
 export const avDevicesController = new AVDevicesController();
 export const uiController = new UIController();
 export const userDataController = new UserDataController();
-userDataController.init();
 export const roomController = new RoomController();
 export const twoDimensionalRenderer = new TwoDimensionalRenderer();
 export const watchPartyController = new WatchPartyController();
@@ -47,3 +46,6 @@ addLearnMoreLink();
 twoDimensionalRenderer.updateCanvasDimensions();
 
 export const uiThemeController = new UIThemeController();
+
+userDataController.init();
+videoController.init();

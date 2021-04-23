@@ -54,7 +54,9 @@ export class TwoDimensionalRenderer {
             }
             let roomListInnerContainer = <HTMLElement>document.querySelector(".roomListInnerContainer");
             if (roomListInnerContainer) {
-                roomListInnerContainer.style.margin = `${72 + learnMoreContainerHeight}px 0 0 0`;
+                let topMarginPX = 72 + learnMoreContainerHeight;
+                roomListInnerContainer.style.margin = `${topMarginPX}px 0 0 0`;
+                roomListInnerContainer.style.height = `calc(100vh - 72px - ${topMarginPX}px - ${learnMoreContainerHeight}px)`;
             }
             let signalButtonContainer = <HTMLElement>document.querySelector(".signalButtonContainer");
             if (signalButtonContainer) {

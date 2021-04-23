@@ -243,10 +243,12 @@ $bottom-controls-container-height: 72px;
 
     &--light-theme {
         background-color: map-get(themes.$light-theme, bottom-controls-container-background);
+        color: map-get(themes.$light-theme, text-primary);
     }
 
     &--dark-theme {
         background-color: map-get(themes.$dark-theme, bottom-controls-container-background);
+        color: map-get(themes.$dark-theme, text-primary);
     }
 }
 
@@ -284,7 +286,7 @@ $bottom-controls-container-height: 72px;
         }
     
         &--dark-theme {
-            background-image: url('../images/icons/dark-theme/red-mic-with-cross.svg');
+            background-image: url('../images/icons/dark-theme/red-mic-with-cross-dark.svg');
         }
     }
 }
@@ -321,7 +323,17 @@ $bottom-controls-container-height: 72px;
     }
 }
 
-.toggleVideoButton--muted {
+.toggleVideoButton {
+    &--disabled {
+        &--light-theme {
+            background-image: url('../images/icons/light-theme/grey-cam-with-cross.svg');
+        }
+    
+        &--dark-theme {
+            background-image: url('../images/icons/dark-theme/grey-cam-with-cross.svg');
+        }
+    }
+
     &--unmuted {
         &--light-theme {
             background-image: url('../images/icons/light-theme/cam.svg');
@@ -340,16 +352,6 @@ $bottom-controls-container-height: 72px;
         &--dark-theme {
             background-image: url('../images/icons/dark-theme/red-cam-with-cross.svg');
         }
-    }
-}
-
-.toggleVideoButton--disabled {
-    &--light-theme {
-        background-image: url('../images/icons/light-theme/grey-cam-with-cross.svg');
-    }
-
-    &--dark-theme {
-        background-image: url('../images/icons/dark-theme/grey-cam-with-cross.svg');
     }
 }
 
@@ -405,7 +407,6 @@ $bottom-controls-container-height: 72px;
 }
 
 .showRoomListButton {
-    background-image: url('../images/icons/light-theme/hamburger.svg');
     width: 32px;
     height: 32px;
     background-repeat: no-repeat;
@@ -418,6 +419,14 @@ $bottom-controls-container-height: 72px;
     outline: none;
     position: fixed;
     z-index: map-get(z-indices.$z-index, aboveHamburger);
+
+    &--light-theme {
+        background-image: url('../images/icons/light-theme/hamburger.svg');
+    }
+
+    &--dark-theme {
+        background-image: url('../images/icons/dark-theme/hamburger-dark.svg');
+    }
 }
 
 .roomListOuterContainer {
@@ -442,7 +451,7 @@ $bottom-controls-container-height: 72px;
 
 .roomListInnerContainer {
     margin: 72px 0 0 0;
-    height: calc(100vh - #{$bottom-controls-container-height} - 72px);
+    height: calc(100vh - #{$bottom-controls-container-height});
     display: flex;
     flex-direction: column;
     overflow-y: auto;
@@ -731,19 +740,40 @@ $bottom-controls-container-height: 72px;
 }
 
 .zoomInButton {
-    background-image: url('../images/icons/light-theme/button-zoom-in-idle.svg');
     margin: 0 0 6px 0;
 
-    &:hover {
-        background-image: url('../images/icons/light-theme/button-zoom-in-hover.svg');
+    &--light-theme {
+        background-image: url('../images/icons/light-theme/button-zoom-in-idle.svg');
+
+        &:hover {
+            background-image: url('../images/icons/light-theme/button-zoom-in-hover.svg');
+        }
+    }
+
+    &--dark-theme {
+        background-image: url('../images/icons/dark-theme/button-zoom-in-idle.svg');
+
+        &:hover {
+            background-image: url('../images/icons/dark-theme/button-zoom-in-hover.svg');
+        }
     }
 }
 
 .zoomOutButton {
-    background-image: url('../images/icons/light-theme/button-zoom-out-idle.svg');
+    &--light-theme {
+        background-image: url('../images/icons/light-theme/button-zoom-out-idle.svg');
 
-    &:hover {
-        background-image: url('../images/icons/light-theme/button-zoom-out-hover.svg');
+        &:hover {
+            background-image: url('../images/icons/light-theme/button-zoom-out-hover.svg');
+        }
+    }
+
+    &--dark-theme {
+        background-image: url('../images/icons/dark-theme/button-zoom-out-idle.svg');
+
+        &:hover {
+            background-image: url('../images/icons/dark-theme/button-zoom-out-hover.svg');
+        }
     }
 }
 
@@ -787,7 +817,9 @@ $bottom-controls-container-height: 72px;
 }
 
 .editMyProfileLink {
+    font-size: 14px;
     color: #B9BBBE;
     text-decoration: underline;
     cursor: pointer;
+    font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
 }

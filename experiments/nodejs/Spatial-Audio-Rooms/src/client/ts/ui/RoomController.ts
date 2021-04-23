@@ -359,7 +359,6 @@ export class RoomController {
             if (userDataController.myAvatar.myUserData.currentRoom === room) {
                 roomInfoContainer.classList.add("roomInfoContainer--mine");
             }
-            uiThemeController.refreshThemedElements();
             this.roomListInnerContainer.appendChild(roomInfoContainer);
 
             let roomInfoContainer__header = document.createElement("h2");
@@ -413,5 +412,7 @@ export class RoomController {
                 });
             }
         });
+        
+        uiThemeController.refreshThemedElements();
     }
 }

@@ -20,14 +20,15 @@ export class VideoController {
         this.videoIsMuted = true;
 
         this.toggleVideoButton = document.querySelector('.toggleVideoButton');
-        this.toggleVideoButton.classList.add("toggleVideoButton--muted");
-        this.toggleVideoButton.classList.remove("toggleVideoButton--unmuted");
-        this.disableVideoButton();
         this.toggleVideoButton.addEventListener("click", async (e) => {
             await this.toggleVideo();
         });
 
         this.providedUserIDToVideoElementMap = new Map();
+    }
+
+    init() {
+        this.disableVideoButton();
     }
 
     connectToTwilio() {
@@ -47,6 +48,8 @@ export class VideoController {
             this.twilioRoom.once('disconnected', error => this.twilioRoom.participants.forEach(this.participantDisconnected.bind(this)));
 
             this.enableVideoButton();
+            this.toggleVideoButton.classList.add("toggleVideoButton--muted");
+            uiThemeController.refreshThemedElements();
         }, error => {
             console.error(`Unable to connect to Room: ${error.message}`);
         });
@@ -74,11 +77,20 @@ export class VideoController {
     }
 
     disableVideoButton() {
+        this.toggleVideoButton.classList.remove("toggleVideoButton--muted");
+        this.toggleVideoButton.classList.remove("toggleVideoButton--unmuted--dark-theme");
+        this.toggleVideoButton.classList.remove("toggleVideoButton--unmuted--light-theme");
+        this.toggleVideoButton.classList.remove("toggleVideoButton--muted--dark-theme");
+        this.toggleVideoButton.classList.remove("toggleVideoButton--muted--light-theme");
         this.toggleVideoButton.classList.add("toggleVideoButton--disabled");
+        uiThemeController.refreshThemedElements();
     }
 
     enableVideoButton() {
         this.toggleVideoButton.classList.remove("toggleVideoButton--disabled");
+        this.toggleVideoButton.classList.remove("toggleVideoButton--disabled--dark-theme");
+        this.toggleVideoButton.classList.remove("toggleVideoButton--disabled--light-theme");
+        uiThemeController.refreshThemedElements();
     }
 
     disableVideo() {
@@ -98,6 +110,8 @@ export class VideoController {
 
         this.toggleVideoButton.classList.add("toggleVideoButton--muted");
         this.toggleVideoButton.classList.remove("toggleVideoButton--unmuted");
+        this.toggleVideoButton.classList.remove("toggleVideoButton--unmuted--dark-theme");
+        this.toggleVideoButton.classList.remove("toggleVideoButton--unmuted--light-theme");
         uiThemeController.refreshThemedElements();
     }
 
@@ -128,6 +142,8 @@ export class VideoController {
         this.twilioRoom.localParticipant.publishTrack(this.localVideoTrack);
         
         this.toggleVideoButton.classList.remove("toggleVideoButton--muted");
+        this.toggleVideoButton.classList.remove("toggleVideoButton--muted--dark-theme");
+        this.toggleVideoButton.classList.remove("toggleVideoButton--muted--light-theme");
         this.toggleVideoButton.classList.add("toggleVideoButton--unmuted");
         uiThemeController.refreshThemedElements();
     }

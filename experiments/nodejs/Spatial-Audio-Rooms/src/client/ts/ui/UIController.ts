@@ -67,6 +67,9 @@ export class UIController {
         myProfileImageContainer.classList.add("myProfileImageContainer");
         let myProfileImage = document.createElement("div");
         myProfileImage.classList.add("myProfileImage");
+        myProfileImage.addEventListener("click", (e) => {
+            this.showAvatarContextMenu(userDataController.myAvatar.myUserData);
+        });
         myProfileImageContainer.appendChild(myProfileImage);
         myProfileContainer.appendChild(myProfileImageContainer);
 
@@ -77,6 +80,9 @@ export class UIController {
         let editMyProfileLink = document.createElement('a');
         editMyProfileLink.innerHTML = "Edit My Profile";
         editMyProfileLink.classList.add("editMyProfileLink");
+        editMyProfileLink.addEventListener("click", (e) => {
+            this.showAvatarContextMenu(userDataController.myAvatar.myUserData);
+        });
         myProfileContainer.appendChild(editMyProfileLink);
 
         bottomControlsContainer.appendChild(myProfileContainer);
@@ -90,7 +96,7 @@ export class UIController {
         bottomControlsContainer.appendChild(toggleOutputMuteButton);
 
         let toggleVideoButton = document.createElement("button");
-        toggleVideoButton.classList.add("bottomControlButton", "toggleVideoButton", "toggleVideoButton--muted");
+        toggleVideoButton.classList.add("bottomControlButton", "toggleVideoButton");
         bottomControlsContainer.appendChild(toggleVideoButton);
 
         let toggleJoinWatchPartyButton = document.createElement("button");

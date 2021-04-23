@@ -77,6 +77,7 @@ export class UIThemeController {
         this.addThemedElementFromClassName("toggleVideoButton--muted");
         this.addThemedElementFromClassName("toggleVideoButton--disabled");
         this.addThemedElementFromClassName("toggleJoinWatchPartyButton");
+        this.addThemedElementFromClassName("showRoomListButton");
 
         this.themedElements.forEach((themedElementArray, baseClassName) => {
             themedElementArray.forEach((themedElement) => {

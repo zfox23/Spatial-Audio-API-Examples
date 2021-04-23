@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="14.833" height="16.667" fill="none" version="1.1" viewBox="0 0 14.833 16.667" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+ <metadata>
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:title/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <path d="m11.492 7.5c0 1.3833-1.1083 2.5-2.4916 2.5-1.3834 0-2.5-1.1167-2.5-2.5v-5c0-1.3833 1.1167-2.5 2.5-2.5 1.3833 0 2.5 1.1167 2.5 2.5zm-2.4916 4.25c2.3 0 4.4166-1.75 4.4166-4.25h1.4167c0 2.85-2.2667 5.2-5 5.6v2.7333h-1.6666v-2.7333c-2.7333-0.4083-5-2.7583-5-5.6h1.4167c0 2.5 2.1167 4.25 4.4167 4.25zm0-10.083c-0.66669 0-0.83335 0.55556-0.83335 0.83333v5c0 0.27775 0.16666 0.83334 0.83335 0.83334 0.6666 0 0.8333-0.55559 0.8333-0.83334v-5c0-0.27777-0.1667-0.83333-0.8333-0.83333z" clip-rule="evenodd" fill="#b9bbbe" fill-rule="evenodd"/>
+ <g fill="#fc615d">
+  <path d="m11.492 7.5c0 1.3833-1.1083 2.5-2.4916 2.5-1.3834 0-2.5-1.1167-2.5-2.5v-5c0-1.3833 1.1167-2.5 2.5-2.5 1.3833 0 2.5 1.1167 2.5 2.5zm-2.4916 4.25c2.3 0 4.4166-1.75 4.4166-4.25h1.4167c0 2.85-2.2667 5.2-5 5.6v3.5667h-1.6666v-3.5667c-2.7333-0.4083-5-2.7583-5-5.6h1.4167c0 2.5 2.1167 4.25 4.4167 4.25z" clip-rule="evenodd" fill-rule="evenodd"/>
+  <rect transform="rotate(135)" x="-2.7143" y="-4.8715" width="5.9001" height="1.6857"/>
+  <rect transform="rotate(45)" x="1.0788" y="-.60712" width="5.9001" height="1.6857"/>
+ </g>
+</svg>
