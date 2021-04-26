@@ -1,6 +1,7 @@
 import '../css/main.scss';
 import { PathsController } from './ai/PathsController';
 import { AVDevicesController } from './avDevices/AVDevicesController';
+import { AppConfigController } from './config/AppConfigController';
 import { ConnectionController } from './connection/ConnectionController';
 import { WebSocketConnectionController } from './connection/WebSocketConnectionController';
 import { PhysicsController } from './physics/PhysicsController';
@@ -15,6 +16,7 @@ import { WatchPartyController } from './ui/WatchPartyController';
 import { UserDataController } from './userData/UserDataController';
 import { VideoController } from './video/VideoController';
 
+export const appConfigController = new AppConfigController();
 export const connectionController = new ConnectionController();
 export const webSocketConnectionController = new WebSocketConnectionController();
 export const avDevicesController = new AVDevicesController();

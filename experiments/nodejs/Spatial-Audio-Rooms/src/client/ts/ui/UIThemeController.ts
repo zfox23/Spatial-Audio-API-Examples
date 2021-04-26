@@ -1,3 +1,4 @@
+import { appConfigController } from "..";
 import { Utilities } from "../utilities/Utilities";
 
 export enum UITheme {
@@ -11,7 +12,13 @@ export class UIThemeController {
 
     constructor() {
         document.body.classList.add("body");
-        this.setTheme(UITheme.DARK);
+        
+        if (appConfigController.configComplete) {
+            this.setTheme(appConfigController.theme);
+        } else {
+            this.setTheme(UITheme.DARK);
+            appConfigController.onConfigComplete.push(() => { this.setTheme(appConfigController.theme); });
+        }
     }
 
     cycleThemes() {
