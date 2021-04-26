@@ -22,7 +22,7 @@
     "audio-decode": "^1.4.0",
     "audio-format": "^2.3.2",
     "gyp": "^0.5.0",
-    "hifi-spatial-audio": "^0.7.5",
+    "hifi-spatial-audio": "*",
     "jose": "^3.9.0",
     "make-fetch-happen": "^8.0.13",
     "pcm-convert": "^1.6.5",
