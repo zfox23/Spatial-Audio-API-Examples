@@ -108,6 +108,10 @@ export class UIThemeController {
     }
 
     setTheme(newTheme: UITheme) {
+        if (newTheme === this.currentTheme) {
+            return;
+        }
+
         this.currentTheme = newTheme;
 
         for (const themeEnumValue of Utilities.enumKeys(UITheme)) {

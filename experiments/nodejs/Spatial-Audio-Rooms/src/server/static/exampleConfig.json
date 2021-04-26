@@ -1,11 +1,24 @@
 {
     "name": "Example Room Config",
     "configJSONVersion": "v1.0.0",
-    "theme": "light",
+    "theme": "dark",
     "rooms": [
         {
-            "name": "Room 1",
-            "seatingCenter": { "x": 0, "z": 0 }
+            "name": "Lobby",
+            "seatingCenter": { "x": 0, "z": 0 },
+            "seatingRadiusM": 1.0,
+            "numSeatsInRoom": 8
+        },
+        {
+            "name": "Watch Party Room",
+            "roomType": "watchParty",
+            "roomCenter": { "x": 5, "z": 5 },
+            "seatingCenter": { "x": 5.15, "z": 3.718 },
+            "dimensions": {"x": 8.098, "z": 3.6 },
+            "seatingRadiusM": 1.85,
+            "roomYawOrientationDegrees": 90,
+            "roomImageSRC": "/spatial-audio-rooms/rooms/watchparty.png",
+            "numSeatsInRoom": 7
         }
     ]
 }

@@ -26,18 +26,18 @@ class SpatialAudioRoomImage {
 }
 
 export enum SpatialAudioRoomType {
-    Normal,
-    WatchParty
+    Normal = "normal",
+    WatchParty = "watchParty"
 };
 
 export class SpatialAudioRoom {
     name: string;
     seatingCenter: Point3D;
     dimensions: Point3D;
-    tableRadiusM: number;
     seatingRadiusM: number;
     roomCenter: Point3D;
-    initialNumSeats: number;
+    roomYawOrientationDegrees: number;
+    numSeatsInRoom: number;
     seats: Array<SpatialAudioSeat>;
     tableColorHex: string;
     roomImage: SpatialAudioRoomImage;
@@ -48,7 +48,8 @@ export class SpatialAudioRoom {
         seatingCenter,
         seatingRadiusM,
         roomCenter,
-        initialNumSeats,
+        roomYawOrientationDegrees = 0,
+        numSeatsInRoom,
         dimensions,
         roomImageSRC,
         roomType = SpatialAudioRoomType.Normal,
@@ -57,7 +58,8 @@ export class SpatialAudioRoom {
             seatingCenter: Point3D,
             seatingRadiusM?: number,
             roomCenter?: Point3D,
-            initialNumSeats?: number,
+            roomYawOrientationDegrees?: number,
+            numSeatsInRoom?: number,
             dimensions?: Point3D,
             roomImageSRC?: string,
             roomType?: SpatialAudioRoomType
@@ -65,6 +67,7 @@ export class SpatialAudioRoom {
         this.name = name;
         this.seatingCenter = seatingCenter;
         this.roomCenter = roomCenter || this.seatingCenter;
+        this.roomYawOrientationDegrees = roomYawOrientationDegrees;
 
         this.roomType = roomType;
 
@@ -88,15 +91,13 @@ export class SpatialAudioRoom {
             console.warn(`Clamped Z dimension of room \`${this.name}\` from ${this.dimensions.z} to ${clampedZ}m.`);
             this.dimensions.z = clampedZ;
         }
-
-        this.tableRadiusM = this.seatingRadiusM - maxAvatarRadiusM;
         
-        if (initialNumSeats) {
-            this.initialNumSeats = initialNumSeats;
-        } else if (!initialNumSeats && roomType === SpatialAudioRoomType.Normal) {
-            this.initialNumSeats = Math.ceil(((Math.PI * this.seatingRadiusM * this.seatingRadiusM) / (2.5 * AVATAR.RADIUS_M)));
-        } else if (!initialNumSeats && roomType === SpatialAudioRoomType.WatchParty) {
-            this.initialNumSeats = Math.ceil(((Math.PI * this.seatingRadiusM * this.seatingRadiusM) / (2.5 * AVATAR.RADIUS_M))) / 2;
+        if (numSeatsInRoom) {
+            this.numSeatsInRoom = numSeatsInRoom;
+        } else if (!numSeatsInRoom && roomType === SpatialAudioRoomType.Normal) {
+            this.numSeatsInRoom = Math.ceil(((Math.PI * this.seatingRadiusM * this.seatingRadiusM) / (2.5 * AVATAR.RADIUS_M)));
+        } else if (!numSeatsInRoom && roomType === SpatialAudioRoomType.WatchParty) {
+            this.numSeatsInRoom = Math.ceil(((Math.PI * this.seatingRadiusM * this.seatingRadiusM) / (2.5 * AVATAR.RADIUS_M))) / 2;
         }
         
         this.seats = [];
@@ -117,14 +118,16 @@ export class SpatialAudioRoom {
     }
     
     generateInitialSeats() {
-        let thetaMax;
+        let thetaMax, incrementor;
         if (this.roomType === SpatialAudioRoomType.Normal) {
             thetaMax = 2 * Math.PI;
+            incrementor = (thetaMax / (this.numSeatsInRoom));
         } else if (this.roomType === SpatialAudioRoomType.WatchParty) {
             thetaMax = Math.PI;
+            incrementor = (thetaMax / (this.numSeatsInRoom - 1));
         }
 
-        for (let theta = 0; theta <= thetaMax; theta += (thetaMax / (this.initialNumSeats - 1))) {
+        for (let theta = 0; theta < thetaMax; theta += incrementor) {
             let currentPotentialPosition = new Point3D({
                 "x": this.seatingRadiusM * Math.cos(theta) + this.seatingCenter.x,
                 "z": this.seatingRadiusM * Math.sin(theta) + this.seatingCenter.z
@@ -134,9 +137,13 @@ export class SpatialAudioRoom {
             currentPotentialPosition.z = Math.round((currentPotentialPosition.z + Number.EPSILON) * 100) / 100;
 
             let orientationYawRadians = Math.atan2(currentPotentialPosition.x - this.seatingCenter.x, currentPotentialPosition.z - this.seatingCenter.z);
-            let orientationYawDegrees = orientationYawRadians * 180 / Math.PI;
+            let orientationYawDegrees = orientationYawRadians * 180 / Math.PI - this.roomYawOrientationDegrees;
             orientationYawDegrees %= 360;
             orientationYawDegrees = Math.round((orientationYawDegrees + Number.EPSILON) * 100) / 100;
+
+            let rotatedPosition = Utilities.rotateAroundPoint(this.roomCenter.x, this.roomCenter.z, currentPotentialPosition.x, currentPotentialPosition.z, -this.roomYawOrientationDegrees);
+            currentPotentialPosition.x = rotatedPosition[0];
+            currentPotentialPosition.z = rotatedPosition[1];
 
             let newSeat = new SpatialAudioSeat({
                 room: this,
@@ -149,14 +156,29 @@ export class SpatialAudioRoom {
         }
     }
 
-    getFirstOpenSeat() {
-        for (let i = 0; i < this.seats.length; i++) {
-            if (!this.seats[i].occupiedUserData) {
-                return this.seats[i];
+    getOptimalOpenSeat() {
+        if (this.roomType === SpatialAudioRoomType.Normal) {
+            let checkedIndices = [];
+            for (let currentStride = this.seats.length; currentStride >= 1; currentStride /= 2) {
+                for (let i = 0; i < this.seats.length; i += Math.round(currentStride)) {
+                    if (checkedIndices.indexOf(i) > -1) {
+                        continue;
+                    }
+                    if (!this.seats[i].occupiedUserData) {
+                        return this.seats[i];
+                    }
+                    checkedIndices.push(i);
+                }
+            }
+        } else if (this.roomType === SpatialAudioRoomType.WatchParty) {
+            for (let i = 0; i < this.seats.length; i++) {
+                if (!this.seats[i].occupiedUserData) {
+                    return this.seats[i];
+                }
             }
         }
 
-        console.warn(`Couldn't get first open seat in room named \`${this.name}\`!`);
+        console.warn(`There are no open seats in the room named \`${this.name}\`!`);
         return;
     }
 }
@@ -186,7 +208,7 @@ interface ConfigJSON {
     author: string;
     configJSONVersion: string;
     comments: string;
-    theme: string;
+    theme?: string;
     rooms: Array<SpatialAudioRoom>;
 }
 class ConfigJSONParser {
@@ -291,7 +313,7 @@ export class RoomController {
             seatingCenter: new Point3D({ x: 0.125, y: 0, z: 1.015 }),
             seatingRadiusM: 0.9,
             dimensions: new Point3D({x: 5.0, y: 0, z: 5.0 }),
-            initialNumSeats: 8,
+            numSeatsInRoom: 8,
             roomImageSRC: Room1
         }));
         this.rooms.push(new SpatialAudioRoom({
@@ -307,7 +329,7 @@ export class RoomController {
             roomCenter: new Point3D({ x: -5, y: 0, z: 4.59228515625 }),
             seatingCenter: new Point3D({ x: -4.32, y: 0, z: 4.825 }),
             dimensions: new Point3D({x: 5.0, y: 0, z: 4.1845703125 }),
-            initialNumSeats: 4,
+            numSeatsInRoom: 4,
             seatingRadiusM: 0.7,
             roomImageSRC: Room3
         }));
@@ -316,7 +338,7 @@ export class RoomController {
             roomCenter: new Point3D({ x: -5, y: 0, z: 8.75828515625 }),
             seatingCenter: new Point3D({ x: -4.32, y: 0, z: 8.73 }),
             dimensions: new Point3D({x: 5.0, y: 0, z: 4.1845703125 }),
-            initialNumSeats: 4,
+            numSeatsInRoom: 4,
             seatingRadiusM: 0.7,
             roomImageSRC: Room4
         }));
@@ -343,7 +365,7 @@ export class RoomController {
             seatingRadiusM: 1.85,
             roomImageSRC: WatchPartyImage,
             roomType: SpatialAudioRoomType.WatchParty,
-            initialNumSeats: 7,
+            numSeatsInRoom: 7,
         }));
     }
 
@@ -489,7 +511,7 @@ export class RoomController {
             let roomInfoContainer__header = document.createElement("h2");
             roomInfoContainer__header.classList.add("roomInfoContainer__header");
             let occupiedSeats = room.seats.filter((seat) => { return !!seat.occupiedUserData; });
-            roomInfoContainer__header.innerHTML = `${room.name} (${occupiedSeats.length}/${room.initialNumSeats})`;
+            roomInfoContainer__header.innerHTML = `${room.name} (${occupiedSeats.length}/${room.numSeatsInRoom})`;
             roomInfoContainer__header.addEventListener("click", (e) => {
                 if (userDataController.myAvatar.myUserData.currentRoom === room) {
                     console.log(`User is already in room \`${room.name}\`!`);

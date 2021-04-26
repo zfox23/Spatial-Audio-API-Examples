@@ -175,8 +175,8 @@ export class Utilities {
         return generatedUUID;
     }
 
-    static rotateAroundPoint(cx: number, cy: number, x: number, y: number, angle: number) {
-        let radians = (Math.PI / 180) * angle,
+    static rotateAroundPoint(cx: number, cy: number, x: number, y: number, angleDegrees: number) {
+        let radians = (Math.PI / 180) * angleDegrees,
             cos = Math.cos(radians),
             sin = Math.sin(radians),
             nx = (cos * (x - cx)) + (sin * (y - cy)) + cx,

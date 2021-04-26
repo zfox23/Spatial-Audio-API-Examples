@@ -269,8 +269,10 @@ export class TwoDimensionalRenderer {
     drawTableOrRoomGraphic(room: SpatialAudioRoom) {
         let normalModeCTX = this.normalModeCTX;
         let pxPerM = physicsController.pxPerMCurrent;
-
+        
         normalModeCTX.translate(room.roomCenter.x * pxPerM, room.roomCenter.z * pxPerM);
+        let amtToRotateRoom = room.roomYawOrientationDegrees * Math.PI / 180;
+        normalModeCTX.rotate(amtToRotateRoom);
 
         let usingRoomImage = false;
         if (room.roomImage && room.roomImage.image.complete && room.roomImage.loaded) {
@@ -282,12 +284,10 @@ export class TwoDimensionalRenderer {
             normalModeCTX.drawImage(room.roomImage.image, -roomDimensionsPX.x / 2, -roomDimensionsPX.z / 2, roomDimensionsPX.x, roomDimensionsPX.z);
         }
 
-        normalModeCTX.translate(-room.roomCenter.x * pxPerM, -room.roomCenter.z * pxPerM);
-
-        normalModeCTX.translate(room.seatingCenter.x * pxPerM, room.seatingCenter.z * pxPerM);
+        normalModeCTX.translate((room.seatingCenter.x - room.roomCenter.x) * pxPerM, (room.seatingCenter.z - room.roomCenter.z) * pxPerM);
         
         if (!usingRoomImage) {
-            let tableRadiusPX = room.tableRadiusM * pxPerM;
+            let tableRadiusPX = (room.seatingRadiusM - AVATAR.RADIUS_M * AVATAR.MAX_VOLUME_DB_AVATAR_RADIUS_MULTIPLIER) * pxPerM;
 
             normalModeCTX.lineWidth = ROOM.TABLE_STROKE_WIDTH_PX;
             normalModeCTX.fillStyle = room.tableColorHex;
@@ -301,7 +301,7 @@ export class TwoDimensionalRenderer {
             normalModeCTX.drawImage(tableImage, -tableRadiusPX, -tableRadiusPX, tableRadiusPX * 2, tableRadiusPX * 2);
         }
 
-        let amtToRotateRoomLabel = this.canvasRotationDegrees * Math.PI / 180;
+        let amtToRotateRoomLabel = (this.canvasRotationDegrees - room.roomYawOrientationDegrees) * Math.PI / 180;
         normalModeCTX.rotate(amtToRotateRoomLabel);
         normalModeCTX.font = ROOM.ROOM_LABEL_FONT;
         normalModeCTX.fillStyle = usingRoomImage ? ROOM.ROOM_WITH_IMAGE_LABEL_COLOR : Utilities.getConstrastingTextColor(Utilities.hexToRGB(room.tableColorHex));
@@ -313,7 +313,10 @@ export class TwoDimensionalRenderer {
         }
         normalModeCTX.rotate(-amtToRotateRoomLabel);
 
-        normalModeCTX.translate(-room.seatingCenter.x * pxPerM, -room.seatingCenter.z * pxPerM);
+        normalModeCTX.translate(-(room.seatingCenter.x - room.roomCenter.x) * pxPerM, -(room.seatingCenter.z - room.roomCenter.z) * pxPerM);
+
+        normalModeCTX.rotate(-amtToRotateRoom);
+        normalModeCTX.translate(-room.roomCenter.x * pxPerM, -room.roomCenter.z * pxPerM);
     }
 
     drawUnoccupiedSeat(seat: SpatialAudioSeat) {

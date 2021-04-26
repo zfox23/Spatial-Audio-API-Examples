@@ -111,7 +111,7 @@ class MyAvatar {
         
         console.log(`Positioning self in room ${targetRoom.name}...`);
 
-        let newSeat = targetRoom.getFirstOpenSeat();
+        let newSeat = targetRoom.getOptimalOpenSeat();
         if (!newSeat) {
             console.warn(`\`positionSelfInRoom()\`: Couldn't get first open seat in room named \`${targetRoomName}\`! Searching for open seats in other rooms...`);
 
@@ -122,7 +122,7 @@ class MyAvatar {
                     continue;
                 }
 
-                newSeat = targetRoom.getFirstOpenSeat();
+                newSeat = targetRoom.getOptimalOpenSeat();
 
                 if (newSeat) {
                     break;
