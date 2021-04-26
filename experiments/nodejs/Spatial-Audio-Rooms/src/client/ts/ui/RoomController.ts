@@ -10,13 +10,15 @@ export class SpatialAudioSeat {
     orientation: OrientationEuler3D;
     occupiedUserData?: UserData;
     seatID: string;
+    seatingCircleTheta?: number;
 
-    constructor({ room, position, orientationEuler, seatID }: { room: SpatialAudioRoom, position: Point3D, orientationEuler: OrientationEuler3D, seatID: string }) {
+    constructor({ room, position, orientationEuler, seatID, seatingCircleTheta }: { room: SpatialAudioRoom, position: Point3D, orientationEuler: OrientationEuler3D, seatID: string, seatingCircleTheta?: number }) {
         this.room = room;
         this.position = position;
         this.orientation = orientationEuler;
         this.occupiedUserData = undefined;
         this.seatID = seatID;
+        this.seatingCircleTheta = seatingCircleTheta;
     }
 }
 
@@ -149,27 +151,82 @@ export class SpatialAudioRoom {
                 room: this,
                 position: currentPotentialPosition,
                 orientationEuler: new OrientationEuler3D({yawDegrees: orientationYawDegrees}),
-                seatID: `${this.name}${theta.toFixed(2)}`
+                seatID: `${this.name}${theta.toFixed(2)}`,
+                seatingCircleTheta: theta
             });
 
             this.seats.push(newSeat);
         }
+
+        this.seats.sort((a, b) => {
+            if (!(a.seatingCircleTheta && b.seatingCircleTheta)) {
+                return 0;
+            }
+
+            if (a.seatingCircleTheta < b.seatingCircleTheta) {
+                return -1;
+            }
+            if (a.seatingCircleTheta > b.seatingCircleTheta) {
+                return 1;
+            }
+            return 0;
+        });
     }
 
     getOptimalOpenSeat() {
         if (this.roomType === SpatialAudioRoomType.Normal) {
-            let checkedIndices = [];
-            for (let currentStride = this.seats.length; currentStride >= 1; currentStride /= 2) {
-                for (let i = 0; i < this.seats.length; i += Math.round(currentStride)) {
-                    if (checkedIndices.indexOf(i) > -1) {
-                        continue;
-                    }
-                    if (!this.seats[i].occupiedUserData) {
-                        return this.seats[i];
-                    }
-                    checkedIndices.push(i);
+            // The algorithm below attempts to seat new people in a room in the seat that's
+            // the furthest away from everyone else.
+            let occupiedSeats = [];
+            let unoccupiedSeats = [];
+            for (let i = 0; i < this.seats.length; i++) {
+                if (this.seats[i].occupiedUserData) {
+                    occupiedSeats.push(this.seats[i]);
+                } else {
+                    unoccupiedSeats.push(this.seats[i]);
                 }
             }
+
+            if (occupiedSeats.length === 0) {
+                return this.seats[0];
+            }
+
+            if (unoccupiedSeats.length === 0) {
+                return;
+            }
+
+            let targetTheta, adjacentSeatThetaDifference;
+            for (let i = 0; i < occupiedSeats.length; i++) {
+                let thisSeatThetaDifference, currentTargetTheta;
+                let seat1, seat2;
+                if (i === occupiedSeats.length - 1) {
+                    seat1 = occupiedSeats[i];
+                    seat2 = occupiedSeats[0];
+                    thisSeatThetaDifference = (occupiedSeats[0].seatingCircleTheta + 2 * Math.PI) - occupiedSeats[i].seatingCircleTheta;
+                    currentTargetTheta = ((occupiedSeats[0].seatingCircleTheta + 2 * Math.PI) + occupiedSeats[i].seatingCircleTheta) / 2;
+                } else {
+                    seat1 = occupiedSeats[i];
+                    seat2 = occupiedSeats[i + 1];
+                    thisSeatThetaDifference = occupiedSeats[i + 1].seatingCircleTheta - occupiedSeats[i].seatingCircleTheta;
+                    currentTargetTheta = (occupiedSeats[i + 1].seatingCircleTheta + occupiedSeats[i].seatingCircleTheta) / 2;
+                }
+                if (adjacentSeatThetaDifference === undefined || thisSeatThetaDifference > adjacentSeatThetaDifference) {
+                    adjacentSeatThetaDifference = thisSeatThetaDifference;
+                    targetTheta = currentTargetTheta;
+                }
+            }
+            
+            let actualSeat, minThetaDifference;
+            for (let i = 0; i < unoccupiedSeats.length; i++) {
+                let thetaDifference = Math.abs(unoccupiedSeats[i].seatingCircleTheta - targetTheta);
+
+                if (minThetaDifference === undefined || thetaDifference < minThetaDifference) {
+                    minThetaDifference = thetaDifference;
+                    actualSeat = unoccupiedSeats[i];
+                }
+            }
+
+            return actualSeat;
         } else if (this.roomType === SpatialAudioRoomType.WatchParty) {
             for (let i = 0; i < this.seats.length; i++) {
                 if (!this.seats[i].occupiedUserData) {
