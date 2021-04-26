@@ -281,7 +281,7 @@ export class ConnectionController {
             }
 
             if (initiallyAlone || this.receivedInitialOtherUserDataFromHiFi) {
-                if (webSocketConnectionController.retrievedInitialWebSocketServerData) {
+                if (webSocketConnectionController.retrievedInitialWebSocketServerData && roomController.roomsInitialized) {
                     userDataController.myAvatar.positionSelfInRoom(roomController.getStartingRoomName());
                 }
             }

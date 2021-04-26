@@ -1,0 +1,10 @@
+{
+    "name": "Example Room Config",
+    "configJSONVersion": "v1.0.0",
+    "rooms": [
+        {
+            "name": "Room 1",
+            "seatingCenter": { "x": 0, "z": 0 }
+        }
+    ]
+}

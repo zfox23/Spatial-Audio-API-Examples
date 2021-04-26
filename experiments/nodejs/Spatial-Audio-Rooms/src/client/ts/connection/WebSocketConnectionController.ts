@@ -115,7 +115,7 @@ export class WebSocketConnectionController {
             if (!this.retrievedInitialWebSocketServerData) {
                 this.retrievedInitialWebSocketServerData = true;
                 
-                if (connectionController.receivedInitialOtherUserDataFromHiFi) {
+                if (connectionController.receivedInitialOtherUserDataFromHiFi && roomController.roomsInitialized) {
                     userDataController.myAvatar.positionSelfInRoom(roomController.getStartingRoomName());
                 }
             }

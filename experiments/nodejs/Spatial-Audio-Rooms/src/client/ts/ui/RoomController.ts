@@ -1,5 +1,5 @@
 import { OrientationEuler3D, Point3D } from "hifi-spatial-audio";
-import { uiController, uiThemeController, userDataController } from "..";
+import { connectionController, roomController, uiController, uiThemeController, userDataController, webSocketConnectionController } from "..";
 import { AVATAR, ROOM, MISC } from "../constants/constants";
 import { UserData } from "../userData/UserDataController";
 import { Utilities } from "../utilities/Utilities";
@@ -161,6 +161,84 @@ export class SpatialAudioRoom {
     }
 }
 
+interface ConfigJSON {
+    author: string;
+    configJSONVersion: string;
+    comments: string;
+    rooms: Array<SpatialAudioRoom>;
+}
+const CONFIG_JSON_VERSIONS = {
+    "v1.0.0": {
+        "dateAdded": "2021-04-26_09-19-00",
+    },
+};
+enum CONFIG_ERRORS {
+    "INCOMPATIBLE_VERSION" = "Incompatible version.",
+    "UNSPECIFIED_ERROR" = "Unspecified error.",
+    "NO_ROOMS" = "No rooms specified in Config JSON.",
+    "ROOM_NO_NAME" = "A room inside the config JSON doesn't have a `name`.",
+    "ROOM_NO_SEATING_CENTER" = "A room inside the config JSON doesn't have a `seatingCenter`.",
+};
+enum CONFIG_SUCCESSES {
+    "OK" = "OK.",
+};
+interface ConfigJSONValidity {
+    valid: boolean;
+    errors: Array<CONFIG_ERRORS>;
+    successes: Array<CONFIG_SUCCESSES>;
+};
+class ConfigJSONParser {
+    static parseConfigJSON(configJSON: ConfigJSON) {
+        let configJSONValidity = ConfigJSONParser.validateConfigJSON(configJSON);
+        if (configJSONValidity.valid) {
+            for (const room of configJSON.rooms) {
+                roomController.rooms.push(new SpatialAudioRoom(room));
+            }
+        } else {
+            console.error(`Couldn't validate remote JSON config. Errors:\n${JSON.stringify(configJSONValidity.errors)}\n\nInitializing default rooms...`);
+            roomController.initializeDefaultRooms();
+        }
+    }
+
+    static validateConfigJSON(configJSON: ConfigJSON) {
+        let retval: ConfigJSONValidity = {
+            "valid": true,
+            "errors": [],
+            "successes": [],
+        };
+
+        switch (configJSON.configJSONVersion) {
+            case ("v1.0.0"):
+                if (!(configJSON.rooms && configJSON.rooms.length > 0)) {
+                    retval.errors.push(CONFIG_ERRORS.NO_ROOMS);
+                    retval.valid = false;
+                } else {
+                    for (const room of configJSON.rooms) {
+                        if (!room.name) {
+                            retval.errors.push(CONFIG_ERRORS.ROOM_NO_NAME);
+                            retval.valid = false;
+                        }
+                        if (!room.seatingCenter) {
+                            retval.valid = false;
+                            retval.errors.push(CONFIG_ERRORS.ROOM_NO_SEATING_CENTER);
+                        }
+                    }
+                }
+                break;
+            default:
+                retval.errors.push(CONFIG_ERRORS.INCOMPATIBLE_VERSION);
+                retval.valid = false;
+                break;
+        }
+
+        if (retval.valid) {
+            retval.successes.push(CONFIG_SUCCESSES.OK);
+        }
+
+        return retval;
+    }
+}
+
 import Room1 from "../../images/rooms/Room1.jpg";
 import Room2 from "../../images/rooms/Room2.jpg";
 import Room3 from "../../images/rooms/Room3.jpg";
@@ -169,7 +247,7 @@ import Room5 from "../../images/rooms/Room5.jpg";
 import SeatingRadius1Image2 from "../../images/rooms/room-with-seating-radius-1-bg-2.jpg";
 import WatchPartyImage from "../../images/rooms/watchparty.png";
 export class RoomController {
-    lobby: SpatialAudioRoom;
+    roomsInitialized: boolean = false;
     rooms: Array<SpatialAudioRoom>;
     showRoomListButton: HTMLButtonElement;
     roomListOuterContainer: HTMLDivElement;
@@ -178,8 +256,23 @@ export class RoomController {
 
     constructor() {
         this.rooms = [];
-        
-        this.lobby = new SpatialAudioRoom({
+
+        this.showRoomListButton = document.createElement("button");
+        this.showRoomListButton.classList.add("showRoomListButton");
+        document.body.appendChild(this.showRoomListButton);
+        this.showRoomListButton.addEventListener("click", this.toggleRoomList.bind(this));
+
+        this.roomListOuterContainer = document.createElement("div");
+        this.roomListOuterContainer.classList.add("roomListOuterContainer", "displayNone");
+        document.body.appendChild(this.roomListOuterContainer);
+
+        this.roomListInnerContainer = document.createElement("div");
+        this.roomListInnerContainer.classList.add("roomListInnerContainer");
+        this.roomListOuterContainer.appendChild(this.roomListInnerContainer);
+    }
+
+    initializeDefaultRooms() {
+        this.rooms.push(new SpatialAudioRoom({
             name: "Room 1",
             roomCenter: new Point3D({ x: 0, y: 0, z: 0 }),
             seatingCenter: new Point3D({ x: 0.125, y: 0, z: 1.015 }),
@@ -187,8 +280,7 @@ export class RoomController {
             dimensions: new Point3D({x: 5.0, y: 0, z: 5.0 }),
             initialNumSeats: 8,
             roomImageSRC: Room1
-        });
-        this.rooms.push(this.lobby);
+        }));
         this.rooms.push(new SpatialAudioRoom({
             name: "Room 2",
             roomCenter: new Point3D({ x: 0, y: 0, z: 4.59228515625 }),
@@ -240,23 +332,43 @@ export class RoomController {
             roomType: SpatialAudioRoomType.WatchParty,
             initialNumSeats: 7,
         }));
+    }
 
-        this.showRoomListButton = document.createElement("button");
-        this.showRoomListButton.classList.add("showRoomListButton");
-        document.body.appendChild(this.showRoomListButton);
-        this.showRoomListButton.addEventListener("click", this.toggleRoomList.bind(this));
+    async initializeRooms() {
+        let searchParams = new URLSearchParams(location.search);
+        if (searchParams.has("config")) {
+            let configURL = searchParams.get("config");
+            let configResponse, configJSON;
+            try {
+                configResponse = await fetch(configURL);
+            } catch (e) {
+                console.error(`Couldn't fetch config from \`${configURL}\`! Error:\n${e}\n\nInitializing default rooms...`);
+                this.initializeDefaultRooms();
+                return;
+            }
 
-        this.roomListOuterContainer = document.createElement("div");
-        this.roomListOuterContainer.classList.add("roomListOuterContainer", "displayNone");
-        document.body.appendChild(this.roomListOuterContainer);
+            try {
+                configJSON = await configResponse.json();
+            } catch (e) {
+                console.error(`Couldn't get JSON config from \`${configURL}\`! Error:\n${e}\n\nInitializing default rooms...`);
+                this.initializeDefaultRooms();
+                return;
+            }
 
-        this.roomListInnerContainer = document.createElement("div");
-        this.roomListInnerContainer.classList.add("roomListInnerContainer");
-        this.roomListOuterContainer.appendChild(this.roomListInnerContainer);
+            ConfigJSONParser.parseConfigJSON(configJSON);
+        } else {
+            this.initializeDefaultRooms();
+        }
+
+        this.roomsInitialized = true;
+
+        if (connectionController.receivedInitialOtherUserDataFromHiFi && webSocketConnectionController.retrievedInitialWebSocketServerData) {
+            userDataController.myAvatar.positionSelfInRoom(this.getStartingRoomName());
+        }
     }
 
     getStartingRoomName() {
-        let startingRoomName = this.lobby.name;
+        let startingRoomName = this.rooms[0].name;
 
         let searchParams = new URLSearchParams(location.search);
         if (searchParams.has("room")) {
