@@ -7,16 +7,16 @@
             "name": "Lobby",
             "seatingCenter": { "x": 0, "z": 0 },
             "seatingRadiusM": 1.0,
-            "numSeatsInRoom": 8
+            "numSeatsInRoom": 8,
+            "roomYawOrientationDegrees": 90
         },
         {
             "name": "Watch Party Room",
             "roomType": "watchParty",
-            "roomCenter": { "x": 5, "z": 5 },
-            "seatingCenter": { "x": 5.15, "z": 3.718 },
-            "dimensions": {"x": 8.098, "z": 3.6 },
+            "roomCenter": { "x": 0, "z": -4 },
+            "seatingCenter": { "x": 0.15, "z": -5.218 },
+            "dimensions": {"x": 8.098, "z": 5.67018 },
             "seatingRadiusM": 1.85,
-            "roomYawOrientationDegrees": 90,
             "roomImageSRC": "/spatial-audio-rooms/rooms/watchparty.png",
             "numSeatsInRoom": 7
         }
