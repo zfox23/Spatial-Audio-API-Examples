@@ -330,13 +330,12 @@ class ConfigJSONParser {
     }
 }
 
-import Room1 from "../../images/rooms/Room1.jpg";
-import Room2 from "../../images/rooms/Room2.jpg";
-import Room3 from "../../images/rooms/Room3.jpg";
-import Room4 from "../../images/rooms/Room4.jpg";
-import Room5 from "../../images/rooms/Room5.jpg";
-import SeatingRadius1Image2 from "../../images/rooms/room-with-seating-radius-1-bg-2.jpg";
-import WatchPartyImage from "../../images/rooms/watchparty.png";
+import Room1 from "../../../server/static/rooms/Room1.jpg";
+import Room2 from "../../../server/static/rooms/Room2.jpg";
+import Room3 from "../../../server/static/rooms/Room3.jpg";
+import Room4 from "../../../server/static/rooms/Room4.jpg";
+import Room5 from "../../../server/static/rooms/Room5.jpg";
+import SeatingRadius1Image2 from "../../../server/static/rooms/room-with-seating-radius-1-bg-2.jpg";
 import { UITheme } from "./UIThemeController";
 export class RoomController {
     roomsInitialized: boolean = false;
@@ -413,16 +412,6 @@ export class RoomController {
             dimensions: new Point3D({x: 3.6, y: 0, z: 3.6 }),
             seatingRadiusM: 1.0,
             roomImageSRC: SeatingRadius1Image2
-        }));
-        this.rooms.push(new SpatialAudioRoom({
-            name: "Watch Party",
-            roomCenter: new Point3D({ x: 0, y: 0, z: 13.482 }),
-            seatingCenter: new Point3D({ x: 0.15, y: 0, z: 12.2 }),
-            dimensions: new Point3D({x: 8.098, y: 0, z: 3.6 }),
-            seatingRadiusM: 1.85,
-            roomImageSRC: WatchPartyImage,
-            roomType: SpatialAudioRoomType.WatchParty,
-            numSeatsInRoom: 7,
         }));
     }
 
