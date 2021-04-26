@@ -1,6 +1,7 @@
 {
     "name": "Example Room Config",
     "configJSONVersion": "v1.0.0",
+    "theme": "light",
     "rooms": [
         {
             "name": "Room 1",

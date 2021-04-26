@@ -161,12 +161,6 @@ export class SpatialAudioRoom {
     }
 }
 
-interface ConfigJSON {
-    author: string;
-    configJSONVersion: string;
-    comments: string;
-    rooms: Array<SpatialAudioRoom>;
-}
 const CONFIG_JSON_VERSIONS = {
     "v1.0.0": {
         "dateAdded": "2021-04-26_09-19-00",
@@ -178,6 +172,7 @@ enum CONFIG_ERRORS {
     "NO_ROOMS" = "No rooms specified in Config JSON.",
     "ROOM_NO_NAME" = "A room inside the config JSON doesn't have a `name`.",
     "ROOM_NO_SEATING_CENTER" = "A room inside the config JSON doesn't have a `seatingCenter`.",
+    "THEME_INVALID" = "Invalid theme name.",
 };
 enum CONFIG_SUCCESSES {
     "OK" = "OK.",
@@ -187,10 +182,23 @@ interface ConfigJSONValidity {
     errors: Array<CONFIG_ERRORS>;
     successes: Array<CONFIG_SUCCESSES>;
 };
+interface ConfigJSON {
+    author: string;
+    configJSONVersion: string;
+    comments: string;
+    theme: string;
+    rooms: Array<SpatialAudioRoom>;
+}
 class ConfigJSONParser {
     static parseConfigJSON(configJSON: ConfigJSON) {
         let configJSONValidity = ConfigJSONParser.validateConfigJSON(configJSON);
         if (configJSONValidity.valid) {
+            if (configJSON.theme === "light") {
+                uiThemeController.setTheme(UITheme.LIGHT);
+            } else if (configJSON.theme === "dark") {
+                uiThemeController.setTheme(UITheme.DARK);
+            }
+
             for (const room of configJSON.rooms) {
                 roomController.rooms.push(new SpatialAudioRoom(room));
             }
@@ -209,17 +217,18 @@ class ConfigJSONParser {
 
         switch (configJSON.configJSONVersion) {
             case ("v1.0.0"):
+                if (configJSON.theme && !(configJSON.theme === "light" || configJSON.theme === "dark")) {
+                    retval.errors.push(CONFIG_ERRORS.THEME_INVALID);
+                }
+
                 if (!(configJSON.rooms && configJSON.rooms.length > 0)) {
                     retval.errors.push(CONFIG_ERRORS.NO_ROOMS);
-                    retval.valid = false;
                 } else {
                     for (const room of configJSON.rooms) {
                         if (!room.name) {
                             retval.errors.push(CONFIG_ERRORS.ROOM_NO_NAME);
-                            retval.valid = false;
                         }
                         if (!room.seatingCenter) {
-                            retval.valid = false;
                             retval.errors.push(CONFIG_ERRORS.ROOM_NO_SEATING_CENTER);
                         }
                     }
@@ -227,8 +236,11 @@ class ConfigJSONParser {
                 break;
             default:
                 retval.errors.push(CONFIG_ERRORS.INCOMPATIBLE_VERSION);
-                retval.valid = false;
                 break;
+        }
+
+        if (retval.errors.length > 0) {
+            retval.valid = false;
         }
 
         if (retval.valid) {
@@ -246,6 +258,7 @@ import Room4 from "../../images/rooms/Room4.jpg";
 import Room5 from "../../images/rooms/Room5.jpg";
 import SeatingRadius1Image2 from "../../images/rooms/room-with-seating-radius-1-bg-2.jpg";
 import WatchPartyImage from "../../images/rooms/watchparty.png";
+import { UITheme } from "./UIThemeController";
 export class RoomController {
     roomsInitialized: boolean = false;
     rooms: Array<SpatialAudioRoom>;
