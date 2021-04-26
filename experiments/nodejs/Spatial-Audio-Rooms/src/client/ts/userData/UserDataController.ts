@@ -2,7 +2,7 @@ import { OrientationEuler3D, Point3D } from "hifi-spatial-audio";
 import { userDataController, connectionController, roomController, physicsController, pathsController, uiController, twoDimensionalRenderer, webSocketConnectionController, watchPartyController } from "..";
 import { Path, Waypoint } from "../ai/PathsController";
 import { AVATAR, PHYSICS, UI } from "../constants/constants";
-import { SpatialAudioSeat, SpatialAudioRoom } from "../ui/RoomController";
+import { SpatialAudioSeat, SpatialAudioRoom, SpatialAudioRoomType } from "../ui/RoomController";
 import { DataToTransmitToHiFi, EasingFunctions, Utilities } from "../utilities/Utilities";
 import { MyAvatarEars } from "./MyAvatarEars";
 
@@ -315,6 +315,12 @@ class MyAvatar {
         roomController.updateRoomList();
 
         userDataController.myAvatarEars.onMouthMovedToNewSeat(targetSeat);
+
+        if (targetRoom.roomType === SpatialAudioRoomType.Normal) {
+            uiController.showZoomUI();
+        } else if (targetRoom.roomType === SpatialAudioRoomType.WatchParty) {
+            uiController.hideZoomUI();
+        }
     }
 
     onMyDisplayNameChanged(newDisplayName?: string) {

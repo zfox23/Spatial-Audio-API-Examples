@@ -88,13 +88,17 @@ export class UserInputController {
                 break;
             case CONTROLS.MINUS_KEY_CODE:
             case CONTROLS.NUMPAD_SUBTRACT_KEY_CODE:
-                physicsController.smoothZoomStartTimestamp = undefined;
-                physicsController.pxPerMTarget = (physicsController.pxPerMTarget || physicsController.pxPerMCurrent) - PHYSICS.PX_PER_M_STEP;
+                if (userDataController.myAvatar.myUserData.currentRoom.roomType === SpatialAudioRoomType.Normal) {
+                    physicsController.smoothZoomStartTimestamp = undefined;
+                    physicsController.pxPerMTarget = (physicsController.pxPerMTarget || physicsController.pxPerMCurrent) - PHYSICS.PX_PER_M_STEP;
+                }
                 break;
             case CONTROLS.EQUAL_KEY_CODE:
             case CONTROLS.NUMPAD_ADD_KEY_CODE:
-                physicsController.smoothZoomStartTimestamp = undefined;
-                physicsController.pxPerMTarget = (physicsController.pxPerMTarget || physicsController.pxPerMCurrent) + PHYSICS.PX_PER_M_STEP;
+                if (userDataController.myAvatar.myUserData.currentRoom.roomType === SpatialAudioRoomType.Normal) {
+                    physicsController.smoothZoomStartTimestamp = undefined;
+                    physicsController.pxPerMTarget = (physicsController.pxPerMTarget || physicsController.pxPerMCurrent) + PHYSICS.PX_PER_M_STEP;
+                }
                 break;
             case CONTROLS.DIGIT1_KEY_CODE:
                 signalsController.toggleActiveSignal(signalsController.supportedSignals.get("positive"));
@@ -534,6 +538,10 @@ export class UserInputController {
 
     onWheel(e: WheelEvent) {
         e.preventDefault();
+
+        if (userDataController.myAvatar.myUserData.currentRoom.roomType === SpatialAudioRoomType.WatchParty) {
+            return;
+        }
 
         let deltaY;
         // This is a nasty hack that all major browsers subscribe to:

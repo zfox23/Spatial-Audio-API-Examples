@@ -86,6 +86,8 @@ export class UIThemeController {
         this.addThemedElementFromClassName("showRoomListButton");
         this.addThemedElementFromClassName("avatarContextMenu__displayName--mine");
         this.addThemedElementFromClassName("editMyProfileLink");
+        this.addThemedElementFromClassName("zoomInButton");
+        this.addThemedElementFromClassName("zoomOutButton");
 
         this.themedElements.forEach((themedElementArray, baseClassName) => {
             themedElementArray.forEach((themedElement) => {

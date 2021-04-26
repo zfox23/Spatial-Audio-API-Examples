@@ -11,6 +11,7 @@ export class UIController {
     modalBackground: HTMLDivElement;
     avatarContextMenu: HTMLDivElement;
     hasCompletedTutorial: boolean;
+    zoomUIContainer: HTMLDivElement;
 
     constructor() {
         this.initPlayOverlay();
@@ -137,9 +138,9 @@ export class UIController {
     }
 
     initZoomUI() {
-        let zoomUIContainer = document.createElement("div");
-        zoomUIContainer.classList.add("zoomUIContainer");
-        document.body.appendChild(zoomUIContainer);
+        this.zoomUIContainer = document.createElement("div");
+        this.zoomUIContainer.classList.add("zoomUIContainer");
+        document.body.appendChild(this.zoomUIContainer);
 
         let zoomInButton = document.createElement("button");
         zoomInButton.classList.add("zoomButton", "zoomInButton");
@@ -147,7 +148,7 @@ export class UIController {
             physicsController.smoothZoomStartTimestamp = undefined;
             physicsController.pxPerMTarget = (physicsController.pxPerMTarget || physicsController.pxPerMCurrent) + PHYSICS.PX_PER_M_STEP;
         });
-        zoomUIContainer.appendChild(zoomInButton);
+        this.zoomUIContainer.appendChild(zoomInButton);
 
         let zoomOutButton = document.createElement("button");
         zoomOutButton.classList.add("zoomButton", "zoomOutButton");
@@ -155,7 +156,15 @@ export class UIController {
             physicsController.smoothZoomStartTimestamp = undefined;
             physicsController.pxPerMTarget = (physicsController.pxPerMTarget || physicsController.pxPerMCurrent) - PHYSICS.PX_PER_M_STEP;
         });
-        zoomUIContainer.appendChild(zoomOutButton);
+        this.zoomUIContainer.appendChild(zoomOutButton);
+    }
+
+    hideZoomUI() {
+        this.zoomUIContainer.classList.add("displayNone");
+    }
+
+    showZoomUI() {
+        this.zoomUIContainer.classList.remove("displayNone");
     }
 
     initContextMenu() {
