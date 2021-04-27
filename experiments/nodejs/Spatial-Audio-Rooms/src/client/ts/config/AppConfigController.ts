@@ -148,7 +148,7 @@ export class AppConfigController {
             }
 
             if (configJSON.backgroundColorHex) {
-                document.body.style.backgroundColor = `${configJSON.backgroundColorHex} !important`;
+                document.body.style.backgroundColor = configJSON.backgroundColorHex;
             }
 
             for (const room of configJSON.rooms) {
