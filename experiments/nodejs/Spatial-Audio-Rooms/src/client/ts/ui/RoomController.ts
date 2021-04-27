@@ -228,9 +228,22 @@ export class SpatialAudioRoom {
 
             return actualSeat;
         } else if (this.roomType === SpatialAudioRoomType.WatchParty) {
-            for (let i = 0; i < this.seats.length; i++) {
-                if (!this.seats[i].occupiedUserData) {
-                    return this.seats[i];
+            let visitedAllSeats = false;
+            let initialIndex = Math.round(this.seats.length / 2);
+            let currentIndex = initialIndex;
+            while (!visitedAllSeats) {
+                if (!this.seats[currentIndex].occupiedUserData) {
+                    return this.seats[currentIndex];
+                }
+
+                if (currentIndex === 0) {
+                    currentIndex = this.seats.length - 1;
+                } else {
+                    currentIndex--;
+                }
+
+                if (currentIndex === initialIndex) {
+                    visitedAllSeats = true;
                 }
             }
         }

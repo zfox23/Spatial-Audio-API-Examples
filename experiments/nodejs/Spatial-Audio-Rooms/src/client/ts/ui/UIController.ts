@@ -330,6 +330,41 @@ export class UIController {
         agcContainer.appendChild(agcCheckboxLabel);
     }
 
+    generateNoiseSuppressionUI(userData: UserData) {
+        if (typeof (userData.noiseSuppressionEnabled) !== "boolean") {
+            return;
+        }
+
+        let noiseSuppressionContainer = document.createElement("div");
+        noiseSuppressionContainer.classList.add("noiseSuppressionContainer");
+        this.avatarContextMenu.appendChild(noiseSuppressionContainer);
+
+        let noiseSuppressionCheckbox = document.createElement("input");
+        noiseSuppressionCheckbox.id = "noiseSuppressionCheckbox";
+        noiseSuppressionCheckbox.classList.add("noiseSuppressionCheckbox");
+        noiseSuppressionCheckbox.type = "checkbox";
+        noiseSuppressionCheckbox.checked = userData.noiseSuppressionEnabled;
+        noiseSuppressionCheckbox.addEventListener("click", (e) => {
+            let newNoiseSuppressionStatus = (<HTMLInputElement>e.target).checked;
+            if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash) {
+                userInputController.setNoiseSuppressionStatus(newNoiseSuppressionStatus)
+            } else {
+                if (webSocketConnectionController && newNoiseSuppressionStatus) {
+                    webSocketConnectionController.requestToEnableNoiseSuppression(userData.visitIDHash);
+                } else if (webSocketConnectionController && !newNoiseSuppressionStatus) {
+                    webSocketConnectionController.requestToDisableNoiseSuppression(userData.visitIDHash);
+                }
+            }
+        });
+        noiseSuppressionContainer.appendChild(noiseSuppressionCheckbox);
+
+        let noiseSuppressionCheckboxLabel = document.createElement("label");
+        noiseSuppressionCheckboxLabel.setAttribute("for", "noiseSuppressionCheckbox");
+        noiseSuppressionCheckboxLabel.classList.add("noiseSuppressionCheckboxLabel");
+        noiseSuppressionCheckboxLabel.innerHTML = "Noise Suppression";
+        noiseSuppressionContainer.appendChild(noiseSuppressionCheckboxLabel);
+    }
+
     generateUserGainForThisConnectionUI(userData: UserData) {
         let hifiCommunicator = connectionController.hifiCommunicator;
 
@@ -467,6 +502,7 @@ export class UIController {
         this.generateColorHexUI(userData);
         this.generateEchoCancellationUI(userData);
         this.generateAGCUI(userData);
+        this.generateNoiseSuppressionUI(userData);
         this.generateUserGainForThisConnectionUI(userData);
         this.generateHiFiGainUI(userData);
         this.generateVolumeThresholdUI(userData);
@@ -498,6 +534,11 @@ export class UIController {
         let agcCheckbox = this.avatarContextMenu.querySelector(".agcCheckbox");
         if (agcCheckbox) {
             (<HTMLInputElement>agcCheckbox).checked = userData.agcEnabled;
+        }
+
+        let noiseSuppressionCheckbox = this.avatarContextMenu.querySelector(".noiseSuppressionCheckbox");
+        if (noiseSuppressionCheckbox) {
+            (<HTMLInputElement>noiseSuppressionCheckbox).checked = userData.noiseSuppressionEnabled;
         }
 
         let avatarContextMenu__hiFiGainSlider = <HTMLInputElement>this.avatarContextMenu.querySelector(".avatarContextMenu__hiFiGainSlider");

@@ -12,6 +12,7 @@ interface WebSocketParticipantData {
     colorHex: string;
     echoCancellationEnabled: boolean;
     agcEnabled: boolean;
+    noiseSuppressionEnabled: boolean;
     hiFiGainSliderValue: string;
     volumeThreshold: number;
 }
@@ -43,6 +44,7 @@ export class WebSocketConnectionController {
                     colorHex,
                     echoCancellationEnabled,
                     agcEnabled,
+                    noiseSuppressionEnabled,
                     hiFiGainSliderValue,
                     volumeThreshold,
                 } = participant;
@@ -60,6 +62,9 @@ export class WebSocketConnectionController {
                     }
                     if (typeof (agcEnabled) === "boolean") {
                         localUserData.agcEnabled = agcEnabled;
+                    }
+                    if (typeof (noiseSuppressionEnabled) === "boolean") {
+                        localUserData.noiseSuppressionEnabled = noiseSuppressionEnabled;
                     }
                     if (typeof (hiFiGainSliderValue) === "string") {
                         localUserData.hiFiGainSliderValue = hiFiGainSliderValue;
@@ -81,7 +86,7 @@ export class WebSocketConnectionController {
                         }
                     }
 
-                    console.log(`Updated participant:\nVisit ID Hash \`${localUserData.visitIDHash}\`:\nDisplay Name: \`${displayName}\`\nColor: ${colorHex}\nCurrent Seat ID: ${localUserData.currentSeat ? localUserData.currentSeat.seatID : "undefined"}\nCurrent Room Name: ${localUserData.currentRoom ? localUserData.currentRoom.name : "undefined"}\nechoCancellationEnabled: ${echoCancellationEnabled}\nagcEnabled: ${agcEnabled}\nhiFiGainSliderValue: ${hiFiGainSliderValue}\nvolumeThreshold:${volumeThreshold}\n`);
+                    console.log(`Updated participant:\nVisit ID Hash \`${localUserData.visitIDHash}\`:\nDisplay Name: \`${displayName}\`\nColor: ${colorHex}\nCurrent Seat ID: ${localUserData.currentSeat ? localUserData.currentSeat.seatID : "undefined"}\nCurrent Room Name: ${localUserData.currentRoom ? localUserData.currentRoom.name : "undefined"}\nechoCancellationEnabled: ${echoCancellationEnabled}\nagcEnabled: ${agcEnabled}\nnsEnabled: ${noiseSuppressionEnabled}\nhiFiGainSliderValue: ${hiFiGainSliderValue}\nvolumeThreshold:${volumeThreshold}\n`);
                 } else if (visitIDHash && displayName) {
                     localUserData = {
                         visitIDHash,
@@ -89,6 +94,7 @@ export class WebSocketConnectionController {
                         colorHex,
                         echoCancellationEnabled,
                         agcEnabled,
+                        noiseSuppressionEnabled,
                         hiFiGainSliderValue,
                         volumeThreshold,
                         tempData: {}
@@ -146,6 +152,18 @@ export class WebSocketConnectionController {
             connectionController.setNewInputAudioMediaStream();
         });
 
+        this.socket.on("onRequestToEnableNoiseSuppression", ({ fromVisitIDHash }: { fromVisitIDHash: string }) => {
+            console.warn(`Got a request from \`${fromVisitIDHash}\` to enable Noise Suppression!`);
+            avDevicesController.audioConstraints.noiseSuppression = true;
+            connectionController.setNewInputAudioMediaStream();
+        });
+
+        this.socket.on("onRequestToDisableNoiseSuppression", ({ fromVisitIDHash }: { fromVisitIDHash: string }) => {
+            console.warn(`Got a request from \`${fromVisitIDHash}\` to disable NS!`);
+            avDevicesController.audioConstraints.noiseSuppression = false;
+            connectionController.setNewInputAudioMediaStream();
+        });
+
         this.socket.on("onRequestToChangeHiFiGainSliderValue", ({ fromVisitIDHash, newHiFiGainSliderValue }: { fromVisitIDHash: string, newHiFiGainSliderValue: string }) => {
             console.warn(`Got a request from \`${fromVisitIDHash}\` to change HiFiGainSliderValue to \`${newHiFiGainSliderValue}\`!`);
             userInputController.setHiFiGainFromSliderValue(newHiFiGainSliderValue);
@@ -193,6 +211,7 @@ export class WebSocketConnectionController {
             colorHex: myUserData.colorHex,
             echoCancellationEnabled: myUserData.echoCancellationEnabled,
             agcEnabled: myUserData.agcEnabled,
+            noiseSuppressionEnabled: myUserData.noiseSuppressionEnabled,
             hiFiGainSliderValue: myUserData.hiFiGainSliderValue,
             volumeThreshold: myUserData.volumeThreshold,
         });
@@ -213,6 +232,7 @@ export class WebSocketConnectionController {
             colorHex: myUserData.colorHex,
             echoCancellationEnabled: myUserData.echoCancellationEnabled,
             agcEnabled: myUserData.agcEnabled,
+            noiseSuppressionEnabled: myUserData.noiseSuppressionEnabled,
             hiFiGainSliderValue: myUserData.hiFiGainSliderValue,
             volumeThreshold: myUserData.volumeThreshold,
         };
@@ -236,6 +256,14 @@ export class WebSocketConnectionController {
 
     requestToDisableAGC(visitIDHash: string) {
         this.socket.emit("requestToDisableAGC", { spaceName: HIFI_SPACE_NAME, toVisitIDHash: visitIDHash, fromVisitIDHash: userDataController.myAvatar.myUserData.visitIDHash });
+    }
+
+    requestToEnableNoiseSuppression(visitIDHash: string) {
+        this.socket.emit("requestToEnableNoiseSuppression", { spaceName: HIFI_SPACE_NAME, toVisitIDHash: visitIDHash, fromVisitIDHash: userDataController.myAvatar.myUserData.visitIDHash });
+    }
+
+    requestToDisableNoiseSuppression(visitIDHash: string) {
+        this.socket.emit("requestToDisableNoiseSuppression", { spaceName: HIFI_SPACE_NAME, toVisitIDHash: visitIDHash, fromVisitIDHash: userDataController.myAvatar.myUserData.visitIDHash });
     }
 
     requestToChangeHiFiGainSliderValue(visitIDHash: string, newHiFiGainSliderValue: string) {

@@ -833,7 +833,8 @@ $bottom-controls-container-height: 72px;
 }
 
 .echoCancellation,
-.agc {
+.agc,
+.noiseSuppression {
     &Container {
         display: flex;
         width: 100%;

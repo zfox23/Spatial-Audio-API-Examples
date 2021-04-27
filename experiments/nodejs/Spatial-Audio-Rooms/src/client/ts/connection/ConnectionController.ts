@@ -53,6 +53,11 @@ export class ConnectionController {
                 let newAGCStatus = !!avDevicesController.audioConstraints.autoGainControl.valueOf();
                 userDataController.myAvatar.myUserData.agcEnabled = newAGCStatus;
             }
+            
+            if (typeof (avDevicesController.audioConstraints.noiseSuppression) !== "undefined") {
+                let newNSStatus = !!avDevicesController.audioConstraints.noiseSuppression.valueOf();
+                userDataController.myAvatar.myUserData.noiseSuppressionEnabled = newNSStatus;
+            }
 
             if (webSocketConnectionController) {
                 webSocketConnectionController.updateMyUserDataOnWebSocketServer();

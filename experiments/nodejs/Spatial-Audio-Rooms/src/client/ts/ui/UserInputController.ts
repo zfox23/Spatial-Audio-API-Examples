@@ -364,6 +364,11 @@ export class UserInputController {
         connectionController.setNewInputAudioMediaStream();
     }
 
+    setNoiseSuppressionStatus(newNSStatus: boolean) {
+        avDevicesController.audioConstraints.noiseSuppression = newNSStatus;
+        connectionController.setNewInputAudioMediaStream();
+    }
+
     setHiFiGainFromSliderValue(newHiFiGainSliderValue: string) {
         let newHiFiGain = uiController.hiFiGainFromSliderValue(newHiFiGainSliderValue);
 

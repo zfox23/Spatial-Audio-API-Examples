@@ -40,6 +40,7 @@ export interface UserData {
     isMuted?: boolean;
     echoCancellationEnabled?: boolean;
     agcEnabled?: boolean;
+    noiseSuppressionEnabled?: boolean;
     tempData?: TempUserData;
 }
 
@@ -77,6 +78,7 @@ class MyAvatar {
             isMuted: false,
             echoCancellationEnabled: false,
             agcEnabled: false,
+            noiseSuppressionEnabled: false,
             tempData: {},
         };
 

@@ -45,6 +45,7 @@ export class MyAvatarEars {
             isMuted: false,
             echoCancellationEnabled: false,
             agcEnabled: false,
+            noiseSuppressionEnabled: false,
             tempData: {},
         };
 

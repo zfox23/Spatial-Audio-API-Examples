@@ -188,7 +188,7 @@ class ServerSpaceInfo {
 }
 
 class Participant {
-    constructor({ socketID, spaceName, visitIDHash, currentSeatID, displayName, colorHex, echoCancellationEnabled, agcEnabled, hiFiGainSliderValue, volumeThreshold, } = {}) {
+    constructor({ socketID, spaceName, visitIDHash, currentSeatID, displayName, colorHex, echoCancellationEnabled, agcEnabled, noiseSuppressionEnabled, hiFiGainSliderValue, volumeThreshold, } = {}) {
         this.socketID = socketID;
         this.spaceName = spaceName;
         this.visitIDHash = visitIDHash;
@@ -197,6 +197,7 @@ class Participant {
         this.colorHex = colorHex;
         this.echoCancellationEnabled = echoCancellationEnabled;
         this.agcEnabled = agcEnabled;
+        this.noiseSuppressionEnabled = noiseSuppressionEnabled;
         this.hiFiGainSliderValue = hiFiGainSliderValue;
         this.volumeThreshold = volumeThreshold;
     }
@@ -257,7 +258,7 @@ function onWatchPartyUserLeft(visitIDHash) {
 
 let spaceInformation = {};
 socketIOServer.on("connection", (socket) => {
-    socket.on("addParticipant", ({ spaceName, visitIDHash, currentSeatID, displayName, colorHex, echoCancellationEnabled, agcEnabled, hiFiGainSliderValue, volumeThreshold, } = {}) => {
+    socket.on("addParticipant", ({ spaceName, visitIDHash, currentSeatID, displayName, colorHex, echoCancellationEnabled, agcEnabled, noiseSuppressionEnabled, hiFiGainSliderValue, volumeThreshold, } = {}) => {
         if (!spaceInformation[spaceName]) {
             spaceInformation[spaceName] = new ServerSpaceInfo({ spaceName });
         }
@@ -278,6 +279,7 @@ socketIOServer.on("connection", (socket) => {
             colorHex,
             echoCancellationEnabled,
             agcEnabled,
+            noiseSuppressionEnabled,
             hiFiGainSliderValue,
             volumeThreshold,
         });
@@ -290,7 +292,7 @@ socketIOServer.on("connection", (socket) => {
         socket.emit("onParticipantsAddedOrEdited", spaceInformation[spaceName].participants.filter((participant) => { return participant.visitIDHash !== visitIDHash; }));
     });
 
-    socket.on("editParticipant", ({ spaceName, visitIDHash, currentSeatID, displayName, colorHex, echoCancellationEnabled, agcEnabled, hiFiGainSliderValue, volumeThreshold, } = {}) => {
+    socket.on("editParticipant", ({ spaceName, visitIDHash, currentSeatID, displayName, colorHex, echoCancellationEnabled, agcEnabled, noiseSuppressionEnabled, hiFiGainSliderValue, volumeThreshold, } = {}) => {
         let participantToEdit = spaceInformation[spaceName].participants.find((participant) => {
             return participant.visitIDHash === visitIDHash;
         });
@@ -310,6 +312,9 @@ socketIOServer.on("connection", (socket) => {
             }
             if (typeof (agcEnabled) === "boolean") {
                 participantToEdit.agcEnabled = agcEnabled;
+            }
+            if (typeof (noiseSuppressionEnabled) === "boolean") {
+                participantToEdit.noiseSuppressionEnabled = noiseSuppressionEnabled;
             }
             if (typeof (hiFiGainSliderValue) === "string") {
                 participantToEdit.hiFiGainSliderValue = hiFiGainSliderValue;
@@ -391,6 +396,34 @@ socketIOServer.on("connection", (socket) => {
             return;
         }
         socketIOServer.to(participant.socketID).emit("onRequestToDisableAGC", { fromVisitIDHash });
+    });
+
+    socket.on("requestToEnableNoiseSuppression", ({ spaceName, toVisitIDHash, fromVisitIDHash } = {}) => {
+        if (!spaceInformation[spaceName]) { return; }
+        let participant = spaceInformation[spaceName].participants.find((participant) => { return participant.visitIDHash === toVisitIDHash; });
+        if (!participant) {
+            console.error(`requestToEnableNoiseSuppression: Couldn't get participant from \`spaceInformation[${spaceName}].participants[]\` with Visit ID Hash \`${toVisitIDHash}\`!`);
+            return;
+        }
+        if (!participant.socketID) {
+            console.error(`requestToEnableNoiseSuppression: Participant didn't have a \`socketID\`!`);
+            return;
+        }
+        socketIOServer.to(participant.socketID).emit("onRequestToEnableNoiseSuppression", { fromVisitIDHash });
+    });
+
+    socket.on("requestToDisableNoiseSuppression", ({ spaceName, toVisitIDHash, fromVisitIDHash } = {}) => {
+        if (!spaceInformation[spaceName]) { return; }
+        let participant = spaceInformation[spaceName].participants.find((participant) => { return participant.visitIDHash === toVisitIDHash; });
+        if (!participant) {
+            console.error(`requestToDisableNoiseSuppression: Couldn't get participant from \`spaceInformation[spaceName].participants[]\` with Visit ID Hash \`${toVisitIDHash}\`!`);
+            return;
+        }
+        if (!participant.socketID) {
+            console.error(`requestToDisableNoiseSuppression: Participant didn't have a \`socketID\`!`);
+            return;
+        }
+        socketIOServer.to(participant.socketID).emit("onRequestToDisableNoiseSuppression", { fromVisitIDHash });
     });
 
     socket.on("requestToChangeHiFiGainSliderValue", ({ spaceName, toVisitIDHash, fromVisitIDHash, newHiFiGainSliderValue } = {}) => {
