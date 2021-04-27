@@ -437,7 +437,7 @@ export class TwoDimensionalRenderer {
         this.cameraPositionNoOffsetM = userDataController.myAvatar.myUserData.positionCurrent;
         const currentRoom = myUserData.currentRoom;
         if (currentRoom) {
-            let scaledOffsetPX = Utilities.linearScale(pxPerM, PHYSICS.MIN_PX_PER_M, physicsController.pxPerMMax, 0, normalCameraOffsetYPX, true);
+            let scaledOffsetPX = Utilities.linearScale(pxPerM, physicsController.pxPerMMin, physicsController.pxPerMMax, 0, normalCameraOffsetYPX, true);
             this.cameraOffsetYPX = scaledOffsetPX;
         }
 
