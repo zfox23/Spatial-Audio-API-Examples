@@ -77,6 +77,51 @@
             "radiusM": 0.2,
             "randomSoundRate": true,
             "clickSoundSRC": ["/spatial-audio-rooms/sounds/rustle1.wav", "/spatial-audio-rooms/sounds/rustle2.wav", "/spatial-audio-rooms/sounds/rustle3.wav", "/spatial-audio-rooms/sounds/rustle4.wav", "/spatial-audio-rooms/sounds/rustle5.wav"]
+        },
+        {
+            "name": "Plants 02",
+            "drawName": false,
+            "positionM": { "x": -1.742308, "z": 0.36206 },
+            "radiusM": 0.2,
+            "randomSoundRate": true,
+            "clickSoundSRC": ["/spatial-audio-rooms/sounds/rustle1.wav", "/spatial-audio-rooms/sounds/rustle2.wav", "/spatial-audio-rooms/sounds/rustle3.wav", "/spatial-audio-rooms/sounds/rustle4.wav", "/spatial-audio-rooms/sounds/rustle5.wav"]
+        },
+        {
+            "name": "Plants 03",
+            "drawName": false,
+            "positionM": { "x": -0.381195, "z": -1.3029072 },
+            "radiusM": 0.2,
+            "randomSoundRate": true,
+            "clickSoundSRC": ["/spatial-audio-rooms/sounds/rustle1.wav", "/spatial-audio-rooms/sounds/rustle2.wav", "/spatial-audio-rooms/sounds/rustle3.wav", "/spatial-audio-rooms/sounds/rustle4.wav", "/spatial-audio-rooms/sounds/rustle5.wav"]
+        },
+        {
+            "name": "Fridge",
+            "drawName": false,
+            "positionM": { "x": -1.12252, "z": 1.414775 },
+            "radiusM": 0.2,
+            "clickSoundSRC": "/spatial-audio-rooms/sounds/fridgeOpen.wav"
+        },
+        {
+            "name": "Faucet",
+            "drawName": false,
+            "positionM": { "x": 1.688328, "z": 1.420752 },
+            "radiusM": 0.2,
+            "clickSoundSRC": "/spatial-audio-rooms/sounds/faucet.wav"
+        },
+        {
+            "name": "Birds",
+            "drawName": false,
+            "positionM": { "x": 0.043778, "z": 2.395408 },
+            "radiusM": 0.25,
+            "clickSoundSRC": ["/spatial-audio-rooms/sounds/birds01.wav", "/spatial-audio-rooms/sounds/birds02.wav", "/spatial-audio-rooms/sounds/birds03.wav", "/spatial-audio-rooms/sounds/birds04.wav"]
+        },
+        {
+            "name": "Light",
+            "drawName": false,
+            "positionM": { "x": 0.72614, "z": -1.31744 },
+            "radiusM": 0.2,
+            "randomSoundRate": true,
+            "clickSoundSRC": ["/spatial-audio-rooms/sounds/light01.wav", "/spatial-audio-rooms/sounds/light02.wav"]
         }
     ]
 }
