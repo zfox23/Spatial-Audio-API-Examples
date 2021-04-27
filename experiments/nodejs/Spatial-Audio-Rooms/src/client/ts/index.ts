@@ -6,6 +6,7 @@ import { ConnectionController } from './connection/ConnectionController';
 import { WebSocketConnectionController } from './connection/WebSocketConnectionController';
 import { PhysicsController } from './physics/PhysicsController';
 import { TwoDimensionalRenderer } from './render/TwoDimensionalRenderer';
+import { EditorModeController } from './ui/EditorModeController';
 import { ParticleController } from './ui/ParticleController';
 import { RoomController } from './ui/RoomController';
 import { SignalsController } from './ui/SignalsController';
@@ -31,6 +32,7 @@ export const videoController = new VideoController();
 export const pathsController = new PathsController();
 export const physicsController = new PhysicsController();
 export const userInputController = new UserInputController();
+export const editorModeController = new EditorModeController();
 
 function addLearnMoreLink() {
     let learnMoreContainer = document.createElement("div");

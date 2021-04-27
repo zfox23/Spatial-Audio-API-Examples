@@ -129,7 +129,7 @@ export class SpatialAudioRoom {
             incrementor = (thetaMax / (this.numSeatsInRoom - 1));
         }
 
-        for (let theta = 0; theta < thetaMax; theta += incrementor) {
+        for (let theta = 0; theta <= thetaMax; theta += incrementor) {
             let currentPotentialPosition = new Point3D({
                 "x": this.seatingRadiusM * Math.cos(theta) + this.seatingCenter.x,
                 "z": this.seatingRadiusM * Math.sin(theta) + this.seatingCenter.z

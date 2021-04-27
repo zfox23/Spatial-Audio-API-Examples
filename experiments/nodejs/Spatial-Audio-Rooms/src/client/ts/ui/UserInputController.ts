@@ -1,4 +1,4 @@
-import { avDevicesController, connectionController, pathsController, physicsController, roomController, signalsController, twoDimensionalRenderer, uiController, uiThemeController, userDataController, watchPartyController, webSocketConnectionController } from "..";
+import { avDevicesController, connectionController, editorModeController, pathsController, physicsController, roomController, signalsController, twoDimensionalRenderer, uiController, uiThemeController, userDataController, watchPartyController, webSocketConnectionController } from "..";
 import { AVATAR, ROOM, CONTROLS, PHYSICS, PARTICLES } from "../constants/constants";
 import { MyAvatarModes, UserData } from "../userData/UserDataController";
 import { Utilities } from "../utilities/Utilities";
@@ -115,6 +115,12 @@ export class UserInputController {
                 break;
             case CONTROLS.T_KEY_CODE:
                 uiThemeController.cycleThemes();
+                break;
+            case CONTROLS.E_KEY_CODE:
+                if (this.keyboardEventCache[0].ctrlKey) {
+                    this.keyboardEventCache[0].preventDefault();
+                    editorModeController.toggleEditorMode();
+                }
                 break;
         }
     }
@@ -381,6 +387,8 @@ export class UserInputController {
     }
 
     handleCanvasClick(event: TouchEvent | MouseEvent | PointerEvent) {
+        editorModeController.handleCanvasClick(event);
+
         if (signalsController.activeSignal && (event instanceof MouseEvent || event instanceof PointerEvent)) {
             let clickM = new Point3D(Utilities.normalModeCanvasPXToM({x: event.offsetX, y: event.offsetY}));
 

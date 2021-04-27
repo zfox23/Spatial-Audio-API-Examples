@@ -254,6 +254,10 @@ $bottom-controls-container-height: 72px;
         background-color: map-get(themes.$dark-theme, bottom-controls-container-background);
         color: map-get(themes.$dark-theme, text-primary);
     }
+
+    &--editorMode {
+        box-shadow: inset 0px 0px 0px 7px #ff0000;
+    }
 }
 
 .bottomControlButton {

@@ -1,24 +1,28 @@
 {
-    "name": "Example Room Config",
+    "name": "Watch Party Config",
+    "comments": "A config JSON associated with Watch Party rooms.",
     "configJSONVersion": "v1.0.0",
     "theme": "dark",
+    "backgroundColorHex": "#0C0227",
     "rooms": [
         {
-            "name": "Lobby",
-            "seatingCenter": { "x": 0, "z": 0 },
-            "seatingRadiusM": 1.0,
-            "numSeatsInRoom": 8,
-            "roomYawOrientationDegrees": 90
+            "name": "Kitchen",
+            "roomCenter": { "x": 0, "z": 0 },
+            "seatingCenter": { "x": 0.0844, "z": 0.1177 },
+            "dimensions": { "x": 5, "z": 7.4240 },
+            "seatingRadiusM": 0.8,
+            "roomImageSRC": "/spatial-audio-rooms/rooms/WatchParty-Kitchen-bg.jpg",
+            "numSeatsInRoom": 7
         },
         {
-            "name": "Watch Party Room",
+            "name": "Living Room",
             "roomType": "watchParty",
-            "roomCenter": { "x": 0, "z": -4 },
-            "seatingCenter": { "x": 0.15, "z": -5.218 },
-            "dimensions": {"x": 8.098, "z": 5.67018 },
-            "seatingRadiusM": 1.85,
-            "roomImageSRC": "/spatial-audio-rooms/rooms/watchparty.png",
-            "numSeatsInRoom": 7
+            "roomCenter": { "x": -5.843465, "z": 0 },
+            "seatingCenter": { "x": -5.649, "z": -1.535 },
+            "dimensions": { "x": 6.68693, "z": 7.4240 },
+            "seatingRadiusM": 1.45,
+            "roomImageSRC": "/spatial-audio-rooms/rooms/WatchParty-LivingRoom-bg.jpg",
+            "numSeatsInRoom": 6
         }
     ]
 }

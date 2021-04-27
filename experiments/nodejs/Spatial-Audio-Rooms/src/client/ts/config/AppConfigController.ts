@@ -34,6 +34,7 @@ interface ConfigJSON {
     configJSONVersion: string;
     comments: string;
     theme?: string;
+    backgroundColorHex?: string;
     spaceName?: string;
     rooms: Array<SpatialAudioRoom>;
 }
@@ -144,6 +145,10 @@ export class AppConfigController {
                 this.theme = UITheme.LIGHT;
             } else if (configJSON.theme === "dark") {
                 this.theme = UITheme.DARK;
+            }
+
+            if (configJSON.backgroundColorHex) {
+                document.body.style.backgroundColor = `${configJSON.backgroundColorHex} !important`;
             }
 
             for (const room of configJSON.rooms) {
