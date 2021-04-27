@@ -17,10 +17,10 @@
         {
             "name": "Living Room",
             "roomType": "watchParty",
-            "roomCenter": { "x": -5.843465, "z": 0 },
-            "seatingCenter": { "x": -5.649, "z": -1.535 },
-            "dimensions": { "x": 6.68693, "z": 7.4240 },
-            "seatingRadiusM": 1.45,
+            "roomCenter": { "x": -5.275, "z": 0 },
+            "seatingCenter": { "x": -5.05, "z": -1.303 },
+            "dimensions": { "x": 5.5511, "z": 7.4240 },
+            "seatingRadiusM": 1.15,
             "roomImageSRC": "/spatial-audio-rooms/rooms/WatchParty-LivingRoom-bg.jpg",
             "numSeatsInRoom": 6
         }
