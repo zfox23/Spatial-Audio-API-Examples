@@ -24,6 +24,7 @@ export const connectionController = new ConnectionController();
 export const webSocketConnectionController = new WebSocketConnectionController();
 export const avDevicesController = new AVDevicesController();
 export const uiController = new UIController();
+export const localSoundsController = new LocalSoundsController();
 export const userDataController = new UserDataController();
 export const roomController = new RoomController();
 export const landmarksController = new LandmarksController();
@@ -36,7 +37,6 @@ export const pathsController = new PathsController();
 export const physicsController = new PhysicsController();
 export const userInputController = new UserInputController();
 export const editorModeController = new EditorModeController();
-export const localSoundsController = new LocalSoundsController();
 
 function addLearnMoreLink() {
     let learnMoreContainer = document.createElement("div");

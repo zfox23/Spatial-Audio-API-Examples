@@ -213,11 +213,11 @@ export class PhysicsController {
                 hifiCommunicator.updateUserDataAndTransmit(dataToTransmit);
 
                 if (dataToTransmit.orientationEuler) {
-                    localSoundsController.updateLocalOrientation(userData.orientationEulerCurrent);
+                    localSoundsController.updateHowlerOrientation(userData.orientationEulerCurrent);
                 }
 
                 if (dataToTransmit.position) {
-                    localSoundsController.updateLocalPosition(userData.positionCurrent);
+                    localSoundsController.onMyGlobalPositionChanged(userData.positionCurrent);
                 }
             }
         });

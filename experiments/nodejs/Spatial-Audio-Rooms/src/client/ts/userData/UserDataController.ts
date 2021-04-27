@@ -154,7 +154,7 @@ class MyAvatar {
             myUserData.positionStart = undefined;
             myUserData.positionCurrent = new Point3D();
             Object.assign(myUserData.positionCurrent, targetSeat.position);
-            localSoundsController.updateLocalPosition(myUserData.positionCurrent);
+            localSoundsController.onMyGlobalPositionChanged(myUserData.positionCurrent);
             myUserData.positionTarget = undefined;
             
             dataToTransmit.position = myUserData.positionCurrent;
@@ -164,7 +164,7 @@ class MyAvatar {
             myUserData.orientationEulerStart = undefined;
             myUserData.orientationEulerCurrent = new OrientationEuler3D();
             myUserData.orientationEulerCurrent.yawDegrees = targetSeat.orientation.yawDegrees;
-            localSoundsController.updateLocalOrientation(myUserData.orientationEulerCurrent);
+            localSoundsController.updateHowlerOrientation(myUserData.orientationEulerCurrent);
             myUserData.orientationEulerTarget = undefined;
 
             dataToTransmit.orientationEuler = myUserData.orientationEulerCurrent;

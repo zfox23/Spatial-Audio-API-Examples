@@ -69,6 +69,14 @@
             "radiusM": 0.15,
             "randomSoundRate": true,
             "clickSoundSRC": "/spatial-audio-rooms/sounds/mmmcookies.wav"
+        },
+        {
+            "name": "Plants 01",
+            "drawName": false,
+            "positionM": { "x": 1.409203, "z": -1.06315 },
+            "radiusM": 0.2,
+            "randomSoundRate": true,
+            "clickSoundSRC": ["/spatial-audio-rooms/sounds/rustle1.wav", "/spatial-audio-rooms/sounds/rustle2.wav", "/spatial-audio-rooms/sounds/rustle3.wav", "/spatial-audio-rooms/sounds/rustle4.wav", "/spatial-audio-rooms/sounds/rustle5.wav"]
         }
     ]
 }

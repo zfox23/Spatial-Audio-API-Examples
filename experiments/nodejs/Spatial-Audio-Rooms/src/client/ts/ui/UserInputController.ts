@@ -462,7 +462,7 @@ export class UserInputController {
                     if (hifiCommunicator) {
                         hifiCommunicator.updateUserDataAndTransmit({ orientationEuler: new OrientationEuler3D({ yawDegrees: newYawDegrees }) });
                     }
-                    localSoundsController.updateLocalOrientation(userDataController.myAvatar.myUserData.orientationEulerCurrent);
+                    localSoundsController.updateHowlerOrientation(userDataController.myAvatar.myUserData.orientationEulerCurrent);
                 }
             }
         } else {
