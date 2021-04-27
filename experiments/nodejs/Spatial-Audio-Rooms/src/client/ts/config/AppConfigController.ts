@@ -7,6 +7,7 @@ import Room3 from "../../../server/static/rooms/Room3.jpg";
 import Room4 from "../../../server/static/rooms/Room4.jpg";
 import Room5 from "../../../server/static/rooms/Room5.jpg";
 import SeatingRadius1Image2 from "../../../server/static/rooms/room-with-seating-radius-1-bg-2.jpg";
+declare var HIFI_SPACE_NAME: string;
 
 const CONFIG_JSON_VERSIONS = {
     "v1.0.0": {
@@ -46,6 +47,7 @@ export class AppConfigController {
     onConfigComplete: Array<Function>;
 
     constructor() {
+        console.log(`HiFi Space Name is: \`${HIFI_SPACE_NAME}\``);
         this.rooms = [];
         this.onConfigComplete = [];
         this.downloadConfigJSON();

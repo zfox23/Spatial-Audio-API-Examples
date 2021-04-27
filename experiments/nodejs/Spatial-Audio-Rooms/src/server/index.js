@@ -70,6 +70,15 @@ app.get('/spatial-audio-rooms', async (req, res, next) => {
     });
 });
 
+app.get('/spatial-audio-rooms/:spaceName', async (req, res, next) => {
+    require('./serverRender')(isInProdMode, req, async (err, page) => {
+        if (err) {
+            return next(err);
+        }
+        res.send(page);
+    });
+});
+
 app.get('/spatial-audio-rooms/slack', (req, res, next) => {
     let code = req.query.code;
     if (!code) {
