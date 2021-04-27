@@ -154,6 +154,10 @@ export class Utilities {
         return Math.sqrt((xMovement *= xMovement) + (yMovement *= yMovement));
     }
 
+    static randomIntBetween(min: number, max: number) {
+        return Math.floor(Utilities.randomFloatBetween(min, max));
+    }
+
     static randomFloatBetween(min: number, max: number) {
         return (Math.random() * (max - min)) + min;
     }

@@ -1,10 +1,10 @@
-import { avDevicesController, connectionController, editorModeController, pathsController, physicsController, roomController, signalsController, twoDimensionalRenderer, uiController, uiThemeController, userDataController, watchPartyController, webSocketConnectionController } from "..";
+import { appConfigController, avDevicesController, connectionController, editorModeController, landmarksController, localSoundsController, pathsController, physicsController, roomController, signalsController, twoDimensionalRenderer, uiController, uiThemeController, userDataController, watchPartyController, webSocketConnectionController } from "..";
 import { AVATAR, ROOM, CONTROLS, PHYSICS, PARTICLES } from "../constants/constants";
-import { MyAvatarModes, UserData } from "../userData/UserDataController";
+import { UserData } from "../userData/UserDataController";
 import { Utilities } from "../utilities/Utilities";
 import { SpatialAudioRoom, SpatialAudioRoomType, SpatialAudioSeat } from "../ui/RoomController";
 import { OrientationEuler3D, Point3D } from "hifi-spatial-audio";
-import * as e from "express";
+import { Landmark } from "./LandmarksController";
 
 export class UserInputController {
     normalModeCanvas: HTMLCanvasElement;
@@ -20,6 +20,7 @@ export class UserInputController {
     hoveredSeat: SpatialAudioSeat;
     zoomedOutTooFarToRenderSeats: boolean = false;
     hoveredRoom: SpatialAudioRoom;
+    hoveredLandmark: Landmark;
 
     constructor() {
         this.toggleInputMuteButton = document.querySelector('.toggleInputMuteButton');
@@ -411,6 +412,8 @@ export class UserInputController {
             console.log(`User clicked on the room named ${this.hoveredRoom.name}!`);
             userDataController.myAvatar.positionSelfInRoom(this.hoveredRoom.name);
             this.hoveredRoom = undefined;
+        } else if (this.hoveredLandmark) {
+            landmarksController.landmarkClicked(this.hoveredLandmark);
         }
 
         document.body.classList.remove("cursorPointer");
@@ -454,11 +457,12 @@ export class UserInputController {
             if (userDataController.myAvatar && userDataController.myAvatar.myUserData.orientationEulerCurrent) {
                 let newYawDegrees = userDataController.myAvatar.myUserData.orientationEulerCurrent.yawDegrees - deltaDistance * CONTROLS.RIGHT_CLICK_ROTATION_SENSITIVITY;
                 if (!isNaN(newYawDegrees)) {
-                    userDataController.myAvatar.myUserData.orientationEulerCurrent.yawDegrees = newYawDegrees;
+                    userDataController.myAvatar.myUserData.orientationEulerCurrent.yawDegrees = newYawDegrees % 360;
                     let hifiCommunicator = connectionController.hifiCommunicator;
                     if (hifiCommunicator) {
                         hifiCommunicator.updateUserDataAndTransmit({ orientationEuler: new OrientationEuler3D({ yawDegrees: newYawDegrees }) });
                     }
+                    localSoundsController.updateLocalOrientation(userDataController.myAvatar.myUserData.orientationEulerCurrent);
                 }
             }
         } else {
@@ -507,11 +511,25 @@ export class UserInputController {
                         }
                 }
             }
+
+            if (!(this.hoveredUserData && this.hoveredSeat && this.hoveredRoom)) {
+                this.hoveredLandmark = undefined;
+
+                    for (let i = 0; i < landmarksController.landmarks.length; i++) {
+                        let landmark = landmarksController.landmarks[i];
+    
+                        if (Utilities.getDistanceBetween2DPoints(landmark.positionM.x, landmark.positionM.z, hoverM.x, hoverM.z) < landmark.radiusM) {
+                            this.hoveredLandmark = landmark;
+                            break;
+                        }
+                }
+            }
         }
 
         if (this.hoveredUserData ||
             this.hoveredSeat ||
-            this.hoveredRoom) {
+            this.hoveredRoom ||
+            this.hoveredLandmark) {
             document.body.classList.add("cursorPointer");
         } else {
             document.body.classList.remove("cursorPointer");

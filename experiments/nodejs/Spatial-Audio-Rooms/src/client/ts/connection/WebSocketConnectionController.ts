@@ -1,4 +1,5 @@
-import { avDevicesController, connectionController, roomController, signalsController, uiController, userDataController, userInputController } from "..";
+import { avDevicesController, connectionController, localSoundsController, roomController, signalsController, uiController, userDataController, userInputController } from "..";
+import { SoundParams } from "../sounds/LocalSoundsController";
 import { SignalParams } from "../ui/SignalsController";
 declare var HIFI_SPACE_NAME: string;
 
@@ -167,6 +168,13 @@ export class WebSocketConnectionController {
                 console.log(`"${visitIDHash}" added a signal particle!`);
                 signalsController.addSignal(particleParams);
             }
+        });
+
+        this.socket.on("requestSoundAdd", ({ visitIDHash, soundParams }: { visitIDHash: string, soundParams: string}) => {
+            let parsedSoundParams: SoundParams = JSON.parse(soundParams);
+
+            console.log(`"${visitIDHash}" requested to play a sound!`);
+            localSoundsController.playSound(parsedSoundParams);
         });
     }
 

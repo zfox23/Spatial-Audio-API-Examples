@@ -6,7 +6,9 @@ import { ConnectionController } from './connection/ConnectionController';
 import { WebSocketConnectionController } from './connection/WebSocketConnectionController';
 import { PhysicsController } from './physics/PhysicsController';
 import { TwoDimensionalRenderer } from './render/TwoDimensionalRenderer';
+import { LocalSoundsController } from './sounds/LocalSoundsController';
 import { EditorModeController } from './ui/EditorModeController';
+import { LandmarksController as LandmarksController } from './ui/LandmarksController';
 import { ParticleController } from './ui/ParticleController';
 import { RoomController } from './ui/RoomController';
 import { SignalsController } from './ui/SignalsController';
@@ -24,6 +26,7 @@ export const avDevicesController = new AVDevicesController();
 export const uiController = new UIController();
 export const userDataController = new UserDataController();
 export const roomController = new RoomController();
+export const landmarksController = new LandmarksController();
 export const twoDimensionalRenderer = new TwoDimensionalRenderer();
 export const watchPartyController = new WatchPartyController();
 export const particleController = new ParticleController();
@@ -33,6 +36,7 @@ export const pathsController = new PathsController();
 export const physicsController = new PhysicsController();
 export const userInputController = new UserInputController();
 export const editorModeController = new EditorModeController();
+export const localSoundsController = new LocalSoundsController();
 
 function addLearnMoreLink() {
     let learnMoreContainer = document.createElement("div");

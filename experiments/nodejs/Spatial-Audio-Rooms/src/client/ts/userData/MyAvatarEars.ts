@@ -3,7 +3,7 @@ import { AudionetInitResponse } from "../connection/ConnectionController";
 import { SpatialAudioSeat } from "../ui/RoomController";
 import { UserData } from "./UserDataController";
 import { DataToTransmitToHiFi } from "../utilities/Utilities";
-import { avDevicesController, connectionController, userDataController } from "..";
+import { avDevicesController, connectionController, localSoundsController, userDataController } from "..";
 declare var HIFI_JWT: string;
 declare var HIFI_ENDPOINT_URL: string;
 declare var HIFI_PROVIDED_USER_ID: string;
@@ -145,6 +145,7 @@ export class MyAvatarEars {
         if (hifiCommunicator) {
             hifiCommunicator.updateUserDataAndTransmit({ orientationEuler: new OrientationEuler3D({ yawDegrees: lockedYawDegrees }) });
         }
+        localSoundsController.updateLocalOrientation(userDataController.myAvatar.myUserData.orientationEulerCurrent);
     }
 
     muteMyOtherEars() {

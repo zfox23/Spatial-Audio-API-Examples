@@ -24,5 +24,51 @@
             "roomImageSRC": "/spatial-audio-rooms/rooms/WatchParty-LivingRoom-bg.jpg",
             "numSeatsInRoom": 6
         }
+    ],
+    "landmarks": [
+        {
+            "name": "Coffee Cup 1",
+            "drawName": false,
+            "positionM": { "x": 0.31953906617506567, "z": -0.1850733523822899 },
+            "radiusM": 0.05,
+            "clickSoundSRC": ["/spatial-audio-rooms/sounds/clink1.wav", "/spatial-audio-rooms/sounds/clink2.wav", "/spatial-audio-rooms/sounds/clink3.wav", "/spatial-audio-rooms/sounds/clink4.wav", "/spatial-audio-rooms/sounds/clink5.wav", "/spatial-audio-rooms/sounds/clink6.wav"]
+        },
+        {
+            "name": "Coffee Cup 2",
+            "drawName": false,
+            "positionM": { "x": 0.176238154992299, "z": -0.2476757169935605 },
+            "radiusM": 0.05,
+            "clickSoundSRC": ["/spatial-audio-rooms/sounds/clink1.wav", "/spatial-audio-rooms/sounds/clink2.wav", "/spatial-audio-rooms/sounds/clink3.wav", "/spatial-audio-rooms/sounds/clink4.wav", "/spatial-audio-rooms/sounds/clink5.wav", "/spatial-audio-rooms/sounds/clink6.wav"]
+        },
+        {
+            "name": "Coffee Cup 3",
+            "drawName": false,
+            "positionM": { "x": 0.29609, "z": 0.37069 },
+            "radiusM": 0.05,
+            "clickSoundSRC": ["/spatial-audio-rooms/sounds/clink1.wav", "/spatial-audio-rooms/sounds/clink2.wav", "/spatial-audio-rooms/sounds/clink3.wav", "/spatial-audio-rooms/sounds/clink4.wav", "/spatial-audio-rooms/sounds/clink5.wav", "/spatial-audio-rooms/sounds/clink6.wav"]
+        },
+        {
+            "name": "Coffee Cup 4",
+            "drawName": false,
+            "positionM": { "x": -0.18862, "z": 0.21769 },
+            "radiusM": 0.05,
+            "clickSoundSRC": ["/spatial-audio-rooms/sounds/clink1.wav", "/spatial-audio-rooms/sounds/clink2.wav", "/spatial-audio-rooms/sounds/clink3.wav", "/spatial-audio-rooms/sounds/clink4.wav", "/spatial-audio-rooms/sounds/clink5.wav", "/spatial-audio-rooms/sounds/clink6.wav"]
+        },
+        {
+            "name": "Books",
+            "drawName": false,
+            "positionM": { "x": -0.251139, "z": -0.1386879 },
+            "radiusM": 0.1,
+            "randomSoundRate": true,
+            "clickSoundSRC": "/spatial-audio-rooms/sounds/bookflip.wav"
+        },
+        {
+            "name": "Cookies",
+            "drawName": false,
+            "positionM": { "x": -0.33921, "z": 1.949988 },
+            "radiusM": 0.15,
+            "randomSoundRate": true,
+            "clickSoundSRC": "/spatial-audio-rooms/sounds/mmmcookies.wav"
+        }
     ]
 }

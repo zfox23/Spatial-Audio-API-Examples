@@ -1,5 +1,5 @@
 import { OrientationEuler3D, Point3D } from "hifi-spatial-audio";
-import { userDataController, connectionController, roomController, physicsController, pathsController, uiController, twoDimensionalRenderer, webSocketConnectionController, watchPartyController } from "..";
+import { userDataController, connectionController, roomController, physicsController, pathsController, uiController, twoDimensionalRenderer, webSocketConnectionController, watchPartyController, localSoundsController } from "..";
 import { Path, Waypoint } from "../ai/PathsController";
 import { AVATAR, PHYSICS, UI } from "../constants/constants";
 import { SpatialAudioSeat, SpatialAudioRoom, SpatialAudioRoomType } from "../ui/RoomController";
@@ -154,6 +154,7 @@ class MyAvatar {
             myUserData.positionStart = undefined;
             myUserData.positionCurrent = new Point3D();
             Object.assign(myUserData.positionCurrent, targetSeat.position);
+            localSoundsController.updateLocalPosition(myUserData.positionCurrent);
             myUserData.positionTarget = undefined;
             
             dataToTransmit.position = myUserData.positionCurrent;
@@ -163,6 +164,7 @@ class MyAvatar {
             myUserData.orientationEulerStart = undefined;
             myUserData.orientationEulerCurrent = new OrientationEuler3D();
             myUserData.orientationEulerCurrent.yawDegrees = targetSeat.orientation.yawDegrees;
+            localSoundsController.updateLocalOrientation(myUserData.orientationEulerCurrent);
             myUserData.orientationEulerTarget = undefined;
 
             dataToTransmit.orientationEuler = myUserData.orientationEulerCurrent;

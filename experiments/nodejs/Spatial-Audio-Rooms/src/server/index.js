@@ -436,8 +436,11 @@ socketIOServer.on("connection", (socket) => {
     });
 
     socket.on("addParticle", ({ visitIDHash, spaceName, particleData } = {}) => {
-        console.log(`In ${spaceName}, \`${visitIDHash}\` added a particle!.`);
         socket.to(spaceName).emit("requestParticleAdd", { visitIDHash, particleData });
+    });
+
+    socket.on("addSound", ({ visitIDHash, spaceName, soundParams } = {}) => {
+        socket.to(spaceName).emit("requestSoundAdd", { visitIDHash, soundParams });
     });
 
     socket.on("watchPartyUserJoined", (visitIDHash, spaceName, roomName) => {

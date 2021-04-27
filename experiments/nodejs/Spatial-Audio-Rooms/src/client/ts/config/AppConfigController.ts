@@ -7,6 +7,7 @@ import Room3 from "../../../server/static/rooms/Room3.jpg";
 import Room4 from "../../../server/static/rooms/Room4.jpg";
 import Room5 from "../../../server/static/rooms/Room5.jpg";
 import SeatingRadius1Image2 from "../../../server/static/rooms/room-with-seating-radius-1-bg-2.jpg";
+import { Landmark } from "../ui/LandmarksController";
 declare var HIFI_SPACE_NAME: string;
 
 const CONFIG_JSON_VERSIONS = {
@@ -38,17 +39,20 @@ interface ConfigJSON {
     backgroundColorHex?: string;
     spaceName?: string;
     rooms: Array<SpatialAudioRoom>;
+    landmarks: Array<Landmark>;
 }
 
 export class AppConfigController {
     configComplete: boolean = false;
     theme: UITheme;
     rooms: Array<SpatialAudioRoom>;
+    landmarks: Array<Landmark>;
     onConfigComplete: Array<Function>;
 
     constructor() {
         console.log(`HiFi Space Name is: \`${HIFI_SPACE_NAME}\``);
         this.rooms = [];
+        this.landmarks = [];
         this.onConfigComplete = [];
         this.downloadConfigJSON();
     }
@@ -155,6 +159,10 @@ export class AppConfigController {
 
             for (const room of configJSON.rooms) {
                 this.rooms.push(new SpatialAudioRoom(room));
+            }
+
+            for (const landmark of configJSON.landmarks) {
+                this.landmarks.push(new Landmark(landmark));
             }
         } else {
             console.error(`Couldn't validate remote JSON config. Errors:\n${JSON.stringify(configJSONValidity.errors)}\n\nInitializing default rooms...`);
