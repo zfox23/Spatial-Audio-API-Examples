@@ -46,6 +46,7 @@ export class MyAvatarEars {
             echoCancellationEnabled: false,
             agcEnabled: false,
             noiseSuppressionEnabled: false,
+            currentWatchPartyRoomName: undefined,
             tempData: {},
         };
 

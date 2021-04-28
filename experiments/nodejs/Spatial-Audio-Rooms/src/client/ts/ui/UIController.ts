@@ -108,7 +108,7 @@ export class UIController {
         bottomBar.appendChild(bottomControlsContainer);
 
         let watchPartyControlsContainer = document.createElement("div");
-        watchPartyControlsContainer.classList.add("watchPartyControlsContainer");
+        watchPartyControlsContainer.classList.add("watchPartyControlsContainer", "displayNone");
 
         let watchTogetherURLInput = document.createElement("input");
         watchTogetherURLInput.classList.add("watchTogetherURLInput");

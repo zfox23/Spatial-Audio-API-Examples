@@ -41,6 +41,7 @@ export interface UserData {
     echoCancellationEnabled?: boolean;
     agcEnabled?: boolean;
     noiseSuppressionEnabled?: boolean;
+    currentWatchPartyRoomName?: string;
     tempData?: TempUserData;
 }
 
@@ -79,6 +80,7 @@ class MyAvatar {
             echoCancellationEnabled: false,
             agcEnabled: false,
             noiseSuppressionEnabled: false,
+            currentWatchPartyRoomName: undefined,
             tempData: {},
         };
 
@@ -319,6 +321,12 @@ class MyAvatar {
         roomController.updateRoomList();
 
         userDataController.myAvatarEars.onMouthMovedToNewSeat(targetSeat);
+
+        if (myUserData.currentRoom.roomType === SpatialAudioRoomType.WatchParty) {
+            document.querySelector(".watchPartyControlsContainer").classList.remove("displayNone");
+        } else {
+            document.querySelector(".watchPartyControlsContainer").classList.add("displayNone");
+        }
     }
 
     onMyDisplayNameChanged(newDisplayName?: string) {

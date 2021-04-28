@@ -1,4 +1,4 @@
-import { avDevicesController, connectionController, localSoundsController, roomController, signalsController, uiController, userDataController, userInputController } from "..";
+import { avDevicesController, connectionController, localSoundsController, roomController, signalsController, uiController, userDataController, userInputController, watchPartyController } from "..";
 import { SoundParams } from "../sounds/LocalSoundsController";
 import { SignalParams } from "../ui/SignalsController";
 declare var HIFI_SPACE_NAME: string;
@@ -16,6 +16,7 @@ interface WebSocketParticipantData {
     noiseSuppressionEnabled: boolean;
     hiFiGainSliderValue: string;
     volumeThreshold: number;
+    currentWatchPartyRoomName: string;
 }
 
 export class WebSocketConnectionController {
@@ -49,6 +50,7 @@ export class WebSocketConnectionController {
                     noiseSuppressionEnabled,
                     hiFiGainSliderValue,
                     volumeThreshold,
+                    currentWatchPartyRoomName,
                 } = participant;
 
                 let localUserData = userDataController.allOtherUserData.find((userData) => { return userData.visitIDHash === visitIDHash; });
@@ -87,8 +89,15 @@ export class WebSocketConnectionController {
                             localUserData.currentRoom = undefined;
                         }
                     }
+                    if (typeof (currentWatchPartyRoomName) === "string") {
+                        localUserData.currentWatchPartyRoomName = currentWatchPartyRoomName;
 
-                    console.log(`Updated participant:\nVisit ID Hash \`${localUserData.visitIDHash}\`:\nDisplay Name: \`${displayName}\`\nColor: ${colorHex}\nCurrent Seat ID: ${localUserData.currentSeat ? localUserData.currentSeat.seatID : "undefined"}\nCurrent Room Name: ${localUserData.currentRoom ? localUserData.currentRoom.name : "undefined"}\nechoCancellationEnabled: ${echoCancellationEnabled}\nagcEnabled: ${agcEnabled}\nnsEnabled: ${noiseSuppressionEnabled}\nhiFiGainSliderValue: ${hiFiGainSliderValue}\nvolumeThreshold:${volumeThreshold}\n`);
+                        if (localUserData.currentWatchPartyRoomName === userDataController.myAvatar.myUserData.currentRoom.name) {
+                            watchPartyController.joinWatchParty(userDataController.myAvatar.myUserData.currentRoom.name);
+                        }
+                    }
+                    
+                    console.log(`Updated participant:\nVisit ID Hash \`${localUserData.visitIDHash}\`:\nDisplay Name: \`${displayName}\`\nColor: ${colorHex}\nCurrent Seat ID: ${localUserData.currentSeat ? localUserData.currentSeat.seatID : "undefined"}\nCurrent Room Name: ${localUserData.currentRoom ? localUserData.currentRoom.name : "undefined"}\nechoCancellationEnabled: ${echoCancellationEnabled}\nagcEnabled: ${agcEnabled}\nnsEnabled: ${noiseSuppressionEnabled}\nhiFiGainSliderValue: ${hiFiGainSliderValue}\nvolumeThreshold:${volumeThreshold}\ncurrentWatchPartyRoomName:${currentWatchPartyRoomName}\n`);
                 } else if (visitIDHash && displayName) {
                     localUserData = {
                         visitIDHash,
@@ -99,6 +108,7 @@ export class WebSocketConnectionController {
                         noiseSuppressionEnabled,
                         hiFiGainSliderValue,
                         volumeThreshold,
+                        currentWatchPartyRoomName,
                         tempData: {}
                     };
                     localUserData.hiFiGain = uiController.hiFiGainFromSliderValue(localUserData.hiFiGainSliderValue);
@@ -216,6 +226,7 @@ export class WebSocketConnectionController {
             noiseSuppressionEnabled: myUserData.noiseSuppressionEnabled,
             hiFiGainSliderValue: myUserData.hiFiGainSliderValue,
             volumeThreshold: myUserData.volumeThreshold,
+            currentWatchPartyRoomName: myUserData.currentWatchPartyRoomName,
         });
     }
 
@@ -237,6 +248,7 @@ export class WebSocketConnectionController {
             noiseSuppressionEnabled: myUserData.noiseSuppressionEnabled,
             hiFiGainSliderValue: myUserData.hiFiGainSliderValue,
             volumeThreshold: myUserData.volumeThreshold,
+            currentWatchPartyRoomName: myUserData.currentWatchPartyRoomName,
         };
 
         console.log(`Updating data about me on server:\n${JSON.stringify(dataToUpdate)}`);

@@ -188,7 +188,7 @@ class ServerSpaceInfo {
 }
 
 class Participant {
-    constructor({ socketID, spaceName, visitIDHash, currentSeatID, displayName, colorHex, echoCancellationEnabled, agcEnabled, noiseSuppressionEnabled, hiFiGainSliderValue, volumeThreshold, } = {}) {
+    constructor({ socketID, spaceName, visitIDHash, currentSeatID, displayName, colorHex, echoCancellationEnabled, agcEnabled, noiseSuppressionEnabled, hiFiGainSliderValue, volumeThreshold, currentWatchPartyRoomName, } = {}) {
         this.socketID = socketID;
         this.spaceName = spaceName;
         this.visitIDHash = visitIDHash;
@@ -200,6 +200,7 @@ class Participant {
         this.noiseSuppressionEnabled = noiseSuppressionEnabled;
         this.hiFiGainSliderValue = hiFiGainSliderValue;
         this.volumeThreshold = volumeThreshold;
+        this.currentWatchPartyRoomName = currentWatchPartyRoomName;
     }
 }
 
@@ -258,7 +259,7 @@ function onWatchPartyUserLeft(visitIDHash) {
 
 let spaceInformation = {};
 socketIOServer.on("connection", (socket) => {
-    socket.on("addParticipant", ({ spaceName, visitIDHash, currentSeatID, displayName, colorHex, echoCancellationEnabled, agcEnabled, noiseSuppressionEnabled, hiFiGainSliderValue, volumeThreshold, } = {}) => {
+    socket.on("addParticipant", ({ spaceName, visitIDHash, currentSeatID, displayName, colorHex, echoCancellationEnabled, agcEnabled, noiseSuppressionEnabled, hiFiGainSliderValue, volumeThreshold, currentWatchPartyRoomName, } = {}) => {
         if (!spaceInformation[spaceName]) {
             spaceInformation[spaceName] = new ServerSpaceInfo({ spaceName });
         }
@@ -282,6 +283,7 @@ socketIOServer.on("connection", (socket) => {
             noiseSuppressionEnabled,
             hiFiGainSliderValue,
             volumeThreshold,
+            currentWatchPartyRoomName,
         });
 
         spaceInformation[spaceName].participants.push(me);
@@ -292,7 +294,7 @@ socketIOServer.on("connection", (socket) => {
         socket.emit("onParticipantsAddedOrEdited", spaceInformation[spaceName].participants.filter((participant) => { return participant.visitIDHash !== visitIDHash; }));
     });
 
-    socket.on("editParticipant", ({ spaceName, visitIDHash, currentSeatID, displayName, colorHex, echoCancellationEnabled, agcEnabled, noiseSuppressionEnabled, hiFiGainSliderValue, volumeThreshold, } = {}) => {
+    socket.on("editParticipant", ({ spaceName, visitIDHash, currentSeatID, displayName, colorHex, echoCancellationEnabled, agcEnabled, noiseSuppressionEnabled, hiFiGainSliderValue, volumeThreshold, currentWatchPartyRoomName, } = {}) => {
         let participantToEdit = spaceInformation[spaceName].participants.find((participant) => {
             return participant.visitIDHash === visitIDHash;
         });
@@ -321,6 +323,9 @@ socketIOServer.on("connection", (socket) => {
             }
             if (typeof (volumeThreshold) === "number") {
                 participantToEdit.volumeThreshold = volumeThreshold;
+            }
+            if (typeof (currentWatchPartyRoomName) === "string") {
+                participantToEdit.currentWatchPartyRoomName = currentWatchPartyRoomName;
             }
             socket.to(spaceName).emit("onParticipantsAddedOrEdited", [participantToEdit]);
         } else {
