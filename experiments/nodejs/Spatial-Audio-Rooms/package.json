@@ -1,7 +1,8 @@
 {
   "name": "spatial-audio-rooms",
-  "version": "0.1.0",
-  "description": "A complex demo application for High Fidelity's Spatial Audio API which integrates many of the API's features as well as Twilio Video Conferencing.",
+  "productName": "HiFi Spatial Audio Rooms",
+  "version": "0.2.0",
+  "description": "A complex demo application of High Fidelity's Spatial Audio API which integrates many of the API's features as well as Twilio Video Conferencing.",
   "main": "dist/electron.js",
   "scripts": {
     "client": "webpack --env dev",
@@ -21,7 +22,7 @@
     "type": "git",
     "url": "git+https://github.com/highfidelity/Spatial-Audio-API-Examples.git"
   },
-  "author": "Zach Fox",
+  "author": "High Fidelity Inc",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/highfidelity/Spatial-Audio-API-Examples/issues"
@@ -79,7 +80,9 @@
   },
   "config": {
     "forge": {
-      "packagerConfig": {},
+      "packagerConfig": {
+        "icon": "src/server/static/favicon.ico"
+      },
       "makers": [
         {
           "name": "@electron-forge/maker-squirrel",
