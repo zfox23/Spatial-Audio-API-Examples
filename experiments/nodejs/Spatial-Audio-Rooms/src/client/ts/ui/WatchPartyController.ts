@@ -282,7 +282,7 @@ export class WatchPartyController {
         this.normalModeCanvas.classList.add("displayNone");
         this.watchPartyModeCanvas.classList.remove("displayNone");
         document.querySelector(".youTubePlayerContainer").classList.remove("displayNone");
-        document.querySelector(".zoomUIContainer").classList.add("displayNone");
+        document.querySelector(".bottomRightControlsContainer").classList.add("displayNone");
         document.querySelector(".signalButtonContainer").classList.add("displayNone");
         webSocketConnectionController.socket.emit("watchPartyUserJoined", userDataController.myAvatar.myUserData.visitIDHash, HIFI_SPACE_NAME, userDataController.myAvatar.myUserData.currentWatchPartyRoomName);
         this.resetMouthOrientation();
@@ -303,7 +303,7 @@ export class WatchPartyController {
         this.normalModeCanvas.classList.remove("displayNone");
         this.watchPartyModeCanvas.classList.add("displayNone");
         document.querySelector(".youTubePlayerContainer").classList.add("displayNone");
-        document.querySelector(".zoomUIContainer").classList.remove("displayNone");
+        document.querySelector(".bottomRightControlsContainer").classList.remove("displayNone");
         document.querySelector(".signalButtonContainer").classList.remove("displayNone");
         this.watchTogetherURLInput.value = ``;
         this.leaveWatchPartyButton.classList.add("displayNone");

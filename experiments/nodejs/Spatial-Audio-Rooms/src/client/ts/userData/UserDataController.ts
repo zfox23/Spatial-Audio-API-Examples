@@ -1,5 +1,5 @@
 import { OrientationEuler3D, Point3D } from "hifi-spatial-audio";
-import { userDataController, connectionController, roomController, physicsController, pathsController, uiController, twoDimensionalRenderer, webSocketConnectionController, watchPartyController, localSoundsController } from "..";
+import { userDataController, connectionController, roomController, physicsController, pathsController, uiController, twoDimensionalRenderer, webSocketConnectionController, watchPartyController, localSoundsController, uiThemeController } from "..";
 import { Path, Waypoint } from "../ai/PathsController";
 import { AVATAR, PHYSICS, UI } from "../constants/constants";
 import { SpatialAudioSeat, SpatialAudioRoom, SpatialAudioRoomType } from "../ui/RoomController";
@@ -53,6 +53,7 @@ export enum MyAvatarModes {
 class MyAvatar {
     myUserData: UserData;
     currentMode: MyAvatarModes;
+    freeMovementEnabled: boolean = false;
 
     constructor() {
         this.myUserData = {
@@ -96,6 +97,38 @@ class MyAvatar {
 
         if (localStorage.getItem('myColorHex')) {
             this.onMyColorHexChanged(localStorage.getItem('myColorHex'));
+        }
+    }
+
+    enableFreeMovement() {
+        this.freeMovementEnabled = true;
+        let toggleFreeMovementButton = document.querySelector('.toggleFreeMovementButton');
+        if (toggleFreeMovementButton) {
+            uiThemeController.clearThemesFromElement(<HTMLElement>toggleFreeMovementButton, "toggleFreeMovementButton__on");
+            uiThemeController.clearThemesFromElement(<HTMLElement>toggleFreeMovementButton, "toggleFreeMovementButton__off");
+            toggleFreeMovementButton.classList.add("toggleFreeMovementButton__on");
+            toggleFreeMovementButton.classList.remove("toggleFreeMovementButton__off");
+        }
+        uiThemeController.refreshThemedElements();
+    }
+
+    disableFreeMovement() {
+        this.freeMovementEnabled = false;
+        let toggleFreeMovementButton = document.querySelector('.toggleFreeMovementButton');
+        if (toggleFreeMovementButton) {
+            uiThemeController.clearThemesFromElement(<HTMLElement>toggleFreeMovementButton, "toggleFreeMovementButton__on");
+            uiThemeController.clearThemesFromElement(<HTMLElement>toggleFreeMovementButton, "toggleFreeMovementButton__off");
+            toggleFreeMovementButton.classList.remove("toggleFreeMovementButton__on");
+            toggleFreeMovementButton.classList.add("toggleFreeMovementButton__off");
+        }
+        uiThemeController.refreshThemedElements();
+    }
+    
+    toggleFreeMovement() {
+        if (this.freeMovementEnabled) {
+            this.disableFreeMovement();
+        } else {
+            this.enableFreeMovement();
         }
     }
 

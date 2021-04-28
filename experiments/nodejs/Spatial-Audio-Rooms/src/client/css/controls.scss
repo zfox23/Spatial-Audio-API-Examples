@@ -912,7 +912,7 @@ $bottom-controls-container-height: 72px;
     }
 }
 
-.zoomUIContainer {
+.bottomRightControlsContainer {
     display: flex;
     flex-direction: column;
     position: fixed;
@@ -920,9 +920,39 @@ $bottom-controls-container-height: 72px;
     bottom: $bottom-controls-container-height;
     margin: 10px;
     z-index: map-get(z-indices.$z-index, ui);
+    
+    &--light-theme {
+        color: map-get(themes.$light-theme, bottom-right-controls-container-text);
+    }
+
+    &--dark-theme {
+        color: map-get(themes.$dark-theme, bottom-right-controls-container-text);
+    }
 }
 
-.zoomButton {
+.bottomRightControlContainer {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.bottomRightControlText {
+    text-shadow: 0px 0px 2px #000000;
+    user-select: none;
+}
+
+.toggleFreeMovementContainer {
+    margin: 0 0 12px 0;
+}
+
+.zoomInContainer {
+    margin: 0 0 6px 0;
+}
+
+.zoomButton,
+.toggleFreeMovementButton {
     width: 24px;
     height: 24px;
     background-repeat: no-repeat;
@@ -933,7 +963,7 @@ $bottom-controls-container-height: 72px;
     border: none;
     outline: none;
     padding: 0;
-    margin: 0;
+    margin: 0 0 0 8px;
 
     &:focus {
         border: none;
@@ -941,9 +971,61 @@ $bottom-controls-container-height: 72px;
     }
 }
 
-.zoomInButton {
-    margin: 0 0 6px 0;
+.toggleFreeMovementButton {
+    &__on {
+        &--light-theme {
+            background-image: url('../images/icons/light-theme/analog-mvmt-on-idle.svg');
+    
+            &:hover {
+                background-image: url('../images/icons/light-theme/analog-mvmt-on-active.svg');
+            }
+    
+            &:active {
+                background-image: url('../images/icons/light-theme/analog-mvmt-on-click.svg');
+            }
+        }
+    
+        &--dark-theme {
+            background-image: url('../images/icons/dark-theme/analog-mvmt-on-idle-dark.svg');
+    
+            &:hover {
+                background-image: url('../images/icons/dark-theme/analog-mvmt-on-active-dark.svg');
+            }
+    
+            &:active {
+                background-image: url('../images/icons/dark-theme/analog-mvmt-on-click-dark.svg');
+            }
+        }
+    }
 
+    &__off {
+        &--light-theme {
+            background-image: url('../images/icons/light-theme/analog-mvmt-off-idle.svg');
+    
+            &:hover {
+                background-image: url('../images/icons/light-theme/analog-mvmt-off-active.svg');
+            }
+    
+            &:active {
+                background-image: url('../images/icons/light-theme/analog-mvmt-off-click.svg');
+            }
+        }
+    
+        &--dark-theme {
+            background-image: url('../images/icons/dark-theme/analog-mvmt-off-idle-dark.svg');
+    
+            &:hover {
+                background-image: url('../images/icons/dark-theme/analog-mvmt-off-active-dark.svg');
+            }
+    
+            &:active {
+                background-image: url('../images/icons/dark-theme/analog-mvmt-off-click-dark.svg');
+            }
+        }
+    }
+}
+
+.zoomInButton {
     &--light-theme {
         background-image: url('../images/icons/light-theme/button-zoom-in-idle.svg');
 

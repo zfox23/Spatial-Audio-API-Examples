@@ -11,12 +11,12 @@ export class UIController {
     modalBackground: HTMLDivElement;
     avatarContextMenu: HTMLDivElement;
     hasCompletedTutorial: boolean;
-    zoomUIContainer: HTMLDivElement;
+    bottomRightControlsContainer: HTMLDivElement;
 
     constructor() {
         this.initPlayOverlay();
         this.initMainUI();
-        this.initZoomUI();
+        this.initBottomRightControls();
         this.initContextMenu();
         this.hideLoadingOverlay();
 
@@ -148,34 +148,63 @@ export class UIController {
         }
     }
 
-    initZoomUI() {
-        this.zoomUIContainer = document.createElement("div");
-        this.zoomUIContainer.classList.add("zoomUIContainer");
-        document.body.appendChild(this.zoomUIContainer);
+    initBottomRightControls() {
+        let bottomRightControlsContainer = document.createElement("div");
+        bottomRightControlsContainer.classList.add("bottomRightControlsContainer");
+        document.body.appendChild(bottomRightControlsContainer);
 
+        let toggleFreeMovementContainer = document.createElement("div");
+        toggleFreeMovementContainer.classList.add("bottomRightControlContainer", "toggleFreeMovementContainer");
+        let toggleFreeMovementText = document.createElement("span");
+        toggleFreeMovementText.classList.add("bottomRightControlText", "displayNone");
+        toggleFreeMovementText.innerHTML = "Free Movement";
+        toggleFreeMovementContainer.appendChild(toggleFreeMovementText);
+        let toggleFreeMovementButton = document.createElement("button");
+        toggleFreeMovementButton.classList.add("toggleFreeMovementButton", "toggleFreeMovementButton__off");
+        toggleFreeMovementButton.addEventListener("click", () => { userDataController.myAvatar.toggleFreeMovement(); });
+        toggleFreeMovementContainer.appendChild(toggleFreeMovementButton);
+        bottomRightControlsContainer.appendChild(toggleFreeMovementContainer);
+
+        let zoomInContainer = document.createElement("div");
+        zoomInContainer.classList.add("bottomRightControlContainer", "zoomInContainer");
+        let zoomInText = document.createElement("span");
+        zoomInText.classList.add("bottomRightControlText", "displayNone");
+        zoomInText.innerHTML = "Zoom In";
+        zoomInContainer.appendChild(zoomInText);
         let zoomInButton = document.createElement("button");
         zoomInButton.classList.add("zoomButton", "zoomInButton");
         zoomInButton.addEventListener("click", () => {
             physicsController.smoothZoomStartTimestamp = undefined;
             physicsController.pxPerMTarget = (physicsController.pxPerMTarget || physicsController.pxPerMCurrent) + PHYSICS.PX_PER_M_STEP;
         });
-        this.zoomUIContainer.appendChild(zoomInButton);
+        zoomInContainer.appendChild(zoomInButton);
+        bottomRightControlsContainer.appendChild(zoomInContainer);
 
+        let zoomOutContainer = document.createElement("div");
+        zoomOutContainer.classList.add("bottomRightControlContainer", "zoomOutContainer");
+        let zoomOutText = document.createElement("span");
+        zoomOutText.classList.add("bottomRightControlText", "displayNone");
+        zoomOutText.innerHTML = "Zoom Out";
+        zoomOutContainer.appendChild(zoomOutText);
         let zoomOutButton = document.createElement("button");
         zoomOutButton.classList.add("zoomButton", "zoomOutButton");
         zoomOutButton.addEventListener("click", () => {
             physicsController.smoothZoomStartTimestamp = undefined;
             physicsController.pxPerMTarget = (physicsController.pxPerMTarget || physicsController.pxPerMCurrent) - PHYSICS.PX_PER_M_STEP;
         });
-        this.zoomUIContainer.appendChild(zoomOutButton);
-    }
-
-    hideZoomUI() {
-        this.zoomUIContainer.classList.add("displayNone");
-    }
-
-    showZoomUI() {
-        this.zoomUIContainer.classList.remove("displayNone");
+        zoomOutContainer.appendChild(zoomOutButton);
+        bottomRightControlsContainer.appendChild(zoomOutContainer);
+        
+        bottomRightControlsContainer.addEventListener("mouseenter", () => {
+            toggleFreeMovementText.classList.remove("displayNone");
+            zoomInText.classList.remove("displayNone");
+            zoomOutText.classList.remove("displayNone");
+        });
+        bottomRightControlsContainer.addEventListener("mouseleave", () => {
+            toggleFreeMovementText.classList.add("displayNone");
+            zoomInText.classList.add("displayNone");
+            zoomOutText.classList.add("displayNone");
+        });
     }
 
     initContextMenu() {
