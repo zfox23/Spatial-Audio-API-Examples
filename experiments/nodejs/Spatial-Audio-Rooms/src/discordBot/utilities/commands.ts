@@ -8,7 +8,7 @@ export async function handleHiFiCommand({ interaction, guild, channel }: { inter
 
     let hash = crypto.createHash('md5').update(stringToHash).digest('hex');
 
-    const spaceURL = `https://experiments.highfidelity.com/spatial-audio-rooms/?spaceName=${hash}`;
+    const spaceURL = `https://experiments.highfidelity.com/spatial-audio-rooms/${hash}/?config=/spatial-audio-rooms/watchParty.json`;
 
     let embed = new MessageEmbed()
         .addField(`Your High Fidelity Spatial Audio Room`, spaceURL, false)
@@ -22,7 +22,7 @@ export async function handleHiFiCommand({ interaction, guild, channel }: { inter
         res = await axios.post(`https://discord.com/api/v8/interactions/${interaction.id}/${interaction.token}/callback`, {
             "type": 4,
             "data": {
-                "content": "Your Spatial Audio Room details are below:"
+                "content": "Your Spatial Audio Room details, as requested."
             }});
         console.log(`Successfully responded to slash command!`);
     } catch (e) {
