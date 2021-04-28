@@ -15,7 +15,7 @@ client.on('ready', () => {
         .createCommand({
             name: "hifi",
             description: "Links to this channel's Spatial Audio Room.",
-        }, "166332644936646656")
+        })
         .then((response: any) => {
             console.log(`Successfully created slash command! Response:\n${JSON.stringify(response, null, 4)}`);
         })

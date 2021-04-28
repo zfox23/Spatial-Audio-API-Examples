@@ -117,7 +117,7 @@ app.post('/spatial-audio-rooms/create', (req, res, next) => {
 
     let slackCommandText = req.body.text;
     if (slackCommandText && slackCommandText.length > 0) {
-        spaceURL = `https://experiments.highfidelity.com/spatial-audio-rooms/?spaceName=${slackCommandText}`;
+        spaceURL = `https://experiments.highfidelity.com/spatial-audio-rooms/slackCommandText/?config=/spatial-audio-rooms/watchParty.json`;
 
         res.json({
             "response_type": 'in_channel',
@@ -149,7 +149,7 @@ app.post('/spatial-audio-rooms/create', (req, res, next) => {
         }
 
         let hash = crypto.createHash('md5').update(stringToHash).digest('hex');
-        spaceURL = `https://experiments.highfidelity.com/spatial-audio-rooms/?spaceName=${hash}`;
+        spaceURL = `https://experiments.highfidelity.com/spatial-audio-rooms/${hash}?config=/spatial-audio-rooms/watchParty.json`;
 
         res.json({
             "response_type": 'in_channel',
