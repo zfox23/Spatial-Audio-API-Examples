@@ -7,6 +7,7 @@ declare var HIFI_SPACE_NAME: string;
 export interface SoundParams {
     src: string;
     positionM: Point3D;
+    randomSoundRate: boolean;
 }
 
 export class LocalSoundsController {
@@ -78,7 +79,8 @@ export class LocalSoundsController {
         if (!localOnly && webSocketConnectionController) {
             let soundParams: SoundParams = {
                 "src": src,
-                "positionM": positionM
+                "positionM": positionM,
+                "randomSoundRate": randomSoundRate
             };
 
             webSocketConnectionController.socket.emit("addSound", { visitIDHash: userDataController.myAvatar.myUserData.visitIDHash, spaceName: HIFI_SPACE_NAME, soundParams: JSON.stringify(soundParams)} );

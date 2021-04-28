@@ -129,7 +129,10 @@ export class UserInputController {
                 }
                 break;
             case CONTROLS.E_KEY_CODE:
-                if (userDataController.myAvatar.freeMovementEnabled) {
+                if (this.keyboardEventCache[0].ctrlKey) {
+                    this.keyboardEventCache[0].preventDefault();
+                    editorModeController.toggleEditorMode();
+                } else if (userDataController.myAvatar.freeMovementEnabled) {
                     userDataController.myAvatar.linearVelocityMPerS.right = CONTROLS.BACKWARD_VELOCITY_M_PER_SEC;
                     userDataController.myAvatar.myUserData.positionTarget = undefined;
                 }
@@ -165,12 +168,6 @@ export class UserInputController {
                 break;
             case CONTROLS.U_KEY_CODE:
                 userDataController.myAvatarEars.toggleConnection();
-                break;
-            case CONTROLS.E_KEY_CODE:
-                if (this.keyboardEventCache[0].ctrlKey) {
-                    this.keyboardEventCache[0].preventDefault();
-                    editorModeController.toggleEditorMode();
-                }
                 break;
         }
     }
