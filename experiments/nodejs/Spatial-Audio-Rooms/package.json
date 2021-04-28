@@ -1,7 +1,7 @@
 {
   "name": "spatial-audio-rooms",
   "productName": "HiFi Spatial Audio Rooms",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A complex demo application of High Fidelity's Spatial Audio API which integrates many of the API's features as well as Twilio Video Conferencing.",
   "main": "dist/electron.js",
   "scripts": {
@@ -16,7 +16,7 @@
     "electron": "webpack --env electron && node -r esm ./src/electron/generateElectronApp.js && electron .",
     "make": "webpack --env electron && node -r esm ./src/electron/generateElectronApp.js && electron-forge make",
     "start": "electron-forge start",
-    "package": "electron-forge package"
+    "package": "webpack --env electron && node -r esm ./src/electron/generateElectronApp.js && electron-forge package"
   },
   "repository": {
     "type": "git",
