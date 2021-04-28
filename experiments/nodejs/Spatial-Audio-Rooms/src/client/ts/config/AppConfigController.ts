@@ -9,6 +9,7 @@ import Room5 from "../../../server/static/rooms/Room5.jpg";
 import SeatingRadius1Image2 from "../../../server/static/rooms/room-with-seating-radius-1-bg-2.jpg";
 import { Landmark } from "../ui/LandmarksController";
 declare var HIFI_SPACE_NAME: string;
+declare var APP_MODE: string;
 
 const CONFIG_JSON_VERSIONS = {
     "v1.0.0": {
@@ -44,7 +45,7 @@ interface ConfigJSON {
 
 export class AppConfigController {
     configComplete: boolean = false;
-    theme: UITheme;
+    theme: UITheme = UITheme.LIGHT;
     rooms: Array<SpatialAudioRoom>;
     landmarks: Array<Landmark>;
     onConfigComplete: Array<Function>;
@@ -59,9 +60,9 @@ export class AppConfigController {
 
     async downloadConfigJSON() {
         let searchParams = new URLSearchParams(location.search);
-        if (searchParams.has("config")) {
+        if (searchParams.has("config") || APP_MODE === "electron") {
             console.log(`Downloading application configuration JSON file...`);
-            let configURL = searchParams.get("config");
+            let configURL = APP_MODE === "electron" ? "watchParty.json" : searchParams.get("config");
             let configResponse, configJSON;
             try {
                 configResponse = await fetch(configURL);

@@ -11,7 +11,8 @@
     "server:dev": "node -r esm ./src/server/index.js dev",
     "server:prod": "node -r esm ./src/server/index.js prod",
     "audiobots": "node -r esm ./src/server/audioBots.js",
-    "discord": "tsc --p ./src/discordBot/ && node ./src/discordBot/dist/index.js"
+    "discord": "tsc --p ./src/discordBot/ && node ./src/discordBot/dist/index.js",
+    "electron": "webpack --env electron && node -r esm ./src/electron/generateElectronApp.js && electron ./src/electron/"
   },
   "repository": {
     "type": "git",
@@ -46,6 +47,7 @@
     "css-loader": "^5.2.0",
     "css-modules-require-hook": "^4.2.3",
     "ejs": "^3.1.6",
+    "electron": "^12.0.5",
     "extract-loader": "^5.1.0",
     "file-loader": "^6.2.0",
     "hifi-spatial-audio": "^0.8.1-2",

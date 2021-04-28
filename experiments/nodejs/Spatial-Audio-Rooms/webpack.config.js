@@ -3,9 +3,10 @@ const webpack = require('webpack');
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 
 module.exports = (env) => {
-    const isInProdMode = (env && env.prod === true);
+    const isInElectronMode = (env && env.electron === true);
+    const isInProdMode = (env && env.prod === true) || isInElectronMode;
 
-    console.log(`*****\nWebpack production mode status: ${isInProdMode}\n*****\n`);
+    console.log(`*****\nWebpack production mode status: ${isInProdMode}\nWebpack Electron mode status: ${isInElectronMode}\n*****\n`);
 
     return {
         entry: {
@@ -57,7 +58,7 @@ module.exports = (env) => {
         output: {
             filename: 'index.js',
             path: path.resolve(__dirname, 'dist'),
-            publicPath: '/spatial-audio-rooms/',
+            publicPath: isInElectronMode ? path.join(__dirname, "dist/") : '/spatial-audio-rooms/',
             clean: true,
         },
         plugins: isInProdMode ? [new MiniCssExtractPlugin({

@@ -27,6 +27,7 @@ async function renderApp(isInProdMode, req, callback) {
         const HIFI_SPACE_NAME = "${spaceName}";
         const HIFI_ENDPOINT_URL = "${auth.HIFI_ENDPOINT_URL}";
         const TWILIO_JWT = "${twilioJWT}";
+        const APP_MODE = "web";
     </script>
     ${isInProdMode ? '<link rel="stylesheet" href="/spatial-audio-rooms/index.css">' : ''}
 </head>

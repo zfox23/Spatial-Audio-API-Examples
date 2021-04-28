@@ -5,6 +5,9 @@ $bottom-controls-container-height: 72px;
 
 .playOverlay {
     position: fixed;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     top: 0;
     left: 0;
     width: 100vw;
@@ -20,7 +23,6 @@ $bottom-controls-container-height: 72px;
     }
 
     &__container {
-        height: calc(100% - 24px);
         display: flex;
         flex-wrap: wrap;
         align-items: flex-start;

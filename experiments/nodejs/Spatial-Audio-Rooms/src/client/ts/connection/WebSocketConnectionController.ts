@@ -2,6 +2,7 @@ import { avDevicesController, connectionController, localSoundsController, roomC
 import { SoundParams } from "../sounds/LocalSoundsController";
 import { SignalParams } from "../ui/SignalsController";
 declare var HIFI_SPACE_NAME: string;
+declare var APP_MODE: string;
 
 const io = require("socket.io-client");
 
@@ -23,7 +24,8 @@ export class WebSocketConnectionController {
     retrievedInitialWebSocketServerData: boolean = false;
 
     constructor() {
-        this.socket = io('', { path: '/spatial-audio-rooms/socket.io' });
+        const socketURL = APP_MODE === "web" ? "" : "https://experiments.highfidelity.com";
+        this.socket = io(socketURL, { path: '/spatial-audio-rooms/socket.io' });
 
         this.socket.on("connect", (socket: any) => {
             console.log(`Connected to Socket.IO WebSocket server!`);

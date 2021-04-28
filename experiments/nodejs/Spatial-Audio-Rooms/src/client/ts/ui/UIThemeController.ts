@@ -7,7 +7,7 @@ export enum UITheme {
 };
 
 export class UIThemeController {
-    currentTheme: UITheme;
+    currentTheme: UITheme = UITheme.LIGHT;
     themedElements: Map<string, Array<HTMLElement>> = new Map();
 
     constructor() {
