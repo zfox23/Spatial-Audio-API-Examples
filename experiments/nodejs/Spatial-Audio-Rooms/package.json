@@ -12,7 +12,10 @@
     "server:prod": "node -r esm ./src/server/index.js prod",
     "audiobots": "node -r esm ./src/server/audioBots.js",
     "discord": "tsc --p ./src/discordBot/ && node ./src/discordBot/dist/index.js",
-    "electron": "webpack --env electron && node -r esm ./src/electron/generateElectronApp.js && electron ."
+    "electron": "webpack --env electron && node -r esm ./src/electron/generateElectronApp.js && electron .",
+    "make": "webpack --env electron && node -r esm ./src/electron/generateElectronApp.js && electron-forge make",
+    "start": "electron-forge start",
+    "package": "electron-forge package"
   },
   "repository": {
     "type": "git",
@@ -28,6 +31,7 @@
     "audio-decode": "^1.4.0",
     "audio-format": "^2.3.2",
     "body-parser": "^1.19.0",
+    "electron-squirrel-startup": "^1.0.0",
     "express": "^4.17.1",
     "howler": "^2.2.1",
     "jose": "^3.11.1",
@@ -40,6 +44,11 @@
   "devDependencies": {
     "@babel/core": "^7.13.14",
     "@babel/node": "^7.13.13",
+    "@electron-forge/cli": "^6.0.0-beta.54",
+    "@electron-forge/maker-deb": "^6.0.0-beta.54",
+    "@electron-forge/maker-rpm": "^6.0.0-beta.54",
+    "@electron-forge/maker-squirrel": "^6.0.0-beta.54",
+    "@electron-forge/maker-zip": "^6.0.0-beta.54",
     "@types/howler": "^2.2.2",
     "@types/html-webpack-plugin": "^3.2.5",
     "@types/socket.io-client": "^1.4.36",
@@ -67,5 +76,32 @@
     "webpack-cli": "^4.6.0",
     "webpack-dev-middleware": "^4.1.0",
     "webpack-hot-middleware": "^2.25.0"
+  },
+  "config": {
+    "forge": {
+      "packagerConfig": {},
+      "makers": [
+        {
+          "name": "@electron-forge/maker-squirrel",
+          "config": {
+            "name": "spatial_audio_rooms"
+          }
+        },
+        {
+          "name": "@electron-forge/maker-zip",
+          "platforms": [
+            "darwin"
+          ]
+        },
+        {
+          "name": "@electron-forge/maker-deb",
+          "config": {}
+        },
+        {
+          "name": "@electron-forge/maker-rpm",
+          "config": {}
+        }
+      ]
+    }
   }
 }
