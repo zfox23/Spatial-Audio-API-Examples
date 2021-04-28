@@ -1,6 +1,7 @@
 const auth = require('../../auth.json');
 const fs = require('fs');
 const path = require('path');
+const { generateHiFiJWT, generateTwilioAccessToken } = require('../server/utilities');
 
 async function generateElectronApp() {
     let spaceName = auth.HIFI_DEFAULT_SPACE_NAME;
@@ -117,6 +118,16 @@ function copyConfigJSON() {
     });
 }
 
+function copyStaticFiles() {
+    fs.copyFileSync(path.join(__dirname, "..", "server", "static", "favicon.ico"), path.join(__dirname, "..", "..", "dist", "favicon.ico"));
+}
+
+function copyElectronJS() {
+    fs.copyFileSync(path.join(__dirname, "electron.js"), path.join(__dirname, "..", "..", "dist", "electron.js"));
+}
+
 generateElectronApp();
 fixupGeneratedCSS();
 copyConfigJSON();
+copyStaticFiles();
+copyElectronJS();

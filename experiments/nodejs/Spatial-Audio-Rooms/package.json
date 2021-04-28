@@ -2,7 +2,7 @@
   "name": "spatial-audio-rooms",
   "version": "0.1.0",
   "description": "A complex demo application for High Fidelity's Spatial Audio API which integrates many of the API's features as well as Twilio Video Conferencing.",
-  "main": "src/index.ts",
+  "main": "dist/electron.js",
   "scripts": {
     "client": "webpack --env dev",
     "client:dev": "webpack --env dev",
@@ -12,7 +12,7 @@
     "server:prod": "node -r esm ./src/server/index.js prod",
     "audiobots": "node -r esm ./src/server/audioBots.js",
     "discord": "tsc --p ./src/discordBot/ && node ./src/discordBot/dist/index.js",
-    "electron": "webpack --env electron && node -r esm ./src/electron/generateElectronApp.js && electron ./src/electron/"
+    "electron": "webpack --env electron && node -r esm ./src/electron/generateElectronApp.js && electron ."
   },
   "repository": {
     "type": "git",
