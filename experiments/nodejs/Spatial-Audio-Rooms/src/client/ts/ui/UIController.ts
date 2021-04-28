@@ -156,12 +156,12 @@ export class UIController {
         let toggleFreeMovementContainer = document.createElement("div");
         toggleFreeMovementContainer.classList.add("bottomRightControlContainer", "toggleFreeMovementContainer");
         let toggleFreeMovementText = document.createElement("span");
-        toggleFreeMovementText.classList.add("bottomRightControlText", "displayNone");
+        toggleFreeMovementText.classList.add("toggleFreeMovementText", "bottomRightControlText", "displayNone");
         toggleFreeMovementText.innerHTML = "Free Movement";
         toggleFreeMovementContainer.appendChild(toggleFreeMovementText);
         let toggleFreeMovementButton = document.createElement("button");
         toggleFreeMovementButton.classList.add("toggleFreeMovementButton", "toggleFreeMovementButton__off");
-        toggleFreeMovementButton.addEventListener("click", () => { userDataController.myAvatar.toggleFreeMovement(); });
+        toggleFreeMovementButton.addEventListener("click", () => { userDataController.myAvatar.toggleFreeMovement(); (<HTMLElement> document.querySelector(".normalModeCanvas")).focus(); });
         toggleFreeMovementContainer.appendChild(toggleFreeMovementButton);
         bottomRightControlsContainer.appendChild(toggleFreeMovementContainer);
 

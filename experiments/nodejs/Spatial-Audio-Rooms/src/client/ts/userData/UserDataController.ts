@@ -127,6 +127,12 @@ class MyAvatar {
             toggleFreeMovementButton.classList.add("toggleFreeMovementButton__on");
             toggleFreeMovementButton.classList.remove("toggleFreeMovementButton__off");
         }
+
+        let toggleFreeMovementText = document.querySelector(".toggleFreeMovementText");
+        if (toggleFreeMovementText) {
+            toggleFreeMovementText.innerHTML = `Free Movement is On`;
+        }
+
         uiThemeController.refreshThemedElements();
 
         this.clearCurrentSeat();
@@ -142,6 +148,12 @@ class MyAvatar {
             toggleFreeMovementButton.classList.remove("toggleFreeMovementButton__on");
             toggleFreeMovementButton.classList.add("toggleFreeMovementButton__off");
         }
+
+        let toggleFreeMovementText = document.querySelector(".toggleFreeMovementText");
+        if (toggleFreeMovementText) {
+            toggleFreeMovementText.innerHTML = `Free Movement is Off`;
+        }
+
         uiThemeController.refreshThemedElements();
 
         this.clearCurrentSeat();
