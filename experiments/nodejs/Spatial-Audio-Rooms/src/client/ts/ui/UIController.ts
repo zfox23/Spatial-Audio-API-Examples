@@ -379,8 +379,12 @@ export class UIController {
     generateUserGainForThisConnectionUI(userData: UserData) {
         let hifiCommunicator = connectionController.hifiCommunicator;
 
-        if (!hifiCommunicator || userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash || typeof (userData.userGainForThisConnection) !== "number") {
+        if (!hifiCommunicator || userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash) {
             return;
+        }
+
+        if (userData.userGainForThisConnection === undefined) {
+            userData.userGainForThisConnection = 1.0;
         }
 
         let avatarContextMenu__userGainForThisConnectionContainer = document.createElement("div");
@@ -401,13 +405,12 @@ export class UIController {
         avatarContextMenu__userGainForThisConnectionSlider.classList.add("avatarContextMenu__userGainForThisConnectionSlider");
 
         // The `change` event fires when the user lets go of the slider.
-        avatarContextMenu__userGainForThisConnectionSlider.addEventListener("change", async (e) => {
+        // The `input` event fires as the user moves the slider.
+        avatarContextMenu__userGainForThisConnectionSlider.addEventListener("input", async (e) => {
             let userGainForThisConnectionSliderValue = parseFloat((<HTMLInputElement>e.target).value);
             try {
-                console.log(`Setting user gain for this connection for Visit ID Hash \`${userData.visitIDHash}\ to \`${userGainForThisConnectionSliderValue}\`...`);
                 await hifiCommunicator.setOtherUserGainForThisConnection(userData.visitIDHash, userGainForThisConnectionSliderValue);
                 userData.userGainForThisConnection = userGainForThisConnectionSliderValue;
-                console.log(`Successfully set user gain for this connection for Visit ID Hash \`${userData.visitIDHash}\ to \`${userData.userGainForThisConnection}\`!`);
             } catch (e) {
                 console.error(`Couldn't set user gain for this connection for Visit ID Hash \`${userData.visitIDHash}\`! Error:\n${JSON.stringify(e)}`);
                 avatarContextMenu__userGainForThisConnectionSlider.value = userData.userGainForThisConnection.toString();

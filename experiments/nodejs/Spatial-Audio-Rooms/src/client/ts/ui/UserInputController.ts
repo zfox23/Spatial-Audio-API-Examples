@@ -65,6 +65,24 @@ export class UserInputController {
         document.addEventListener('keyup', this.onDocumentKeyUp.bind(this), false);
     }
 
+    shouldIgnoreKeyDown() {
+        let allInputElements = document.querySelectorAll("input");
+        for (let i = 0; i < allInputElements.length; i++) {
+            if (allInputElements[i] === document.activeElement) {
+                return true;
+            }
+        }
+        
+        let allButtonElements = document.querySelectorAll("button");
+        for (let i = 0; i < allButtonElements.length; i++) {
+            if (allButtonElements[i] === document.activeElement) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     onDocumentKeyDown(event: KeyboardEvent) {
         let shouldAddKeyEvent = true;
         for (let i = 0; i < this.keyboardEventCache.length; i++) {
@@ -75,6 +93,10 @@ export class UserInputController {
         }
         if (shouldAddKeyEvent) {
             this.keyboardEventCache.unshift(event);
+        }        
+
+        if (this.shouldIgnoreKeyDown() || this.keyboardEventCache.length === 0) {
+            return;
         }
 
         switch (this.keyboardEventCache[0].code) {
@@ -109,9 +131,6 @@ export class UserInputController {
                 break;
             case CONTROLS.U_KEY_CODE:
                 userDataController.myAvatarEars.toggleConnection();
-                break;
-            case CONTROLS.T_KEY_CODE:
-                uiThemeController.cycleThemes();
                 break;
             case CONTROLS.E_KEY_CODE:
                 if (this.keyboardEventCache[0].ctrlKey) {

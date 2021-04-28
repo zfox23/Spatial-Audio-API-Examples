@@ -47,6 +47,7 @@ export class MyAvatarEars {
             agcEnabled: false,
             noiseSuppressionEnabled: false,
             currentWatchPartyRoomName: undefined,
+            userGainForThisConnection: 1.0,
             tempData: {},
         };
 
