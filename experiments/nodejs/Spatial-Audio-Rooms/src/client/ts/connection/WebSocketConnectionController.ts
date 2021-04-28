@@ -92,7 +92,7 @@ export class WebSocketConnectionController {
                     if (typeof (currentWatchPartyRoomName) === "string") {
                         localUserData.currentWatchPartyRoomName = currentWatchPartyRoomName;
 
-                        if (localUserData.currentWatchPartyRoomName === userDataController.myAvatar.myUserData.currentRoom.name) {
+                        if (userDataController.myAvatar.myUserData.currentRoom && localUserData.currentWatchPartyRoomName === userDataController.myAvatar.myUserData.currentRoom.name) {
                             watchPartyController.joinWatchParty(userDataController.myAvatar.myUserData.currentRoom.name);
                         }
                     }
