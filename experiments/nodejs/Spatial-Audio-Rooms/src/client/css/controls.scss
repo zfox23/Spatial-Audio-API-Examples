@@ -974,14 +974,14 @@ $bottom-controls-container-height: 72px;
 .toggleFreeMovementButton {
     &__on {
         &--light-theme {
-            background-image: url('../images/icons/light-theme/analog-mvmt-on-idle.svg');
+            background-image: url('../images/icons/light-theme/analog-mvmt-on-idle-light.svg');
     
             &:hover {
-                background-image: url('../images/icons/light-theme/analog-mvmt-on-active.svg');
+                background-image: url('../images/icons/light-theme/analog-mvmt-on-active-light.svg');
             }
     
             &:active {
-                background-image: url('../images/icons/light-theme/analog-mvmt-on-click.svg');
+                background-image: url('../images/icons/light-theme/analog-mvmt-on-click-light.svg');
             }
         }
     
@@ -1000,14 +1000,14 @@ $bottom-controls-container-height: 72px;
 
     &__off {
         &--light-theme {
-            background-image: url('../images/icons/light-theme/analog-mvmt-off-idle.svg');
+            background-image: url('../images/icons/light-theme/analog-mvmt-off-idle-light.svg');
     
             &:hover {
-                background-image: url('../images/icons/light-theme/analog-mvmt-off-active.svg');
+                background-image: url('../images/icons/light-theme/analog-mvmt-off-active-light.svg');
             }
     
             &:active {
-                background-image: url('../images/icons/light-theme/analog-mvmt-off-click.svg');
+                background-image: url('../images/icons/light-theme/analog-mvmt-off-click-light.svg');
             }
         }
     

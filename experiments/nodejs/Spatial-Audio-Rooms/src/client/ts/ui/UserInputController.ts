@@ -100,6 +100,40 @@ export class UserInputController {
         }
 
         switch (this.keyboardEventCache[0].code) {
+            case CONTROLS.UP_ARROW_KEY_CODE:
+            case CONTROLS.W_KEY_CODE:
+                if (userDataController.myAvatar.freeMovementEnabled) {
+                    userDataController.myAvatar.linearVelocityMPerS.forward = CONTROLS.FORWARD_VELOCITY_M_PER_SEC;
+                    userDataController.myAvatar.myUserData.positionTarget = undefined;
+                }
+                break;
+            case CONTROLS.DOWN_ARROW_KEY_CODE:
+            case CONTROLS.S_KEY_CODE:
+                if (userDataController.myAvatar.freeMovementEnabled) {
+                    userDataController.myAvatar.linearVelocityMPerS.forward = CONTROLS.BACKWARD_VELOCITY_M_PER_SEC;
+                    userDataController.myAvatar.myUserData.positionTarget = undefined;
+                }
+                break;
+            case CONTROLS.LEFT_ARROW_KEY_CODE:
+            case CONTROLS.A_KEY_CODE:
+                userDataController.myAvatar.rotationalVelocityDegreesPerS = CONTROLS.ROTATIONAL_VELOCITY_DEGREES_PER_SEC;
+                break;
+            case CONTROLS.RIGHT_ARROW_KEY_CODE:
+            case CONTROLS.D_KEY_CODE:
+                userDataController.myAvatar.rotationalVelocityDegreesPerS = -CONTROLS.ROTATIONAL_VELOCITY_DEGREES_PER_SEC;
+                break;
+            case CONTROLS.Q_KEY_CODE:
+                if (userDataController.myAvatar.freeMovementEnabled) {
+                    userDataController.myAvatar.linearVelocityMPerS.right = CONTROLS.FORWARD_VELOCITY_M_PER_SEC;
+                    userDataController.myAvatar.myUserData.positionTarget = undefined;
+                }
+                break;
+            case CONTROLS.E_KEY_CODE:
+                if (userDataController.myAvatar.freeMovementEnabled) {
+                    userDataController.myAvatar.linearVelocityMPerS.right = CONTROLS.BACKWARD_VELOCITY_M_PER_SEC;
+                    userDataController.myAvatar.myUserData.positionTarget = undefined;
+                }
+                break;
             case CONTROLS.M_KEY_CODE:
                 this.toggleInputMute();
                 break;
@@ -149,6 +183,40 @@ export class UserInputController {
         }
 
         switch (event.code) {
+            case CONTROLS.UP_ARROW_KEY_CODE:
+            case CONTROLS.W_KEY_CODE:
+                userDataController.myAvatar.linearVelocityMPerS.forward = 0;
+                if (userDataController.myAvatar.freeMovementEnabled) {
+                    userDataController.myAvatar.myUserData.positionTarget = undefined;
+                }
+                break;
+            case CONTROLS.DOWN_ARROW_KEY_CODE:
+            case CONTROLS.S_KEY_CODE:
+                userDataController.myAvatar.linearVelocityMPerS.forward = 0;
+                if (userDataController.myAvatar.freeMovementEnabled) {
+                    userDataController.myAvatar.myUserData.positionTarget = undefined;
+                }
+                break;
+            case CONTROLS.LEFT_ARROW_KEY_CODE:
+            case CONTROLS.A_KEY_CODE:
+                userDataController.myAvatar.rotationalVelocityDegreesPerS = 0;
+                break;
+            case CONTROLS.RIGHT_ARROW_KEY_CODE:
+            case CONTROLS.D_KEY_CODE:
+                userDataController.myAvatar.rotationalVelocityDegreesPerS = 0;
+                break;
+            case CONTROLS.Q_KEY_CODE:
+                userDataController.myAvatar.linearVelocityMPerS.right = 0;
+                if (userDataController.myAvatar.freeMovementEnabled) {
+                    userDataController.myAvatar.myUserData.positionTarget = undefined;
+                }
+                break;
+            case CONTROLS.E_KEY_CODE:
+                userDataController.myAvatar.linearVelocityMPerS.right = 0;
+                if (userDataController.myAvatar.freeMovementEnabled) {
+                    userDataController.myAvatar.myUserData.positionTarget = undefined;
+                }
+                break;
             case CONTROLS.SPACE_KEY_CODE:
                 if (this.wasMutedBeforePTT) {
                     this.setInputMute(true);

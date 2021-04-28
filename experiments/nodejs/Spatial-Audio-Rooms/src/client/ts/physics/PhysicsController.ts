@@ -1,6 +1,6 @@
 import { OrientationEuler3D, Point3D } from "hifi-spatial-audio";
 import { connectionController, localSoundsController, particleController, pathsController, roomController, uiController, userDataController, userInputController } from "..";
-import { PHYSICS, UI, ROOM } from "../constants/constants";
+import { PHYSICS, UI, ROOM, CONTROLS, TIME } from "../constants/constants";
 import { SpatialAudioRoom } from "../ui/RoomController";
 import { Utilities, DataToTransmitToHiFi, EasingFunctions } from "../utilities/Utilities";
 
@@ -27,12 +27,14 @@ export class PhysicsController {
         let dt = now - this.lastNow;
         this.lastNow = now;
 
-        this.computeAvatarPositionsAndOrientations(now);
+        this.computeAvatarPositionsAndOrientations(now, dt);
         particleController.updateAllParticles(now, dt);
         this.computePXPerM(now);
     }
 
-    computeAvatarPositionsAndOrientations(timestamp: number) {
+
+
+    computeAvatarPositionsAndOrientations(timestamp: number, deltaTimestampMS: number) {
         let hifiCommunicator = connectionController.hifiCommunicator;
         if (!hifiCommunicator || !userDataController.myAvatar) {
             return;
@@ -207,6 +209,37 @@ export class PhysicsController {
                         dataToTransmit.orientationEuler = userData.orientationEulerCurrent;
                         mustTransmit = true;
                     }
+                }
+            } else if (isMine && userData.orientationEulerCurrent) {
+                userDataController.myAvatar.setMyAvatarVelocity({ 
+                    x: -userDataController.myAvatar.linearVelocityMPerS.right * Math.cos(-userData.orientationEulerCurrent.yawDegrees * Math.PI / 180) + userDataController.myAvatar.linearVelocityMPerS.forward * Math.sin(-userData.orientationEulerCurrent.yawDegrees * Math.PI / 180),
+                    z: -userDataController.myAvatar.linearVelocityMPerS.right * Math.sin(-userData.orientationEulerCurrent.yawDegrees * Math.PI / 180) - userDataController.myAvatar.linearVelocityMPerS.forward * Math.cos(-userData.orientationEulerCurrent.yawDegrees * Math.PI / 180)
+                }, PHYSICS.CHANGING_VELOCITY_UPDATE_TAU)
+            }
+
+            if (isMine) {
+                let myVelocity = userDataController.myAvatar.linearVelocityMPerS;
+                if (myVelocity.x || myVelocity.z) {
+                    userDataController.myAvatar.clearCurrentSeat();
+                    let newWorldPositionM = {
+                        x: 0,
+                        y: userDataController.myAvatar.myUserData.positionCurrent.y,
+                        z: 0
+                    };
+                    newWorldPositionM.x = userDataController.myAvatar.myUserData.positionCurrent.x + (myVelocity.x * deltaTimestampMS / TIME.MS_PER_SEC);
+                    newWorldPositionM.z = userDataController.myAvatar.myUserData.positionCurrent.z + (myVelocity.z * deltaTimestampMS / TIME.MS_PER_SEC);
+                    userData.positionCurrent = newWorldPositionM;
+
+                    dataToTransmit.position = userData.positionCurrent;
+                    mustTransmit = true;
+                }
+                
+                let myRotationalVelocity = userDataController.myAvatar.rotationalVelocityDegreesPerS;
+                if (myRotationalVelocity && userDataController.myAvatar.myUserData.orientationEulerCurrent) {
+                    let newYawOrientationDegrees = userDataController.myAvatar.myUserData.orientationEulerCurrent.yawDegrees + myRotationalVelocity * deltaTimestampMS / TIME.MS_PER_SEC;
+                    userDataController.myAvatar.myUserData.orientationEulerCurrent.yawDegrees = newYawOrientationDegrees;
+                    dataToTransmit.orientationEuler = userData.orientationEulerCurrent;
+                    mustTransmit = true;
                 }
             }
 

@@ -55,17 +55,17 @@ export class SpatialAudioRoom {
         dimensions,
         roomImageSRC,
         roomType = SpatialAudioRoomType.Normal,
-        }: {
-            name: string,
-            seatingCenter: Point3D,
-            seatingRadiusM?: number,
-            roomCenter?: Point3D,
-            roomYawOrientationDegrees?: number,
-            numSeatsInRoom?: number,
-            dimensions?: Point3D,
-            roomImageSRC?: string,
-            roomType?: SpatialAudioRoomType
-        }) {
+    }: {
+        name: string,
+        seatingCenter: Point3D,
+        seatingRadiusM?: number,
+        roomCenter?: Point3D,
+        roomYawOrientationDegrees?: number,
+        numSeatsInRoom?: number,
+        dimensions?: Point3D,
+        roomImageSRC?: string,
+        roomType?: SpatialAudioRoomType
+    }) {
         this.name = name;
         this.seatingCenter = seatingCenter;
         this.roomCenter = roomCenter || this.seatingCenter;
@@ -81,7 +81,7 @@ export class SpatialAudioRoom {
             this.seatingRadiusM = 2 * maxAvatarRadiusM;
         }
 
-        this.dimensions = dimensions ? dimensions : new Point3D({x: 2 * this.seatingRadiusM * 2 + maxAvatarRadiusM, y: 0, z: 2 * this.seatingRadiusM * 2 + maxAvatarRadiusM });
+        this.dimensions = dimensions ? dimensions : new Point3D({ x: 2 * this.seatingRadiusM * 2 + maxAvatarRadiusM, y: 0, z: 2 * this.seatingRadiusM * 2 + maxAvatarRadiusM });
 
         let clampedX = Utilities.clamp(this.dimensions.x, 2 * this.seatingRadiusM + 2 * maxAvatarRadiusM, 9999);
         if (clampedX !== this.dimensions.x) {
@@ -93,7 +93,7 @@ export class SpatialAudioRoom {
             console.warn(`Clamped Z dimension of room \`${this.name}\` from ${this.dimensions.z} to ${clampedZ}m.`);
             this.dimensions.z = clampedZ;
         }
-        
+
         if (numSeatsInRoom) {
             this.numSeatsInRoom = numSeatsInRoom;
         } else if (!numSeatsInRoom && roomType === SpatialAudioRoomType.Normal) {
@@ -101,7 +101,7 @@ export class SpatialAudioRoom {
         } else if (!numSeatsInRoom && roomType === SpatialAudioRoomType.WatchParty) {
             this.numSeatsInRoom = Math.ceil(((Math.PI * this.seatingRadiusM * this.seatingRadiusM) / (2.5 * AVATAR.RADIUS_M))) / 2;
         }
-        
+
         this.seats = [];
         this.generateInitialSeats();
 
@@ -118,7 +118,7 @@ export class SpatialAudioRoom {
             this.roomImage.image.src = roomImageSRC;
         }
     }
-    
+
     generateInitialSeats() {
         let thetaMax, incrementor;
         if (this.roomType === SpatialAudioRoomType.Normal) {
@@ -150,7 +150,7 @@ export class SpatialAudioRoom {
             let newSeat = new SpatialAudioSeat({
                 room: this,
                 position: currentPotentialPosition,
-                orientationEuler: new OrientationEuler3D({yawDegrees: orientationYawDegrees}),
+                orientationEuler: new OrientationEuler3D({ yawDegrees: orientationYawDegrees }),
                 seatID: `${this.name}${theta.toFixed(2)}`,
                 seatingCircleTheta: theta
             });
@@ -215,7 +215,7 @@ export class SpatialAudioRoom {
                     targetTheta = currentTargetTheta;
                 }
             }
-            
+
             let actualSeat, minThetaDifference;
             for (let i = 0; i < unoccupiedSeats.length; i++) {
                 let thetaDifference = Math.abs(unoccupiedSeats[i].seatingCircleTheta - targetTheta);
@@ -368,7 +368,7 @@ export class RoomController {
         }
 
         let allSeats: Array<SpatialAudioSeat> = [];
-        
+
         this.rooms.forEach((room) => { allSeats = allSeats.concat(room.seats); });
 
         let seat = allSeats.find((seat) => {
@@ -418,39 +418,62 @@ export class RoomController {
             roomInfoContainer.appendChild(roomInfoContainer__occupantsList);
         });
 
+        let roomInfoContainer = document.createElement("div");
+        roomInfoContainer.classList.add("roomInfoContainer");
+        if (userDataController.myAvatar.myUserData.currentRoom === undefined) {
+            roomInfoContainer.classList.add("roomInfoContainer--mine");
+        }
+        this.roomListInnerContainer.appendChild(roomInfoContainer);
+
+        let roomInfoContainer__header = document.createElement("h2");
+        roomInfoContainer__header.classList.add("roomInfoContainer__header");
+        roomInfoContainer__header.innerHTML = `Using Free Movement`;
+        roomInfoContainer.appendChild(roomInfoContainer__header);
+
+        let roomInfoContainer__occupantsList = document.createElement("div");
+        roomInfoContainer__occupantsList.classList.add("roomInfoContainer__occupantsList");
+        roomInfoContainer__occupantsList.setAttribute("data-room-name", `Using Free Movement`);
+        roomInfoContainer.appendChild(roomInfoContainer__occupantsList);
+
         let allUserData = userDataController.allOtherUserData.concat(userDataController.myAvatar.myUserData);
         allUserData.forEach((userData) => {
-            if (userData.currentRoom) {
-                let roomInfoContainer__occupant = document.createElement("p");
-                roomInfoContainer__occupant.classList.add("roomInfoContainer__occupant");
-                roomInfoContainer__occupant.setAttribute('data-visit-id-hash', userData.visitIDHash);
-                let occupantInnerHTML;
-                if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash) {
-                    occupantInnerHTML = `<span class="roomInfoContainer__occupantColorChip" style="background-color:${userDataController.myAvatar.myUserData.colorHex}"></span>`;
-                    occupantInnerHTML += `(you) ${userData.displayName}`;
+            let roomInfoContainer__occupant = document.createElement("p");
+            roomInfoContainer__occupant.classList.add("roomInfoContainer__occupant");
+            roomInfoContainer__occupant.setAttribute('data-visit-id-hash', userData.visitIDHash);
+            let occupantInnerHTML;
+            if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash) {
+                occupantInnerHTML = `<span class="roomInfoContainer__occupantColorChip" style="background-color:${userDataController.myAvatar.myUserData.colorHex}"></span>`;
+                occupantInnerHTML += `(you) ${userData.displayName}`;
+                if (userData.currentRoom) {
                     document.querySelector(`[data-room-name="${userData.currentRoom.name}"]`).prepend(roomInfoContainer__occupant);
                 } else {
-                    occupantInnerHTML = ``;
-                    if (userData.colorHex) {
-                        occupantInnerHTML += `<span class="roomInfoContainer__occupantColorChip" style="background-color:${userData.colorHex}"></span>`;
-                    }
-                    occupantInnerHTML += userData.displayName && userData.displayName.length > 0 ? userData.displayName : userData.providedUserID;
-                    document.querySelector(`[data-room-name="${userData.currentRoom.name}"]`).appendChild(roomInfoContainer__occupant);
+                    document.querySelector(`[data-room-name="Using Free Movement"]`).prepend(roomInfoContainer__occupant);
                 }
-                roomInfoContainer__occupant.innerHTML = occupantInnerHTML;
-
-                roomInfoContainer__occupant.addEventListener("click", (e) => {
-                    uiController.showAvatarContextMenu(userData);
-                });
-                roomInfoContainer__occupant.addEventListener("mouseenter", (e) => {
-                    this.currentlyHoveringOverVisitIDHash = userData.visitIDHash;
-                });
-                roomInfoContainer__occupant.addEventListener("mouseleave", (e) => {
-                    this.currentlyHoveringOverVisitIDHash = undefined;
-                });
+            } else {
+                occupantInnerHTML = ``;
+                if (userData.colorHex) {
+                    occupantInnerHTML += `<span class="roomInfoContainer__occupantColorChip" style="background-color:${userData.colorHex}"></span>`;
+                }
+                occupantInnerHTML += userData.displayName && userData.displayName.length > 0 ? userData.displayName : userData.providedUserID;
+                if (userData.currentRoom) {
+                    document.querySelector(`[data-room-name="${userData.currentRoom.name}"]`).appendChild(roomInfoContainer__occupant);
+                } else {
+                    document.querySelector(`[data-room-name="Using Free Movement"]`).appendChild(roomInfoContainer__occupant);
+                }
             }
+            roomInfoContainer__occupant.innerHTML = occupantInnerHTML;
+
+            roomInfoContainer__occupant.addEventListener("click", (e) => {
+                uiController.showAvatarContextMenu(userData);
+            });
+            roomInfoContainer__occupant.addEventListener("mouseenter", (e) => {
+                this.currentlyHoveringOverVisitIDHash = userData.visitIDHash;
+            });
+            roomInfoContainer__occupant.addEventListener("mouseleave", (e) => {
+                this.currentlyHoveringOverVisitIDHash = undefined;
+            });
         });
-        
+
         uiThemeController.refreshThemedElements();
     }
 }

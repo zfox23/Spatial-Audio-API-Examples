@@ -50,10 +50,19 @@ export enum MyAvatarModes {
     WatchParty,
 }
 
+export interface AvatarVelocity {
+    x: number;
+    z: number;
+    forward?: number;
+    right?: number;
+}
+
 class MyAvatar {
     myUserData: UserData;
     currentMode: MyAvatarModes;
     freeMovementEnabled: boolean = false;
+    linearVelocityMPerS: AvatarVelocity = {x: 0, z: 0, forward: 0, right: 0};
+    rotationalVelocityDegreesPerS: number = 0;
 
     constructor() {
         this.myUserData = {
@@ -98,10 +107,19 @@ class MyAvatar {
         if (localStorage.getItem('myColorHex')) {
             this.onMyColorHexChanged(localStorage.getItem('myColorHex'));
         }
+
+        if (localStorage.getItem('freeMovementEnabled')) {
+            if (localStorage.getItem("freeMovementEnabled") === "true") {
+                this.enableFreeMovement();
+            } else {
+                this.disableFreeMovement();
+            }
+        }
     }
 
     enableFreeMovement() {
         this.freeMovementEnabled = true;
+        localStorage.setItem("freeMovementEnabled", "true");
         let toggleFreeMovementButton = document.querySelector('.toggleFreeMovementButton');
         if (toggleFreeMovementButton) {
             uiThemeController.clearThemesFromElement(<HTMLElement>toggleFreeMovementButton, "toggleFreeMovementButton__on");
@@ -110,10 +128,13 @@ class MyAvatar {
             toggleFreeMovementButton.classList.remove("toggleFreeMovementButton__off");
         }
         uiThemeController.refreshThemedElements();
+
+        this.clearCurrentSeat();
     }
 
     disableFreeMovement() {
         this.freeMovementEnabled = false;
+        localStorage.setItem("freeMovementEnabled", "false");
         let toggleFreeMovementButton = document.querySelector('.toggleFreeMovementButton');
         if (toggleFreeMovementButton) {
             uiThemeController.clearThemesFromElement(<HTMLElement>toggleFreeMovementButton, "toggleFreeMovementButton__on");
@@ -122,6 +143,8 @@ class MyAvatar {
             toggleFreeMovementButton.classList.add("toggleFreeMovementButton__off");
         }
         uiThemeController.refreshThemedElements();
+
+        this.clearCurrentSeat();
     }
     
     toggleFreeMovement() {
@@ -129,6 +152,17 @@ class MyAvatar {
             this.disableFreeMovement();
         } else {
             this.enableFreeMovement();
+        }
+    }
+
+    setMyAvatarVelocity(newVelocity: AvatarVelocity, tau: number) {
+        let myVelocity = this.linearVelocityMPerS;
+        if (tau < PHYSICS.CONSTANT_VELOCITY_UPDATE_TAU) {
+            myVelocity.x += tau * (newVelocity.x - myVelocity.x);
+            myVelocity.z += tau * (newVelocity.z - myVelocity.z);
+        } else {
+            myVelocity.x = newVelocity.x;
+            myVelocity.z = newVelocity.z;
         }
     }
 
@@ -223,7 +257,7 @@ class MyAvatar {
         let targetRoom = targetSeat.room;
 
         if (!isFirstMoveInNewSession) {
-            console.log(`User is moving from ${currentRoom.name} to ${targetRoom.name}...`);
+            console.log(`User is moving from ${currentRoom ? currentRoom.name : "<Unknown Room>"} to ${targetRoom.name}...`);
 
             if (pathsController.currentPath) {
                 pathsController.resetCurrentPath();
@@ -360,6 +394,25 @@ class MyAvatar {
         } else {
             document.querySelector(".watchPartyControlsContainer").classList.add("displayNone");
         }
+    }
+
+    clearCurrentSeat() {
+        let myUserData = userDataController.myAvatar.myUserData;
+        if (!(myUserData && myUserData.currentSeat)) {
+            return;
+        }
+
+        if (myUserData.currentSeat) {
+            myUserData.currentSeat.occupiedUserData = undefined;
+        }
+        myUserData.currentSeat = undefined;
+        myUserData.currentRoom = undefined;
+        webSocketConnectionController.updateMyUserDataOnWebSocketServer();
+
+        watchPartyController.leaveWatchParty();
+        document.querySelector(".watchPartyControlsContainer").classList.add("displayNone");
+        
+        roomController.updateRoomList();
     }
 
     onMyDisplayNameChanged(newDisplayName?: string) {
