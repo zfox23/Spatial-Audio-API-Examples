@@ -110,10 +110,21 @@ export class UIController {
         let watchPartyControlsContainer = document.createElement("div");
         watchPartyControlsContainer.classList.add("watchPartyControlsContainer");
 
-        let toggleJoinWatchPartyButton = document.createElement("button");
-        toggleJoinWatchPartyButton.classList.add("toggleJoinWatchPartyButton");
-        toggleJoinWatchPartyButton.innerHTML = `Join/Leave Watch Party`;
-        watchPartyControlsContainer.appendChild(toggleJoinWatchPartyButton);
+        let watchTogetherURLInput = document.createElement("input");
+        watchTogetherURLInput.classList.add("watchTogetherURLInput");
+        watchTogetherURLInput.type = "text";
+        watchTogetherURLInput.placeholder = "Paste a YouTube URL";
+        watchPartyControlsContainer.appendChild(watchTogetherURLInput);
+
+        let watchTogetherButton = document.createElement("button");
+        watchTogetherButton.classList.add("watchTogetherButton");
+        watchTogetherButton.innerHTML = `Watch Together`;
+        watchPartyControlsContainer.appendChild(watchTogetherButton);
+
+        let leaveWatchPartyButton = document.createElement("button");
+        leaveWatchPartyButton.classList.add("leaveWatchPartyButton", "displayNone");
+        leaveWatchPartyButton.innerHTML = `Leave Watch Party`;
+        watchPartyControlsContainer.appendChild(leaveWatchPartyButton);
 
         bottomBar.appendChild(watchPartyControlsContainer);
 

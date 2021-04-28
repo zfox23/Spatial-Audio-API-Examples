@@ -67,10 +67,10 @@ export class TwoDimensionalRenderer {
                 signalButtonContainer.style.top = `${learnMoreContainerHeight}px`;
             }
 
-            let youTubePlayerElement = <HTMLElement>document.querySelector(".youTubePlayerElement");
-            if (youTubePlayerElement) {
-                youTubePlayerElement.style.top = `${learnMoreContainerHeight}px`;
-                youTubePlayerElement.style.height = `calc(100vh - 72px - 150px - ${learnMoreContainerHeight}px)`;
+            let youTubePlayerContainer = <HTMLElement>document.querySelector(".youTubePlayerContainer");
+            if (youTubePlayerContainer) {
+                youTubePlayerContainer.style.top = `${learnMoreContainerHeight}px`;
+                youTubePlayerContainer.style.height = `calc(100vh - 72px - 150px - ${learnMoreContainerHeight}px)`;
             }
         }
 

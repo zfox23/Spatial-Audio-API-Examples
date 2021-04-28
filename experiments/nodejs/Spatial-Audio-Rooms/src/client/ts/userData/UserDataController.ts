@@ -319,12 +319,6 @@ class MyAvatar {
         roomController.updateRoomList();
 
         userDataController.myAvatarEars.onMouthMovedToNewSeat(targetSeat);
-
-        if (targetRoom.roomType === SpatialAudioRoomType.Normal) {
-            uiController.showZoomUI();
-        } else if (targetRoom.roomType === SpatialAudioRoomType.WatchParty) {
-            uiController.hideZoomUI();
-        }
     }
 
     onMyDisplayNameChanged(newDisplayName?: string) {

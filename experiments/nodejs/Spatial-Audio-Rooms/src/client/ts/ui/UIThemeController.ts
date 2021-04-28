@@ -89,7 +89,10 @@ export class UIThemeController {
         this.addThemedElementFromClassName("toggleVideoButton--muted");
         this.addThemedElementFromClassName("toggleVideoButton--disabled");
         this.addThemedElementFromClassName("toggleSettingsButton");
-        this.addThemedElementFromClassName("toggleJoinWatchPartyButton");
+        this.addThemedElementFromClassName("watchTogetherButton");
+        this.addThemedElementFromClassName("leaveWatchPartyButton");
+        this.addThemedElementFromClassName("watchTogetherURLInput");
+        this.addThemedElementFromClassName("watchPartyInstructions");
         this.addThemedElementFromClassName("showRoomListButton");
         this.addThemedElementFromClassName("avatarContextMenu__displayName--mine");
         this.addThemedElementFromClassName("editMyProfileLink");

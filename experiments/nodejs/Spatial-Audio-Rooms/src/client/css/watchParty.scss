@@ -25,11 +25,35 @@ $watch-party-mode-canvas-height: 150px;
     }
 }
 
-.youTubePlayerElement {
+.watchPartyInstructions {
+    position: absolute;
+    z-index: map-get(z-indices.$z-index, watchPartyInstructions);
+    font-family: 'Roboto-Bold', 'Helvetica', 'Arial', sans-serif;
+    font-size: 22px;
+    margin: 12px;
+
+    &--light-theme {
+        color: map-get(themes.$light-theme, text-primary);
+    }
+
+    &--dark-theme {
+        color: map-get(themes.$dark-theme, text-primary);
+    }
+}
+
+.youTubePlayerContainer {
     position: fixed;
-    z-index: map-get(z-indices.$z-index, canvas);
+    display: flex;
+    align-items: center;
+    justify-content: center;
     bottom: $bottom-controls-container-height;
     top: 0;
     width: 100%;
     height: calc(100vh - #{$bottom-controls-container-height} - #{$watch-party-mode-canvas-height});
+}
+
+.youTubePlayerElement {
+    width: 100%;
+    height: 100%;
+    z-index: map-get(z-indices.$z-index, canvas);
 }

@@ -404,7 +404,42 @@ $bottom-controls-container-height: 72px;
     }
 }
 
-.toggleJoinWatchPartyButton {
+.watchTogetherURLInput {
+    width: 200px;
+    height: 12px;
+    margin: 0 12px 0 0;
+    font-size: 12px;
+    font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+    border-radius: 4px;
+    padding: 12px;
+    border: none;
+
+    &:focus {
+        outline: none;
+        border: none;
+    }
+
+    &--light-theme {
+        background-color: map-get(themes.$light-theme, text-input-background);
+        color: map-get(themes.$light-theme, text-input);
+
+        &:focus {
+            box-shadow: 0 0 0 2px map-get(themes.$light-theme, text-input-outline);
+        }
+    }
+
+    &--dark-theme {
+        background-color: map-get(themes.$dark-theme, text-input-background);
+        color: map-get(themes.$dark-theme, text-input);
+
+        &:focus {
+            box-shadow: 0 0 0 2px map-get(themes.$dark-theme, text-input-outline);
+        }
+    }
+}
+
+.watchTogetherButton,
+.leaveWatchPartyButton {
     cursor: pointer;
     background-color: transparent;
     border: none;
@@ -421,8 +456,9 @@ $bottom-controls-container-height: 72px;
         border: none;
         outline: none;
     }
+}
 
-    // Television by ProSymbols from the Noun Project
+.watchTogetherButton {
     &--light-theme {
         background: map-get(themes.$light-theme, watch-party-join-button-background);
 
@@ -436,6 +472,24 @@ $bottom-controls-container-height: 72px;
 
         &:hover {
             background: map-get(themes.$dark-theme, watch-party-join-button-background-hover);
+        }
+    }
+}
+
+.leaveWatchPartyButton {
+    &--light-theme {
+        background: map-get(themes.$light-theme, watch-party-leave-button-background);
+
+        &:hover {
+            background: map-get(themes.$dark-theme, watch-party-leave-button-background-hover);
+        }
+    }
+
+    &--dark-theme {
+        background: map-get(themes.$dark-theme, watch-party-leave-button-background);
+
+        &:hover {
+            background: map-get(themes.$dark-theme, watch-party-leave-button-background-hover);
         }
     }
 }

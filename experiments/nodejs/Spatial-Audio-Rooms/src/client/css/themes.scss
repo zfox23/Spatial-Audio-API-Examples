@@ -27,6 +27,7 @@ $light-theme: (
     settings-menu-h2: #8F9297,
     
     text-input-background: #FFFFFF,
+    text-input-outline: #7289DA,
     text-input: #DADADA,
 
     select-background: #FFFFFF,
@@ -36,6 +37,8 @@ $light-theme: (
     watch-party-canvas-background: #000000,
     watch-party-join-button-background: radial-gradient(95.59% 206.12% at 47.81% -44.9%, #9054E3 0%, #5C33AD 100%),
     watch-party-join-button-background-hover: #9054E3,
+    watch-party-leave-button-background: #404348,
+    watch-party-leave-button-background-hover: #494c53,
 
     modal-scrim: rgba(0, 0, 0, 0.3),
     modal-background: #d7d7d7,
@@ -76,6 +79,7 @@ $dark-theme: (
     settings-menu-h2: #8F9297,
     
     text-input-background: #4e5054,
+    text-input-outline: #7289DA,
     text-input: #DADADA,
 
     select-background: #303237,
@@ -85,6 +89,8 @@ $dark-theme: (
     watch-party-canvas-background: #000000,
     watch-party-join-button-background: radial-gradient(95.59% 206.12% at 47.81% -44.9%, #9054E3 0%, #5C33AD 100%),
     watch-party-join-button-background-hover: #9054E3,
+    watch-party-leave-button-background: #404348,
+    watch-party-leave-button-background-hover: #494c53,
 
     modal-scrim: rgba(0, 0, 0, 0.3),
     modal-background: #37393E,
