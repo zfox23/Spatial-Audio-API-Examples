@@ -52,6 +52,8 @@ Inspect and debug in 3D any Hifi Audio Space. powered by THREE.js
 Move around as dots in a 3D space with spatial audio.
 ### [Plaza](./experiments/nodejs/plaza)
 Explore various environments connected in a grid with spatial audio between them.
+### [Spatial Audio Rooms](./experiments/nodejs/Spatial-Audio-Rooms)
+A complex Web application that lets users watch synced YouTube videos together while chatting in a virtual 3D environment using High Fidelity's spatial audio technology, local spatialization, rooms configured via a JSON file, and much more.
 ### [Spatial Microphone](./experiments/nodejs/spatial-microphone)
 Drop the Spatial Microphone in a High Fidelity Spatial Audio Space to record the audio in that Space from coordinates `(0, 0, 0)`. The Spatial Microphone saves audio recordings in `.wav` format by default.
 ### [Spatial Speaker Space](./experiments/nodejs/Spatial-Speaker-Space)
