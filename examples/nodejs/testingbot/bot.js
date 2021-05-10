@@ -38,11 +38,15 @@ class Bot {
         }
         Object.assign(this, options, {volume: parseFloat(volume)}); // see above re yargs
         this.initializeSource();
-        let initialHiFiAudioAPIData = new HiFiAudioAPIData({
+        let initialAudioData = new HiFiAudioAPIData({
             position: initialPosition,
             orientationEuler: this.makeEuler({pitchDegrees, yawDegrees, rollDegrees})
         });
-        this.communicator = new HiFiCommunicator({transmitRateLimitTimeoutMS, initialHiFiAudioAPIData, serverShouldSendUserData});
+        this.communicator = new HiFiCommunicator({
+            transmitRateLimitTimeoutMS: transmitRateLimitTimeoutMS,
+            initialHiFiAudioAPIData: initialAudioData,
+            serverShouldSendUserData: serverShouldSendUserData
+        });
         // This promise will never resolve, unless someone calls this.resolve().
         this.stopped = new Promise(resolve => this.resolve = resolve);
     }

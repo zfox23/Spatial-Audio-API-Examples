@@ -11,7 +11,7 @@
   "dependencies": {
     "audio-decode": "^1.4.0",
     "audio-format": "^2.3.2",
-    "hifi-spatial-audio": "^0.7.5",
+    "hifi-spatial-audio": "*",
     "jose": "^3.11.3",
     "pcm-convert": "^1.6.5",
     "wrtc": "^0.4.7",
