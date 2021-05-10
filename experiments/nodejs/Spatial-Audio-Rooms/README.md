@@ -1,5 +1,17 @@
 # Spatial-Audio-Rooms
-A complex demo application for High Fidelity's Spatial Audio API which integrates many of the API's features as well as Twilio Video Conferencing.
+A very complex demo application for High Fidelity's Spatial Audio API written in modular TypeScript which integrates many of the Spatial Audio API's features. Other features include:
+- Twilio video conferencing with in-avatar video.
+- The ability to configure the application and its virtual rooms with a `.json` configuration file.
+- Users can join a "Watch Party" inside a "Watch Party Room" and watch synced YouTube videos together.
+- Rooms contain "landmarks", which can have associated sounds. Users who click on these landmarks will hear the sounds spatialized locally on their client using [Howler.JS](https://howlerjs.com/).
+- Code for a Discord bot and Slack integration which can be used to add a `/hifi` command to Discord/Slack (try `npm run discord`).
+- The repository includes code for generating a native Electron app from the Spatial Audio Rooms code (try `npm run electron`).
+- Code for injecting Audio Bots (with tree sounds!) into a Spatial Audio Room (try `npm run audiobots`).
+- A particle system, currently used for "Signals" (click the star and minus icon in the top right, then click on the canvas).
+- The ability for users to put their "ears" in the center of a table, to hear what that sounds like (press "U" on your keyboard when sitting in a seat).
+- A bare-bones "map editor" mode (press CTRL+E on your keyboard).
+
+For help with Spatial Audio Rooms, or for general help with the Spatial Audio API, [click here to join our Discord server](https://discord.gg/WwjNQx9K).
 
 !["Spatial-Audio-Rooms" Example Screenshot](./screenshot.png)
 
