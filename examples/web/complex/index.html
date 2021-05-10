@@ -212,7 +212,6 @@
                 currentDiv.innerHTML += `<p>Position: ${allUserDataFromServer[i].position ? JSON.stringify(allUserDataFromServer[i].position) : "&#60;unknown&#62;"}</p>`;
                 currentDiv.innerHTML += `<p>Orientation: ${allUserDataFromServer[i].orientationEuler ? JSON.stringify(allUserDataFromServer[i].orientationEuler) : "&#60;unknown&#62;"}</p>`;
                 currentDiv.innerHTML += `<p>Volume (dB): ${allUserDataFromServer[i].volumeDecibels ? allUserDataFromServer[i].volumeDecibels : "&#60;unknown&#62;"}</p>`;
-                currentDiv.innerHTML += `<p>HiFi Gain: ${allUserDataFromServer[i].hiFiGain ? allUserDataFromServer[i].hiFiGain : "&#60;unknown&#62;"}</p>`;
                 userDataContainer__fromServer.appendChild(currentDiv);
             }
         }
@@ -271,10 +270,6 @@
                         if (typeof (currentDataFromServer.volumeDecibels) === "number") {
                             allUserDataFromServer[allItr].volumeDecibels = currentDataFromServer.volumeDecibels;
                         }
-
-                        if (typeof (currentDataFromServer.hiFiGain) === "number") {
-                            allUserDataFromServer[allItr].hiFiGain = currentDataFromServer.hiFiGain;
-                        }
                         break;
                     }
                 }
@@ -330,7 +325,6 @@
                     HighFidelityAudio.AvailableUserDataSubscriptionComponents.Position,
                     HighFidelityAudio.AvailableUserDataSubscriptionComponents.OrientationEuler,
                     HighFidelityAudio.AvailableUserDataSubscriptionComponents.VolumeDecibels,
-                    HighFidelityAudio.AvailableUserDataSubscriptionComponents.HiFiGain
                 ],
                 "callback": (receivedHiFiAudioAPIDataArray) => {
                     onNewUserDataReceived(receivedHiFiAudioAPIDataArray);
