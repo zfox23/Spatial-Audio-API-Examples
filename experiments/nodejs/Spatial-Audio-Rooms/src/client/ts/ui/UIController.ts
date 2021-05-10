@@ -435,7 +435,7 @@ export class UIController {
 
         // The `change` event fires when the user lets go of the slider.
         // The `input` event fires as the user moves the slider.
-        avatarContextMenu__userGainForThisConnectionSlider.addEventListener("change", async (e) => {
+        avatarContextMenu__userGainForThisConnectionSlider.addEventListener("input", async (e) => {
             let userGainForThisConnectionSliderValue = parseFloat((<HTMLInputElement>e.target).value);
             try {
                 await hifiCommunicator.setOtherUserGainForThisConnection(userData.visitIDHash, userGainForThisConnectionSliderValue);
