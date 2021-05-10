@@ -1,0 +1,15 @@
+{
+  "name": "spatial-audio-rooms-discord-bot",
+  "version": "1.0.0",
+  "description": "A Discord bot for use with Spatial Audio Rooms.",
+  "main": "./dist/index.js",
+  "scripts": {
+    "start": "tsc --p . && node ./dist/index.js"
+  },
+  "author": "Zach Fox",
+  "license": "MIT",
+  "dependencies": {
+    "discord-slash-commands-client": "^1.1.1",
+    "discord.js": "github:zfox23/discord.js"
+  }
+}

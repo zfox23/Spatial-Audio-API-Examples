@@ -1,0 +1,1125 @@
+@use "./themes";
+@use "./z-indices";
+@import './include-media';
+$bottom-controls-container-height: 72px;
+
+.playOverlay {
+    position: fixed;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: map-get(z-indices.$z-index, aboveModal);
+
+    &--light-theme {
+        background-color: map-get(themes.$light-theme, play-overlay-scrim);
+    }
+
+    &--dark-theme {
+        background-color: map-get(themes.$dark-theme, play-overlay-scrim);
+    }
+
+    &__container {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        align-content: center;
+        margin: 24px auto 0 auto;
+        padding: 12px;
+        flex-direction: column;
+        width: 540px;
+        max-width: 90%;
+    }
+
+    &__header {
+        height: 90px;
+        background: url('../images/high-fidelity-banner.svg') no-repeat center center;
+        background-size: contain;
+        align-self: flex-start;
+        width: 180px;
+        margin: 0;
+        line-height: 50px;
+    }
+
+    &__playText {
+        font-family: 'Roboto-Bold', 'Helvetica', 'Arial', sans-serif;
+        width: 100%;
+
+        &--light-theme {
+            color: map-get(themes.$light-theme, play-overlay);
+        }
+
+        &--dark-theme {
+            color: map-get(themes.$dark-theme, play-overlay);
+        }
+
+        @include media(">tablet") {
+            margin: 24px 0 0 0;
+            font-size: 36px;
+        }
+
+        @include media(">phone", "<=tablet") {
+            margin: 24px 0 0 0;
+            font-size: 36px;
+        }
+
+        @include media("<=phone") {
+            margin: 12px 0 0 0;
+            font-size: 32px;
+        }
+    }
+
+    &__headphones {
+        display: block;
+
+        @include media(">tablet") {
+            line-height: 48px;
+            font-size: 48px;
+        }
+
+        @include media(">phone", "<=tablet") {
+            line-height: 48px;
+            font-size: 48px;
+        }
+
+        @include media("<=phone") {
+            line-height: 36px;
+            font-size: 36px;
+        }
+    }
+
+    &__thenPress {
+        position: relative;
+
+        &--light-theme {
+            color: map-get(themes.$light-theme, text-secondary);
+        }
+
+        &--dark-theme {
+            color: map-get(themes.$dark-theme, text-secondary);
+        }
+
+        @include media(">tablet") {
+            top: 6px;
+        }
+
+        @include media(">phone", "<=tablet") {
+            top: 6px;
+        }
+
+        @include media("<=phone") {
+            top: 6px;
+        }
+    }
+
+    &__button {
+        background: url('../images/play.svg') no-repeat center center;
+        /* play by Aneeque Ahmed from the Noun Project */
+        background-size: contain;
+        margin: 20px auto;
+        padding: 0;
+        position: relative;
+        display: inline-block;
+        cursor: pointer;
+        border: none;
+
+        &:focus {
+            outline-style: none;
+        }
+
+        &:focus-visible {
+            border: 2px solid rgb(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        @include media(">tablet") {
+            width: 96px;
+            height: 96px;
+        }
+
+        @include media(">phone", "<=tablet") {
+            width: 96px;
+            height: 96px;
+        }
+
+        @include media("<=phone") {
+            width: 86px;
+            height: 86px;
+        }
+    }
+
+    &__playAnimation {
+        border-radius: 50%;
+        position: relative;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        z-index: -1;
+        animation: scaleIn 2s infinite cubic-bezier(.17, .67, .83, .67);
+
+        &--light-theme {
+            background-color: map-get(themes.$light-theme, text-secondary);
+        }
+
+        &--dark-theme {
+            background-color: map-get(themes.$dark-theme, text-secondary);
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0.8, 0.8);
+                opacity: .8;
+            }
+
+            to {
+                transform: scale(1.6, 1.6);
+                opacity: 0;
+            }
+        }
+    }
+}
+
+.learnMoreContainer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    text-align: center;
+    z-index: map-get(z-indices.$z-index, ui);
+    padding: 8px;
+    border-bottom: 1px black solid;
+
+    &--light-theme {
+        background-color: map-get(themes.$light-theme, body-background);
+        color: map-get(themes.$light-theme, text-secondary);
+    }
+
+    &--dark-theme {
+        background-color: map-get(themes.$dark-theme, body-background);
+        color: map-get(themes.$dark-theme, text-secondary);
+    }
+
+    &__link {
+        font-family: 'Roboto-Bold', 'Helvetica', 'Arial', sans-serif;
+        font-size: 18px;
+
+        &--light-theme {
+            color: map-get(themes.$light-theme, text-secondary);
+        }
+
+        &--dark-theme {
+            color: map-get(themes.$dark-theme, text-secondary);
+        }
+    }
+}
+
+.normalModeCanvas {
+    width: 100%;
+    height: calc(100vh - #{$bottom-controls-container-height});
+    position: fixed;
+    z-index: map-get(z-indices.$z-index, normalModeCanvas);
+    touch-action: none;
+
+    &:focus {
+        outline-style: none;
+    }
+}
+
+.normalModeCanvas--positiveCursor {
+    cursor: url('../images/signalStar.png') 10 10, auto;
+}
+
+.normalModeCanvas--negativeCursor {
+    cursor: url('../images/signalLine.png') 10 10, auto;
+}
+
+.bottomBar {
+    height: $bottom-controls-container-height;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: map-get(z-indices.$z-index, ui);
+
+    &--light-theme {
+        background-color: map-get(themes.$light-theme, bottom-controls-container-background);
+        color: map-get(themes.$light-theme, text-primary);
+    }
+
+    &--dark-theme {
+        background-color: map-get(themes.$dark-theme, bottom-controls-container-background);
+        color: map-get(themes.$dark-theme, text-primary);
+    }
+
+    &--editorMode {
+        box-shadow: inset 0px 0px 0px 7px #ff0000;
+    }
+}
+
+.bottomControlButton {
+    cursor: pointer;
+    background-color: transparent;
+    border: none;
+    outline: none;
+    width: 40px;
+    height: 40px;
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: center center;
+    margin: 0 8px;
+
+    &:focus {
+        border: none;
+        outline: none;
+    }
+}
+
+.toggleInputMuteButton {
+    &--disabled {
+        &--light-theme {
+            background-image: url('../images/icons/light-theme/grey-mic.svg');
+        }
+
+        &--dark-theme {
+            background-image: url('../images/icons/dark-theme/grey-mic.svg');
+        }
+    }
+
+    &--unmuted {
+        &--light-theme {
+            background-image: url('../images/icons/light-theme/mic.svg');
+        }
+
+        &--dark-theme {
+            background-image: url('../images/icons/dark-theme/mic-on-idle-dark.svg');
+
+            &:hover {
+                background-image: url('../images/icons/dark-theme/mic-on-hover-dark.svg');
+            }
+        }
+    }
+
+    &--muted {
+        &--light-theme {
+            background-image: url('../images/icons/light-theme/red-mic-with-cross.svg');
+        }
+
+        &--dark-theme {
+            background-image: url('../images/icons/dark-theme/mic-off-idle-dark.svg');
+
+            &:hover {
+                background-image: url('../images/icons/dark-theme/mic-off-hover-dark.svg');
+            }
+        }
+    }
+}
+
+.toggleOutputMuteButton {
+    &--unmuted {
+        &--light-theme {
+            background-image: url('../images/icons/light-theme/headphones.svg');
+        }
+
+        &--dark-theme {
+            background-image: url('../images/icons/dark-theme/headphones-on-idle-dark.svg');
+
+            &:hover {
+                background-image: url('../images/icons/dark-theme/headphones-on-hover-dark.svg');
+            }
+        }
+    }
+
+    &--muted {
+        &--light-theme {
+            background-image: url('../images/icons/light-theme/red-headphones-with-x.svg');
+        }
+
+        &--dark-theme {
+            background-image: url('../images/icons/dark-theme/headphones-off-idle-dark.svg');
+
+            &:hover {
+                background-image: url('../images/icons/dark-theme/headphones-off-hover-dark.svg');
+            }
+        }
+    }
+}
+
+.toggleVideoButton {
+    &--disabled {
+        &--light-theme {
+            background-image: url('../images/icons/light-theme/grey-cam-with-cross.svg');
+        }
+
+        &--dark-theme {
+            background-image: url('../images/icons/dark-theme/grey-cam-with-cross.svg');
+        }
+    }
+
+    &--unmuted {
+        &--light-theme {
+            background-image: url('../images/icons/light-theme/cam.svg');
+        }
+
+        &--dark-theme {
+            background-image: url('../images/icons/dark-theme/video-on-idle-dark.svg');
+
+            &:hover {
+                background-image: url('../images/icons/dark-theme/video-on-hover-dark.svg');
+            }
+        }
+    }
+
+    &--muted {
+        &--light-theme {
+            background-image: url('../images/icons/light-theme/red-cam-with-cross.svg');
+        }
+
+        &--dark-theme {
+            background-image: url('../images/icons/dark-theme/video-off-idle-dark.svg');
+
+            &:hover {
+                background-image: url('../images/icons/dark-theme/video-off-hover-dark.svg');
+            }
+        }
+    }
+}
+
+.toggleSettingsButton {
+    &--light-theme {
+        background-image: url('../images/icons/light-theme/devices-idle.svg');
+    }
+
+    &--dark-theme {
+        background-image: url('../images/icons/dark-theme/devices-idle-dark.svg');
+
+        &:hover {
+            background-image: url('../images/icons/dark-theme/devices-hover-dark.svg');
+        }
+    }
+}
+
+.watchTogetherURLInput {
+    width: 200px;
+    height: 12px;
+    margin: 0 12px 0 0;
+    font-size: 12px;
+    font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+    border-radius: 4px;
+    padding: 12px;
+    border: none;
+
+    &:focus {
+        outline: none;
+        border: none;
+    }
+
+    &--light-theme {
+        background-color: map-get(themes.$light-theme, text-input-background);
+        color: map-get(themes.$light-theme, text-input);
+
+        &:focus {
+            box-shadow: 0 0 0 2px map-get(themes.$light-theme, text-input-outline);
+        }
+    }
+
+    &--dark-theme {
+        background-color: map-get(themes.$dark-theme, text-input-background);
+        color: map-get(themes.$dark-theme, text-input);
+
+        &:focus {
+            box-shadow: 0 0 0 2px map-get(themes.$dark-theme, text-input-outline);
+        }
+    }
+}
+
+.watchTogetherButton,
+.leaveWatchPartyButton {
+    cursor: pointer;
+    background-color: transparent;
+    border: none;
+    outline: none;
+    height: 35px;
+    border-radius: 7px;
+    color: #FFFFFF;
+    font-family: 'Roboto-Bold', 'Helvetica', 'Arial', sans-serif;
+    padding: 0 12px;
+    font-size: 15px;
+    margin: 0 20px 0 0;
+
+    &:focus {
+        border: none;
+        outline: none;
+    }
+}
+
+.watchTogetherButton {
+    &--light-theme {
+        background: map-get(themes.$light-theme, watch-party-join-button-background);
+
+        &:hover {
+            background: map-get(themes.$dark-theme, watch-party-join-button-background-hover);
+        }
+    }
+
+    &--dark-theme {
+        background: map-get(themes.$dark-theme, watch-party-join-button-background);
+
+        &:hover {
+            background: map-get(themes.$dark-theme, watch-party-join-button-background-hover);
+        }
+    }
+}
+
+.leaveWatchPartyButton {
+    &--light-theme {
+        background: map-get(themes.$light-theme, watch-party-leave-button-background);
+
+        &:hover {
+            background: map-get(themes.$dark-theme, watch-party-leave-button-background-hover);
+        }
+    }
+
+    &--dark-theme {
+        background: map-get(themes.$dark-theme, watch-party-leave-button-background);
+
+        &:hover {
+            background: map-get(themes.$dark-theme, watch-party-leave-button-background-hover);
+        }
+    }
+}
+
+.settingsMenu {
+    position: fixed;
+    width: 340px;
+    bottom: $bottom-controls-container-height;
+    left: 20px;
+    display: flex;
+    flex-direction: column;
+    z-index: map-get(z-indices.$z-index, modalBackground);
+    padding: 20px;
+    border-radius: 5px 5px 0 0;
+
+    &--light-theme {
+        background-color: map-get(themes.$light-theme, settings-menu-background);
+        color: map-get(themes.$light-theme, modal);
+    }
+
+    &--dark-theme {
+        background-color: map-get(themes.$dark-theme, settings-menu-background);
+        color: map-get(themes.$dark-theme, modal);
+    }
+
+    &__closeButton {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        width: 42px;
+        height: 42px;
+        margin: 0;
+        font-size: 18px;
+        font-family: 'Roboto-Bold', 'Helvetica', 'Arial', sans-serif;
+        border: none;
+        outline: none;
+        background-color: transparent;
+        padding: 0;
+        cursor: pointer;
+
+        &--light-theme {
+            color: map-get(themes.$light-theme, modal);
+        }
+
+        &--dark-theme {
+            color: map-get(themes.$dark-theme, modal);
+        }
+    }
+
+    &__h1 {
+        width: 100%;
+        text-align: left;
+        margin: 0 0 16px 0;
+        padding: 0;
+        font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+        font-size: 20px;
+        font-weight: 500;
+
+        &--light-theme {
+            color: map-get(themes.$light-theme, settings-menu-h1);
+        }
+
+        &--dark-theme {
+            color: map-get(themes.$dark-theme, settings-menu-h1);
+        }
+    }
+
+    &__h2 {
+        width: 100%;
+        text-align: left;
+        margin: 0 0 4px 0;
+        padding: 0;
+        font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+        font-size: 12px;
+        font-weight: 500;
+
+        &--light-theme {
+            color: map-get(themes.$light-theme, settings-menu-h2);
+        }
+
+        &--dark-theme {
+            color: map-get(themes.$dark-theme, settings-menu-h2);
+        }
+    }
+
+    &__select {
+        margin: 0 0 14px 0;
+        font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+        font-weight: normal;
+        font-size: 14px;
+        padding: 4px;
+        height: 36px;
+        border-radius: 5px;
+
+        &--light-theme {
+            background-color: map-get(themes.$light-theme, select-background);
+            color: map-get(themes.$light-theme, select);
+        }
+
+        &--dark-theme {
+            background-color: map-get(themes.$dark-theme, select-background);
+            color: map-get(themes.$dark-theme, select);
+            border-color: map-get(themes.$dark-theme, select-border);
+        }
+    }
+}
+
+.showRoomListButton {
+    width: 32px;
+    height: 32px;
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: center center;
+    margin: 16px;
+    cursor: pointer;
+    background-color: transparent;
+    border: none;
+    outline: none;
+    position: fixed;
+    z-index: map-get(z-indices.$z-index, aboveHamburger);
+
+    &--light-theme {
+        background-image: url('../images/icons/light-theme/hamburger.svg');
+    }
+
+    &--dark-theme {
+        background-image: url('../images/icons/dark-theme/hamburger-dark.svg');
+    }
+}
+
+.roomListOuterContainer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 280px;
+    max-width: 95vw;
+    height: calc(100vh - #{$bottom-controls-container-height});
+    z-index: map-get(z-indices.$z-index, hamburger);
+    animation-name: slideIn;
+    animation-duration: 0.25s;
+
+    &--light-theme {
+        background-color: map-get(themes.$light-theme, room-list-container-background);
+    }
+
+    &--dark-theme {
+        background-color: map-get(themes.$dark-theme, room-list-container-background);
+    }
+}
+
+.roomListInnerContainer {
+    margin: 72px 0 0 0;
+    height: calc(100vh - #{$bottom-controls-container-height});
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    scrollbar-width: thin;
+
+    &--light-theme {
+        scrollbar-color: map-get(themes.$light-theme, scrollbar-thumb) "transparent";
+    }
+
+    &--dark-theme {
+        scrollbar-color: map-get(themes.$dark-theme, scrollbar-thumb) "transparent";
+    }
+
+    &::-webkit-scrollbar {
+        width: 12px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: "transparent";
+        margin: 8px 0;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background-color: map-get(themes.$light-theme, scrollbar-thumb);
+        border: 1px solid map-get(themes.$light-theme, scrollbar-track);
+        border-radius: 16px;
+    }
+
+    &__header {
+        font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+        font-weight: normal;
+        font-size: 24px;
+        margin: 0 0 24px 0;
+        padding: 0 12px;
+
+        &--light-theme {
+            color: map-get(themes.$light-theme, room-list-container);
+        }
+
+        &--dark-theme {
+            color: map-get(themes.$dark-theme, room-list-container);
+        }
+    }
+}
+
+@keyframes slideIn {
+    from {
+        left: -240px;
+    }
+
+    to {
+        left: 0;
+    }
+}
+
+.roomInfoContainer {
+    display: flex;
+    flex-direction: column;
+    margin: 0 0 24px 0;
+    padding: 12px;
+
+    &--light-theme {
+        color: map-get(themes.$light-theme, room-list-container);
+    }
+
+    &--dark-theme {
+        color: map-get(themes.$dark-theme, room-list-container);
+    }
+
+    &--mine {
+        &--light-theme {
+            background-color: map-get(themes.$light-theme, room-list-container-mine-background);
+        }
+
+        &--dark-theme {
+            background-color: map-get(themes.$dark-theme, room-list-container-mine-background);
+        }
+    }
+
+    &__header {
+        cursor: pointer;
+        margin: 0 0 12px 0;
+        font-size: 18px;
+        line-height: 18px;
+    }
+
+    &__occupantsList {
+        display: flex;
+        flex-direction: column;
+        margin: 0;
+        padding: 0;
+    }
+
+    &__occupant {
+        margin: 5px 0 5px 0;
+        font-size: 16px;
+        cursor: pointer;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    &__occupantColorChip {
+        width: 14px;
+        height: 14px;
+        display: inline-block;
+        margin: 0 4px 0 0;
+        padding: 0;
+        position: relative;
+        top: 2px;
+        border-radius: 16px;
+        border: 1px solid white;
+    }
+}
+
+.modalBackground {
+    position: fixed;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: calc(100vh - #{$bottom-controls-container-height});
+    z-index: map-get(z-indices.$z-index, modalBackground);
+
+    &--light-theme {
+        background-color: map-get(themes.$light-theme, modal-scrim);
+    }
+
+    &--dark-theme {
+        background-color: map-get(themes.$dark-theme, modal-scrim);
+    }
+}
+
+.avatarContextMenu {
+    max-width: 80%;
+    max-height: 80%;
+    z-index: map-get(z-indices.$z-index, modalBackground);
+    padding: 48px;
+    position: absolute;
+    border-radius: 4px;
+
+    &--light-theme {
+        background-color: map-get(themes.$light-theme, modal-background);
+        color: map-get(themes.$light-theme, modal);
+    }
+
+    &--dark-theme {
+        background-color: map-get(themes.$dark-theme, modal-background);
+        color: map-get(themes.$dark-theme, modal);
+    }
+
+    &__closeButton {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 42px;
+        height: 42px;
+        margin: 0;
+        font-size: 18px;
+        font-family: 'Roboto-Bold', 'Helvetica', 'Arial', sans-serif;
+        border: none;
+        outline: none;
+        background-color: transparent;
+        padding: 0;
+        cursor: pointer;
+
+        &--light-theme {
+            color: map-get(themes.$light-theme, modal);
+        }
+
+        &--dark-theme {
+            color: map-get(themes.$dark-theme, modal);
+        }
+    }
+
+    &__displayName {
+        width: 100%;
+        height: 32px;
+        margin: 0 0 4px 0;
+        font-size: 24px;
+        font-family: 'Roboto-Bold', 'Helvetica', 'Arial', sans-serif;
+        border-radius: 4px;
+        border: none;
+
+        &--mine {
+            padding: 4px;
+
+            &--light-theme {
+                background-color: map-get(themes.$light-theme, text-input-background);
+                color: map-get(themes.$light-theme, text-input);
+            }
+        
+            &--dark-theme {
+                background-color: map-get(themes.$dark-theme, text-input-background);
+                color: map-get(themes.$dark-theme, text-input);
+            }
+        }
+    }
+
+    &__colorHexInput {
+        width: 50%;
+        height: 32px;
+        display: block;
+        margin: 0 0 24px 0;
+        border-radius: 4px;
+        border: none;
+        padding: 0;
+
+        &--mine {
+            cursor: pointer;
+        }
+    }
+
+    &__userGainForThisConnection,
+    &__hiFiGain,
+    &__volumeThreshold {
+        &Container {
+            margin: 0 0 12px 0;
+        }
+
+        &Header {
+            margin: 0 0 6px 0;
+        }
+
+        &Slider {
+            width: 100%;
+            cursor: pointer;
+        }
+    }
+
+    &__muteForAllButton {
+        width: 100%;
+        height: 32px;
+        margin: 8px 0 4px 0;
+        font-size: 16px;
+        line-height: 16px;
+        font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+        border-radius: 4px;
+        border: none;
+        cursor: pointer;
+    }
+}
+
+.echoCancellation,
+.agc,
+.noiseSuppression {
+    &Container {
+        display: flex;
+        width: 100%;
+        height: 24px;
+        margin: 0 0 24px 0;
+    }
+
+    &Checkbox {
+        margin: 0 12px 0 0;
+        width: 24px;
+        height: 24px;
+        cursor: pointer;
+
+        &Label {
+            font-size: 16px;
+            line-height: 24px;
+            cursor: pointer;
+        }
+    }
+}
+
+.bottomRightControlsContainer {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    right: 0;
+    bottom: $bottom-controls-container-height;
+    margin: 10px;
+    z-index: map-get(z-indices.$z-index, ui);
+    
+    &--light-theme {
+        color: map-get(themes.$light-theme, bottom-right-controls-container-text);
+    }
+
+    &--dark-theme {
+        color: map-get(themes.$dark-theme, bottom-right-controls-container-text);
+    }
+}
+
+.bottomRightControlContainer {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.bottomRightControlText {
+    text-shadow: 0px 0px 2px #000000;
+    user-select: none;
+}
+
+.toggleFreeMovementContainer {
+    margin: 0 0 12px 0;
+}
+
+.zoomInContainer {
+    margin: 0 0 6px 0;
+}
+
+.zoomButton,
+.toggleFreeMovementButton {
+    width: 24px;
+    height: 24px;
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: center center;
+    cursor: pointer;
+    background-color: transparent;
+    border: none;
+    outline: none;
+    padding: 0;
+    margin: 0 0 0 8px;
+
+    &:focus {
+        border: none;
+        outline: none;
+    }
+}
+
+.toggleFreeMovementButton {
+    &__on {
+        &--light-theme {
+            background-image: url('../images/icons/light-theme/analog-mvmt-on-idle-light.svg');
+    
+            &:hover {
+                background-image: url('../images/icons/light-theme/analog-mvmt-on-active-light.svg');
+            }
+    
+            &:active {
+                background-image: url('../images/icons/light-theme/analog-mvmt-on-click-light.svg');
+            }
+        }
+    
+        &--dark-theme {
+            background-image: url('../images/icons/dark-theme/analog-mvmt-on-idle-dark.svg');
+    
+            &:hover {
+                background-image: url('../images/icons/dark-theme/analog-mvmt-on-active-dark.svg');
+            }
+    
+            &:active {
+                background-image: url('../images/icons/dark-theme/analog-mvmt-on-click-dark.svg');
+            }
+        }
+    }
+
+    &__off {
+        &--light-theme {
+            background-image: url('../images/icons/light-theme/analog-mvmt-off-idle-light.svg');
+    
+            &:hover {
+                background-image: url('../images/icons/light-theme/analog-mvmt-off-active-light.svg');
+            }
+    
+            &:active {
+                background-image: url('../images/icons/light-theme/analog-mvmt-off-click-light.svg');
+            }
+        }
+    
+        &--dark-theme {
+            background-image: url('../images/icons/dark-theme/analog-mvmt-off-idle-dark.svg');
+    
+            &:hover {
+                background-image: url('../images/icons/dark-theme/analog-mvmt-off-active-dark.svg');
+            }
+    
+            &:active {
+                background-image: url('../images/icons/dark-theme/analog-mvmt-off-click-dark.svg');
+            }
+        }
+    }
+}
+
+.zoomInButton {
+    &--light-theme {
+        background-image: url('../images/icons/light-theme/button-zoom-in-idle.svg');
+
+        &:hover {
+            background-image: url('../images/icons/light-theme/button-zoom-in-hover.svg');
+        }
+    }
+
+    &--dark-theme {
+        background-image: url('../images/icons/dark-theme/button-zoom-in-idle.svg');
+
+        &:hover {
+            background-image: url('../images/icons/dark-theme/button-zoom-in-hover.svg');
+        }
+    }
+}
+
+.zoomOutButton {
+    &--light-theme {
+        background-image: url('../images/icons/light-theme/button-zoom-out-idle.svg');
+
+        &:hover {
+            background-image: url('../images/icons/light-theme/button-zoom-out-hover.svg');
+        }
+    }
+
+    &--dark-theme {
+        background-image: url('../images/icons/dark-theme/button-zoom-out-idle.svg');
+
+        &:hover {
+            background-image: url('../images/icons/dark-theme/button-zoom-out-hover.svg');
+        }
+    }
+}
+
+.bottomControlsContainer {
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+.myProfileContainer {
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    flex-wrap: wrap;
+    height: 100%;
+    width: 100%;
+    margin: 0 24px;
+}
+
+.myProfileImage {
+    &Container {
+        flex-basis: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 0 8px 0 0;
+    }
+
+    height: 42px;
+    width: 42px;
+    border-radius: 42px;
+
+    &:hover {
+        cursor: pointer;
+    }
+}
+
+.myDisplayName {
+    font-size: 14px;
+    font-family: 'Roboto-Bold', 'Helvetica', 'Arial', sans-serif;
+}
+
+.editMyProfileLink {
+    font-size: 14px;
+    color: #B9BBBE;
+    text-decoration: underline;
+    cursor: pointer;
+    font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+
+    &--light-theme {
+        color: map-get(themes.$light-theme, edit-my-profile-link);
+
+        &:hover {
+            color: map-get(themes.$light-theme, edit-my-profile-link-hover);
+        }
+    }
+
+    &--dark-theme {
+        color: map-get(themes.$dark-theme, edit-my-profile-link);
+
+        &:hover {
+            color: map-get(themes.$dark-theme, edit-my-profile-link-hover);
+        }
+    }
+}

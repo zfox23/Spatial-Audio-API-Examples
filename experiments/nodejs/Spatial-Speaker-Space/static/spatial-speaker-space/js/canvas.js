@@ -185,7 +185,7 @@ function drawParticles() {
 }
 
 let canvasRotationDegrees = 0;
-function updateCanvas() {
+function drawCanvas() {
     ctx.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
 
     if (allLocalUserData.length === 0) {

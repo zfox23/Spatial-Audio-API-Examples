@@ -1,0 +1,13 @@
+{
+    "HIFI_APP_ID": "",
+    "HIFI_APP_SECRET": "",
+    "HIFI_DEFAULT_SPACE_NAME": "webpack-test-app-space",
+    "HIFI_ENDPOINT_URL": "api-pro.highfidelity.com",
+
+    "TWILIO_ACCOUNT_SID": "",
+    "TWILIO_API_KEY_SID": "",
+    "TWILIO_API_KEY_SECRET": "",
+
+    "SLACK_CLIENT_ID": "",
+    "SLACK_CLIENT_SECRET": ""
+}

@@ -1,0 +1,57 @@
+{
+    "name": "Example Room Config",
+    "configJSONVersion": "v1.0.0",
+    "theme": "light",
+    "rooms": [
+        {
+            "name": "Room 1",
+            "roomCenter": { "x": 0, "y": 0, "z": 0 },
+            "seatingCenter": { "x": 0.125, "y": 0, "z": 1.015 },
+            "seatingRadiusM": 0.9,
+            "dimensions": {"x": 5.0, "y": 0, "z": 5.0 },
+            "numSeatsInRoom": 8,
+            "roomImageSRC": "/spatial-audio-rooms/rooms/Room1.jpg"
+        },
+        {
+            "name": "Room 2",
+            "roomCenter": { "x": 0, "y": 0, "z": 4.59228515625 },
+            "seatingCenter": { "x": 0.05, "y": 0, "z": 4.68 },
+            "dimensions": {"x": 5.0, "y": 0, "z": 4.1845703125 },
+            "seatingRadiusM": 1.15,
+            "roomImageSRC": "/spatial-audio-rooms/rooms/Room2.jpg"
+        },
+        {
+            "name": "Room 3",
+            "roomCenter": { "x": -5, "y": 0, "z": 4.59228515625 },
+            "seatingCenter": { "x": -4.32, "y": 0, "z": 4.825 },
+            "dimensions": {"x": 5.0, "y": 0, "z": 4.1845703125 },
+            "numSeatsInRoom": 4,
+            "seatingRadiusM": 0.7,
+            "roomImageSRC": "/spatial-audio-rooms/rooms/Room3.jpg"
+        },
+        {
+            "name": "Room 4",
+            "roomCenter": { "x": -5, "y": 0, "z": 8.75828515625 },
+            "seatingCenter": { "x": -4.32, "y": 0, "z": 8.73 },
+            "dimensions": {"x": 5.0, "y": 0, "z": 4.1845703125 },
+            "numSeatsInRoom": 4,
+            "seatingRadiusM": 0.7,
+            "roomImageSRC": "/spatial-audio-rooms/rooms/Room4.jpg"
+        },
+        {
+            "name": "Room 5",
+            "roomCenter": { "x": 0, "y": 0, "z": 9.182 },
+            "seatingCenter": {"x": 0.09221915190033814, "z": 9.2},
+            "dimensions": {"x": 5.0, "y": 0, "z": 5.0 },
+            "seatingRadiusM": 1.7,
+            "roomImageSRC": "/spatial-audio-rooms/rooms/Room5.jpg"
+        },
+        {
+            "name": "Private Room",
+            "seatingCenter": { "x": 100, "y": 0, "z": 100 },
+            "dimensions": {"x": 3.6, "y": 0, "z": 3.6 },
+            "seatingRadiusM": 1.0,
+            "roomImageSRC": "/spatial-audio-rooms/rooms/room-with-seating-radius-1-bg-2.jpg"
+        }
+    ]
+}
