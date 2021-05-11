@@ -126,45 +126,6 @@ Removing the express app and it's container and image...${DIM}"
 docker rm --force express-app
 docker rmi express-app
 
-# echo -e "${GREEN}\nOK, then let's test that same type of app, but with I/O device selection. 
-# I'll set that one up now.${DIM}"
-# cd ../../web/simple-with-device-selection
-# cp ../../../hifiZip.zip .
-# sed -i "s/const HIFI_AUDIO_JWT = ""/const HIFI_AUDIO_JWT = '${token}';/g" index.html
-# touch Dockerfile
-# echo -e "FROM python:3\n
-# COPY [\"index.html\", \"hifiZip.zip\", \"./\"]\n
-# RUN unzip hifiZip.zip\n
-# CMD python3 -m http.server 8050"  > Dockerfile
-# docker build --no-cache -f Dockerfile . -t simple-w-io | sed 's/\x1B\[[0-9;]\{1,\}[A-Za-z]//g'
-# docker run -d -p 8050:8050 --name simple-w-io simple-w-io
-# echo -e "\n${GREEN}The simple web app with I/O device selection is running. Navigate to ${CYAN}http://localhost:8050/ 
-# ${GREEN}to confirm that you can connect and change devices, then leave your feedback and press 'ENTER'.${PURPLE}"
-# read simpleWIOStatus
-# echo -e  "${GREEN}\nGreat, we are almost done. Stopping this app's server and deleting it's container and image.${DIM}"
-# docker rm --force simple-w-io
-# docker rmi simple-w-io
-
-# echo -e "${GREEN}The next app is useful for learning how to work with user data subscriptions. 
-# I'll set it up and then you can connect from multiple browser tabs to make sure you get data about your 
-# own user(current tab) and another user (hidden tab).${DIM}"
-# cd ../subscriptions
-# cp ../../../hifiZip.zip .
-# sed -i "s/HIFI_AUDIO_JWT/'${token}'/g" index.html
-# touch Dockerfile
-# echo -e "FROM python:3\n
-# COPY [\"index.html\", \"hifiZip.zip\", \"./\"]\n
-# RUN unzip hifiZip.zip\n
-# CMD python3 -m http.server 8040"  > Dockerfile
-# docker build --no-cache -f Dockerfile . -t subscriptions | sed 's/\x1B\[[0-9;]\{1,\}[A-Za-z]//g'
-# docker run -d -p 8040:8040 --name subscriptions subscriptions
-# echo -e "\n\n${GREEN}ok, that app is up and running. Open two browser tabs to ${CYAN}http://localhost:8040/ ${GREEN}, 
-# make sure you see all the correct data, and then leave your comments and press 'ENTER'.${PURPLE}"
-# read subscriptionsStatus
-# echo -e  "${GREEN}Cleaning up again...${DIM}"
-# docker rm --force subscriptions
-# docker rmi subscriptions
-
 echo -e "${GREEN}Ok, those were all of the tests we have. Here are the results:\n\n
 ${BLUE}Simple Web App: ${DIM}${simpleStatus}\n
 ${BLUE}Get a JWT: ${DIM}${getJWTStatus}\n
