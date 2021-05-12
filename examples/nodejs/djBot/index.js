@@ -102,9 +102,43 @@ async function startDJBot(audioPath, position, hiFiGain) {
         }),
         // Set up the HiFiCommunicator used to communicate with the Spatial Audio API.
         hifiCommunicator = new HiFiCommunicator({ initialHiFiAudioAPIData: initialAudioData });
+    // The variables used below are used to modify the signal amplitude (volume) of the DJ Bot's transmitted audio over time,
+    // such as during "fade in" and "fade out" operations.
+    let signalAmplitudeInterval = undefined, signalAmplitude = 1.0;
+    const AUDIO_FADE_INTERVAL_MS = 20, AMPLITUDE_PER_INTERVAL_DELTA = 0.05;
 
     // Set the Input Audio Media Stream to the `MediaStream` we created above. We'll fill it up with data below.
     await hifiCommunicator.setInputAudioMediaStream(inputAudioMediaStream);
+
+    let maybeStopSignalAmplitudeInterval = () => {
+        if (signalAmplitudeInterval) {
+            clearInterval(signalAmplitudeInterval);
+        }
+        signalAmplitudeInterval = undefined;
+    }
+
+    let fadeInAudio = () => {
+        maybeStopSignalAmplitudeInterval();
+        signalAmplitude = 0.0;
+        signalAmplitudeInterval = setInterval(() => {
+            signalAmplitude += AMPLITUDE_PER_INTERVAL_DELTA;
+            if (signalAmplitude >= 1.0) {
+                signalAmplitude = 1.0;
+                maybeStopSignalAmplitudeInterval();
+            }
+        }, AUDIO_FADE_INTERVAL_MS);
+    }
+
+    let fadeOutAudio = () => {
+        maybeStopSignalAmplitudeInterval();
+        signalAmplitudeInterval = setInterval(() => {
+            signalAmplitude -= AMPLITUDE_PER_INTERVAL_DELTA;
+            if (signalAmplitude <= 0.0) {
+                signalAmplitude = 0.0;
+                maybeStopSignalAmplitudeInterval();
+            }
+        }, AUDIO_FADE_INTERVAL_MS);
+    }
 
     // `sampleNumber` defines where we are in the decoded audio stream from above. `0` means "we're at the beginning of the audio file".
     let sampleNumber = 0;
@@ -114,7 +148,7 @@ async function startDJBot(audioPath, position, hiFiGain) {
         // in the decoded audio file.
         for (let frameNumber = 0; frameNumber < SAMPLES_PER_TICK; frameNumber++, sampleNumber++) {
             for (let channelNumber = 0; channelNumber < numberOfChannels; channelNumber++) {
-                currentSamples[frameNumber * numberOfChannels + channelNumber] = convertedAudioBuffer[sampleNumber * numberOfChannels + channelNumber] || 0;
+                currentSamples[frameNumber * numberOfChannels + channelNumber] = (convertedAudioBuffer[sampleNumber * numberOfChannels + channelNumber] * signalAmplitude) || 0;
             }
         }
 
