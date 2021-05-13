@@ -26,6 +26,8 @@ are connected in space inspector and ready to give me account credentials.${DIM}
 read
 echo -e "${GREEN}What token did you use to connect to space inspector?${PURPLE}"
 read token
+echo -e "${GREEN}What stack is that token for? (ex. 'api.highfidelity.com')${PURPLE}"
+read stackname
 echo -e "${GREEN}What is your app ID?${PURPLE}"
 read appID
 echo -e "${GREEN}What is the secret key for that app?${PURPLE}"
@@ -46,7 +48,7 @@ RUN unzip hifiZip.zip\n
 CMD python3 -m http.server 8060"  > Dockerfile
 docker build --no-cache -f Dockerfile . -t simple | sed 's/\x1B\[[0-9;]\{1,\}[A-Za-z]//g'
 docker run -d -p 8060:8060 --name simple simple
-echo -e "\n${GREEN}The simple web app is running. Navigate to ${CYAN}http://localhost:8060/ ${GREEN}to verify 
+echo -e "\n${GREEN}The simple web app is running. Navigate to ${CYAN}http://localhost:8060/?stack=${stackname} ${GREEN}to verify 
 that you can connect through it. You should see the test app avatar appear in space inspector and should 
 be able to hear yourself. Leave your feedback and press 'ENTER' when you are done.${PURPLE}"
 read simpleStatus
@@ -63,6 +65,7 @@ touch Dockerfile
 sed -i "s/APP_ID = \"aaaaaaaa-1111-bbbb-2222-cccccccccccc\"/APP_ID = \"${appID}\"/g" index.js
 sed -i "s/SPACE_ID = \"aaaaaaaa-1111-bbbb-2222-cccccccccccc\"/SPACE_ID = \"${spaceID}\"/g" index.js
 sed -i "s/APP_SECRET = \"aaaaaaaa-1111-bbbb-2222-cccccccccccc\"/APP_SECRET = \"${appSecret}\"/g" index.js
+sed -i "s/connectToHiFiAudioAPIServer(hiFiSampleJWT)/connectToHiFiAudioAPIServer(hiFiSampleJWT, '${stackname}')/g" index.js
 echo -e "FROM node:14\n
 COPY [\"package.json\", \"index.js\", \"./\"]\n
 RUN npm install\n
@@ -81,12 +84,12 @@ docker rmi get-jwt
 echo -e "${GREEN}\nNow I am going to create a test for a DJ Bot by creating a docker container that runs a DJ 
 Bot in the space you provided. Let me set that up...${DIM}"
 cd ../djbot
-# change this once file is pushed to repo
 cp ../../../../../testing/testAudio.mp3 .
 touch Dockerfile
 sed -i "s/APP_ID = \"aaaaaaaa-1111-bbbb-2222-cccccccccccc\"/APP_ID = \"${appID}\"/g" index.js
 sed -i "s/SPACE_ID = \"aaaaaaaa-1111-bbbb-2222-cccccccccccc\"/SPACE_ID = \"${spaceID}\"/g" index.js
 sed -i "s/APP_SECRET = \"aaaaaaaa-1111-bbbb-2222-cccccccccccc\"/APP_SECRET = \"${appSecret}\"/g" index.js
+sed -i "s/connectToHiFiAudioAPIServer(hiFiJWT)/connectToHiFiAudioAPIServer(hiFiJWT, '${stackname}')/g" index.js
 echo -e "FROM node:14\n
 COPY [\"package.json\", \"index.js\", \"testAudio.mp3\", \"./\"]\n
 RUN npm install\n
@@ -108,6 +111,7 @@ touch Dockerfile
 sed -i "s/APP_ID = \"aaaaaaaa-1111-bbbb-2222-cccccccccccc\"/APP_ID = \"${appID}\"/g" index.js
 sed -i "s/SPACE_ID = \"aaaaaaaa-1111-bbbb-2222-cccccccccccc\"/SPACE_ID = \"${spaceID}\"/g" index.js
 sed -i "s/APP_SECRET = \"aaaaaaaa-1111-bbbb-2222-cccccccccccc\"/APP_SECRET = \"${appSecret}\"/g" index.js
+sed -i "s/connectToHiFiAudioAPIServer(HIFI_AUDIO_JWT)/connectToHiFiAudioAPIServer(HIFI_AUDIO_JWT, '${stackname}')/g" ./views/index.ejs
 echo -e "FROM node:14\n
 COPY [\"package.json\", \"package-lock.json\", \"index.js\", \"./\"]\n
 COPY [\"views\", \"./views/\"]\n
