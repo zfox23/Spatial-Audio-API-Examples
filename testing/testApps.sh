@@ -11,9 +11,7 @@ git repo and then start a local server for space-inspector.${DIM}"
 mkdir testingTemp
 cd testingTemp
 git clone https://github.com/highfidelity/Spatial-Audio-API-Examples.git
-cd Spatial-Audio-API-Examples
-wget -O hifiZip.zip https://hifi-spatial-audio-api.s3.amazonaws.com/releases/main/highfidelity-hifi-audio-web.zip
-cd experiments/web/space-inspector
+cd Spatial-Audio-API-Examples/experiments/web/space-inspector
 python3 -m http.server 8090 &
 serverPID=$!
 cd ../../../
@@ -43,7 +41,8 @@ cp ../../../hifiZip.zip .
 sed -i "s/let HiFiAudioJWT;/let HiFiAudioJWT = '${token}';/g" index.html
 touch Dockerfile
 echo -e "FROM python:3\n
-COPY [\"index.html\", \"hifiZip.zip\", \"./\"]\n
+COPY [\"index.html\", \"./\"]\n
+RUN wget -O hifiZip.zip https://hifi-spatial-audio-api.s3.amazonaws.com/releases/main/highfidelity-hifi-audio-web.zip\n
 RUN unzip hifiZip.zip\n
 CMD python3 -m http.server 8060"  > Dockerfile
 docker build --no-cache -f Dockerfile . -t simple | sed 's/\x1B\[[0-9;]\{1,\}[A-Za-z]//g'
