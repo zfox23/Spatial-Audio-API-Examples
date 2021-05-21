@@ -34,6 +34,10 @@ async function generateHiFiJWT(userID, spaceName, isAdmin = false) {
 }
 
 function generateTwilioAccessToken(providedUserID, spaceName) {
+    if (!auth.TWILIO_ACCOUNT_SID || auth.TWILIO_ACCOUNT_SID.length === 0 || !auth.TWILIO_API_KEY_SID || auth.TWILIO_API_KEY_SID.length === 0 || !auth.TWILIO_API_KEY_SECRET || auth.TWILIO_API_KEY_SECRET.length === 0) {
+        return "";
+    }
+
     const AccessToken = twilio.jwt.AccessToken;
     const VideoGrant = AccessToken.VideoGrant;
 

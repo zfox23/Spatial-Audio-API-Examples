@@ -32,6 +32,11 @@ export class VideoController {
     }
 
     connectToTwilio() {
+        if (!TWILIO_JWT || TWILIO_JWT.length === 0) {
+            console.error(`Couldn't connect to Twilio: \`TWILIO_JWT\` is unspecified. The owner of this application has not provided Twilio authentication credentials.\nVideo conferencing in Spatial Audio Rooms will not function.`);
+            return;
+        }
+
         Video.connect(TWILIO_JWT, {
             name: HIFI_SPACE_NAME,
             video: false,

@@ -352,6 +352,8 @@ $bottom-controls-container-height: 72px;
 
 .toggleVideoButton {
     &--disabled {
+        cursor: no-drop;
+
         &--light-theme {
             background-image: url('../images/icons/light-theme/grey-cam-with-cross.svg');
         }

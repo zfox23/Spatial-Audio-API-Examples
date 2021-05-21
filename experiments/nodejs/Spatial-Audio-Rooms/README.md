@@ -24,7 +24,8 @@ Zach Fox
 3. Copy `auth.example.json` to `auth.json`.
 4. Populate your credentials inside `./auth.json`.
     - Obtain `HIFI_*` credentials from the [High Fidelity Spatial Audio API Developer Console](https://account.highfidelity.com/dev/account)
-    - Obtain `TWILIO_*` credentials from the [Twilio Console](https://www.twilio.com/console)
+    - _Optionally,_ obtain `TWILIO_*` credentials from the [Twilio Console](https://www.twilio.com/console)
+        - If you don't supply Twilio credentials in `./auth.json`, video conferencing inside Spatial Audio Rooms will not work. Users will see a disabled "video" button in the SAR UI, and users who hover over that button will see a "🚫" cursor.
     - _Optionally,_ obtain `SLACK_*` credentials from the [Slack Apps Console](https://api.slack.com/apps)
         - This is only necessary if you want to develop a Slack app which links users to Spatial Audio Rooms. Detailed instructions for doing this are not included in this README.
 5. Open `./node_modules/webpack-hot-middleware/process-update.js` in a text editor. Change `ignoreUnaccepted: true,` to `ignoreUnaccepted: false,`.
