@@ -449,6 +449,11 @@ export class UserInputController {
         connectionController.setNewInputAudioMediaStream();
     }
 
+    setStereoInputStatus(newStereoInputStatus: boolean) {
+        userDataController.myAvatar.myUserData.stereoInput = newStereoInputStatus;
+        connectionController.setNewInputAudioMediaStream();
+    }
+
     setHiFiGainFromSliderValue(newHiFiGainSliderValue: string) {
         let newHiFiGain = uiController.hiFiGainFromSliderValue(newHiFiGainSliderValue);
 

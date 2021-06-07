@@ -41,6 +41,7 @@ export interface UserData {
     echoCancellationEnabled?: boolean;
     agcEnabled?: boolean;
     noiseSuppressionEnabled?: boolean;
+    stereoInput?: boolean;
     currentWatchPartyRoomName?: string;
     tempData?: TempUserData;
 }
@@ -90,6 +91,7 @@ class MyAvatar {
             echoCancellationEnabled: false,
             agcEnabled: false,
             noiseSuppressionEnabled: false,
+            stereoInput: false,
             currentWatchPartyRoomName: undefined,
             tempData: {},
         };

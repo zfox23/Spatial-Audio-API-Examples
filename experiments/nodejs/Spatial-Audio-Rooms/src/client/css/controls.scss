@@ -892,7 +892,8 @@ $bottom-controls-container-height: 72px;
 
 .echoCancellation,
 .agc,
-.noiseSuppression {
+.noiseSuppression,
+.stereoInput {
     &Container {
         display: flex;
         width: 100%;

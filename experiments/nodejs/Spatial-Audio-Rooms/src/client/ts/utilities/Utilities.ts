@@ -76,7 +76,7 @@ export class Utilities {
 
     static hexColorFromString(string: string) {
         if (!string) {
-            return;
+            return "#FFFFFF";
         }
 
         let hash = 0;

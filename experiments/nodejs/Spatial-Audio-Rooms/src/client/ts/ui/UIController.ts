@@ -405,6 +405,33 @@ export class UIController {
         noiseSuppressionContainer.appendChild(noiseSuppressionCheckboxLabel);
     }
 
+    generateStereoInputUI(userData: UserData) {
+        if (userData.visitIDHash !== userDataController.myAvatar.myUserData.visitIDHash || typeof (userData.stereoInput) !== "boolean") {
+            return;
+        }
+
+        let stereoInputContainer = document.createElement("div");
+        stereoInputContainer.classList.add("stereoInputContainer");
+        this.avatarContextMenu.appendChild(stereoInputContainer);
+
+        let stereoInputCheckbox = document.createElement("input");
+        stereoInputCheckbox.id = "stereoInputCheckbox";
+        stereoInputCheckbox.classList.add("stereoInputCheckbox");
+        stereoInputCheckbox.type = "checkbox";
+        stereoInputCheckbox.checked = userData.stereoInput;
+        stereoInputCheckbox.addEventListener("click", (e) => {
+            let newStereoInputStatus = (<HTMLInputElement>e.target).checked;
+            userInputController.setStereoInputStatus(newStereoInputStatus)
+        });
+        stereoInputContainer.appendChild(stereoInputCheckbox);
+
+        let stereoInputCheckboxLabel = document.createElement("label");
+        stereoInputCheckboxLabel.setAttribute("for", "stereoInputCheckbox");
+        stereoInputCheckboxLabel.classList.add("stereoInputCheckboxLabel");
+        stereoInputCheckboxLabel.innerHTML = "Stereo Input";
+        stereoInputContainer.appendChild(stereoInputCheckboxLabel);
+    }
+
     generateUserGainForThisConnectionUI(userData: UserData) {
         let hifiCommunicator = connectionController.hifiCommunicator;
 
@@ -546,6 +573,7 @@ export class UIController {
         this.generateEchoCancellationUI(userData);
         this.generateAGCUI(userData);
         this.generateNoiseSuppressionUI(userData);
+        this.generateStereoInputUI(userData);
         this.generateUserGainForThisConnectionUI(userData);
         this.generateHiFiGainUI(userData);
         this.generateVolumeThresholdUI(userData);
