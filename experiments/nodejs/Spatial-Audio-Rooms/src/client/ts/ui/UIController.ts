@@ -1,9 +1,8 @@
-import { avDevicesController, connectionController, physicsController, roomController, twoDimensionalRenderer, uiThemeController, userDataController, userInputController, webSocketConnectionController } from '..';
+import { connectionController, physicsController, roomController, twoDimensionalRenderer, uiThemeController, userDataController, userInputController, webSocketConnectionController } from '..';
 import '../../css/controls.scss';
-import { AudionetInitResponse, ConnectionController } from '../connection/ConnectionController';
+import { AudionetInitResponse } from '../connection/ConnectionController';
 import { UserData } from '../userData/UserDataController';
 import { Utilities } from '../utilities/Utilities';
-import { TwoDimensionalRenderer } from '../render/TwoDimensionalRenderer';
 import { PHYSICS } from '../constants/constants';
 
 export class UIController {
@@ -153,18 +152,6 @@ export class UIController {
         bottomRightControlsContainer.classList.add("bottomRightControlsContainer");
         document.body.appendChild(bottomRightControlsContainer);
 
-        let toggleFreeMovementContainer = document.createElement("div");
-        toggleFreeMovementContainer.classList.add("bottomRightControlContainer", "toggleFreeMovementContainer");
-        let toggleFreeMovementText = document.createElement("span");
-        toggleFreeMovementText.classList.add("toggleFreeMovementText", "bottomRightControlText", "displayNone");
-        toggleFreeMovementText.innerHTML = "Free Movement";
-        toggleFreeMovementContainer.appendChild(toggleFreeMovementText);
-        let toggleFreeMovementButton = document.createElement("button");
-        toggleFreeMovementButton.classList.add("toggleFreeMovementButton", "toggleFreeMovementButton__off");
-        toggleFreeMovementButton.addEventListener("click", () => { userDataController.myAvatar.toggleFreeMovement(); (<HTMLElement> document.querySelector(".normalModeCanvas")).focus(); });
-        toggleFreeMovementContainer.appendChild(toggleFreeMovementButton);
-        bottomRightControlsContainer.appendChild(toggleFreeMovementContainer);
-
         let zoomInContainer = document.createElement("div");
         zoomInContainer.classList.add("bottomRightControlContainer", "zoomInContainer");
         let zoomInText = document.createElement("span");
@@ -194,17 +181,6 @@ export class UIController {
         });
         zoomOutContainer.appendChild(zoomOutButton);
         bottomRightControlsContainer.appendChild(zoomOutContainer);
-        
-        bottomRightControlsContainer.addEventListener("mouseenter", () => {
-            toggleFreeMovementText.classList.remove("displayNone");
-            zoomInText.classList.remove("displayNone");
-            zoomOutText.classList.remove("displayNone");
-        });
-        bottomRightControlsContainer.addEventListener("mouseleave", () => {
-            toggleFreeMovementText.classList.add("displayNone");
-            zoomInText.classList.add("displayNone");
-            zoomOutText.classList.add("displayNone");
-        });
     }
 
     initContextMenu() {

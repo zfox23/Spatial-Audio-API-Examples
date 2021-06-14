@@ -21,6 +21,9 @@ body {
 }
 
 .body {
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
+    -webkit-tap-highlight-color: transparent;
+    
     &--light-theme {
         background-color: map-get(themes.$light-theme, body-background);
     }

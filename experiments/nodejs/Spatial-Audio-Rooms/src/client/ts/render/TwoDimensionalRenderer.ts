@@ -47,37 +47,55 @@ export class TwoDimensionalRenderer {
     updateCanvasDimensions() {
         let learnMoreContainer = document.querySelector('.learnMoreContainer');
         let learnMoreContainerHeight = 0;
+
+        let bottomBar = document.querySelector('.bottomBar');
+        let bottomBarHeight = 72;
+
+        if (bottomBar) {
+            bottomBarHeight = bottomBar.clientHeight;
+        }
+
         if (learnMoreContainer) {
             learnMoreContainerHeight = learnMoreContainer.clientHeight;
+        }
 
-            let showRoomListButton = <HTMLElement>document.querySelector(".showRoomListButton");
-            if (showRoomListButton) {
-                showRoomListButton.style.top = `${learnMoreContainerHeight}px`;
-            }
+        let showRoomListButton = <HTMLElement>document.querySelector(".showRoomListButton");
+        if (showRoomListButton) {
+            showRoomListButton.style.top = `${learnMoreContainerHeight}px`;
+        }
 
-            let roomListInnerContainer = <HTMLElement>document.querySelector(".roomListInnerContainer");
-            if (roomListInnerContainer) {
-                let topMarginPX = 72 + learnMoreContainerHeight;
-                roomListInnerContainer.style.margin = `${topMarginPX}px 0 0 0`;
-                roomListInnerContainer.style.height = `calc(100vh - 72px - ${topMarginPX}px - ${learnMoreContainerHeight}px)`;
-            }
+        let roomListOuterContainer = <HTMLElement>document.querySelector(".roomListOuterContainer");
+        if (roomListOuterContainer) {
+            roomListOuterContainer.style.bottom = `${bottomBarHeight}px`;
+        }
 
-            let signalButtonContainer = <HTMLElement>document.querySelector(".signalButtonContainer");
-            if (signalButtonContainer) {
-                signalButtonContainer.style.top = `${learnMoreContainerHeight}px`;
-            }
+        let roomListInnerContainer = <HTMLElement>document.querySelector(".roomListInnerContainer");
+        if (roomListInnerContainer) {
+            let topMarginPX = bottomBarHeight + learnMoreContainerHeight;
+            roomListInnerContainer.style.margin = `${topMarginPX}px 0 0 0`;
+            roomListInnerContainer.style.height = `calc(100vh - ${bottomBarHeight}px - ${topMarginPX}px - ${learnMoreContainerHeight}px)`;
+        }
 
-            let youTubePlayerContainer = <HTMLElement>document.querySelector(".youTubePlayerContainer");
-            if (youTubePlayerContainer) {
-                youTubePlayerContainer.style.top = `${learnMoreContainerHeight}px`;
-                youTubePlayerContainer.style.height = `calc(100vh - 72px - 150px - ${learnMoreContainerHeight}px)`;
-            }
+        let signalButtonContainer = <HTMLElement>document.querySelector(".signalButtonContainer");
+        if (signalButtonContainer) {
+            signalButtonContainer.style.top = `${learnMoreContainerHeight}px`;
+        }
+
+        let youTubePlayerContainer = <HTMLElement>document.querySelector(".youTubePlayerContainer");
+        if (youTubePlayerContainer) {
+            youTubePlayerContainer.style.top = `${learnMoreContainerHeight}px`;
+            youTubePlayerContainer.style.height = `calc(100vh - ${bottomBarHeight} - 150px - ${learnMoreContainerHeight}px)`;
+        }
+
+        let modalBackground = <HTMLElement>document.querySelector(".modalBackground");
+        if (modalBackground) {
+            modalBackground.style.height = `calc(100vh - ${bottomBarHeight})`;
         }
 
         this.normalModeCanvas.width = window.innerWidth;
-        this.normalModeCanvas.style.height = `${window.innerHeight - 72 - learnMoreContainerHeight}px`;
+        this.normalModeCanvas.style.height = `${window.innerHeight - bottomBarHeight - learnMoreContainerHeight}px`;
         this.normalModeCanvas.style.top = `${learnMoreContainerHeight}px`
-        this.normalModeCanvas.height = window.innerHeight - 72 - learnMoreContainerHeight;
+        this.normalModeCanvas.height = window.innerHeight - bottomBarHeight - learnMoreContainerHeight;
 
         try {
             physicsController.autoComputePXPerMFromRoom(userDataController.myAvatar.myUserData.currentRoom);

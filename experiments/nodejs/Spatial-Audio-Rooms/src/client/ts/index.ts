@@ -51,10 +51,11 @@ function addLearnMoreLink() {
 }
 
 addLearnMoreLink();
-twoDimensionalRenderer.updateCanvasDimensions();
 
 export const uiThemeController = new UIThemeController();
 
 userDataController.init();
 videoController.init();
 roomController.initializeRooms();
+
+twoDimensionalRenderer.updateCanvasDimensions();

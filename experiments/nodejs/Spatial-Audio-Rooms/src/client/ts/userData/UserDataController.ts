@@ -61,7 +61,6 @@ export interface AvatarVelocity {
 class MyAvatar {
     myUserData: UserData;
     currentMode: MyAvatarModes;
-    freeMovementEnabled: boolean = false;
     linearVelocityMPerS: AvatarVelocity = {x: 0, z: 0, forward: 0, right: 0};
     rotationalVelocityDegreesPerS: number = 0;
 
@@ -108,64 +107,6 @@ class MyAvatar {
 
         if (localStorage.getItem('myColorHex')) {
             this.onMyColorHexChanged(localStorage.getItem('myColorHex'));
-        }
-
-        if (localStorage.getItem('freeMovementEnabled')) {
-            if (localStorage.getItem("freeMovementEnabled") === "true") {
-                this.enableFreeMovement();
-            } else {
-                this.disableFreeMovement();
-            }
-        }
-    }
-
-    enableFreeMovement() {
-        this.freeMovementEnabled = true;
-        localStorage.setItem("freeMovementEnabled", "true");
-        let toggleFreeMovementButton = document.querySelector('.toggleFreeMovementButton');
-        if (toggleFreeMovementButton) {
-            uiThemeController.clearThemesFromElement(<HTMLElement>toggleFreeMovementButton, "toggleFreeMovementButton__on");
-            uiThemeController.clearThemesFromElement(<HTMLElement>toggleFreeMovementButton, "toggleFreeMovementButton__off");
-            toggleFreeMovementButton.classList.add("toggleFreeMovementButton__on");
-            toggleFreeMovementButton.classList.remove("toggleFreeMovementButton__off");
-        }
-
-        let toggleFreeMovementText = document.querySelector(".toggleFreeMovementText");
-        if (toggleFreeMovementText) {
-            toggleFreeMovementText.innerHTML = `Free Movement is On`;
-        }
-
-        uiThemeController.refreshThemedElements();
-
-        this.clearCurrentSeat();
-    }
-
-    disableFreeMovement() {
-        this.freeMovementEnabled = false;
-        localStorage.setItem("freeMovementEnabled", "false");
-        let toggleFreeMovementButton = document.querySelector('.toggleFreeMovementButton');
-        if (toggleFreeMovementButton) {
-            uiThemeController.clearThemesFromElement(<HTMLElement>toggleFreeMovementButton, "toggleFreeMovementButton__on");
-            uiThemeController.clearThemesFromElement(<HTMLElement>toggleFreeMovementButton, "toggleFreeMovementButton__off");
-            toggleFreeMovementButton.classList.remove("toggleFreeMovementButton__on");
-            toggleFreeMovementButton.classList.add("toggleFreeMovementButton__off");
-        }
-
-        let toggleFreeMovementText = document.querySelector(".toggleFreeMovementText");
-        if (toggleFreeMovementText) {
-            toggleFreeMovementText.innerHTML = `Free Movement is Off`;
-        }
-
-        uiThemeController.refreshThemedElements();
-
-        this.clearCurrentSeat();
-    }
-    
-    toggleFreeMovement() {
-        if (this.freeMovementEnabled) {
-            this.disableFreeMovement();
-        } else {
-            this.enableFreeMovement();
         }
     }
 

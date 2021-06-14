@@ -32,8 +32,6 @@ export class PhysicsController {
         this.computePXPerM(now);
     }
 
-
-
     computeAvatarPositionsAndOrientations(timestamp: number, deltaTimestampMS: number) {
         let hifiCommunicator = connectionController.hifiCommunicator;
         if (!hifiCommunicator || !userDataController.myAvatar) {

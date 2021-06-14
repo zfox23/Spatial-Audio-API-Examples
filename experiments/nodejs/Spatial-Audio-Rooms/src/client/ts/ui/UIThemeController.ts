@@ -98,8 +98,6 @@ export class UIThemeController {
         this.addThemedElementFromClassName("editMyProfileLink");
         this.addThemedElementFromClassName("zoomInButton");
         this.addThemedElementFromClassName("zoomOutButton");
-        this.addThemedElementFromClassName("toggleFreeMovementButton__on");
-        this.addThemedElementFromClassName("toggleFreeMovementButton__off");
         this.addThemedElementFromClassName("bottomRightControlsContainer");
 
         this.themedElements.forEach((themedElementArray, baseClassName) => {

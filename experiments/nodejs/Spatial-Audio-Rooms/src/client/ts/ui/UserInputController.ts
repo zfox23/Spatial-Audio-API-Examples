@@ -8,7 +8,8 @@ import { Landmark } from "./LandmarksController";
 
 export class UserInputController {
     normalModeCanvas: HTMLCanvasElement;
-    keyboardEventCache: Array<KeyboardEvent>;
+    pointerEventCache: Array<PointerEvent> = [];
+    keyboardEventCache: Array<KeyboardEvent> = [];
     wasMutedBeforePTT: boolean = false;
     toggleInputMuteButton: HTMLButtonElement;
     toggleOutputMuteButton: HTMLButtonElement;
@@ -60,7 +61,6 @@ export class UserInputController {
 
         this.normalModeCanvas.addEventListener("wheel", this.onWheel.bind(this), false);
 
-        this.keyboardEventCache = [];
         document.addEventListener('keydown', this.onDocumentKeyDown.bind(this), false);
         document.addEventListener('keyup', this.onDocumentKeyUp.bind(this), false);
     }
@@ -72,7 +72,7 @@ export class UserInputController {
                 return true;
             }
         }
-        
+
         let allButtonElements = document.querySelectorAll("button");
         for (let i = 0; i < allButtonElements.length; i++) {
             if (allButtonElements[i] === document.activeElement) {
@@ -93,27 +93,13 @@ export class UserInputController {
         }
         if (shouldAddKeyEvent) {
             this.keyboardEventCache.unshift(event);
-        }        
+        }
 
         if (this.shouldIgnoreKeyDown() || this.keyboardEventCache.length === 0) {
             return;
         }
 
         switch (this.keyboardEventCache[0].code) {
-            case CONTROLS.UP_ARROW_KEY_CODE:
-            case CONTROLS.W_KEY_CODE:
-                if (userDataController.myAvatar.freeMovementEnabled) {
-                    userDataController.myAvatar.linearVelocityMPerS.forward = CONTROLS.FORWARD_VELOCITY_M_PER_SEC;
-                    userDataController.myAvatar.myUserData.positionTarget = undefined;
-                }
-                break;
-            case CONTROLS.DOWN_ARROW_KEY_CODE:
-            case CONTROLS.S_KEY_CODE:
-                if (userDataController.myAvatar.freeMovementEnabled) {
-                    userDataController.myAvatar.linearVelocityMPerS.forward = CONTROLS.BACKWARD_VELOCITY_M_PER_SEC;
-                    userDataController.myAvatar.myUserData.positionTarget = undefined;
-                }
-                break;
             case CONTROLS.LEFT_ARROW_KEY_CODE:
             case CONTROLS.A_KEY_CODE:
                 userDataController.myAvatar.rotationalVelocityDegreesPerS = CONTROLS.ROTATIONAL_VELOCITY_DEGREES_PER_SEC;
@@ -122,19 +108,10 @@ export class UserInputController {
             case CONTROLS.D_KEY_CODE:
                 userDataController.myAvatar.rotationalVelocityDegreesPerS = -CONTROLS.ROTATIONAL_VELOCITY_DEGREES_PER_SEC;
                 break;
-            case CONTROLS.Q_KEY_CODE:
-                if (userDataController.myAvatar.freeMovementEnabled) {
-                    userDataController.myAvatar.linearVelocityMPerS.right = CONTROLS.FORWARD_VELOCITY_M_PER_SEC;
-                    userDataController.myAvatar.myUserData.positionTarget = undefined;
-                }
-                break;
             case CONTROLS.E_KEY_CODE:
                 if (this.keyboardEventCache[0].ctrlKey) {
                     this.keyboardEventCache[0].preventDefault();
                     editorModeController.toggleEditorMode();
-                } else if (userDataController.myAvatar.freeMovementEnabled) {
-                    userDataController.myAvatar.linearVelocityMPerS.right = CONTROLS.BACKWARD_VELOCITY_M_PER_SEC;
-                    userDataController.myAvatar.myUserData.positionTarget = undefined;
                 }
                 break;
             case CONTROLS.M_KEY_CODE:
@@ -180,20 +157,6 @@ export class UserInputController {
         }
 
         switch (event.code) {
-            case CONTROLS.UP_ARROW_KEY_CODE:
-            case CONTROLS.W_KEY_CODE:
-                userDataController.myAvatar.linearVelocityMPerS.forward = 0;
-                if (userDataController.myAvatar.freeMovementEnabled) {
-                    userDataController.myAvatar.myUserData.positionTarget = undefined;
-                }
-                break;
-            case CONTROLS.DOWN_ARROW_KEY_CODE:
-            case CONTROLS.S_KEY_CODE:
-                userDataController.myAvatar.linearVelocityMPerS.forward = 0;
-                if (userDataController.myAvatar.freeMovementEnabled) {
-                    userDataController.myAvatar.myUserData.positionTarget = undefined;
-                }
-                break;
             case CONTROLS.LEFT_ARROW_KEY_CODE:
             case CONTROLS.A_KEY_CODE:
                 userDataController.myAvatar.rotationalVelocityDegreesPerS = 0;
@@ -201,18 +164,6 @@ export class UserInputController {
             case CONTROLS.RIGHT_ARROW_KEY_CODE:
             case CONTROLS.D_KEY_CODE:
                 userDataController.myAvatar.rotationalVelocityDegreesPerS = 0;
-                break;
-            case CONTROLS.Q_KEY_CODE:
-                userDataController.myAvatar.linearVelocityMPerS.right = 0;
-                if (userDataController.myAvatar.freeMovementEnabled) {
-                    userDataController.myAvatar.myUserData.positionTarget = undefined;
-                }
-                break;
-            case CONTROLS.E_KEY_CODE:
-                userDataController.myAvatar.linearVelocityMPerS.right = 0;
-                if (userDataController.myAvatar.freeMovementEnabled) {
-                    userDataController.myAvatar.myUserData.positionTarget = undefined;
-                }
                 break;
             case CONTROLS.SPACE_KEY_CODE:
                 if (this.wasMutedBeforePTT) {
@@ -358,10 +309,10 @@ export class UserInputController {
 
                     settingsMenu.appendChild(changeAudioInputDeviceMenu__header);
                     settingsMenu.appendChild(changeAudioInputDeviceMenu__select);
-                    
+
                     settingsMenu.appendChild(changeAudioOutputDeviceMenu__header);
                     settingsMenu.appendChild(changeAudioOutputDeviceMenu__select);
-                    
+
                     settingsMenu.appendChild(changeVideoDeviceMenu__header);
                     settingsMenu.appendChild(changeVideoDeviceMenu__select);
 
@@ -481,7 +432,7 @@ export class UserInputController {
         editorModeController.handleCanvasClick(event);
 
         if (signalsController.activeSignal && (event instanceof MouseEvent || event instanceof PointerEvent)) {
-            let clickM = new Point3D(Utilities.normalModeCanvasPXToM({x: event.offsetX, y: event.offsetY}));
+            let clickM = new Point3D(Utilities.normalModeCanvasPXToM({ x: event.offsetX, y: event.offsetY }));
 
             let isCloseEnough = false;
             if (userDataController.myAvatar.myUserData && userDataController.myAvatar.myUserData.positionCurrent) {
@@ -509,6 +460,31 @@ export class UserInputController {
         document.body.classList.remove("cursorPointer");
     }
 
+    pushEvent(event: PointerEvent) {
+        this.pointerEventCache.push(event);
+    }
+
+    removeEvent(event: PointerEvent) {
+        for (let i = 0; i < this.pointerEventCache.length; i++) {
+            if (this.pointerEventCache[i].pointerId === event.pointerId) {
+                this.pointerEventCache.splice(i, 1);
+                i--;
+                break;
+            }
+        }
+    }
+
+    getEventFromCacheByID(idToFind: number) {
+        for (let i = 0; i < this.pointerEventCache.length; i++) {
+            let id = this.pointerEventCache[i].pointerId;
+
+            if (id == idToFind) {
+                return this.pointerEventCache[i];
+            }
+        }
+        return null;
+    }
+
     handleGestureOnCanvasStart(event: TouchEvent | MouseEvent | PointerEvent) {
         event.preventDefault();
 
@@ -519,6 +495,27 @@ export class UserInputController {
         let target = <HTMLElement>event.target;
 
         target.focus();
+
+        if (event instanceof PointerEvent && event.pointerId) {
+            this.pushEvent(event);
+        } else if (event instanceof TouchEvent && event.changedTouches) {
+            let touches = event.changedTouches;
+            for (let i = 0; i < touches.length; i++) {
+                let currentEvent = touches[i];
+                let newEvent = new PointerEvent("pointerdown", {
+                    "pointerId": currentEvent.identifier,
+                    "clientX": currentEvent.clientX,
+                    "clientY": currentEvent.clientY,
+                    "button": 0,
+                    "buttons": 0
+                });
+                this.pushEvent(newEvent);
+            }
+        }
+
+        if (event instanceof TouchEvent && event.touches && event.touches.length > 1) {
+            return;
+        }
 
         if (window.PointerEvent && event instanceof PointerEvent) {
             target.setPointerCapture(event.pointerId);
@@ -534,12 +531,12 @@ export class UserInputController {
         }
     }
 
-    handleGestureOnCanvasMove(event: MouseEvent | PointerEvent) {
+    handleGestureOnCanvasMove(event: TouchEvent | MouseEvent | PointerEvent) {
         event.preventDefault();
 
         let gesturePointPX = Utilities.getGesturePointFromEvent(event);
 
-        if (event.buttons === 1 && this.leftClickStartPositionPX !== undefined && !pathsController.currentPath && !(userDataController.myAvatarEars.isConnecting || userDataController.myAvatarEars.isConnected)) {
+        if (this.pointerEventCache.length <= 1 && ((event instanceof MouseEvent || event instanceof PointerEvent) && event.buttons === 1) && this.leftClickStartPositionPX !== undefined && !pathsController.currentPath && !(userDataController.myAvatarEars.isConnecting || userDataController.myAvatarEars.isConnected)) {
             let newDistance = gesturePointPX.x - this.leftClickStartPositionPX.x;
             let deltaDistance = newDistance - this.lastDistanceBetweenLeftClickEvents;
             this.lastDistanceBetweenLeftClickEvents = newDistance;
@@ -555,7 +552,7 @@ export class UserInputController {
                     localSoundsController.updateHowlerOrientation(userDataController.myAvatar.myUserData.orientationEulerCurrent);
                 }
             }
-        } else {
+        } else if (this.pointerEventCache.length <= 1 && (event instanceof MouseEvent || event instanceof PointerEvent)) {
             let hoverM = Utilities.normalModeCanvasPXToM({ x: event.offsetX, y: event.offsetY });
 
             if (!(hoverM && userDataController.myAvatar.myUserData.positionCurrent)) {
@@ -579,7 +576,7 @@ export class UserInputController {
                         this.hoveredSeat = room.seats.find((seat) => {
                             return !seat.occupiedUserData && Utilities.getDistanceBetween2DPoints(seat.position.x, seat.position.z, hoverM.x, hoverM.z) < ROOM.SEAT_RADIUS_M;
                         });
-    
+
                         if (this.hoveredSeat) {
                             break;
                         }
@@ -590,30 +587,67 @@ export class UserInputController {
             if (!(this.hoveredUserData && this.hoveredSeat)) {
                 this.hoveredRoom = undefined;
 
-                    for (let i = 0; i < roomController.rooms.length; i++) {
-                        let room = roomController.rooms[i];
-    
-                        if (Utilities.getDistanceBetween2DPoints(room.seatingCenter.x, room.seatingCenter.z, hoverM.x, hoverM.z) < room.seatingRadiusM) {
-                            if (this.zoomedOutTooFarToRenderSeats) {
-                                this.hoveredRoom = room;
-                                break;
-                            }
+                for (let i = 0; i < roomController.rooms.length; i++) {
+                    let room = roomController.rooms[i];
+
+                    if (Utilities.getDistanceBetween2DPoints(room.seatingCenter.x, room.seatingCenter.z, hoverM.x, hoverM.z) < room.seatingRadiusM) {
+                        if (this.zoomedOutTooFarToRenderSeats) {
+                            this.hoveredRoom = room;
+                            break;
                         }
+                    }
                 }
             }
 
             if (!(this.hoveredUserData && this.hoveredSeat && this.hoveredRoom)) {
                 this.hoveredLandmark = undefined;
 
-                    for (let i = 0; i < landmarksController.landmarks.length; i++) {
-                        let landmark = landmarksController.landmarks[i];
-    
-                        if (Utilities.getDistanceBetween2DPoints(landmark.positionM.x, landmark.positionM.z, hoverM.x, hoverM.z) < landmark.radiusM) {
-                            this.hoveredLandmark = landmark;
-                            break;
-                        }
+                for (let i = 0; i < landmarksController.landmarks.length; i++) {
+                    let landmark = landmarksController.landmarks[i];
+
+                    if (Utilities.getDistanceBetween2DPoints(landmark.positionM.x, landmark.positionM.z, hoverM.x, hoverM.z) < landmark.radiusM) {
+                        this.hoveredLandmark = landmark;
+                        break;
+                    }
                 }
             }
+        } else if (this.pointerEventCache.length === 2) {
+            userDataController.myAvatar.linearVelocityMPerS.forward = 0;
+            userDataController.myAvatar.linearVelocityMPerS.right = 0;
+    
+            let lastDistanceBetweenTouchPointsPixels = Utilities.getDistanceBetween2DPoints(this.pointerEventCache[0].clientX, this.pointerEventCache[0].clientY, this.pointerEventCache[1].clientX, this.pointerEventCache[1].clientY);
+    
+            if (event instanceof PointerEvent && event.pointerId) {
+                for (let i = 0; i < this.pointerEventCache.length; i++) {
+                    if (this.pointerEventCache[i].pointerId === event.pointerId) {
+                        this.pointerEventCache[i] = event;
+                    }
+                }
+            } else if (event instanceof TouchEvent && event.changedTouches) {
+                let touches = event.changedTouches;
+                for (let i = 0; i < touches.length; i++) {
+                    let currentEvent = this.getEventFromCacheByID(touches[i].identifier);
+                    if (currentEvent) {
+                        let dict: any = {};
+                        Object.assign(dict, currentEvent);
+                        dict.clientX = touches[i].clientX;
+                        dict.clientY = touches[i].clientY;
+                        let newEvent = new PointerEvent(currentEvent.type, dict);
+                        this.removeEvent(currentEvent);
+                        this.pushEvent(newEvent);
+                    }
+                }
+            }
+    
+            let newDistance = Utilities.getDistanceBetween2DPoints(this.pointerEventCache[0].clientX, this.pointerEventCache[0].clientY, this.pointerEventCache[1].clientX, this.pointerEventCache[1].clientY);
+    
+            let deltaDistance = newDistance - lastDistanceBetweenTouchPointsPixels;
+            let scaleFactor = 1 + deltaDistance * CONTROLS.PINCH_TO_ZOOM_FACTOR;
+    
+            let targetPXPerSU = physicsController.pxPerMCurrent * scaleFactor;
+            targetPXPerSU = Utilities.clamp(targetPXPerSU, physicsController.pxPerMMin, physicsController.pxPerMMax);
+            physicsController.pxPerMTarget = undefined;
+            physicsController.pxPerMCurrent = targetPXPerSU;
         }
 
         if (this.hoveredUserData ||
@@ -626,8 +660,28 @@ export class UserInputController {
         }
     }
 
-    handleGestureOnCanvasEnd(event: MouseEvent | PointerEvent) {
+    handleGestureOnCanvasEnd(event: PointerEvent | MouseEvent | TouchEvent) {
         event.preventDefault();
+
+        if (event instanceof PointerEvent && event.pointerId) {
+            this.removeEvent(event);
+        } else if (event instanceof TouchEvent && event.changedTouches) {
+            let touches = event.changedTouches;
+            for (let i = touches.length - 1; i >= 0; i--) {
+                let currentEvent = this.getEventFromCacheByID(touches[i].identifier);
+                if (currentEvent) {
+                    this.removeEvent(currentEvent);
+                }
+            }
+        }
+
+        if (this.pointerEventCache.length > 0) { 
+            this.leftClickStartPositionPX = undefined;
+        }
+    
+        if ((event instanceof TouchEvent && event.touches && event.touches.length > 0) || this.pointerEventCache.length > 0) {
+            return;
+        }
 
         let target = <HTMLElement>event.target;
 
@@ -642,7 +696,15 @@ export class UserInputController {
             this.normalModeCanvas.removeEventListener('mouseup', this.handleGestureOnCanvasEnd, true);
         }
 
-        if (event.buttons === 0 && this.leftClickStartPositionPX !== undefined) {
+        if ((event instanceof TouchEvent && event.touches.length === 0) || ((event instanceof PointerEvent || event instanceof MouseEvent) && event.buttons === 0)) {
+            let gesturePointPX = Utilities.getGesturePointFromEvent(event);
+            if (this.leftClickStartPositionPX && Utilities.getDistanceBetween2DPoints(this.leftClickStartPositionPX.x, this.leftClickStartPositionPX.y, gesturePointPX.x, gesturePointPX.y) <= CONTROLS.FUZZY_LEFT_CLICK_DISTANCE_PX) {
+                this.leftClickStartPositionPX = undefined;
+                this.handleGestureOnCanvasMove(event);
+            }
+        }
+
+        if ((event instanceof TouchEvent && event.touches.length === 0) || ((event instanceof PointerEvent || event instanceof MouseEvent) && event.buttons === 0) && this.leftClickStartPositionPX !== undefined) {
             this.leftClickStartPositionPX = undefined;
             this.lastDistanceBetweenLeftClickEvents = 0;
         }

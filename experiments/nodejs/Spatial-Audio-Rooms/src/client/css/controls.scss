@@ -299,7 +299,7 @@ $bottom-controls-container-height: 72px;
         &--dark-theme {
             background-image: url('../images/icons/dark-theme/mic-on-idle-dark.svg');
 
-            &:hover {
+            &:not(:focus):hover {
                 background-image: url('../images/icons/dark-theme/mic-on-hover-dark.svg');
             }
         }
@@ -313,7 +313,7 @@ $bottom-controls-container-height: 72px;
         &--dark-theme {
             background-image: url('../images/icons/dark-theme/mic-off-idle-dark.svg');
 
-            &:hover {
+            &:not(:focus):hover {
                 background-image: url('../images/icons/dark-theme/mic-off-hover-dark.svg');
             }
         }
@@ -329,7 +329,7 @@ $bottom-controls-container-height: 72px;
         &--dark-theme {
             background-image: url('../images/icons/dark-theme/headphones-on-idle-dark.svg');
 
-            &:hover {
+            &:not(:focus):hover {
                 background-image: url('../images/icons/dark-theme/headphones-on-hover-dark.svg');
             }
         }
@@ -343,7 +343,7 @@ $bottom-controls-container-height: 72px;
         &--dark-theme {
             background-image: url('../images/icons/dark-theme/headphones-off-idle-dark.svg');
 
-            &:hover {
+            &:not(:focus):hover {
                 background-image: url('../images/icons/dark-theme/headphones-off-hover-dark.svg');
             }
         }
@@ -371,7 +371,7 @@ $bottom-controls-container-height: 72px;
         &--dark-theme {
             background-image: url('../images/icons/dark-theme/video-on-idle-dark.svg');
 
-            &:hover {
+            &:not(:focus):hover {
                 background-image: url('../images/icons/dark-theme/video-on-hover-dark.svg');
             }
         }
@@ -385,7 +385,7 @@ $bottom-controls-container-height: 72px;
         &--dark-theme {
             background-image: url('../images/icons/dark-theme/video-off-idle-dark.svg');
 
-            &:hover {
+            &:not(:focus):hover {
                 background-image: url('../images/icons/dark-theme/video-off-hover-dark.svg');
             }
         }
@@ -400,7 +400,7 @@ $bottom-controls-container-height: 72px;
     &--dark-theme {
         background-image: url('../images/icons/dark-theme/devices-idle-dark.svg');
 
-        &:hover {
+        &:not(:focus):hover {
             background-image: url('../images/icons/dark-theme/devices-hover-dark.svg');
         }
     }
@@ -464,7 +464,7 @@ $bottom-controls-container-height: 72px;
     &--light-theme {
         background: map-get(themes.$light-theme, watch-party-join-button-background);
 
-        &:hover {
+        &:not(:focus):hover {
             background: map-get(themes.$dark-theme, watch-party-join-button-background-hover);
         }
     }
@@ -472,7 +472,7 @@ $bottom-controls-container-height: 72px;
     &--dark-theme {
         background: map-get(themes.$dark-theme, watch-party-join-button-background);
 
-        &:hover {
+        &:not(:focus):hover {
             background: map-get(themes.$dark-theme, watch-party-join-button-background-hover);
         }
     }
@@ -482,7 +482,7 @@ $bottom-controls-container-height: 72px;
     &--light-theme {
         background: map-get(themes.$light-theme, watch-party-leave-button-background);
 
-        &:hover {
+        &:not(:focus):hover {
             background: map-get(themes.$dark-theme, watch-party-leave-button-background-hover);
         }
     }
@@ -490,7 +490,7 @@ $bottom-controls-container-height: 72px;
     &--dark-theme {
         background: map-get(themes.$dark-theme, watch-party-leave-button-background);
 
-        &:hover {
+        &:not(:focus):hover {
             background: map-get(themes.$dark-theme, watch-party-leave-button-background-hover);
         }
     }
@@ -626,9 +626,9 @@ $bottom-controls-container-height: 72px;
     position: fixed;
     top: 0;
     left: 0;
+    bottom: 72px;
     width: 280px;
     max-width: 95vw;
-    height: calc(100vh - #{$bottom-controls-container-height});
     z-index: map-get(z-indices.$z-index, hamburger);
     animation-name: slideIn;
     animation-duration: 0.25s;
@@ -767,8 +767,8 @@ $bottom-controls-container-height: 72px;
     align-items: center;
     top: 0;
     left: 0;
+    bottom: $bottom-controls-container-height;
     width: 100vw;
-    height: calc(100vh - #{$bottom-controls-container-height});
     z-index: map-get(z-indices.$z-index, modalBackground);
 
     &--light-theme {
@@ -946,16 +946,11 @@ $bottom-controls-container-height: 72px;
     user-select: none;
 }
 
-.toggleFreeMovementContainer {
-    margin: 0 0 12px 0;
-}
-
 .zoomInContainer {
     margin: 0 0 6px 0;
 }
 
-.zoomButton,
-.toggleFreeMovementButton {
+.zoomButton {
     width: 24px;
     height: 24px;
     background-repeat: no-repeat;
@@ -974,65 +969,11 @@ $bottom-controls-container-height: 72px;
     }
 }
 
-.toggleFreeMovementButton {
-    &__on {
-        &--light-theme {
-            background-image: url('../images/icons/light-theme/analog-mvmt-on-idle-light.svg');
-    
-            &:hover {
-                background-image: url('../images/icons/light-theme/analog-mvmt-on-active-light.svg');
-            }
-    
-            &:active {
-                background-image: url('../images/icons/light-theme/analog-mvmt-on-click-light.svg');
-            }
-        }
-    
-        &--dark-theme {
-            background-image: url('../images/icons/dark-theme/analog-mvmt-on-idle-dark.svg');
-    
-            &:hover {
-                background-image: url('../images/icons/dark-theme/analog-mvmt-on-active-dark.svg');
-            }
-    
-            &:active {
-                background-image: url('../images/icons/dark-theme/analog-mvmt-on-click-dark.svg');
-            }
-        }
-    }
-
-    &__off {
-        &--light-theme {
-            background-image: url('../images/icons/light-theme/analog-mvmt-off-idle-light.svg');
-    
-            &:hover {
-                background-image: url('../images/icons/light-theme/analog-mvmt-off-active-light.svg');
-            }
-    
-            &:active {
-                background-image: url('../images/icons/light-theme/analog-mvmt-off-click-light.svg');
-            }
-        }
-    
-        &--dark-theme {
-            background-image: url('../images/icons/dark-theme/analog-mvmt-off-idle-dark.svg');
-    
-            &:hover {
-                background-image: url('../images/icons/dark-theme/analog-mvmt-off-active-dark.svg');
-            }
-    
-            &:active {
-                background-image: url('../images/icons/dark-theme/analog-mvmt-off-click-dark.svg');
-            }
-        }
-    }
-}
-
 .zoomInButton {
     &--light-theme {
         background-image: url('../images/icons/light-theme/button-zoom-in-idle.svg');
 
-        &:hover {
+        &:not(:focus):hover {
             background-image: url('../images/icons/light-theme/button-zoom-in-hover.svg');
         }
     }
@@ -1040,7 +981,7 @@ $bottom-controls-container-height: 72px;
     &--dark-theme {
         background-image: url('../images/icons/dark-theme/button-zoom-in-idle.svg');
 
-        &:hover {
+        &:not(:focus):hover {
             background-image: url('../images/icons/dark-theme/button-zoom-in-hover.svg');
         }
     }
@@ -1050,7 +991,7 @@ $bottom-controls-container-height: 72px;
     &--light-theme {
         background-image: url('../images/icons/light-theme/button-zoom-out-idle.svg');
 
-        &:hover {
+        &:not(:focus):hover {
             background-image: url('../images/icons/light-theme/button-zoom-out-hover.svg');
         }
     }
@@ -1058,7 +999,7 @@ $bottom-controls-container-height: 72px;
     &--dark-theme {
         background-image: url('../images/icons/dark-theme/button-zoom-out-idle.svg');
 
-        &:hover {
+        &:not(:focus):hover {
             background-image: url('../images/icons/dark-theme/button-zoom-out-hover.svg');
         }
     }
@@ -1093,7 +1034,7 @@ $bottom-controls-container-height: 72px;
     width: 42px;
     border-radius: 42px;
 
-    &:hover {
+    &:not(:focus):hover {
         cursor: pointer;
     }
 }
@@ -1113,7 +1054,7 @@ $bottom-controls-container-height: 72px;
     &--light-theme {
         color: map-get(themes.$light-theme, edit-my-profile-link);
 
-        &:hover {
+        &:not(:focus):hover {
             color: map-get(themes.$light-theme, edit-my-profile-link-hover);
         }
     }
@@ -1121,7 +1062,7 @@ $bottom-controls-container-height: 72px;
     &--dark-theme {
         color: map-get(themes.$dark-theme, edit-my-profile-link);
 
-        &:hover {
+        &:not(:focus):hover {
             color: map-get(themes.$dark-theme, edit-my-profile-link-hover);
         }
     }

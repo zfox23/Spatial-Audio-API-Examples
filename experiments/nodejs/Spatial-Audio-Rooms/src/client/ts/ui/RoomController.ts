@@ -425,16 +425,6 @@ export class RoomController {
         }
         this.roomListInnerContainer.appendChild(roomInfoContainer);
 
-        let roomInfoContainer__header = document.createElement("h2");
-        roomInfoContainer__header.classList.add("roomInfoContainer__header");
-        roomInfoContainer__header.innerHTML = `Using Free Movement`;
-        roomInfoContainer.appendChild(roomInfoContainer__header);
-
-        let roomInfoContainer__occupantsList = document.createElement("div");
-        roomInfoContainer__occupantsList.classList.add("roomInfoContainer__occupantsList");
-        roomInfoContainer__occupantsList.setAttribute("data-room-name", `Using Free Movement`);
-        roomInfoContainer.appendChild(roomInfoContainer__occupantsList);
-
         let allUserData = userDataController.allOtherUserData.concat(userDataController.myAvatar.myUserData);
         allUserData.forEach((userData) => {
             let roomInfoContainer__occupant = document.createElement("p");
@@ -446,8 +436,6 @@ export class RoomController {
                 occupantInnerHTML += `(you) ${userData.displayName}`;
                 if (userData.currentRoom) {
                     document.querySelector(`[data-room-name="${userData.currentRoom.name}"]`).prepend(roomInfoContainer__occupant);
-                } else {
-                    document.querySelector(`[data-room-name="Using Free Movement"]`).prepend(roomInfoContainer__occupant);
                 }
             } else {
                 occupantInnerHTML = ``;
@@ -457,8 +445,6 @@ export class RoomController {
                 occupantInnerHTML += userData.displayName && userData.displayName.length > 0 ? userData.displayName : userData.providedUserID;
                 if (userData.currentRoom) {
                     document.querySelector(`[data-room-name="${userData.currentRoom.name}"]`).appendChild(roomInfoContainer__occupant);
-                } else {
-                    document.querySelector(`[data-room-name="Using Free Movement"]`).appendChild(roomInfoContainer__occupant);
                 }
             }
             roomInfoContainer__occupant.innerHTML = occupantInnerHTML;

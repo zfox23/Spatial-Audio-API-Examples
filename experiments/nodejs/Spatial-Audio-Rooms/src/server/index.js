@@ -1,7 +1,9 @@
 const isInProdMode = process.argv.slice(2)[0] === "prod";
+const isInHTTPSMode = process.argv.slice(2)[1] === "true";
 
 console.warn(`*****\nServer production mode status: ${isInProdMode}\n*****\n`);
 
+const fs = require('fs');
 const webpack = require('webpack');
 const path = require('path');
 const express = require('express');
@@ -166,12 +168,22 @@ app.post('/spatial-audio-rooms/create', (req, res, next) => {
     }
 });
 
-const http = require("http").createServer(app);
+let httpOrHttpsServer;
+if (isInHTTPSMode) {
+    const options = {
+        "key": fs.readFileSync('C:/Users/Zach/AppData/Local/mkcert/localhost+2-key.pem'),
+        "cert": fs.readFileSync('C:/Users/Zach/AppData/Local/mkcert/localhost+2.pem'),
+        "ca": fs.readFileSync('C:/Users/Zach/AppData/Local/mkcert/rootCA.pem')
+    };
+    httpOrHttpsServer = require("https").createServer(options, app);
+} else {
+    httpOrHttpsServer = require("http").createServer(app);
+}
 
-const socketIOServer = require("socket.io")(http, {
+const socketIOServer = require("socket.io")(httpOrHttpsServer, {
     path: '/spatial-audio-rooms/socket.io',
     cors: {
-        origin: `http://localhost:${PORT}`,
+        origins: [`https://localhost:${PORT}`, `http://localhost:${PORT}`, `https://192.168.1.23:${PORT}`, `http://192.168.1.23:${PORT}`],
         methods: ["GET", "POST"]
     }
 });
@@ -584,9 +596,9 @@ socketIOServer.on("connection", (socket) => {
     });
 });
 
-http.listen(PORT, (err) => {
+httpOrHttpsServer.listen(PORT, (err) => {
     if (err) {
         throw err;
     }
-    console.log(`${Date.now()}: Spatial Audio Rooms is ready. Go to this URL in your browser: http://localhost:${PORT}/spatial-audio-rooms`);
+    console.log(`${Date.now()}: Spatial Audio Rooms is ready. Go to this URL in your browser: ${isInHTTPSMode ? "https" : "http"}://localhost:${PORT}/spatial-audio-rooms`);
 });
