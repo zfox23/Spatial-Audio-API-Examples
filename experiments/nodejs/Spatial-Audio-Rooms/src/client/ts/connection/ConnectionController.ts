@@ -43,20 +43,50 @@ export class ConnectionController {
                 reject(`Error calling \`getUserMedia()\`! Error:\n${e}`);
                 return;
             }
+
+            let inputAudioMediaStreamTrack = avDevicesController.inputAudioMediaStream.getAudioTracks()[0];
+            if (!inputAudioMediaStreamTrack) {
+                return reject(`Error calling \`getUserMedia()\`! Error:\nNo audio tracks on the input audio media stream!`);
+            }
+
+            let inputAudioMediaStreamTrackSettings = inputAudioMediaStreamTrack.getSettings();
+            if (!inputAudioMediaStreamTrackSettings) {
+                console.warn(`Couldn't get input audio media stream track settings. Thus, couldn't verify that the browser gave us the requested audio input device.`);
+            } else if (avDevicesController.audioConstraints.deviceId && avDevicesController.audioConstraints.deviceId === inputAudioMediaStreamTrackSettings.deviceId) {
+                console.log(`Browser gave us the requested audio input device.`);
+            } else if (avDevicesController.audioConstraints.deviceId && avDevicesController.audioConstraints.deviceId !== inputAudioMediaStreamTrackSettings.deviceId) {
+                console.warn(`Browser did not give us the requested audio input device.`);
+            }
+
+            let inputAudioMediaStreamTrackConstraints = inputAudioMediaStreamTrack.getConstraints();
+            if (!inputAudioMediaStreamTrackConstraints) {
+                console.warn(`Couldn't get input audio media stream track constraints! The UI may show different results versus what the user hears.`);
+            } else {
+                console.log(`Resultant audio constraints:\n${JSON.stringify(inputAudioMediaStreamTrackConstraints)}`);
+            }
             
-            if (typeof (avDevicesController.audioConstraints.echoCancellation) !== "undefined") {
-                let newEchoCancellationStatus = !!avDevicesController.audioConstraints.echoCancellation.valueOf();
-                userDataController.myAvatar.myUserData.echoCancellationEnabled = newEchoCancellationStatus;
+            if (typeof (avDevicesController.inputAudioMediaStream.getAudioTracks()[0].getConstraints()) !== "undefined") {
+                if (inputAudioMediaStreamTrackConstraints) {
+                    userDataController.myAvatar.myUserData.echoCancellationEnabled = !!inputAudioMediaStreamTrackConstraints.echoCancellation.valueOf();
+                } else {
+                    userDataController.myAvatar.myUserData.echoCancellationEnabled = !!avDevicesController.audioConstraints.echoCancellation.valueOf();
+                }
             }
             
             if (typeof (avDevicesController.audioConstraints.autoGainControl) !== "undefined") {
-                let newAGCStatus = !!avDevicesController.audioConstraints.autoGainControl.valueOf();
-                userDataController.myAvatar.myUserData.agcEnabled = newAGCStatus;
+                if (inputAudioMediaStreamTrackConstraints) {
+                    userDataController.myAvatar.myUserData.agcEnabled = !!inputAudioMediaStreamTrackConstraints.autoGainControl.valueOf();
+                } else {
+                    userDataController.myAvatar.myUserData.agcEnabled = !!avDevicesController.audioConstraints.autoGainControl.valueOf();
+                }
             }
             
             if (typeof (avDevicesController.audioConstraints.noiseSuppression) !== "undefined") {
-                let newNSStatus = !!avDevicesController.audioConstraints.noiseSuppression.valueOf();
-                userDataController.myAvatar.myUserData.noiseSuppressionEnabled = newNSStatus;
+                if (inputAudioMediaStreamTrackConstraints) {
+                    userDataController.myAvatar.myUserData.noiseSuppressionEnabled = !!inputAudioMediaStreamTrackConstraints.noiseSuppression.valueOf();
+                } else {
+                    userDataController.myAvatar.myUserData.noiseSuppressionEnabled = !!avDevicesController.audioConstraints.noiseSuppression.valueOf();
+                }
             }
 
             if (webSocketConnectionController) {
