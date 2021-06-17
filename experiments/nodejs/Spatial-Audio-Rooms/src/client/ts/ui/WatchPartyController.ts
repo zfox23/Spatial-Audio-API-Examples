@@ -454,7 +454,6 @@ export class WatchPartyController {
     }
 
     drawAvatarBase({ userData }: { userData: UserData }) {
-        let isMine = userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash;
         let watchPartyModeCTX = this.watchPartyModeCTX;
         let pxPerM = this.pxPerM;
         let avatarRadiusM = AVATAR.RADIUS_M;
@@ -473,20 +472,9 @@ export class WatchPartyController {
 
         let colorHex = userData.colorHex || Utilities.hexColorFromString(userData.visitIDHash);
 
-        watchPartyModeCTX.lineWidth = AVATAR.STROKE_WIDTH_PX;
         watchPartyModeCTX.fillStyle = colorHex;
         watchPartyModeCTX.beginPath();
         watchPartyModeCTX.arc(0, 0, avatarRadiusPX, 0, 2 * Math.PI);
-        if (isMine) {
-            if (userData.isMuted) {
-                watchPartyModeCTX.strokeStyle = AVATAR.AVATAR_STROKE_HEX_MUTED;
-            } else {
-                watchPartyModeCTX.strokeStyle = AVATAR.AVATAR_STROKE_HEX_UNMUTED;
-            }
-        } else {
-            watchPartyModeCTX.strokeStyle = AVATAR.AVATAR_STROKE_HEX_UNMUTED;
-        }
-        watchPartyModeCTX.stroke();
         watchPartyModeCTX.fill();
         watchPartyModeCTX.closePath();
     }

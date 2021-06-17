@@ -8,6 +8,7 @@ import { SpatialAudioSeat, SpatialAudioRoom } from "../ui/RoomController";
 import SeatIconIdle from '../../images/seat-idle.png';
 import SeatIconHover from '../../images/seat-hover.png';
 import TableImage from '../../images/table.png';
+import AvatarMuted from '../../images/avatar-muted.png';
 import { Point3D } from "hifi-spatial-audio";
 
 const seatIconIdle = new Image();
@@ -16,6 +17,8 @@ const seatIconHover = new Image();
 seatIconHover.src = SeatIconHover;
 const tableImage = new Image();
 tableImage.src = TableImage;
+const avatarMutedImage = new Image();
+avatarMutedImage.src = AvatarMuted;
 
 export class TwoDimensionalRenderer {
     normalModeCanvas: HTMLCanvasElement;
@@ -45,23 +48,11 @@ export class TwoDimensionalRenderer {
     }
 
     updateCanvasDimensions() {
-        let learnMoreContainer = document.querySelector('.learnMoreContainer');
-        let learnMoreContainerHeight = 0;
-
         let bottomBar = document.querySelector('.bottomBar');
         let bottomBarHeight = 72;
 
         if (bottomBar) {
             bottomBarHeight = bottomBar.clientHeight;
-        }
-
-        if (learnMoreContainer) {
-            learnMoreContainerHeight = learnMoreContainer.clientHeight;
-        }
-
-        let showRoomListButton = <HTMLElement>document.querySelector(".showRoomListButton");
-        if (showRoomListButton) {
-            showRoomListButton.style.top = `${learnMoreContainerHeight}px`;
         }
 
         let roomListOuterContainer = <HTMLElement>document.querySelector(".roomListOuterContainer");
@@ -71,20 +62,14 @@ export class TwoDimensionalRenderer {
 
         let roomListInnerContainer = <HTMLElement>document.querySelector(".roomListInnerContainer");
         if (roomListInnerContainer) {
-            let topMarginPX = bottomBarHeight + learnMoreContainerHeight;
+            let topMarginPX = bottomBarHeight;
             roomListInnerContainer.style.margin = `${topMarginPX}px 0 0 0`;
-            roomListInnerContainer.style.height = `calc(100vh - ${bottomBarHeight}px - ${topMarginPX}px - ${learnMoreContainerHeight}px)`;
-        }
-
-        let signalButtonContainer = <HTMLElement>document.querySelector(".signalButtonContainer");
-        if (signalButtonContainer) {
-            signalButtonContainer.style.top = `${learnMoreContainerHeight}px`;
+            roomListInnerContainer.style.height = `calc(100vh - ${bottomBarHeight}px - ${topMarginPX}px)`;
         }
 
         let youTubePlayerContainer = <HTMLElement>document.querySelector(".youTubePlayerContainer");
         if (youTubePlayerContainer) {
-            youTubePlayerContainer.style.top = `${learnMoreContainerHeight}px`;
-            youTubePlayerContainer.style.height = `calc(100vh - ${bottomBarHeight} - 150px - ${learnMoreContainerHeight}px)`;
+            youTubePlayerContainer.style.height = `calc(100vh - ${bottomBarHeight} - 150px)`;
         }
 
         let modalBackground = <HTMLElement>document.querySelector(".modalBackground");
@@ -93,9 +78,8 @@ export class TwoDimensionalRenderer {
         }
 
         this.normalModeCanvas.width = window.innerWidth;
-        this.normalModeCanvas.style.height = `${window.innerHeight - bottomBarHeight - learnMoreContainerHeight}px`;
-        this.normalModeCanvas.style.top = `${learnMoreContainerHeight}px`
-        this.normalModeCanvas.height = window.innerHeight - bottomBarHeight - learnMoreContainerHeight;
+        this.normalModeCanvas.style.height = `${window.innerHeight - bottomBarHeight}px`;
+        this.normalModeCanvas.height = window.innerHeight - bottomBarHeight;
 
         try {
             physicsController.autoComputePXPerMFromRoom(userDataController.myAvatar.myUserData.currentRoom);
@@ -150,20 +134,9 @@ export class TwoDimensionalRenderer {
             normalModeCTX.closePath();
         }
 
-        normalModeCTX.lineWidth = AVATAR.STROKE_WIDTH_PX;
         normalModeCTX.fillStyle = colorHex;
         normalModeCTX.beginPath();
         normalModeCTX.arc(0, 0, avatarRadiusPX, 0, 2 * Math.PI);
-        if (isMine) {
-            if (userData.isMuted) {
-                normalModeCTX.strokeStyle = AVATAR.AVATAR_STROKE_HEX_MUTED;
-            } else {
-                normalModeCTX.strokeStyle = AVATAR.AVATAR_STROKE_HEX_UNMUTED;
-            }
-        } else {
-            normalModeCTX.strokeStyle = AVATAR.AVATAR_STROKE_HEX_UNMUTED;
-        }
-        normalModeCTX.stroke();
         normalModeCTX.fill();
         normalModeCTX.closePath();
         normalModeCTX.rotate(-amtToRotateAvatar);
@@ -214,6 +187,25 @@ export class TwoDimensionalRenderer {
         }
 
         normalModeCTX.fillText(textToDraw, 0, 0);
+        normalModeCTX.rotate(-amtToRotateAvatarLabel);
+    }
+
+    drawAvatarMuted({ userData }: { userData: UserData }) {
+        if (!userData.isAudioInputMuted) {
+            return;
+        }
+
+        let normalModeCTX = this.normalModeCTX;
+        let pxPerM = physicsController.pxPerMCurrent;
+
+        let amtToRotateAvatarLabel = this.canvasRotationDegrees * Math.PI / 180;
+        normalModeCTX.rotate(amtToRotateAvatarLabel);
+
+        let avatarRadiusM = AVATAR.RADIUS_M;
+        let avatarRadiusPX = avatarRadiusM * pxPerM;
+        let mutedIconRadius = avatarRadiusPX / 3;
+        normalModeCTX.drawImage(avatarMutedImage, avatarRadiusPX - mutedIconRadius * 1.5, avatarRadiusPX - mutedIconRadius * 1.5, mutedIconRadius * 2, mutedIconRadius * 2);
+
         normalModeCTX.rotate(-amtToRotateAvatarLabel);
     }
 
@@ -276,6 +268,7 @@ export class TwoDimensionalRenderer {
         this.drawAvatarBase({ userData });
         this.drawAvatarVideo({ userData });
         this.drawAvatarLabel({ userData });
+        this.drawAvatarMuted({ userData });
 
         if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash && !uiController.hasCompletedTutorial) {
             this.drawTutorialText();

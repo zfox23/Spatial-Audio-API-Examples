@@ -38,20 +38,6 @@ export const physicsController = new PhysicsController();
 export const userInputController = new UserInputController();
 export const editorModeController = new EditorModeController();
 
-function addLearnMoreLink() {
-    let learnMoreContainer = document.createElement("div");
-    learnMoreContainer.classList.add("learnMoreContainer");
-    let learnMoreContainer__link = document.createElement("a");
-    learnMoreContainer__link.innerHTML = `Learn how to integrate the Spatial Audio API into your app.`;
-    learnMoreContainer__link.href = `https://highfidelity.com/api/`;
-    learnMoreContainer__link.target = "_blank";
-    learnMoreContainer__link.classList.add("learnMoreContainer__link");
-    learnMoreContainer.appendChild(learnMoreContainer__link);
-    document.body.appendChild(learnMoreContainer);
-}
-
-addLearnMoreLink();
-
 export const uiThemeController = new UIThemeController();
 
 userDataController.init();

@@ -118,7 +118,7 @@ export class UserInputController {
                 this.toggleInputMute();
                 break;
             case CONTROLS.SPACE_KEY_CODE:
-                if (userDataController.myAvatar.myUserData.isMuted) {
+                if (userDataController.myAvatar.myUserData.isAudioInputMuted) {
                     this.wasMutedBeforePTT = true;
                     this.setInputMute(false);
                 }
@@ -326,7 +326,7 @@ export class UserInputController {
     }
 
     async toggleInputMute() {
-        await this.setInputMute(!userDataController.myAvatar.myUserData.isMuted);
+        await this.setInputMute(!userDataController.myAvatar.myUserData.isAudioInputMuted);
     }
 
     async setInputMute(newMuteStatus: boolean) {
@@ -336,14 +336,14 @@ export class UserInputController {
             return;
         }
 
-        if (userDataController.myAvatar.myUserData.isMuted === newMuteStatus) {
+        if (userDataController.myAvatar.myUserData.isAudioInputMuted === newMuteStatus) {
             return;
         }
 
         if (await hifiCommunicator.setInputAudioMuted(newMuteStatus)) {
-            userDataController.myAvatar.myUserData.isMuted = newMuteStatus;
+            userDataController.myAvatar.myUserData.isAudioInputMuted = newMuteStatus;
 
-            if (userDataController.myAvatar.myUserData.isMuted) {
+            if (userDataController.myAvatar.myUserData.isAudioInputMuted) {
                 this.toggleInputMuteButton.classList.add("toggleInputMuteButton--muted");
                 this.toggleInputMuteButton.classList.remove("toggleInputMuteButton--unmuted");
                 uiThemeController.clearThemesFromElement(<HTMLElement>this.toggleInputMuteButton, 'toggleInputMuteButton--unmuted', false);
@@ -353,6 +353,7 @@ export class UserInputController {
                 this.toggleInputMuteButton.classList.add("toggleInputMuteButton--unmuted");
             }
             uiThemeController.refreshThemedElements();
+            webSocketConnectionController.updateMyUserDataOnWebSocketServer();
         }
     }
 

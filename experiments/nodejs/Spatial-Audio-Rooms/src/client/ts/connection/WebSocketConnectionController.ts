@@ -11,6 +11,7 @@ interface WebSocketParticipantData {
     currentSeatID: string;
     displayName: string;
     colorHex: string;
+    isAudioInputMuted: boolean;
     echoCancellationEnabled: boolean;
     agcEnabled: boolean;
     noiseSuppressionEnabled: boolean;
@@ -45,6 +46,7 @@ export class WebSocketConnectionController {
                     currentSeatID,
                     displayName,
                     colorHex,
+                    isAudioInputMuted,
                     echoCancellationEnabled,
                     agcEnabled,
                     noiseSuppressionEnabled,
@@ -60,6 +62,9 @@ export class WebSocketConnectionController {
                     }
                     if (typeof (colorHex) === "string") {
                         localUserData.colorHex = colorHex;
+                    }
+                    if (typeof (isAudioInputMuted) === "boolean") {
+                        localUserData.isAudioInputMuted = isAudioInputMuted;
                     }
                     if (typeof (echoCancellationEnabled) === "boolean") {
                         localUserData.echoCancellationEnabled = echoCancellationEnabled;
@@ -97,12 +102,13 @@ export class WebSocketConnectionController {
                         }
                     }
                     
-                    console.log(`Updated participant:\nVisit ID Hash \`${localUserData.visitIDHash}\`:\nDisplay Name: \`${displayName}\`\nColor: ${colorHex}\nCurrent Seat ID: ${localUserData.currentSeat ? localUserData.currentSeat.seatID : "undefined"}\nCurrent Room Name: ${localUserData.currentRoom ? localUserData.currentRoom.name : "undefined"}\nechoCancellationEnabled: ${echoCancellationEnabled}\nagcEnabled: ${agcEnabled}\nnsEnabled: ${noiseSuppressionEnabled}\nhiFiGainSliderValue: ${hiFiGainSliderValue}\nvolumeThreshold:${volumeThreshold}\ncurrentWatchPartyRoomName:${currentWatchPartyRoomName}\n`);
+                    console.log(`Updated participant:\nVisit ID Hash \`${localUserData.visitIDHash}\`:\nDisplay Name: \`${displayName}\`\nColor: ${colorHex}\nisAudioInputMuted: ${isAudioInputMuted}\nCurrent Seat ID: ${localUserData.currentSeat ? localUserData.currentSeat.seatID : "undefined"}\nCurrent Room Name: ${localUserData.currentRoom ? localUserData.currentRoom.name : "undefined"}\nechoCancellationEnabled: ${echoCancellationEnabled}\nagcEnabled: ${agcEnabled}\nnsEnabled: ${noiseSuppressionEnabled}\nhiFiGainSliderValue: ${hiFiGainSliderValue}\nvolumeThreshold:${volumeThreshold}\ncurrentWatchPartyRoomName:${currentWatchPartyRoomName}\n`);
                 } else if (visitIDHash && displayName) {
                     localUserData = {
                         visitIDHash,
                         displayName,
                         colorHex,
+                        isAudioInputMuted,
                         echoCancellationEnabled,
                         agcEnabled,
                         noiseSuppressionEnabled,
@@ -221,6 +227,7 @@ export class WebSocketConnectionController {
             currentSeatID: myUserData.currentSeat ? myUserData.currentSeat.seatID : "",
             displayName: myUserData.displayName,
             colorHex: myUserData.colorHex,
+            isAudioInputMuted: myUserData.isAudioInputMuted,
             echoCancellationEnabled: myUserData.echoCancellationEnabled,
             agcEnabled: myUserData.agcEnabled,
             noiseSuppressionEnabled: myUserData.noiseSuppressionEnabled,
@@ -243,6 +250,7 @@ export class WebSocketConnectionController {
             currentSeatID: myUserData.currentSeat ? myUserData.currentSeat.seatID : "",
             displayName: myUserData.displayName,
             colorHex: myUserData.colorHex,
+            isAudioInputMuted: myUserData.isAudioInputMuted,
             echoCancellationEnabled: myUserData.echoCancellationEnabled,
             agcEnabled: myUserData.agcEnabled,
             noiseSuppressionEnabled: myUserData.noiseSuppressionEnabled,

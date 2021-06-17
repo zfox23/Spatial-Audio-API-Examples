@@ -182,40 +182,6 @@ $bottom-controls-container-height: 72px;
     }
 }
 
-.learnMoreContainer {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    text-align: center;
-    z-index: map-get(z-indices.$z-index, ui);
-    padding: 8px;
-    border-bottom: 1px black solid;
-
-    &--light-theme {
-        background-color: map-get(themes.$light-theme, body-background);
-        color: map-get(themes.$light-theme, text-secondary);
-    }
-
-    &--dark-theme {
-        background-color: map-get(themes.$dark-theme, body-background);
-        color: map-get(themes.$dark-theme, text-secondary);
-    }
-
-    &__link {
-        font-family: 'Roboto-Bold', 'Helvetica', 'Arial', sans-serif;
-        font-size: 18px;
-
-        &--light-theme {
-            color: map-get(themes.$light-theme, text-secondary);
-        }
-
-        &--dark-theme {
-            color: map-get(themes.$dark-theme, text-secondary);
-        }
-    }
-}
-
 .normalModeCanvas {
     width: 100%;
     height: calc(100vh - #{$bottom-controls-container-height});
@@ -267,11 +233,12 @@ $bottom-controls-container-height: 72px;
     background-color: transparent;
     border: none;
     outline: none;
-    width: 40px;
-    height: 40px;
+    width: 32px;
+    height: 32px;
     background-repeat: no-repeat;
     background-size: contain;
     background-position: center center;
+    padding: 0;
     margin: 0 8px;
 
     &:focus {
@@ -1016,8 +983,8 @@ $bottom-controls-container-height: 72px;
     justify-content: center;
     flex-direction: column;
     flex-wrap: wrap;
+    width: 140px;
     height: 100%;
-    width: 100%;
     margin: 0 24px;
 }
 
@@ -1027,12 +994,12 @@ $bottom-controls-container-height: 72px;
         display: flex;
         justify-content: center;
         align-items: center;
-        margin: 0 8px 0 0;
+        margin: 0 7px 0 0;
     }
 
-    height: 42px;
-    width: 42px;
-    border-radius: 42px;
+    height: 39px;
+    width: 39px;
+    border-radius: 39px;
 
     &:not(:focus):hover {
         cursor: pointer;
@@ -1040,12 +1007,13 @@ $bottom-controls-container-height: 72px;
 }
 
 .myDisplayName {
-    font-size: 14px;
+    font-size: 12px;
+    margin: 0 0 2px 0;
     font-family: 'Roboto-Bold', 'Helvetica', 'Arial', sans-serif;
 }
 
 .editMyProfileLink {
-    font-size: 14px;
+    font-size: 12px;
     color: #B9BBBE;
     text-decoration: underline;
     cursor: pointer;

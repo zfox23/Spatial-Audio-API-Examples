@@ -37,7 +37,7 @@ export interface UserData {
     hiFiGain?: number;
     hiFiGainSliderValue?: string;
     volumeThreshold?: number;
-    isMuted?: boolean;
+    isAudioInputMuted?: boolean;
     echoCancellationEnabled?: boolean;
     agcEnabled?: boolean;
     noiseSuppressionEnabled?: boolean;
@@ -86,7 +86,7 @@ class MyAvatar {
             volumeThreshold: -60,
             hiFiGain: 1.0,
             hiFiGainSliderValue: "11",
-            isMuted: false,
+            isAudioInputMuted: false,
             echoCancellationEnabled: false,
             agcEnabled: false,
             noiseSuppressionEnabled: false,

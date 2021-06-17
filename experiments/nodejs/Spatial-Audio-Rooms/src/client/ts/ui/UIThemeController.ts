@@ -59,8 +59,6 @@ export class UIThemeController {
         this.addThemedElementFromClassName("playOverlay__playText");
         this.addThemedElementFromClassName("playOverlay__thenPress");
         this.addThemedElementFromClassName("playOverlay__playAnimation");
-        this.addThemedElementFromClassName("learnMoreContainer");
-        this.addThemedElementFromClassName("learnMoreContainer__link");
         this.addThemedElementFromClassName("bottomBar");
         this.addThemedElementFromClassName("settingsMenu");
         this.addThemedElementFromClassName("settingsMenu__closeButton");

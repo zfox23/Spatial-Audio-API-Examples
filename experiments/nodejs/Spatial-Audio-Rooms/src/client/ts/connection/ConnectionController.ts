@@ -98,7 +98,7 @@ export class ConnectionController {
             console.log("Setting input audio stream on `this.hifiCommunicator`...");
             try {
                 await this.hifiCommunicator.setInputAudioMediaStream(avDevicesController.inputAudioMediaStream, userDataController.myAvatar.myUserData.stereoInput);
-                await this.hifiCommunicator.setInputAudioMuted(userDataController.myAvatar.myUserData.isMuted);
+                await this.hifiCommunicator.setInputAudioMuted(userDataController.myAvatar.myUserData.isAudioInputMuted);
                 resolve(avDevicesController.inputAudioMediaStream);
             } catch (e) {
                 reject(e);

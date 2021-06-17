@@ -42,7 +42,7 @@ export class MyAvatarEars {
             volumeThreshold: -60,
             hiFiGain: 1.0,
             hiFiGainSliderValue: "11",
-            isMuted: false,
+            isAudioInputMuted: false,
             echoCancellationEnabled: false,
             agcEnabled: false,
             noiseSuppressionEnabled: false,
