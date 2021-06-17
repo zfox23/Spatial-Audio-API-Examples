@@ -207,7 +207,7 @@ export class UserInputController {
 
                     let settingsMenu__header = document.createElement("h2");
                     settingsMenu__header.classList.add("settingsMenu__h1");
-                    settingsMenu__header.innerHTML = "DEVICES";
+                    settingsMenu__header.innerHTML = "Devices";
                     settingsMenu.appendChild(settingsMenu__header);
 
                     let changeAudioInputDeviceMenu__header = document.createElement("h2");

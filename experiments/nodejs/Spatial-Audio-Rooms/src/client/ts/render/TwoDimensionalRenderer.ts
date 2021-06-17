@@ -123,17 +123,6 @@ export class TwoDimensionalRenderer {
 
         let colorHex = userData.colorHex || Utilities.hexColorFromString(userData.visitIDHash);
 
-        if (userData.orientationEulerCurrent) {
-            normalModeCTX.beginPath();
-            normalModeCTX.arc(0, -avatarRadiusM * AVATAR.DIRECTION_CLOUD_RADIUS_MULTIPLIER * pxPerM, avatarRadiusM * AVATAR.DIRECTION_CLOUD_RADIUS_MULTIPLIER * pxPerM, 0, Math.PI, false);
-            let grad = normalModeCTX.createLinearGradient(0, 0, 0, -avatarRadiusM * AVATAR.DIRECTION_CLOUD_RADIUS_MULTIPLIER * pxPerM);
-            grad.addColorStop(0.0, colorHex);
-            grad.addColorStop(1.0, colorHex + "00");
-            normalModeCTX.fillStyle = grad;
-            normalModeCTX.fill();
-            normalModeCTX.closePath();
-        }
-
         normalModeCTX.fillStyle = colorHex;
         normalModeCTX.beginPath();
         normalModeCTX.arc(0, 0, avatarRadiusPX, 0, 2 * Math.PI);

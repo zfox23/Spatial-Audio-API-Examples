@@ -7,7 +7,7 @@ $light-theme: (
     body-background: #FFFFFF,
     on-body-background: #000000,
 
-    primary: #DDDDDD,
+    primary: #EEEEEF,
     text-primary: #000000,
     text-secondary: #007AFF,
     text-faint: #B9BBBE,
@@ -19,22 +19,22 @@ $light-theme: (
     room-list-container-mine-background: #d7d7d7,
     room-list-container: #000000,
 
-    bottom-controls-container-background: #DDDDDD,
-    edit-my-profile-link: #B9BBBE,
+    bottom-controls-container-background: #EEEEEF,
+    edit-my-profile-link: #4A4A4A,
     edit-my-profile-link-hover: #9054E3,
-    settings-menu-background: #37393E,
-    settings-menu-h1: #FFFFFF,
+    settings-menu-background: #EEEEEF,
+    settings-menu-h1: #747F8D,
     settings-menu-h2: #8F9297,
 
     bottom-right-controls-container-text: #F1F3FB99,
     
     text-input-background: #FFFFFF,
     text-input-outline: #7289DA,
-    text-input: #DADADA,
+    text-input: #000000,
 
-    select-background: #FFFFFF,
-    select: #DADADA,
-    select-border: #FFFFFF,
+    select-background: #E7E7E7,
+    select: #393939,
+    select-border: #CFCFCF,
 
     watch-party-canvas-background: #000000,
     watch-party-join-button-background: radial-gradient(95.59% 206.12% at 47.81% -44.9%, #9054E3 0%, #5C33AD 100%),
@@ -43,8 +43,8 @@ $light-theme: (
     watch-party-leave-button-background-hover: #494c53,
 
     modal-scrim: rgba(0, 0, 0, 0.3),
-    modal-background: #d7d7d7,
-    modal: #000000,
+    modal-background: #EEEEEF,
+    modal: #747F8D,
 
     scrollbar-thumb: #ebebebAA,
     scrollbar-track: #bcbcbc,

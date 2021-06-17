@@ -162,8 +162,10 @@ export class AppConfigController {
                 this.rooms.push(new SpatialAudioRoom(room));
             }
 
-            for (const landmark of configJSON.landmarks) {
-                this.landmarks.push(new Landmark(landmark));
+            if (configJSON.landmarks && Array.isArray(configJSON.landmarks)) {
+                for (const landmark of configJSON.landmarks) {
+                    this.landmarks.push(new Landmark(landmark));
+                }
             }
         } else {
             console.error(`Couldn't validate remote JSON config. Errors:\n${JSON.stringify(configJSONValidity.errors)}\n\nInitializing default rooms...`);

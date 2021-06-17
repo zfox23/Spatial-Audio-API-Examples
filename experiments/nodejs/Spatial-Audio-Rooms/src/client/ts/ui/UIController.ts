@@ -4,6 +4,8 @@ import { AudionetInitResponse } from '../connection/ConnectionController';
 import { UserData } from '../userData/UserDataController';
 import { Utilities } from '../utilities/Utilities';
 import { PHYSICS } from '../constants/constants';
+import ChooseColorButtonImage from '../../images/chooseColorButtonImage.png';
+import AddPhotoButtonImage from '../../images/photo-select-icon.png';
 
 export class UIController {
     playOverlay: HTMLElement;
@@ -56,6 +58,7 @@ export class UIController {
         let bottomBar = document.createElement("div");
         bottomBar.classList.add("bottomBar");
         bottomBar.addEventListener("click", (e) => { userInputController.hideSettingsMenu(); });
+        bottomBar.addEventListener("click", this.hideAvatarContextMenu.bind(this));
         document.body.appendChild(bottomBar);
 
         let bottomControlsContainer = document.createElement("div");
@@ -70,6 +73,7 @@ export class UIController {
         myProfileImage.classList.add("myProfileImage");
         myProfileImage.addEventListener("click", (e) => {
             this.showAvatarContextMenu(userDataController.myAvatar.myUserData);
+            e.stopPropagation();
         });
         myProfileImageContainer.appendChild(myProfileImage);
         myProfileContainer.appendChild(myProfileImageContainer);
@@ -83,6 +87,7 @@ export class UIController {
         editMyProfileLink.classList.add("editMyProfileLink");
         editMyProfileLink.addEventListener("click", (e) => {
             this.showAvatarContextMenu(userDataController.myAvatar.myUserData);
+            e.stopPropagation();
         });
         myProfileContainer.appendChild(editMyProfileLink);
 
@@ -222,8 +227,23 @@ export class UIController {
         this.modalBackground.classList.add("displayNone");
         this.avatarContextMenu.classList.add("displayNone");
         this.avatarContextMenu.removeAttribute('visit-id-hash');
+        this.avatarContextMenu.classList.remove("avatarContextMenu--mine");
+
+        let bottomControlsContainer = document.querySelector(".bottomControlsContainer");
+        if (bottomControlsContainer) {
+            bottomControlsContainer.classList.remove("displayNone");
+        }
     }
 
+    generateHeader(userData: UserData) {
+        if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash) {
+            let avatarContextMenu__h1 = document.createElement("h1");
+            avatarContextMenu__h1.classList.add("settingsMenu__h1");
+            avatarContextMenu__h1.innerHTML = "Profile";
+            this.avatarContextMenu.appendChild(avatarContextMenu__h1);
+        }
+    }
+    
     generateCloseButtonUI() {
         let closeButton = document.createElement("button");
         closeButton.innerHTML = "X";
@@ -256,8 +276,11 @@ export class UIController {
         uiThemeController.refreshThemedElements();
     }
 
-    generateColorHexUI(userData: UserData) {
-        let colorHexInput;
+    generateCustomizeUI(userData: UserData) {
+        let customizeUI = document.createElement("div");
+        customizeUI.classList.add("avatarContextMenu__customizeContainer");
+
+        let colorHexInput: HTMLInputElement;
         colorHexInput = document.createElement("input");
         colorHexInput.type = "color";
         colorHexInput.value = userData.colorHex || Utilities.hexColorFromString(userData.visitIDHash);
@@ -273,7 +296,42 @@ export class UIController {
         }
 
         colorHexInput.classList.add("avatarContextMenu__colorHexInput");
-        this.avatarContextMenu.appendChild(colorHexInput);
+
+        customizeUI.appendChild(colorHexInput);
+
+        if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash) {
+            let chooseColorButton = document.createElement("button");
+            chooseColorButton.classList.add("avatarContextMenu__chooseColorButton");
+            chooseColorButton.addEventListener('click', (e) => {
+                colorHexInput.click();
+            });
+            let chooseColorButtonImage = document.createElement("img");
+            chooseColorButtonImage.classList.add("avatarContextMenu__chooseColorButtonImage");
+            chooseColorButtonImage.src = ChooseColorButtonImage;
+            chooseColorButton.appendChild(chooseColorButtonImage);
+            let chooseColorButtonText = document.createElement("span");
+            chooseColorButtonText.classList.add("avatarContextMenu__chooseColorButtonText");
+            chooseColorButtonText.innerHTML = "Choose Color";
+            chooseColorButton.appendChild(chooseColorButtonText);
+            customizeUI.appendChild(chooseColorButton);
+            
+            let addPhotoButton = document.createElement("button");
+            addPhotoButton.classList.add("avatarContextMenu__addPhotoButton");
+            addPhotoButton.addEventListener('click', (e) => {
+                
+            });
+            let addPhotoButtonImage = document.createElement("img");
+            addPhotoButtonImage.classList.add("avatarContextMenu__addPhotoButtonImage");
+            addPhotoButtonImage.src = AddPhotoButtonImage;
+            addPhotoButton.appendChild(addPhotoButtonImage);
+            let addPhotoButtonText = document.createElement("span");
+            addPhotoButtonText.classList.add("avatarContextMenu__addPhotoButtonText");
+            addPhotoButtonText.innerHTML = "Add Photo";
+            addPhotoButton.appendChild(addPhotoButtonText);
+            customizeUI.appendChild(addPhotoButton);
+        }
+
+        this.avatarContextMenu.appendChild(customizeUI);
     }
 
     generateEchoCancellationUI(userData: UserData) {
@@ -284,6 +342,17 @@ export class UIController {
         let echoCancellationContainer = document.createElement("div");
         echoCancellationContainer.classList.add("echoCancellationContainer");
         this.avatarContextMenu.appendChild(echoCancellationContainer);
+
+        let echoCancellationCheckboxLabel = document.createElement("label");
+        echoCancellationCheckboxLabel.setAttribute("for", "echoCancellationCheckbox");
+        echoCancellationCheckboxLabel.classList.add("echoCancellationCheckboxLabel");
+        echoCancellationCheckboxLabel.innerHTML = "Echo Cancellation";
+        echoCancellationContainer.appendChild(echoCancellationCheckboxLabel);
+
+        let echoCancellationSwitchLabel = document.createElement("label");
+        echoCancellationSwitchLabel.classList.add("switch");
+        let echoCancellationSwitchSlider = document.createElement("span");
+        echoCancellationSwitchSlider.classList.add("slider");
 
         let echoCancellationCheckbox = document.createElement("input");
         echoCancellationCheckbox.id = "echoCancellationCheckbox";
@@ -302,13 +371,11 @@ export class UIController {
                 }
             }
         });
-        echoCancellationContainer.appendChild(echoCancellationCheckbox);
 
-        let echoCancellationCheckboxLabel = document.createElement("label");
-        echoCancellationCheckboxLabel.setAttribute("for", "echoCancellationCheckbox");
-        echoCancellationCheckboxLabel.classList.add("echoCancellationCheckboxLabel");
-        echoCancellationCheckboxLabel.innerHTML = "Echo Cancellation";
-        echoCancellationContainer.appendChild(echoCancellationCheckboxLabel);
+        echoCancellationSwitchLabel.appendChild(echoCancellationCheckbox);
+        echoCancellationSwitchLabel.appendChild(echoCancellationSwitchSlider);
+
+        echoCancellationContainer.appendChild(echoCancellationSwitchLabel);
     }
 
     generateAGCUI(userData: UserData) {
@@ -319,6 +386,17 @@ export class UIController {
         let agcContainer = document.createElement("div");
         agcContainer.classList.add("agcContainer");
         this.avatarContextMenu.appendChild(agcContainer);
+
+        let agcCheckboxLabel = document.createElement("label");
+        agcCheckboxLabel.setAttribute("for", "agcCheckbox");
+        agcCheckboxLabel.classList.add("agcCheckboxLabel");
+        agcCheckboxLabel.innerHTML = "Automatic Gain Control";
+        agcContainer.appendChild(agcCheckboxLabel);
+
+        let agcSwitchLabel = document.createElement("label");
+        agcSwitchLabel.classList.add("switch");
+        let agcSwitchSlider = document.createElement("span");
+        agcSwitchSlider.classList.add("slider");
 
         let agcCheckbox = document.createElement("input");
         agcCheckbox.id = "agcCheckbox";
@@ -337,13 +415,11 @@ export class UIController {
                 }
             }
         });
-        agcContainer.appendChild(agcCheckbox);
 
-        let agcCheckboxLabel = document.createElement("label");
-        agcCheckboxLabel.setAttribute("for", "agcCheckbox");
-        agcCheckboxLabel.classList.add("agcCheckboxLabel");
-        agcCheckboxLabel.innerHTML = "Automatic Gain Control";
-        agcContainer.appendChild(agcCheckboxLabel);
+        agcSwitchLabel.appendChild(agcCheckbox);
+        agcSwitchLabel.appendChild(agcSwitchSlider);
+
+        agcContainer.appendChild(agcSwitchLabel);
     }
 
     generateNoiseSuppressionUI(userData: UserData) {
@@ -354,6 +430,17 @@ export class UIController {
         let noiseSuppressionContainer = document.createElement("div");
         noiseSuppressionContainer.classList.add("noiseSuppressionContainer");
         this.avatarContextMenu.appendChild(noiseSuppressionContainer);
+
+        let noiseSuppressionCheckboxLabel = document.createElement("label");
+        noiseSuppressionCheckboxLabel.setAttribute("for", "noiseSuppressionCheckbox");
+        noiseSuppressionCheckboxLabel.classList.add("noiseSuppressionCheckboxLabel");
+        noiseSuppressionCheckboxLabel.innerHTML = "Noise Suppression";
+        noiseSuppressionContainer.appendChild(noiseSuppressionCheckboxLabel);
+
+        let noiseSuppressionSwitchLabel = document.createElement("label");
+        noiseSuppressionSwitchLabel.classList.add("switch");
+        let noiseSuppressionSwitchSlider = document.createElement("span");
+        noiseSuppressionSwitchSlider.classList.add("slider");
 
         let noiseSuppressionCheckbox = document.createElement("input");
         noiseSuppressionCheckbox.id = "noiseSuppressionCheckbox";
@@ -372,13 +459,11 @@ export class UIController {
                 }
             }
         });
-        noiseSuppressionContainer.appendChild(noiseSuppressionCheckbox);
 
-        let noiseSuppressionCheckboxLabel = document.createElement("label");
-        noiseSuppressionCheckboxLabel.setAttribute("for", "noiseSuppressionCheckbox");
-        noiseSuppressionCheckboxLabel.classList.add("noiseSuppressionCheckboxLabel");
-        noiseSuppressionCheckboxLabel.innerHTML = "Noise Suppression";
-        noiseSuppressionContainer.appendChild(noiseSuppressionCheckboxLabel);
+        noiseSuppressionSwitchLabel.appendChild(noiseSuppressionCheckbox);
+        noiseSuppressionSwitchLabel.appendChild(noiseSuppressionSwitchSlider);
+
+        noiseSuppressionContainer.appendChild(noiseSuppressionSwitchLabel);
     }
 
     generateStereoInputUI(userData: UserData) {
@@ -390,6 +475,17 @@ export class UIController {
         stereoInputContainer.classList.add("stereoInputContainer");
         this.avatarContextMenu.appendChild(stereoInputContainer);
 
+        let stereoInputCheckboxLabel = document.createElement("label");
+        stereoInputCheckboxLabel.setAttribute("for", "stereoInputCheckbox");
+        stereoInputCheckboxLabel.classList.add("stereoInputCheckboxLabel");
+        stereoInputCheckboxLabel.innerHTML = "Stereo Input";
+        stereoInputContainer.appendChild(stereoInputCheckboxLabel);
+
+        let stereoInputSwitchLabel = document.createElement("label");
+        stereoInputSwitchLabel.classList.add("switch");
+        let stereoInputSwitchSlider = document.createElement("span");
+        stereoInputSwitchSlider.classList.add("slider");
+
         let stereoInputCheckbox = document.createElement("input");
         stereoInputCheckbox.id = "stereoInputCheckbox";
         stereoInputCheckbox.classList.add("stereoInputCheckbox");
@@ -399,13 +495,11 @@ export class UIController {
             let newStereoInputStatus = (<HTMLInputElement>e.target).checked;
             userInputController.setStereoInputStatus(newStereoInputStatus)
         });
-        stereoInputContainer.appendChild(stereoInputCheckbox);
 
-        let stereoInputCheckboxLabel = document.createElement("label");
-        stereoInputCheckboxLabel.setAttribute("for", "stereoInputCheckbox");
-        stereoInputCheckboxLabel.classList.add("stereoInputCheckboxLabel");
-        stereoInputCheckboxLabel.innerHTML = "Stereo Input";
-        stereoInputContainer.appendChild(stereoInputCheckboxLabel);
+        stereoInputSwitchLabel.appendChild(stereoInputCheckbox);
+        stereoInputSwitchLabel.appendChild(stereoInputSwitchSlider);
+
+        stereoInputContainer.appendChild(stereoInputSwitchLabel);
     }
 
     generateUserGainForThisConnectionUI(userData: UserData) {
@@ -463,7 +557,7 @@ export class UIController {
         this.avatarContextMenu.appendChild(avatarContextMenu__hiFiGainContainer);
 
         let avatarContextMenu__hiFiGainHeader = document.createElement("h3");
-        avatarContextMenu__hiFiGainHeader.innerHTML = `HiFi Gain (Global): ${Math.round(userData.hiFiGain * 100)}%`;
+        avatarContextMenu__hiFiGainHeader.innerHTML = `Mic Volume: ${Math.round(userData.hiFiGain * 100)}%`;
         avatarContextMenu__hiFiGainHeader.classList.add("avatarContextMenu__hiFiGainHeader");
         avatarContextMenu__hiFiGainContainer.appendChild(avatarContextMenu__hiFiGainHeader);
 
@@ -498,7 +592,7 @@ export class UIController {
         this.avatarContextMenu.appendChild(avatarContextMenu__volumeThresholdContainer);
 
         let avatarContextMenu__volumeThresholdHeader = document.createElement("h3");
-        avatarContextMenu__volumeThresholdHeader.innerHTML = `Mic Threshold (Global): ${userData.volumeThreshold} dB`;
+        avatarContextMenu__volumeThresholdHeader.innerHTML = `Mic Threshold: ${userData.volumeThreshold} dB`;
         avatarContextMenu__volumeThresholdHeader.classList.add("avatarContextMenu__volumeThresholdHeader");
         avatarContextMenu__volumeThresholdContainer.appendChild(avatarContextMenu__volumeThresholdHeader);
 
@@ -543,9 +637,10 @@ export class UIController {
 
         this.avatarContextMenu.innerHTML = ``;
 
+        this.generateHeader(userData);
         this.generateCloseButtonUI();
         this.generateDisplayNameUI(userData);
-        this.generateColorHexUI(userData);
+        this.generateCustomizeUI(userData);
         this.generateEchoCancellationUI(userData);
         this.generateAGCUI(userData);
         this.generateNoiseSuppressionUI(userData);
@@ -561,8 +656,14 @@ export class UIController {
         this.avatarContextMenu.classList.remove("displayNone");
 
         if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash) {
+            this.avatarContextMenu.classList.add("avatarContextMenu--mine");
             this.hasCompletedTutorial = true;
             localStorage.setItem("hasCompletedTutorial", "true");
+
+            let bottomControlsContainer = document.querySelector(".bottomControlsContainer");
+            if (bottomControlsContainer) {
+                bottomControlsContainer.classList.add("displayNone");
+            }
         }
     }
 
@@ -592,7 +693,7 @@ export class UIController {
         let avatarContextMenu__hiFiGainHeader = <HTMLHeadingElement>this.avatarContextMenu.querySelector(".avatarContextMenu__hiFiGainHeader");
         if (avatarContextMenu__hiFiGainSlider) {
             avatarContextMenu__hiFiGainSlider.value = userData.hiFiGainSliderValue;
-            avatarContextMenu__hiFiGainHeader.innerHTML = `HiFi Gain (Global): ${Math.round(userData.hiFiGain * 100)}%`;
+            avatarContextMenu__hiFiGainHeader.innerHTML = `Mic Volume: ${Math.round(userData.hiFiGain * 100)}%`;
         }
 
         let avatarContextMenu__userGainForThisConnectionSlider = <HTMLInputElement>this.avatarContextMenu.querySelector(".avatarContextMenu__userGainForThisConnectionSlider");
@@ -606,7 +707,7 @@ export class UIController {
         let avatarContextMenu__volumeThresholdHeader = <HTMLHeadingElement>this.avatarContextMenu.querySelector(".avatarContextMenu__volumeThresholdHeader");
         if (avatarContextMenu__volumeThresholdSlider) {
             avatarContextMenu__volumeThresholdSlider.value = userData.volumeThreshold.toString();
-            avatarContextMenu__volumeThresholdHeader.innerHTML = `Mic Threshold (Global): ${userData.volumeThreshold} dB`;
+            avatarContextMenu__volumeThresholdHeader.innerHTML = `Mic Threshold: ${userData.volumeThreshold} dB`;
         }
     }
 
