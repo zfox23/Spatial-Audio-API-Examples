@@ -742,7 +742,7 @@ export class UIController {
     }
 
     generateVolumeThresholdUI(userData: UserData) {
-        if (typeof (userData.volumeThreshold) !== "number") {
+        if (userData.visitIDHash !== userDataController.myAvatar.myUserData.visitIDHash || typeof (userData.volumeThreshold) !== "number") {
             return;
         }
 
@@ -776,14 +776,14 @@ export class UIController {
     }
 
     generateMuteForAllUI(userData: UserData) {
-        if (typeof (userData.hiFiGain) !== "number") {
+        if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash || typeof (userData.hiFiGain) !== "number") {
             return;
         }
 
         let muteForAllButton;
         muteForAllButton = document.createElement("button");
         muteForAllButton.classList.add("avatarContextMenu__muteForAllButton");
-        muteForAllButton.innerHTML = "Mute this user's mic (Global)";
+        muteForAllButton.innerHTML = "Mute this person for everyone";
         muteForAllButton.addEventListener('click', (e) => {
             webSocketConnectionController.requestToMuteAudioInputDevice(userData.visitIDHash);
         });

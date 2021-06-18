@@ -567,7 +567,7 @@ $bottom-controls-container-height: 72px;
     &__h1 {
         width: 100%;
         text-align: center;
-        margin: 0 0 16px 0;
+        margin: 0 0 8px 0;
         padding: 0;
         font-family: 'Graphik', 'Helvetica', 'Arial', sans-serif;
         font-size: 20px;
@@ -923,7 +923,7 @@ $bottom-controls-container-height: 72px;
     &__customizeContainer {
         width: calc(100% - 48px);
         display: flex;
-        margin: 8px 24px 24px 24px;
+        margin: 8px 24px 12px 24px;
         align-items: flex-start;
         border-image: none;
     }
@@ -1092,7 +1092,7 @@ $bottom-controls-container-height: 72px;
         border-radius: 4px;
         border: none;
         cursor: pointer;
-        background: radial-gradient(95.59% 206.12% at 47.81% -44.9%, #54A2FF 0%, #1479FB 100%);
+        background: radial-gradient(100.77% 213.47% at 47.81% -44.9%, #FF8380 0%, #FC615D 100%);
         color: #FFFFFF;
     }
 }
