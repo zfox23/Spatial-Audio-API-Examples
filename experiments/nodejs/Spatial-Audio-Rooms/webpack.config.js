@@ -67,6 +67,9 @@ module.exports = (env) => {
         })] : [new webpack.HotModuleReplacementPlugin()],
         resolve: {
             extensions: ['.tsx', '.ts', '.js'],
+            fallback: {
+                "util": require.resolve("util/"),
+            },
         },
     }
 };

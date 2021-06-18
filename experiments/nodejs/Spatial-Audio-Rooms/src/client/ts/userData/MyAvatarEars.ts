@@ -29,6 +29,8 @@ export class MyAvatarEars {
             currentSeat: undefined,
             displayName: undefined,
             colorHex: undefined,
+            profileImageURL: undefined,
+            profileImageEl: undefined,
             motionStartTimestamp: undefined,
             positionCircleCenter: undefined,
             positionStart: undefined,

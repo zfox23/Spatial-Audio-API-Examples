@@ -23,6 +23,8 @@ export interface UserData {
     currentSeat?: SpatialAudioSeat;
     displayName?: string;
     colorHex?: string;
+    profileImageURL?: string;
+    profileImageEl?: HTMLImageElement;
     motionStartTimestamp?: number;
     positionCircleCenter?: Point3D;
     positionStart?: Point3D;
@@ -72,6 +74,8 @@ class MyAvatar {
             currentSeat: undefined,
             displayName: undefined,
             colorHex: undefined,
+            profileImageURL: undefined,
+            profileImageEl: undefined,
             motionStartTimestamp: undefined,
             positionCircleCenter: undefined,
             positionStart: undefined,
@@ -107,6 +111,10 @@ class MyAvatar {
 
         if (localStorage.getItem('myColorHex')) {
             this.onMyColorHexChanged(localStorage.getItem('myColorHex'));
+        }
+
+        if (localStorage.getItem('myProfileImageURL')) {
+            this.onMyProfileImageURLChanged(localStorage.getItem('myProfileImageURL'));
         }
     }
 
@@ -384,10 +392,12 @@ class MyAvatar {
         localStorage.setItem('myColorHex', newColorHex);
         this.myUserData.colorHex = newColorHex;
         uiController.updateMyProfileImage();
-        webSocketConnectionController.updateMyUserDataOnWebSocketServer();
-        try {
-            roomController.updateRoomList();
-        } catch (e) { }
+    }
+
+    onMyProfileImageURLChanged(newProfileImageURL: string) {
+        localStorage.setItem('myProfileImageURL', newProfileImageURL);
+        this.myUserData.profileImageURL = newProfileImageURL;
+        uiController.updateMyProfileImage();
     }
 }
 

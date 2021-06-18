@@ -6,6 +6,7 @@
         "moduleResolution": "node",
         "target": "es6",
         "allowJs": true,
+        "esModuleInterop": true
     },
     "include": ["src", "index.d.ts"],
     "exclude": ["node_modules", "**/*.spec.ts", "**/*.test.ts", "src/discordBot"]

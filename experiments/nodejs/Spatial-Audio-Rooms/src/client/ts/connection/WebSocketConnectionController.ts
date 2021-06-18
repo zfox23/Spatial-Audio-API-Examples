@@ -11,6 +11,7 @@ interface WebSocketParticipantData {
     currentSeatID: string;
     displayName: string;
     colorHex: string;
+    profileImageURL: string;
     isAudioInputMuted: boolean;
     echoCancellationEnabled: boolean;
     agcEnabled: boolean;
@@ -46,6 +47,7 @@ export class WebSocketConnectionController {
                     currentSeatID,
                     displayName,
                     colorHex,
+                    profileImageURL,
                     isAudioInputMuted,
                     echoCancellationEnabled,
                     agcEnabled,
@@ -62,6 +64,16 @@ export class WebSocketConnectionController {
                     }
                     if (typeof (colorHex) === "string") {
                         localUserData.colorHex = colorHex;
+                    }
+                    if (typeof (profileImageURL) === "string") {
+                        localUserData.profileImageURL = profileImageURL;
+
+                        if (localUserData.profileImageURL && localUserData.profileImageURL.length > 0) {
+                            localUserData.profileImageEl = new Image();
+                            localUserData.profileImageEl.src = localUserData.profileImageURL;
+                        } else {
+                            localUserData.profileImageEl = undefined;
+                        }
                     }
                     if (typeof (isAudioInputMuted) === "boolean") {
                         localUserData.isAudioInputMuted = isAudioInputMuted;
@@ -102,12 +114,13 @@ export class WebSocketConnectionController {
                         }
                     }
                     
-                    console.log(`Updated participant:\nVisit ID Hash \`${localUserData.visitIDHash}\`:\nDisplay Name: \`${displayName}\`\nColor: ${colorHex}\nisAudioInputMuted: ${isAudioInputMuted}\nCurrent Seat ID: ${localUserData.currentSeat ? localUserData.currentSeat.seatID : "undefined"}\nCurrent Room Name: ${localUserData.currentRoom ? localUserData.currentRoom.name : "undefined"}\nechoCancellationEnabled: ${echoCancellationEnabled}\nagcEnabled: ${agcEnabled}\nnsEnabled: ${noiseSuppressionEnabled}\nhiFiGainSliderValue: ${hiFiGainSliderValue}\nvolumeThreshold:${volumeThreshold}\ncurrentWatchPartyRoomName:${currentWatchPartyRoomName}\n`);
+                    console.log(`Updated participant:\nVisit ID Hash \`${localUserData.visitIDHash}\`:\nDisplay Name: \`${displayName}\`\nColor: ${colorHex}\nprofileImageURL: ${profileImageURL}\nisAudioInputMuted: ${isAudioInputMuted}\nCurrent Seat ID: ${localUserData.currentSeat ? localUserData.currentSeat.seatID : "undefined"}\nCurrent Room Name: ${localUserData.currentRoom ? localUserData.currentRoom.name : "undefined"}\nechoCancellationEnabled: ${echoCancellationEnabled}\nagcEnabled: ${agcEnabled}\nnsEnabled: ${noiseSuppressionEnabled}\nhiFiGainSliderValue: ${hiFiGainSliderValue}\nvolumeThreshold:${volumeThreshold}\ncurrentWatchPartyRoomName:${currentWatchPartyRoomName}\n`);
                 } else if (visitIDHash && displayName) {
                     localUserData = {
                         visitIDHash,
                         displayName,
                         colorHex,
+                        profileImageURL,
                         isAudioInputMuted,
                         echoCancellationEnabled,
                         agcEnabled,
@@ -128,6 +141,13 @@ export class WebSocketConnectionController {
                         localUserData.currentRoom = localUserData.currentSeat.room;
                     } else {
                         localUserData.currentRoom = undefined;
+                    }
+
+                    if (localUserData.profileImageURL && localUserData.profileImageURL.length > 0) {
+                        localUserData.profileImageEl = new Image();
+                        localUserData.profileImageEl.src = localUserData.profileImageURL;
+                    } else {
+                        localUserData.profileImageEl = undefined;
                     }
 
                     userDataController.allOtherUserData.push(localUserData);
@@ -227,6 +247,7 @@ export class WebSocketConnectionController {
             currentSeatID: myUserData.currentSeat ? myUserData.currentSeat.seatID : "",
             displayName: myUserData.displayName,
             colorHex: myUserData.colorHex,
+            profileImageURL: myUserData.profileImageURL,
             isAudioInputMuted: myUserData.isAudioInputMuted,
             echoCancellationEnabled: myUserData.echoCancellationEnabled,
             agcEnabled: myUserData.agcEnabled,
@@ -250,6 +271,7 @@ export class WebSocketConnectionController {
             currentSeatID: myUserData.currentSeat ? myUserData.currentSeat.seatID : "",
             displayName: myUserData.displayName,
             colorHex: myUserData.colorHex,
+            profileImageURL: myUserData.profileImageURL,
             isAudioInputMuted: myUserData.isAudioInputMuted,
             echoCancellationEnabled: myUserData.echoCancellationEnabled,
             agcEnabled: myUserData.agcEnabled,

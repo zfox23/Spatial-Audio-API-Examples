@@ -99,7 +99,6 @@ export class TwoDimensionalRenderer {
     }
 
     drawAvatarBase({ userData }: { userData: UserData }) {
-        let isMine = userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash;
         let normalModeCTX = this.normalModeCTX;
         let pxPerM = physicsController.pxPerMCurrent;
         let avatarRadiusM = AVATAR.RADIUS_M;
@@ -128,7 +127,26 @@ export class TwoDimensionalRenderer {
         normalModeCTX.arc(0, 0, avatarRadiusPX, 0, 2 * Math.PI);
         normalModeCTX.fill();
         normalModeCTX.closePath();
+
         normalModeCTX.rotate(-amtToRotateAvatar);
+        
+        if (userData.profileImageEl && userData.profileImageEl.complete) {
+            let amtToRotateProfileImage = this.canvasRotationDegrees * Math.PI / 180;
+            normalModeCTX.rotate(amtToRotateProfileImage);
+            normalModeCTX.beginPath();
+            normalModeCTX.arc(0, 0, avatarRadiusPX, 0, Math.PI * 2, true);
+            normalModeCTX.closePath();
+            normalModeCTX.save();
+            normalModeCTX.clip();
+
+            normalModeCTX.drawImage(userData.profileImageEl, -avatarRadiusPX, -avatarRadiusPX, avatarRadiusPX * 2, avatarRadiusPX * 2);
+
+            normalModeCTX.beginPath();
+            normalModeCTX.arc(0, 0, avatarRadiusPX, 0, Math.PI * 2, true);
+            normalModeCTX.closePath();
+            normalModeCTX.restore();
+            normalModeCTX.rotate(-amtToRotateProfileImage);
+        }
     }
 
     drawAvatarVideo({ userData }: { userData: UserData }) {
@@ -152,7 +170,7 @@ export class TwoDimensionalRenderer {
 
     drawAvatarLabel({ userData }: { userData: UserData }) {
         // Don't draw the avatar label if we're drawing that avatar's video.
-        if (videoController.providedUserIDToVideoElementMap.has(userData.providedUserID)) {
+        if (videoController.providedUserIDToVideoElementMap.has(userData.providedUserID) || userData.profileImageEl) {
             return;
         }
 

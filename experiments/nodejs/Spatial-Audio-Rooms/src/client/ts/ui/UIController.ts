@@ -1,9 +1,9 @@
-import { connectionController, physicsController, roomController, twoDimensionalRenderer, uiThemeController, userDataController, userInputController, webSocketConnectionController } from '..';
+import { connectionController, physicsController, roomController, s3Controller, twoDimensionalRenderer, uiThemeController, userDataController, userInputController, webSocketConnectionController } from '..';
 import '../../css/controls.scss';
 import { AudionetInitResponse } from '../connection/ConnectionController';
 import { UserData } from '../userData/UserDataController';
 import { Utilities } from '../utilities/Utilities';
-import { PHYSICS } from '../constants/constants';
+import { AVATAR, PHYSICS } from '../constants/constants';
 import ChooseColorButtonImage from '../../images/chooseColorButtonImage.png';
 import AddPhotoButtonImage from '../../images/photo-select-icon.png';
 
@@ -139,10 +139,44 @@ export class UIController {
     }
 
     updateMyProfileImage() {
-        let myProfileImage = document.querySelector(".myProfileImage");
-        if (myProfileImage) {
-            (<HTMLElement>myProfileImage).style.backgroundColor = userDataController.myAvatar.myUserData.colorHex;
+        let avatarContextMenu__removeLink = document.querySelector(".avatarContextMenu__removeLink");
+        let myProfileImage = <HTMLElement>document.querySelector(".myProfileImage");
+
+        if (!userDataController.myAvatar.myUserData.profileImageURL || userDataController.myAvatar.myUserData.profileImageURL.length === 0) {
+            let avatarContextMenu__imageFile: HTMLInputElement = document.querySelector(".avatarContextMenu__imageFile");
+            if (avatarContextMenu__imageFile) {
+                avatarContextMenu__imageFile.value = null;
+            }
+            if (avatarContextMenu__removeLink) {
+                avatarContextMenu__removeLink.classList.add("displayNone");
+            }
+            if (myProfileImage) {
+                myProfileImage.style.backgroundColor = userDataController.myAvatar.myUserData.colorHex;
+                myProfileImage.style.backgroundImage = "none";
+            }
+
+            userDataController.myAvatar.myUserData.profileImageEl = undefined;
+        } else {
+            if (avatarContextMenu__removeLink) {
+                avatarContextMenu__removeLink.classList.remove("displayNone");
+            }
+            if (myProfileImage) {
+                myProfileImage.style.backgroundImage = `url(${userDataController.myAvatar.myUserData.profileImageURL})`;
+            }
+
+            let myProfileImageEl = new Image();
+            myProfileImageEl.addEventListener("load", () => {
+                userDataController.myAvatar.myUserData.profileImageEl = myProfileImageEl;
+                this.maybeUpdateAvatarContextMenu(userDataController.myAvatar.myUserData);
+            });
+            myProfileImageEl.src = userDataController.myAvatar.myUserData.profileImageURL;
         }
+
+        this.maybeUpdateAvatarContextMenu(userDataController.myAvatar.myUserData);
+        webSocketConnectionController.updateMyUserDataOnWebSocketServer();
+        try {
+            roomController.updateRoomList();
+        } catch (e) { }
     }
 
     updateMyDisplayName() {
@@ -234,15 +268,6 @@ export class UIController {
             bottomControlsContainer.classList.remove("displayNone");
         }
     }
-
-    generateHeader(userData: UserData) {
-        if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash) {
-            let avatarContextMenu__h1 = document.createElement("h1");
-            avatarContextMenu__h1.classList.add("settingsMenu__h1");
-            avatarContextMenu__h1.innerHTML = "Profile";
-            this.avatarContextMenu.appendChild(avatarContextMenu__h1);
-        }
-    }
     
     generateCloseButtonUI() {
         let closeButton = document.createElement("button");
@@ -255,57 +280,63 @@ export class UIController {
         this.avatarContextMenu.appendChild(closeButton);
     }
 
-    generateDisplayNameUI(userData: UserData) {
+    generateHeader(userData: UserData) {
         let displayName;
+
+        let avatarContextMenu__customizeContainer = document.createElement("div");
+        avatarContextMenu__customizeContainer.classList.add("avatarContextMenu__customizeContainer");
+
+        let avatarContextMenu__avatarRepresentation = document.createElement("div");
+        avatarContextMenu__avatarRepresentation.classList.add("avatarContextMenu__avatarRepresentation");
+
+        let avatarContextMenu__h1 = document.createElement("h1");
+        avatarContextMenu__h1.classList.add("settingsMenu__h1");
+        avatarContextMenu__h1.innerHTML = "Profile";
+        this.avatarContextMenu.appendChild(avatarContextMenu__h1);
+
         if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash) {
             displayName = document.createElement("input");
-            displayName.classList.add("avatarContextMenu__displayName--mine");
+            displayName.classList.add("avatarContextMenu__displayName", "avatarContextMenu__displayName--mine");
             displayName.type = "text";
             displayName.value = userData.displayName;
 
             displayName.addEventListener('input', (e) => {
                 userDataController.myAvatar.onMyDisplayNameChanged((<HTMLInputElement>e.target).value);
             });
-        } else {
-            displayName = document.createElement("h1");
-            displayName.innerText = userData.displayName && userData.displayName.length > 0 ? userData.displayName : userData.providedUserID;
-        }
-        displayName.classList.add("avatarContextMenu__displayName");
-        this.avatarContextMenu.appendChild(displayName);
-
-        uiThemeController.refreshThemedElements();
-    }
-
-    generateCustomizeUI(userData: UserData) {
-        let customizeUI = document.createElement("div");
-        customizeUI.classList.add("avatarContextMenu__customizeContainer");
-
-        let avatarContextMenu__avatarRepresentation = document.createElement("div");
-        avatarContextMenu__avatarRepresentation.classList.add("avatarContextMenu__avatarRepresentation");
-
-        let colorHexInput: HTMLInputElement;
-        colorHexInput = document.createElement("input");
-        colorHexInput.classList.add("avatarContextMenu__colorHexInput");
-        colorHexInput.type = "color";
-        colorHexInput.value = userData.colorHex || Utilities.hexColorFromString(userData.visitIDHash);
-        if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash) {
+            
+            let colorHexInput = document.createElement("input");
+            colorHexInput.classList.add("avatarContextMenu__colorHexInput", "displayNone");
+            colorHexInput.type = "color";
+            colorHexInput.value = userData.colorHex || Utilities.hexColorFromString(userData.visitIDHash);
             colorHexInput.classList.add("avatarContextMenu__colorHexInput--mine");
             colorHexInput.addEventListener('input', (e) => {
                 userDataController.myAvatar.onMyColorHexChanged((<HTMLInputElement>e.target).value);
             });
             avatarContextMenu__avatarRepresentation.appendChild(colorHexInput);
+            
+            let avatarContextMenu__avatarCircle = document.createElement("div");
+            avatarContextMenu__avatarCircle.classList.add("avatarContextMenu__avatarCircle", "avatarContextMenu__avatarCircle--mine");
+            avatarContextMenu__avatarCircle.style.backgroundColor = userData.colorHex;
+            if (userData.profileImageEl && userData.profileImageEl.complete) {
+                avatarContextMenu__avatarCircle.style.backgroundImage = `url(${userDataController.myAvatar.myUserData.profileImageURL})`;
+            }
+            avatarContextMenu__avatarCircle.addEventListener('click', (e) => {
+                colorHexInput.click();
+            });
+            avatarContextMenu__avatarRepresentation.appendChild(avatarContextMenu__avatarCircle);
 
-            let removeLink = document.createElement("a");
-            removeLink.classList.add("avatarContextMenu__removeLink");
-            removeLink.innerHTML = `Remove`;
-            avatarContextMenu__avatarRepresentation.appendChild(removeLink);
-        } else {
-            colorHexInput.disabled = true;
-            avatarContextMenu__avatarRepresentation.appendChild(colorHexInput);
-        }
-        customizeUI.appendChild(avatarContextMenu__avatarRepresentation);
+            if (userData.profileImageURL && userData.profileImageURL.length > 0) {
+                let removeLink = document.createElement("a");
+                removeLink.classList.add("avatarContextMenu__removeLink");
+                removeLink.innerHTML = `Remove`;
+                removeLink.addEventListener("click", (e) => {
+                    userDataController.myAvatar.onMyProfileImageURLChanged("");
+                });
+                avatarContextMenu__avatarRepresentation.appendChild(removeLink);
+            }
 
-        if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash) {
+            avatarContextMenu__customizeContainer.appendChild(avatarContextMenu__avatarRepresentation);
+
             let chooseColorButton = document.createElement("button");
             chooseColorButton.classList.add("avatarContextMenu__chooseColorButton");
             chooseColorButton.addEventListener('click', (e) => {
@@ -319,12 +350,35 @@ export class UIController {
             chooseColorButtonText.classList.add("avatarContextMenu__chooseColorButtonText");
             chooseColorButtonText.innerHTML = "Choose Color";
             chooseColorButton.appendChild(chooseColorButtonText);
-            customizeUI.appendChild(chooseColorButton);
+            avatarContextMenu__customizeContainer.appendChild(chooseColorButton);
+            
+            let avatarContextMenu__imageFile = document.createElement("input");
+            avatarContextMenu__imageFile.classList.add("avatarContextMenu__imageFile");
+            avatarContextMenu__imageFile.type = "file";
+            avatarContextMenu__imageFile.accept = "image/*"
+            avatarContextMenu__imageFile.addEventListener("change", (e) => {
+                let selectedFile = (<HTMLInputElement>(e.currentTarget)).files;
+                if (selectedFile.length === 1) {
+                    let imageFile = selectedFile[0];
+
+                    let fileReader = new FileReader();
+                    fileReader.onload = (fileLoadedEvent) => {
+                        let srcData = fileLoadedEvent.target.result;
+                        let newImage = document.createElement('img');
+                        newImage.addEventListener('load', (event) => {
+                            this.updateProfileImageFromBase64String((<HTMLImageElement>event.currentTarget).src);
+                        });
+                        newImage.src = srcData as string;
+                    }
+                    fileReader.readAsDataURL(imageFile);
+                }
+            })
+            avatarContextMenu__customizeContainer.appendChild(avatarContextMenu__imageFile);
             
             let addPhotoButton = document.createElement("button");
             addPhotoButton.classList.add("avatarContextMenu__addPhotoButton");
             addPhotoButton.addEventListener('click', (e) => {
-                
+                avatarContextMenu__imageFile.click();
             });
             let addPhotoButtonImage = document.createElement("img");
             addPhotoButtonImage.classList.add("avatarContextMenu__addPhotoButtonImage");
@@ -334,10 +388,88 @@ export class UIController {
             addPhotoButtonText.classList.add("avatarContextMenu__addPhotoButtonText");
             addPhotoButtonText.innerHTML = "Add Photo";
             addPhotoButton.appendChild(addPhotoButtonText);
-            customizeUI.appendChild(addPhotoButton);
+            avatarContextMenu__customizeContainer.appendChild(addPhotoButton);
+
+            this.avatarContextMenu.appendChild(displayName);
+            this.avatarContextMenu.appendChild(avatarContextMenu__customizeContainer);
+        } else {
+            displayName = document.createElement("h1");
+            displayName.classList.add("avatarContextMenu__displayName");
+            displayName.innerText = userData.displayName && userData.displayName.length > 0 ? userData.displayName : userData.providedUserID;
+
+            let avatarContextMenu__avatarCircle = document.createElement("div");
+            avatarContextMenu__avatarCircle.classList.add("avatarContextMenu__avatarCircle");
+            avatarContextMenu__avatarCircle.style.backgroundColor = userData.colorHex;
+            if (userData.profileImageEl && userData.profileImageEl.complete) {
+                avatarContextMenu__avatarCircle.style.backgroundImage = `url(${userDataController.myAvatar.myUserData.profileImageURL})`;
+            }
+            avatarContextMenu__avatarRepresentation.appendChild(avatarContextMenu__avatarCircle);
+            avatarContextMenu__customizeContainer.appendChild(avatarContextMenu__avatarRepresentation);
+
+            avatarContextMenu__customizeContainer.appendChild(displayName);
+            this.avatarContextMenu.appendChild(avatarContextMenu__customizeContainer);
         }
 
-        this.avatarContextMenu.appendChild(customizeUI);
+        uiThemeController.refreshThemedElements();
+    }
+
+    updateProfileImageFromBase64String(newBase64String: string) {
+        // Draw the image
+        let image = new Image();
+        image.onload = () => {
+            // Create canvas
+            let tempProfileImageCanvas = document.createElement('canvas');
+            let tempCtx = tempProfileImageCanvas.getContext('2d');
+            // Set width and height
+            tempProfileImageCanvas.width = AVATAR.PROFILE_IMAGE_DIMENSIONS_MAX_PX;
+            tempProfileImageCanvas.height = AVATAR.PROFILE_IMAGE_DIMENSIONS_MAX_PX;
+    
+            let imgRatio = image.height / image.width;
+            let canvasRatio = tempProfileImageCanvas.height / tempProfileImageCanvas.width;
+    
+            if (imgRatio > canvasRatio) {
+                let h = tempProfileImageCanvas.width * imgRatio;
+                tempCtx.drawImage(image, 0, (tempProfileImageCanvas.height - h) / 2, tempProfileImageCanvas.width, h);
+            } else {
+                let w = tempProfileImageCanvas.width * canvasRatio / imgRatio;
+                tempCtx.drawImage(image, (tempProfileImageCanvas.width - w) / 2, 0, w, tempProfileImageCanvas.height);
+            }
+    
+            let imageData = tempCtx.getImageData(0, 0, AVATAR.PROFILE_IMAGE_DIMENSIONS_MAX_PX, AVATAR.PROFILE_IMAGE_DIMENSIONS_MAX_PX);
+            let selectedPixel: any;
+            for (let i = 0; i < AVATAR.PROFILE_IMAGE_DIMENSIONS_MAX_PX; i++) {
+                for (let j = 0; j < AVATAR.PROFILE_IMAGE_DIMENSIONS_MAX_PX; j++) {
+                    let rgba = Utilities.getPixelDataFromCanvasImageData(imageData.data, i, j, imageData.width);
+                    let hsv = Utilities.RGBtoHSV(rgba);
+                    if (!selectedPixel || (hsv.s > selectedPixel.s && hsv.v > 0.3 && hsv.v < 0.8)) {
+                        selectedPixel = { x: i, y: j, rgba: rgba, s: hsv.s, v: hsv.v };
+                    }
+                }
+            }
+    
+            tempProfileImageCanvas.toBlob((blob) => {
+                tempProfileImageCanvas.remove();
+                let s3KeyName = `${Utilities.generateUUID(true)}.png`;
+                s3Controller.s3.upload({
+                    Bucket: s3Controller.bucketName,
+                    Key: s3KeyName,
+                    Body: blob,
+                    ACL: "public-read"
+                }, (err, data) => {
+                    if (err) {
+                        console.log(`There was an error uploading your photo:\n${err.message}`);
+                        return;
+                    }
+        
+                    console.log(`Successfully uploaded photo! URL:\n${data.Location}`);
+    
+                    userDataController.myAvatar.onMyProfileImageURLChanged(data.Location);
+                    let newHexColor = Utilities.RGBAtoHex(selectedPixel.rgba, true);
+                    userDataController.myAvatar.onMyColorHexChanged(newHexColor);
+                });
+            });
+        };
+        image.src = newBase64String;
     }
 
     generateEchoCancellationUI(userData: UserData) {
@@ -664,10 +796,8 @@ export class UIController {
 
         this.avatarContextMenu.innerHTML = ``;
 
-        this.generateHeader(userData);
         this.generateCloseButtonUI();
-        this.generateDisplayNameUI(userData);
-        this.generateCustomizeUI(userData);
+        this.generateHeader(userData);
         this.generateEchoCancellationUI(userData);
         this.generateAGCUI(userData);
         this.generateNoiseSuppressionUI(userData);
@@ -700,6 +830,29 @@ export class UIController {
         }
 
         (<HTMLHeadingElement>this.avatarContextMenu.querySelector('.avatarContextMenu__displayName')).innerText = userData.displayName ? userData.displayName : userData.providedUserID;
+
+        let avatarContextMenu__avatarCircle = <HTMLElement>document.querySelector(".avatarContextMenu__avatarCircle");
+        if (avatarContextMenu__avatarCircle) {
+            avatarContextMenu__avatarCircle.style.backgroundColor = userDataController.myAvatar.myUserData.colorHex;
+
+            if (userData.profileImageEl && userData.profileImageEl.complete) {
+                avatarContextMenu__avatarCircle.style.backgroundImage = `url(${userDataController.myAvatar.myUserData.profileImageURL})`;
+
+                let avatarContextMenu__removeLink = document.querySelector(".avatarContextMenu__removeLink");
+                let avatarContextMenu__avatarRepresentation = document.querySelector(".avatarContextMenu__avatarRepresentation");
+                if (!avatarContextMenu__removeLink && avatarContextMenu__avatarRepresentation) {
+                    let removeLink = document.createElement("a");
+                    removeLink.classList.add("avatarContextMenu__removeLink");
+                    removeLink.innerHTML = `Remove`;
+                    removeLink.addEventListener("click", (e) => {
+                        userDataController.myAvatar.onMyProfileImageURLChanged("");
+                    });
+                    avatarContextMenu__avatarRepresentation.appendChild(removeLink);
+                }
+            } else {
+                avatarContextMenu__avatarCircle.style.backgroundImage = "none";
+            }
+        }
 
         let echoCancellationCheckbox = this.avatarContextMenu.querySelector(".echoCancellationCheckbox");
         if (echoCancellationCheckbox) {

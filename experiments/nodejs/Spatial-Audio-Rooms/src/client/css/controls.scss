@@ -897,9 +897,14 @@ $bottom-controls-container-height: 72px;
         font-family: 'Graphik-Bold', 'Helvetica', 'Arial', sans-serif;
         border-radius: 4px;
         border: none;
-        margin: 0 24px 4px 24px;
+
+        &:not(&--mine) {
+            margin: 0 8px 4px 0;
+            color: map-get(themes.$light-theme, text-input);
+        }
 
         &--mine {
+            margin: 0 24px 4px 24px;
             width: calc(100% - 8px - 48px);
             padding: 4px;
 
@@ -940,6 +945,21 @@ $bottom-controls-container-height: 72px;
         margin: 8px 0 0 0;
     }
 
+    &__avatarCircle {
+        width: 40px;
+        height: 40px;
+        display: inline-block;
+        border-radius: 40px;
+        border: none;
+        padding: 0;
+        margin: 0;
+        background-size: contain;
+
+        &--mine {
+            cursor: pointer;
+        }
+    }
+
     &__colorHexInput {
         width: 40px;
         height: 40px;
@@ -966,7 +986,7 @@ $bottom-controls-container-height: 72px;
         cursor: pointer;
         border: none;
         outline: none;
-        padding: 0 12px;
+        padding: 0 6px;
 
         &Image {
             margin: 0 6px 0 0;
@@ -990,6 +1010,10 @@ $bottom-controls-container-height: 72px;
     &__addPhotoButtonImage {
         width: 16px;
         height: 13px;
+    }
+
+    &__imageFile {
+        display: none;
     }
 
     &__userGainForThisConnection,
@@ -1283,6 +1307,7 @@ input:checked+.slider:before {
     height: 39px;
     width: 39px;
     border-radius: 39px;
+    background-size: contain;
 
     &:not(:focus):hover {
         cursor: pointer;

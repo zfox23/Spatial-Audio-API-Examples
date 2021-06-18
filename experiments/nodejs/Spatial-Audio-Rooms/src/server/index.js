@@ -200,13 +200,14 @@ class ServerSpaceInfo {
 }
 
 class Participant {
-    constructor({ socketID, spaceName, visitIDHash, currentSeatID, displayName, colorHex, isAudioInputMuted, echoCancellationEnabled, agcEnabled, noiseSuppressionEnabled, hiFiGainSliderValue, volumeThreshold, currentWatchPartyRoomName, } = {}) {
+    constructor({ socketID, spaceName, visitIDHash, currentSeatID, displayName, colorHex, profileImageURL, isAudioInputMuted, echoCancellationEnabled, agcEnabled, noiseSuppressionEnabled, hiFiGainSliderValue, volumeThreshold, currentWatchPartyRoomName, } = {}) {
         this.socketID = socketID;
         this.spaceName = spaceName;
         this.visitIDHash = visitIDHash;
         this.currentSeatID = currentSeatID;
         this.displayName = displayName;
         this.colorHex = colorHex;
+        this.profileImageURL = profileImageURL;
         this.isAudioInputMuted = isAudioInputMuted;
         this.echoCancellationEnabled = echoCancellationEnabled;
         this.agcEnabled = agcEnabled;
@@ -272,7 +273,7 @@ function onWatchPartyUserLeft(visitIDHash) {
 
 let spaceInformation = {};
 socketIOServer.on("connection", (socket) => {
-    socket.on("addParticipant", ({ spaceName, visitIDHash, currentSeatID, displayName, colorHex, isAudioInputMuted, echoCancellationEnabled, agcEnabled, noiseSuppressionEnabled, hiFiGainSliderValue, volumeThreshold, currentWatchPartyRoomName, } = {}) => {
+    socket.on("addParticipant", ({ spaceName, visitIDHash, currentSeatID, displayName, colorHex, profileImageURL, isAudioInputMuted, echoCancellationEnabled, agcEnabled, noiseSuppressionEnabled, hiFiGainSliderValue, volumeThreshold, currentWatchPartyRoomName, } = {}) => {
         if (!spaceInformation[spaceName]) {
             spaceInformation[spaceName] = new ServerSpaceInfo({ spaceName });
         }
@@ -291,6 +292,7 @@ socketIOServer.on("connection", (socket) => {
             currentSeatID,
             displayName,
             colorHex,
+            profileImageURL,
             isAudioInputMuted,
             echoCancellationEnabled,
             agcEnabled,
@@ -308,7 +310,7 @@ socketIOServer.on("connection", (socket) => {
         socket.emit("onParticipantsAddedOrEdited", spaceInformation[spaceName].participants.filter((participant) => { return participant.visitIDHash !== visitIDHash; }));
     });
 
-    socket.on("editParticipant", ({ spaceName, visitIDHash, currentSeatID, displayName, colorHex, isAudioInputMuted, echoCancellationEnabled, agcEnabled, noiseSuppressionEnabled, hiFiGainSliderValue, volumeThreshold, currentWatchPartyRoomName, } = {}) => {
+    socket.on("editParticipant", ({ spaceName, visitIDHash, currentSeatID, displayName, colorHex, profileImageURL, isAudioInputMuted, echoCancellationEnabled, agcEnabled, noiseSuppressionEnabled, hiFiGainSliderValue, volumeThreshold, currentWatchPartyRoomName, } = {}) => {
         let participantToEdit = spaceInformation[spaceName].participants.find((participant) => {
             return participant.visitIDHash === visitIDHash;
         });
@@ -322,6 +324,9 @@ socketIOServer.on("connection", (socket) => {
             }
             if (typeof (colorHex) === "string") {
                 participantToEdit.colorHex = colorHex;
+            }
+            if (typeof (profileImageURL) === "string") {
+                participantToEdit.profileImageURL = profileImageURL;
             }
             if (typeof (isAudioInputMuted) === "boolean") {
                 participantToEdit.isAudioInputMuted = isAudioInputMuted;

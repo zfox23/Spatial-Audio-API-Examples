@@ -110,6 +110,90 @@ export class Utilities {
         }
     }
 
+    static RGBtoHSV(rgb: any) {
+        let r = rgb.r;
+        let g = rgb.g;
+        let b = rgb.b;
+
+        let h;
+        let s;
+        let v;
+
+        let maxColor = Math.max(r, g, b);
+        let minColor = Math.min(r, g, b);
+        let delta = maxColor - minColor;
+
+        // Calculate hue
+        // To simplify the formula, we use 0-6 range.
+        if (delta === 0) {
+            h = 0;
+        } else if (r === maxColor) {
+            h = (6 + (g - b) / delta) % 6;
+        } else if (g === maxColor) {
+            h = 2 + (b - r) / delta;
+        } else if (b === maxColor) {
+            h = 4 + (r - g) / delta;
+        } else {
+            h = 0;
+        }
+        // Then adjust the range to be 0-1
+        h = h / 6;
+
+        // Calculate saturation
+        if (maxColor != 0) {
+            s = delta / maxColor;
+        } else {
+            s = 0;
+        }
+
+        // Calculate value
+        v = maxColor / 255;
+
+        return { h: h, s: s, v: v };
+    }
+
+    static RGBAtoHex(rgba: any, ignoreAlpha: boolean) {
+        let hexR = Number(rgba.r).toString(16);
+        if (hexR.length < 2) {
+            hexR = "0" + hexR;
+        }
+        let hexG = Number(rgba.g).toString(16);
+        if (hexG.length < 2) {
+            hexG = "0" + hexG;
+        }
+        let hexB = Number(rgba.b).toString(16);
+        if (hexB.length < 2) {
+            hexB = "0" + hexB;
+        }
+        let hexA;
+        if (rgba.a && !ignoreAlpha) {
+            hexA = Number(rgba.a).toString(16);
+            if (hexA.length < 2) {
+                hexA = "0" + hexA;
+            }
+        }
+
+        if (hexA) {
+            return `#${hexR}${hexG}${hexB}${hexA}`;
+        } else {
+            return `#${hexR}${hexG}${hexB}`;
+        }
+    }
+
+    static getPixelDataFromCanvasImageData(imageData: Uint8ClampedArray, x: number, y: number, width: number) {
+        let red = imageData[y * (width * 4) + x * 4];
+        let green = imageData[y * (width * 4) + x * 4 + 1];
+        let blue = imageData[y * (width * 4) + x * 4 + 2];
+        let alpha = imageData[y * (width * 4) + x * 4 + 3];
+
+        return {
+            r: red,
+            g: green,
+            b: blue,
+            a: alpha
+        };
+    }
+
     static getConstrastingTextColor(rgb: any) {
         // HSP Color Model equation from http://alienryderflex.com/hsp.html
         // The three constants (.299, .587, and .114) represent the different degrees to which each of the primary (RGB) colors 
