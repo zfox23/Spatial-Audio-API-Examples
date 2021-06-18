@@ -280,24 +280,30 @@ export class UIController {
         let customizeUI = document.createElement("div");
         customizeUI.classList.add("avatarContextMenu__customizeContainer");
 
+        let avatarContextMenu__avatarRepresentation = document.createElement("div");
+        avatarContextMenu__avatarRepresentation.classList.add("avatarContextMenu__avatarRepresentation");
+
         let colorHexInput: HTMLInputElement;
         colorHexInput = document.createElement("input");
+        colorHexInput.classList.add("avatarContextMenu__colorHexInput");
         colorHexInput.type = "color";
         colorHexInput.value = userData.colorHex || Utilities.hexColorFromString(userData.visitIDHash);
-
         if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash) {
             colorHexInput.classList.add("avatarContextMenu__colorHexInput--mine");
-
             colorHexInput.addEventListener('input', (e) => {
                 userDataController.myAvatar.onMyColorHexChanged((<HTMLInputElement>e.target).value);
             });
+            avatarContextMenu__avatarRepresentation.appendChild(colorHexInput);
+
+            let removeLink = document.createElement("a");
+            removeLink.classList.add("avatarContextMenu__removeLink");
+            removeLink.innerHTML = `Remove`;
+            avatarContextMenu__avatarRepresentation.appendChild(removeLink);
         } else {
             colorHexInput.disabled = true;
+            avatarContextMenu__avatarRepresentation.appendChild(colorHexInput);
         }
-
-        colorHexInput.classList.add("avatarContextMenu__colorHexInput");
-
-        customizeUI.appendChild(colorHexInput);
+        customizeUI.appendChild(avatarContextMenu__avatarRepresentation);
 
         if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash) {
             let chooseColorButton = document.createElement("button");
@@ -547,6 +553,16 @@ export class UIController {
         avatarContextMenu__userGainForThisConnectionContainer.appendChild(avatarContextMenu__userGainForThisConnectionSlider);
     }
 
+    onHiFiGainSliderValueChanged(slider: HTMLInputElement, userData: UserData) {
+        let gainSliderValue = slider.value;
+        if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash) {
+            userInputController.setHiFiGainFromSliderValue(gainSliderValue);
+        } else {
+            webSocketConnectionController.requestToChangeHiFiGainSliderValue(userData.visitIDHash, gainSliderValue);
+        }
+        this.maybeUpdateAvatarContextMenu(userData);
+    }
+
     generateHiFiGainUI(userData: UserData) {
         if (typeof (userData.hiFiGain) !== "number") {
             return;
@@ -561,9 +577,12 @@ export class UIController {
         avatarContextMenu__hiFiGainHeader.classList.add("avatarContextMenu__hiFiGainHeader");
         avatarContextMenu__hiFiGainContainer.appendChild(avatarContextMenu__hiFiGainHeader);
 
+        let avatarContextMenu__hiFiGainSliderContainer = document.createElement("div");
+        avatarContextMenu__hiFiGainSliderContainer.classList.add("avatarContextMenu__hiFiGainSliderContainer");
+
         let avatarContextMenu__hiFiGainSlider = document.createElement("input");
         avatarContextMenu__hiFiGainSlider.type = "range";
-        avatarContextMenu__hiFiGainSlider.min = "1";
+        avatarContextMenu__hiFiGainSlider.min = "0";
         avatarContextMenu__hiFiGainSlider.max = "21";
         avatarContextMenu__hiFiGainSlider.value = userData.hiFiGainSliderValue;
         avatarContextMenu__hiFiGainSlider.step = "1";
@@ -571,15 +590,23 @@ export class UIController {
 
         // The `input` event fires as the user is changing the value of the slider.
         avatarContextMenu__hiFiGainSlider.addEventListener("input", (e) => {
-            let gainSliderValue = (<HTMLInputElement>e.target).value;
-            if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash) {
-                userInputController.setHiFiGainFromSliderValue(gainSliderValue);
-            } else {
-                webSocketConnectionController.requestToChangeHiFiGainSliderValue(userData.visitIDHash, gainSliderValue);
-            }
+            this.onHiFiGainSliderValueChanged((<HTMLInputElement>e.target), userData);
         });
 
-        avatarContextMenu__hiFiGainContainer.appendChild(avatarContextMenu__hiFiGainSlider);
+        let avatarContextMenu__hiFiGainSliderLeftImage = document.createElement("div");
+        avatarContextMenu__hiFiGainSliderLeftImage.classList.add("avatarContextMenu__hiFiGainSliderLeftImage");
+        avatarContextMenu__hiFiGainSliderLeftImage.addEventListener("click", (e) => {
+            avatarContextMenu__hiFiGainSlider.value = "0";
+            this.onHiFiGainSliderValueChanged(avatarContextMenu__hiFiGainSlider, userData);
+        });
+
+        let avatarContextMenu__hiFiGainSliderRightImage = document.createElement("div");
+        avatarContextMenu__hiFiGainSliderRightImage.classList.add("avatarContextMenu__hiFiGainSliderRightImage");
+
+        avatarContextMenu__hiFiGainSliderContainer.appendChild(avatarContextMenu__hiFiGainSliderLeftImage);
+        avatarContextMenu__hiFiGainSliderContainer.appendChild(avatarContextMenu__hiFiGainSlider);
+        avatarContextMenu__hiFiGainSliderContainer.appendChild(avatarContextMenu__hiFiGainSliderRightImage);
+        avatarContextMenu__hiFiGainContainer.appendChild(avatarContextMenu__hiFiGainSliderContainer);
     }
 
     generateVolumeThresholdUI(userData: UserData) {
@@ -715,6 +742,8 @@ export class UIController {
         // Make the UI look nice with a default gain slider value of 1.0 instead of 1.05...
         if (hiFiGainSliderValue === "11") {
             return 1.0;
+        } else if (hiFiGainSliderValue === "0") {
+            return 0.0;
         } else {
             return Utilities.logarithmicScale(parseInt(hiFiGainSliderValue), 1, 21, 1, 110) / 10;
         }

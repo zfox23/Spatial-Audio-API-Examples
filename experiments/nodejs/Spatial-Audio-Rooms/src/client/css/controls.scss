@@ -807,18 +807,35 @@ $bottom-controls-container-height: 72px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    max-height: calc(100vh - #{$bottom-controls-container-height} - 36px);
+
+    &::-webkit-scrollbar {
+        width: 12px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: "transparent";
+        margin: 8px 0;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background-color: map-get(themes.$light-theme, scrollbar-thumb);
+        border: 1px solid map-get(themes.$light-theme, scrollbar-track);
+        border-radius: 16px;
+    }
 
     &--mine {
         border-radius: 0 5px 0 0;
         left: 0;
         bottom: $bottom-controls-container-height;
-        padding: 12px 0;
+        padding: 18px 0;
     }
 
     &:not(&--mine) {
         border-radius: 4px;
-        padding: 0;
+        padding: 18px 0;
         max-width: 80%;
         max-height: 80%;
     }
@@ -901,10 +918,26 @@ $bottom-controls-container-height: 72px;
     &__customizeContainer {
         width: calc(100% - 48px);
         display: flex;
-        height: 40px;
-        margin: 0 24px 24px 24px;
-        align-items: center;
+        margin: 8px 24px 24px 24px;
+        align-items: flex-start;
         border-image: none;
+    }
+
+    &__avatarRepresentation {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin: 0 12px 0 0;
+    }
+
+    &__removeLink {
+        text-align: center;
+        text-decoration: underline;
+        font-family: 'Graphik', 'Helvetica', 'Arial', sans-serif;
+        font-size: 12px;
+        color: #042042;
+        cursor: pointer;
+        margin: 8px 0 0 0;
     }
 
     &__colorHexInput {
@@ -914,7 +947,7 @@ $bottom-controls-container-height: 72px;
         border-radius: 40px;
         border: none;
         padding: 0;
-        margin: 0 12px 0 0;
+        margin: 0;
 
         &--mine {
             cursor: pointer;
@@ -978,11 +1011,44 @@ $bottom-controls-container-height: 72px;
             font-family: 'Graphik', 'Helvetica', 'Arial', sans-serif;
             font-weight: 600;
         }
+    }
 
+    &__userGainForThisConnection,
+    &__volumeThreshold {
         &Slider {
             width: calc(100% - 48px);
             cursor: pointer;
             margin: 8px 24px 0 24px;
+        }
+    }
+
+    &__hiFiGain {
+        &Slider {
+            width: 100%;
+            cursor: pointer;
+            margin: 0 8px;
+
+            &Container {
+                width: calc(100% - 48px);
+                margin: 8px 24px 0 24px;
+                display: flex;
+            }
+
+            &LeftImage {
+                background: url('../images/icons/light-theme/mic-slider-left-light.svg') no-repeat center center;
+                cursor: pointer;
+            }
+
+            &RightImage {
+                background: url('../images/icons/light-theme/mic-slider-right-light.svg') no-repeat center center;
+            }
+
+            &LeftImage,
+            &RightImage {
+                background-size: contain;
+                width: 24px;
+                height: 24px;
+            }
         }
     }
 
@@ -995,8 +1061,9 @@ $bottom-controls-container-height: 72px;
     &__muteForAllButton {
         height: 32px;
         margin: 8px 0 4px 0;
+        padding: 12px;
         font-size: 16px;
-        line-height: 16px;
+        line-height: 12px;
         font-family: 'Graphik', 'Helvetica', 'Arial', sans-serif;
         border-radius: 4px;
         border: none;
