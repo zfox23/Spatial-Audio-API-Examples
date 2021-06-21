@@ -3,9 +3,6 @@ import { SpatialAudioRoom } from "../ui/RoomController";
 import { UITheme } from "../ui/UIThemeController";
 import Room1 from "../../../server/static/rooms/Room1.jpg";
 import Room2 from "../../../server/static/rooms/Room2.jpg";
-import Room3 from "../../../server/static/rooms/Room3.jpg";
-import Room4 from "../../../server/static/rooms/Room4.jpg";
-import Room5 from "../../../server/static/rooms/Room5.jpg";
 import SeatingRadius1Image2 from "../../../server/static/rooms/room-with-seating-radius-1-bg-2.jpg";
 import { Landmark } from "../ui/LandmarksController";
 declare var HIFI_SPACE_NAME: string;
@@ -109,32 +106,6 @@ export class AppConfigController {
             dimensions: new Point3D({x: 5.0, y: 0, z: 4.1845703125 }),
             seatingRadiusM: 1.15,
             roomImageSRC: Room2
-        }));
-        this.rooms.push(new SpatialAudioRoom({
-            name: "Room 3",
-            roomCenter: new Point3D({ x: -5, y: 0, z: 4.59228515625 }),
-            seatingCenter: new Point3D({ x: -4.32, y: 0, z: 4.825 }),
-            dimensions: new Point3D({x: 5.0, y: 0, z: 4.1845703125 }),
-            numSeatsInRoom: 4,
-            seatingRadiusM: 0.7,
-            roomImageSRC: Room3
-        }));
-        this.rooms.push(new SpatialAudioRoom({
-            name: "Room 4",
-            roomCenter: new Point3D({ x: -5, y: 0, z: 8.75828515625 }),
-            seatingCenter: new Point3D({ x: -4.32, y: 0, z: 8.73 }),
-            dimensions: new Point3D({x: 5.0, y: 0, z: 4.1845703125 }),
-            numSeatsInRoom: 4,
-            seatingRadiusM: 0.7,
-            roomImageSRC: Room4
-        }));
-        this.rooms.push(new SpatialAudioRoom({
-            name: "Room 5",
-            roomCenter: new Point3D({ x: 0, y: 0, z: 9.182 }),
-            seatingCenter: new Point3D({x: 0.09221915190033814, z: 9.2}),
-            dimensions: new Point3D({x: 5.0, y: 0, z: 5.0 }),
-            seatingRadiusM: 1.7,
-            roomImageSRC: Room5
         }));
         this.rooms.push(new SpatialAudioRoom({
             name: "Private Room",

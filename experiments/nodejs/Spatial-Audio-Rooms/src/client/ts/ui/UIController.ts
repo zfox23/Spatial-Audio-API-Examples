@@ -52,6 +52,15 @@ export class UIController {
         playButton.appendChild(playAnimation);
         playContainer.appendChild(playButton);
 
+        let playOverlay__separator = document.createElement("div");
+        playOverlay__separator.classList.add("playOverlay__separator");
+        playContainer.appendChild(playOverlay__separator);
+
+        let playOverlay__byContinuing = document.createElement("p");
+        playOverlay__byContinuing.classList.add("playOverlay__byContinuing");
+        playOverlay__byContinuing.innerHTML = `By continuing, you agree to High Fidelity's <a href="https://www.highfidelity.com/terms-of-service" target="_blank">Terms of Service</a> and <a href="https://www.highfidelity.com/privacy" target="_blank">Privacy Policy</a>.`
+        playContainer.appendChild(playOverlay__byContinuing);
+
         playButton.addEventListener("click", (e) => { this.startConnectionProcess(); });
     }
 

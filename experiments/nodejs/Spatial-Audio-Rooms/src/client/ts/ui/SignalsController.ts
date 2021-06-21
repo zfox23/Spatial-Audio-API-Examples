@@ -80,6 +80,10 @@ export class SignalsController {
 
         this.localAudioElToUse = this.localAudio2;
 
+        return;
+        // Signals aren't a thing in Spatial Audio Rooms as of June 2021
+        // They'll be replaced with an emoji reaction system later.
+
         this.signalButtonContainer = document.createElement("div");
         this.signalButtonContainer.classList.add('signalButtonContainer');
         document.body.appendChild(this.signalButtonContainer);
@@ -100,6 +104,10 @@ export class SignalsController {
     }
 
     updateSignalUI() {
+        return;
+        // Signals aren't a thing in Spatial Audio Rooms as of June 2021
+        // They'll be replaced with an emoji reaction system later.
+        
         let children = this.signalButtonContainer.children;
         for (let i = 0; i < children.length; i++) {
             children[i].classList.remove('signalButton--active');

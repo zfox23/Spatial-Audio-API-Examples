@@ -259,15 +259,50 @@ export class RoomController {
     showRoomListButton: HTMLButtonElement;
     roomListOuterContainer: HTMLDivElement;
     roomListInnerContainer: HTMLDivElement;
+    topBar__allRoomsPeopleCount: HTMLDivElement;
     currentlyHoveringOverVisitIDHash: string;
 
     constructor() {
         this.rooms = [];
 
+        let topBar = document.createElement("div");
+        topBar.classList.add("topBar");
+        topBar.addEventListener("click", this.hideRoomList.bind(this));
+        document.body.appendChild(topBar);
+
         this.showRoomListButton = document.createElement("button");
         this.showRoomListButton.classList.add("showRoomListButton");
-        document.body.appendChild(this.showRoomListButton);
-        this.showRoomListButton.addEventListener("click", this.toggleRoomList.bind(this));
+        topBar.appendChild(this.showRoomListButton);
+        this.showRoomListButton.addEventListener("click", (e) => {
+            this.toggleRoomList();
+            e.stopPropagation();
+        });
+
+        let topBar__roomsHeader = document.createElement("h1");
+        topBar__roomsHeader.classList.add("topBar__roomsHeader");
+        topBar__roomsHeader.innerHTML = "Rooms";
+        topBar__roomsHeader.addEventListener("click", (e) => {
+            this.toggleRoomList();
+            e.stopPropagation();
+        });
+        topBar.appendChild(topBar__roomsHeader);
+
+        let topBar__peopleIcon = document.createElement("div");
+        topBar__peopleIcon.classList.add("topBar__peopleIcon");
+        topBar__peopleIcon.addEventListener("click", (e) => {
+            this.toggleRoomList();
+            e.stopPropagation();
+        });
+        topBar.appendChild(topBar__peopleIcon);
+
+        this.topBar__allRoomsPeopleCount = document.createElement("p");
+        this.topBar__allRoomsPeopleCount.classList.add("topBar__allRoomsPeopleCount");
+        this.topBar__allRoomsPeopleCount.innerHTML = "0";
+        this.topBar__allRoomsPeopleCount.addEventListener("click", (e) => {
+            this.toggleRoomList();
+            e.stopPropagation();
+        });
+        topBar.appendChild(this.topBar__allRoomsPeopleCount);
 
         this.roomListOuterContainer = document.createElement("div");
         this.roomListOuterContainer.classList.add("roomListOuterContainer", "displayNone");
@@ -383,13 +418,9 @@ export class RoomController {
     }
 
     updateRoomList() {
-        this.roomListInnerContainer.innerHTML = ``;
+        let totalNumOccupiedSeats = 0;
 
-        let roomListInnerContainer__header = document.createElement("h1");
-        roomListInnerContainer__header.classList.add("roomListInnerContainer__header");
-        uiThemeController.refreshThemedElements();
-        roomListInnerContainer__header.innerHTML = `Rooms`;
-        this.roomListInnerContainer.appendChild(roomListInnerContainer__header);
+        this.roomListInnerContainer.innerHTML = ``;
 
         this.rooms.forEach((room) => {
             let roomInfoContainer = document.createElement("div");
@@ -402,7 +433,8 @@ export class RoomController {
             let roomInfoContainer__header = document.createElement("h2");
             roomInfoContainer__header.classList.add("roomInfoContainer__header");
             let occupiedSeats = room.seats.filter((seat) => { return !!seat.occupiedUserData; });
-            roomInfoContainer__header.innerHTML = `${room.name} (${occupiedSeats.length}/${room.numSeatsInRoom})`;
+            roomInfoContainer__header.innerHTML = `${room.name} <span class="roomInfoContainer__peopleIcon"></span> ${occupiedSeats.length}/${room.numSeatsInRoom}`;
+            totalNumOccupiedSeats += occupiedSeats.length;
             roomInfoContainer__header.addEventListener("click", (e) => {
                 if (userDataController.myAvatar.myUserData.currentRoom === room) {
                     console.log(`User is already in room \`${room.name}\`!`);
@@ -432,15 +464,15 @@ export class RoomController {
             roomInfoContainer__occupant.setAttribute('data-visit-id-hash', userData.visitIDHash);
             let occupantInnerHTML;
             if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash) {
-                occupantInnerHTML = `<span class="roomInfoContainer__occupantColorChip" style="background-color:${userDataController.myAvatar.myUserData.colorHex}"></span>`;
-                occupantInnerHTML += `(you) ${userData.displayName}`;
+                occupantInnerHTML = `<span class="roomInfoContainer__occupantAvatar" style="background-color:${userDataController.myAvatar.myUserData.colorHex};border-color:${userDataController.myAvatar.myUserData.colorHex};background-image:url(${userDataController.myAvatar.myUserData.profileImageURL ? userDataController.myAvatar.myUserData.profileImageURL : "none"});"></span>`;
+                occupantInnerHTML += `<div class="roomInfoContainer__occupantTextContainer"><p class="roomInfoContainer__occupantTextTop">${userData.displayName}</p><p class="roomInfoContainer__occupantTextBottom">(YOU)</p></div>`;
                 if (userData.currentRoom) {
                     document.querySelector(`[data-room-name="${userData.currentRoom.name}"]`).prepend(roomInfoContainer__occupant);
                 }
             } else {
                 occupantInnerHTML = ``;
                 if (userData.colorHex) {
-                    occupantInnerHTML += `<span class="roomInfoContainer__occupantColorChip" style="background-color:${userData.colorHex}"></span>`;
+                    occupantInnerHTML += `<span class="roomInfoContainer__occupantAvatar" style="background-color:${userData.colorHex};border-color:${userData.colorHex};background-image:url(${userData.profileImageURL ? userData.profileImageURL : "none"});"></span>`;
                 }
                 occupantInnerHTML += userData.displayName && userData.displayName.length > 0 ? userData.displayName : userData.providedUserID;
                 if (userData.currentRoom) {
@@ -459,6 +491,8 @@ export class RoomController {
                 this.currentlyHoveringOverVisitIDHash = undefined;
             });
         });
+
+        this.topBar__allRoomsPeopleCount.innerHTML = totalNumOccupiedSeats.toString();
 
         uiThemeController.refreshThemedElements();
     }

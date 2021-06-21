@@ -62,9 +62,7 @@ export class TwoDimensionalRenderer {
 
         let roomListInnerContainer = <HTMLElement>document.querySelector(".roomListInnerContainer");
         if (roomListInnerContainer) {
-            let topMarginPX = bottomBarHeight;
-            roomListInnerContainer.style.margin = `${topMarginPX}px 0 0 0`;
-            roomListInnerContainer.style.height = `calc(100vh - ${bottomBarHeight}px - ${topMarginPX}px)`;
+            roomListInnerContainer.style.height = `calc(100vh - ${bottomBarHeight}px - 48px - 16px)`;
         }
 
         let youTubePlayerContainer = <HTMLElement>document.querySelector(".youTubePlayerContainer");

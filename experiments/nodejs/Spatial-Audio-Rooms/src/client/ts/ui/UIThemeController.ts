@@ -67,7 +67,6 @@ export class UIThemeController {
         this.addThemedElementFromClassName("settingsMenu__h2");
         this.addThemedElementFromClassName("roomListOuterContainer");
         this.addThemedElementFromClassName("roomListInnerContainer");
-        this.addThemedElementFromClassName("roomListInnerContainer__header");
         this.addThemedElementFromClassName("roomInfoContainer");
         this.addThemedElementFromClassName("roomInfoContainer--mine");
         this.addThemedElementFromClassName("modalBackground");
