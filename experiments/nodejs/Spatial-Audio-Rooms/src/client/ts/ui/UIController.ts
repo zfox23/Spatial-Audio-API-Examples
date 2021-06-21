@@ -173,6 +173,10 @@ export class UIController {
             myProfileImageEl.src = userDataController.myAvatar.myUserData.profileImageURL;
         }
 
+        if (myProfileImage) {
+            myProfileImage.style.borderColor = userDataController.myAvatar.myUserData.colorHex;
+        }
+
         this.maybeUpdateAvatarContextMenu(userDataController.myAvatar.myUserData);
         webSocketConnectionController.updateMyUserDataOnWebSocketServer();
         try {
@@ -273,7 +277,6 @@ export class UIController {
     
     generateCloseButtonUI() {
         let closeButton = document.createElement("button");
-        closeButton.innerHTML = "X";
         closeButton.classList.add("avatarContextMenu__closeButton");
         uiThemeController.refreshThemedElements();
         closeButton.addEventListener("click", (e) => {
@@ -319,6 +322,7 @@ export class UIController {
             let avatarContextMenu__avatarCircle = document.createElement("div");
             avatarContextMenu__avatarCircle.classList.add("avatarContextMenu__avatarCircle", "avatarContextMenu__avatarCircle--mine");
             avatarContextMenu__avatarCircle.style.backgroundColor = userData.colorHex;
+            avatarContextMenu__avatarCircle.style.borderColor = userData.colorHex;
             if (userData.profileImageEl && userData.profileImageEl.complete) {
                 avatarContextMenu__avatarCircle.style.backgroundImage = `url(${userDataController.myAvatar.myUserData.profileImageURL})`;
             }
@@ -402,8 +406,9 @@ export class UIController {
             let avatarContextMenu__avatarCircle = document.createElement("div");
             avatarContextMenu__avatarCircle.classList.add("avatarContextMenu__avatarCircle");
             avatarContextMenu__avatarCircle.style.backgroundColor = userData.colorHex;
+            avatarContextMenu__avatarCircle.style.borderColor = userData.colorHex;
             if (userData.profileImageEl && userData.profileImageEl.complete) {
-                avatarContextMenu__avatarCircle.style.backgroundImage = `url(${userDataController.myAvatar.myUserData.profileImageURL})`;
+                avatarContextMenu__avatarCircle.style.backgroundImage = `url(${userData.profileImageURL})`;
             }
             avatarContextMenu__avatarRepresentation.appendChild(avatarContextMenu__avatarCircle);
             avatarContextMenu__customizeContainer.appendChild(avatarContextMenu__avatarRepresentation);
@@ -866,10 +871,11 @@ export class UIController {
 
         let avatarContextMenu__avatarCircle = <HTMLElement>document.querySelector(".avatarContextMenu__avatarCircle");
         if (avatarContextMenu__avatarCircle) {
-            avatarContextMenu__avatarCircle.style.backgroundColor = userDataController.myAvatar.myUserData.colorHex;
+            avatarContextMenu__avatarCircle.style.backgroundColor = userData.colorHex;
 
             if (userData.profileImageEl && userData.profileImageEl.complete) {
-                avatarContextMenu__avatarCircle.style.backgroundImage = `url(${userDataController.myAvatar.myUserData.profileImageURL})`;
+                avatarContextMenu__avatarCircle.style.backgroundImage = `url(${userData.profileImageURL})`;
+                avatarContextMenu__avatarCircle.style.borderColor = userData.colorHex;
 
                 let avatarContextMenu__removeLink = document.querySelector(".avatarContextMenu__removeLink");
                 let avatarContextMenu__avatarRepresentation = document.querySelector(".avatarContextMenu__avatarRepresentation");

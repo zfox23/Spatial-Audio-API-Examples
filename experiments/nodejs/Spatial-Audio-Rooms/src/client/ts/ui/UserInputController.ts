@@ -198,7 +198,6 @@ export class UserInputController {
                     settingsMenu.classList.add("settingsMenu");
 
                     let closeButton = document.createElement("button");
-                    closeButton.innerHTML = "X";
                     closeButton.classList.add("settingsMenu__closeButton");
                     closeButton.addEventListener("click", (e) => {
                         this.hideSettingsMenu();
@@ -307,14 +306,20 @@ export class UserInputController {
                         avDevicesController.changeVideoDevice((<HTMLSelectElement>e.target).value);
                     });
 
-                    settingsMenu.appendChild(changeAudioInputDeviceMenu__header);
-                    settingsMenu.appendChild(changeAudioInputDeviceMenu__select);
+                    if (numAudioInputDevices > 0) {
+                        settingsMenu.appendChild(changeAudioInputDeviceMenu__header);
+                        settingsMenu.appendChild(changeAudioInputDeviceMenu__select);
+                    }
 
-                    settingsMenu.appendChild(changeAudioOutputDeviceMenu__header);
-                    settingsMenu.appendChild(changeAudioOutputDeviceMenu__select);
+                    if (numAudioOutputDevices > 0) {
+                        settingsMenu.appendChild(changeAudioOutputDeviceMenu__header);
+                        settingsMenu.appendChild(changeAudioOutputDeviceMenu__select);
+                    }
 
-                    settingsMenu.appendChild(changeVideoDeviceMenu__header);
-                    settingsMenu.appendChild(changeVideoDeviceMenu__select);
+                    if (numVideoDevices > 0) {
+                        settingsMenu.appendChild(changeVideoDeviceMenu__header);
+                        settingsMenu.appendChild(changeVideoDeviceMenu__select);
+                    }
 
                     document.body.appendChild(settingsMenu);
                     uiThemeController.refreshThemedElements();

@@ -554,6 +554,7 @@ $bottom-controls-container-height: 72px;
         background-color: transparent;
         padding: 0;
         cursor: pointer;
+        background: url('../images/icons/light-theme/close-light.svg') no-repeat center center;
 
         &--light-theme {
             color: map-get(themes.$light-theme, settings-menu-h1);
@@ -888,12 +889,13 @@ $bottom-controls-container-height: 72px;
         height: 42px;
         margin: 0;
         font-size: 18px;
-        font-family: 'Graphik-Bold', 'Helvetica', 'Arial', sans-serif;
+        font-family: 'Graphik', 'Helvetica', 'Arial', sans-serif;
         border: none;
         outline: none;
         background-color: transparent;
         padding: 0;
         cursor: pointer;
+        background: url('../images/icons/light-theme/close-light.svg') no-repeat center center;
 
         &--light-theme {
             color: map-get(themes.$light-theme, settings-menu-h1);
@@ -963,7 +965,7 @@ $bottom-controls-container-height: 72px;
         height: 40px;
         display: inline-block;
         border-radius: 40px;
-        border: none;
+        border: 2px solid;
         padding: 0;
         margin: 0;
         background-size: contain;
@@ -999,7 +1001,9 @@ $bottom-controls-container-height: 72px;
         cursor: pointer;
         border: none;
         outline: none;
-        padding: 0 6px;
+        padding: 0 12px;
+        position: relative;
+        top: 3px;
 
         &Image {
             margin: 0 6px 0 0;
@@ -1153,7 +1157,7 @@ $bottom-controls-container-height: 72px;
     &__muteForAllButton {
         height: 35px;
         margin: 16px 0 4px 0;
-        padding: 8px 12px;
+        padding: 8px 14px;
         font-size: 16px;
         line-height: 12px;
         font-family: 'Graphik', 'Helvetica', 'Arial', sans-serif;
@@ -1162,6 +1166,11 @@ $bottom-controls-container-height: 72px;
         cursor: pointer;
         background: radial-gradient(100.77% 213.47% at 47.81% -44.9%, #FF8380 0%, #FC615D 100%);
         color: #FFFFFF;
+
+        &>span {
+            position: relative;
+            top: -1px;
+        }
 
         &:hover {
             background: radial-gradient(100.77% 213.47% at 47.81% -44.9%, #FC615D 0%, #FF8380 100%);
@@ -1390,6 +1399,7 @@ input:checked+.slider:before {
     width: 39px;
     border-radius: 39px;
     background-size: contain;
+    border: 2px solid;
 
     &:not(:focus):hover {
         cursor: pointer;
@@ -1459,7 +1469,7 @@ input[type=range]::-webkit-slider-thumb {
     border-radius: 22px;
     background: #ffffff;
     cursor: pointer;
-    margin-top: -9px;
+    margin-top: -10px;
 }
 
 input[type=range]:focus::-webkit-slider-runnable-track {
@@ -1484,7 +1494,7 @@ input[type=range]::-moz-range-thumb {
     border-radius: 22px;
     background: #ffffff;
     cursor: pointer;
-    margin-top: -9px;
+    margin-top: -10px;
 }
 
 input[type="range"]::-moz-range-progress {
