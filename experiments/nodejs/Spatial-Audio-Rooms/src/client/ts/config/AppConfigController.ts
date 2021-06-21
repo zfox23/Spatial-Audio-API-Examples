@@ -91,28 +91,22 @@ export class AppConfigController {
 
     initializeDefaultRooms() {
         this.rooms.push(new SpatialAudioRoom({
-            name: "Room 1",
-            roomCenter: new Point3D({ x: 0, y: 0, z: 0 }),
-            seatingCenter: new Point3D({ x: 0.125, y: 0, z: 1.015 }),
-            seatingRadiusM: 0.9,
-            dimensions: new Point3D({x: 5.0, y: 0, z: 5.0 }),
-            numSeatsInRoom: 8,
-            roomImageSRC: Room1
+            "name": "Small Room",
+            "roomCenter": { "x": -4.3, "y": 0, "z": -1.03  },
+            "seatingCenter": {"x": -4.368974709501025, "y": 0, "z": -1.0196103896103903},
+            "dimensions": {"x": 6.59, "y": 0, "z": 7.19 },
+            "numSeatsInRoom": 12,
+            "seatingRadiusM": 1.2,
+            "roomImageSRC": Room1
         }));
         this.rooms.push(new SpatialAudioRoom({
-            name: "Room 2",
-            roomCenter: new Point3D({ x: 0, y: 0, z: 4.59228515625 }),
-            seatingCenter: new Point3D({ x: 0.05, y: 0, z: 4.68 }),
-            dimensions: new Point3D({x: 5.0, y: 0, z: 4.1845703125 }),
-            seatingRadiusM: 1.15,
-            roomImageSRC: Room2
-        }));
-        this.rooms.push(new SpatialAudioRoom({
-            name: "Private Room",
-            seatingCenter: new Point3D({ x: 100, y: 0, z: 100 }),
-            dimensions: new Point3D({x: 3.6, y: 0, z: 3.6 }),
-            seatingRadiusM: 1.0,
-            roomImageSRC: SeatingRadius1Image2
+            "name": "Large Room",
+            "roomCenter": { "x": 3.30, "y": 0, "z": 0 },
+            "seatingCenter": {"x": 3.51459649122807, "y": 0, "z": 0.10519298245614023},
+            "dimensions": {"x": 8.64, "y": 0, "z": 9.304 },
+            "numSeatsInRoom": 20,
+            "seatingRadiusM": 2.0,
+            "roomImageSRC": Room2
         }));
     }
     

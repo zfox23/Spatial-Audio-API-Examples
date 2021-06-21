@@ -5,8 +5,8 @@
     "rooms": [
         {
             "name": "Small Room",
-            "roomCenter": { "x": -4.39, "y": 0, "z": 1.03  },
-            "seatingCenter": { "x": -4.39, "y": 0, "z": 1.03 },
+            "roomCenter": { "x": -4.3, "y": 0, "z": -1.03  },
+            "seatingCenter": {"x": -4.368974709501025, "y": 0, "z": -1.0196103896103903},
             "dimensions": {"x": 6.59, "y": 0, "z": 7.19 },
             "numSeatsInRoom": 12,
             "seatingRadiusM": 1.2,
@@ -15,9 +15,9 @@
         {
             "name": "Large Room",
             "roomCenter": { "x": 3.30, "y": 0, "z": 0 },
-            "seatingCenter": { "x": 3.522, "y": 0, "z": -0.06  },
+            "seatingCenter": {"x": 3.51459649122807, "y": 0, "z": 0.10519298245614023},
             "dimensions": {"x": 8.64, "y": 0, "z": 9.304 },
-            "numSeatsInRoom": 24,
+            "numSeatsInRoom": 20,
             "seatingRadiusM": 2.0,
             "roomImageSRC": "/spatial-audio-rooms/rooms/Room2.jpg"
         }
