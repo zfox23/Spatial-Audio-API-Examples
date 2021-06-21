@@ -5,8 +5,8 @@
     "rooms": [
         {
             "name": "Small Room",
-            "roomCenter": { "x": -4.3, "y": 0, "z": -1.03  },
-            "seatingCenter": {"x": -4.368974709501025, "y": 0, "z": -1.0196103896103903},
+            "roomCenter": { "x": -4.3, "y": 0, "z": -1.055 },
+            "seatingCenter": {"x": -4.397745090149535, "y": 0, "z": -1.0481428664107273},
             "dimensions": {"x": 6.59, "y": 0, "z": 7.19 },
             "numSeatsInRoom": 12,
             "seatingRadiusM": 1.2,
