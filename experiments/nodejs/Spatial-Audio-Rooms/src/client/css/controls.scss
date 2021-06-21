@@ -27,10 +27,10 @@ $bottom-controls-container-height: 72px;
         flex-wrap: wrap;
         align-items: flex-start;
         align-content: center;
-        margin: 24px auto 0 auto;
+        margin: 0 auto;
         padding: 12px;
         flex-direction: column;
-        width: 540px;
+        width: 350px;
         max-width: 90%;
     }
 
@@ -177,6 +177,30 @@ $bottom-controls-container-height: 72px;
             to {
                 transform: scale(1.6, 1.6);
                 opacity: 0;
+            }
+        }
+    }
+
+    &__separator {
+        width: 100%;
+        height: 1px;
+        background-color: #24A3FF;
+        margin: 24px 0;
+    }
+
+    &__byContinuing {
+        font-family: 'Graphik', 'Helvetica', 'Arial', sans-serif;
+        font-size: 16px;
+        line-height: 18px;
+        color: #8F8F8F;
+
+        &>a {
+            font-family: 'Graphik-Bold', 'Helvetica', 'Arial', sans-serif;
+            color: #8F8F8F;
+            text-decoration: none;
+
+            &:visited {
+                color: #8F8F8F;
             }
         }
     }
@@ -621,19 +645,52 @@ $bottom-controls-container-height: 72px;
     }
 }
 
+.topBar {
+    width: 100vw;
+    height: 48px;
+    display: flex;
+    background: rgba(255, 255, 255, 0.9);
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: map-get(z-indices.$z-index, belowHamburger);
+    align-items: center;
+
+    &__roomsHeader {
+        font-size: 15px;
+        font-family: 'Graphik', 'Helvetica', 'Arial', sans-serif;
+        margin: 0;
+        cursor: pointer;
+    }
+
+    &__peopleIcon {
+        width: 20px;
+        height: 16px;
+        background-size: contain;
+        background: url('../images/icons/light-theme/people-light.svg') no-repeat center center;
+        margin: 0 6px 0 16px;
+        cursor: pointer;
+    }
+
+    &__allRoomsPeopleCount {
+        font-size: 15px;
+        font-family: 'Graphik', 'Helvetica', 'Arial', sans-serif;
+        color: #4F5659;
+        cursor: pointer;
+    }
+}
+
 .showRoomListButton {
-    width: 32px;
-    height: 32px;
+    width: 18px;
+    height: 18px;
     background-repeat: no-repeat;
     background-size: contain;
     background-position: center center;
-    margin: 16px;
+    margin: 16px 10px 16px 16px;
     cursor: pointer;
     background-color: transparent;
     border: none;
     outline: none;
-    position: fixed;
-    z-index: map-get(z-indices.$z-index, aboveHamburger);
 
     &--light-theme {
         background-image: url('../images/icons/light-theme/hamburger.svg');
@@ -646,7 +703,7 @@ $bottom-controls-container-height: 72px;
 
 .roomListOuterContainer {
     position: fixed;
-    top: 0;
+    top: 48px;
     left: 0;
     bottom: 72px;
     width: 280px;
@@ -665,7 +722,7 @@ $bottom-controls-container-height: 72px;
 }
 
 .roomListInnerContainer {
-    margin: 72px 0 0 0;
+    margin: 16px 0 0 0;
     height: calc(100vh - #{$bottom-controls-container-height});
     display: flex;
     flex-direction: column;
@@ -749,8 +806,20 @@ $bottom-controls-container-height: 72px;
     &__header {
         cursor: pointer;
         margin: 0 0 12px 0;
-        font-size: 18px;
-        line-height: 18px;
+        font-size: 14px;
+        line-height: 14px;
+        text-transform: uppercase;
+    }
+
+    &__peopleIcon {
+        width: 14px;
+        height: 14px;
+        display: inline-block;
+        background: url('../images/icons/light-theme/people-light.svg') no-repeat center center;
+        background-size: contain;
+        margin: 0 2px 0 16px;
+        position: relative;
+        top: 2px;
     }
 
     &__occupantsList {
@@ -762,23 +831,41 @@ $bottom-controls-container-height: 72px;
 
     &__occupant {
         margin: 5px 0 5px 0;
-        font-size: 16px;
+        font-size: 15px;
         cursor: pointer;
         overflow: hidden;
         white-space: nowrap;
         text-overflow: ellipsis;
+        font-family: 'Graphik-Bold', 'Helvetica', 'Arial', sans-serif;
+        display: flex;
+        align-items: center;
+
+        &TextContainer {
+            display: flex;
+            flex-direction: column;
+        }
+
+        &TextTop {
+            margin: 0 0 2px 0;
+        }
+
+        &TextBottom {
+            font-family: 'Graphik', 'Helvetica', 'Arial', sans-serif;
+            margin: 0;
+            font-size: 11px;
+            color: #8E9297;
+        }
     }
 
-    &__occupantColorChip {
-        width: 14px;
-        height: 14px;
+    &__occupantAvatar {
+        width: 28px;
+        height: 28px;
         display: inline-block;
-        margin: 0 4px 0 0;
+        margin: 0 6px 0 0;
         padding: 0;
-        position: relative;
-        top: 2px;
         border-radius: 16px;
-        border: 1px solid white;
+        border: 1px solid;
+        background-size: contain;
     }
 }
 
