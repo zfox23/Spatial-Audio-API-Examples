@@ -6,6 +6,7 @@ import { Utilities } from '../utilities/Utilities';
 import { AVATAR, PHYSICS } from '../constants/constants';
 import ChooseColorButtonImage from '../../images/chooseColorButtonImage.png';
 import AddPhotoButtonImage from '../../images/photo-select-icon.png';
+import MuteForEveryoneButtonIcon from '../../images/mute-for-everyone-button-icon.svg';
 
 export class UIController {
     playOverlay: HTMLElement;
@@ -78,7 +79,7 @@ export class UIController {
         myProfileImageContainer.appendChild(myProfileImage);
         myProfileContainer.appendChild(myProfileImageContainer);
 
-        let myDisplayName = document.createElement("span");
+        let myDisplayName = document.createElement("p");
         myDisplayName.classList.add("myDisplayName");
         myProfileContainer.appendChild(myDisplayName);
 
@@ -259,6 +260,7 @@ export class UIController {
 
     hideAvatarContextMenu() {
         this.modalBackground.classList.add("displayNone");
+        this.modalBackground.classList.remove("modalBackground--mobileFullscreen");
         this.avatarContextMenu.classList.add("displayNone");
         this.avatarContextMenu.removeAttribute('visit-id-hash');
         this.avatarContextMenu.classList.remove("avatarContextMenu--mine");
@@ -290,7 +292,7 @@ export class UIController {
         avatarContextMenu__avatarRepresentation.classList.add("avatarContextMenu__avatarRepresentation");
 
         let avatarContextMenu__h1 = document.createElement("h1");
-        avatarContextMenu__h1.classList.add("settingsMenu__h1");
+        avatarContextMenu__h1.classList.add("avatarContextMenu__h1");
         avatarContextMenu__h1.innerHTML = "Profile";
         this.avatarContextMenu.appendChild(avatarContextMenu__h1);
 
@@ -660,6 +662,9 @@ export class UIController {
         avatarContextMenu__userGainForThisConnectionHeader.classList.add("avatarContextMenu__userGainForThisConnectionHeader");
         avatarContextMenu__userGainForThisConnectionContainer.appendChild(avatarContextMenu__userGainForThisConnectionHeader);
 
+        let avatarContextMenu__userGainForThisConnectionSliderContainer = document.createElement("div");
+        avatarContextMenu__userGainForThisConnectionSliderContainer.classList.add("avatarContextMenu__userGainForThisConnectionSliderContainer");
+
         let avatarContextMenu__userGainForThisConnectionSlider = document.createElement("input");
         avatarContextMenu__userGainForThisConnectionSlider.type = "range";
         avatarContextMenu__userGainForThisConnectionSlider.min = "0.0";
@@ -682,7 +687,21 @@ export class UIController {
             this.maybeUpdateAvatarContextMenu(userData);
         });
 
-        avatarContextMenu__userGainForThisConnectionContainer.appendChild(avatarContextMenu__userGainForThisConnectionSlider);
+        let avatarContextMenu__userGainForThisConnectionSliderLeftImage = document.createElement("div");
+        avatarContextMenu__userGainForThisConnectionSliderLeftImage.classList.add("avatarContextMenu__userGainForThisConnectionSliderLeftImage");
+
+        let avatarContextMenu__userGainForThisConnectionSliderRightImage = document.createElement("div");
+        avatarContextMenu__userGainForThisConnectionSliderRightImage.classList.add("avatarContextMenu__userGainForThisConnectionSliderRightImage");
+
+        avatarContextMenu__userGainForThisConnectionSliderContainer.appendChild(avatarContextMenu__userGainForThisConnectionSliderLeftImage);
+        avatarContextMenu__userGainForThisConnectionSliderContainer.appendChild(avatarContextMenu__userGainForThisConnectionSlider);
+        avatarContextMenu__userGainForThisConnectionSliderContainer.appendChild(avatarContextMenu__userGainForThisConnectionSliderRightImage);
+        avatarContextMenu__userGainForThisConnectionContainer.appendChild(avatarContextMenu__userGainForThisConnectionSliderContainer);
+
+        let avatarContextMenu__userGainForThisConnectionFooter = document.createElement("p");
+        avatarContextMenu__userGainForThisConnectionFooter.innerHTML = `<div class="avatarContextMenu__userGainForThisConnectionFooterImage"></div> Controls how loud this person is <strong>for just you</strong>`;
+        avatarContextMenu__userGainForThisConnectionFooter.classList.add("avatarContextMenu__userGainForThisConnectionFooter");
+        avatarContextMenu__userGainForThisConnectionContainer.appendChild(avatarContextMenu__userGainForThisConnectionFooter);
     }
 
     onHiFiGainSliderValueChanged(slider: HTMLInputElement, userData: UserData) {
@@ -739,6 +758,13 @@ export class UIController {
         avatarContextMenu__hiFiGainSliderContainer.appendChild(avatarContextMenu__hiFiGainSlider);
         avatarContextMenu__hiFiGainSliderContainer.appendChild(avatarContextMenu__hiFiGainSliderRightImage);
         avatarContextMenu__hiFiGainContainer.appendChild(avatarContextMenu__hiFiGainSliderContainer);
+
+        if (userData.visitIDHash !== userDataController.myAvatar.myUserData.visitIDHash) {
+            let avatarContextMenu__hiFiGainFooter = document.createElement("p");
+            avatarContextMenu__hiFiGainFooter.innerHTML = `<div class="avatarContextMenu__hiFiGainFooterImage"></div> Controls how loud this person is <strong>for everyone</strong>`;
+            avatarContextMenu__hiFiGainFooter.classList.add("avatarContextMenu__hiFiGainFooter");
+            avatarContextMenu__hiFiGainContainer.appendChild(avatarContextMenu__hiFiGainFooter);
+        }
     }
 
     generateVolumeThresholdUI(userData: UserData) {
@@ -780,14 +806,19 @@ export class UIController {
             return;
         }
 
-        let muteForAllButton;
-        muteForAllButton = document.createElement("button");
+        let muteForAllButton = document.createElement("button");
         muteForAllButton.classList.add("avatarContextMenu__muteForAllButton");
-        muteForAllButton.innerHTML = "Mute this person for everyone";
         muteForAllButton.addEventListener('click', (e) => {
             webSocketConnectionController.requestToMuteAudioInputDevice(userData.visitIDHash);
         });
-        muteForAllButton.classList.add("avatarContextMenu__muteForAllButton");
+        let muteForAllButtonImage = document.createElement("img");
+        muteForAllButtonImage.classList.add("avatarContextMenu__muteForAllButtonImage");
+        muteForAllButtonImage.src = MuteForEveryoneButtonIcon;
+        muteForAllButton.appendChild(muteForAllButtonImage);
+        let muteForAllButtonText = document.createElement("span");
+        muteForAllButtonImage.classList.add("avatarContextMenu__muteForAllButtonText");
+        muteForAllButtonText.innerHTML = "Mute for everyone";
+        muteForAllButton.appendChild(muteForAllButtonText);
         this.avatarContextMenu.appendChild(muteForAllButton);
     }
 
@@ -821,6 +852,8 @@ export class UIController {
             if (bottomControlsContainer) {
                 bottomControlsContainer.classList.add("displayNone");
             }
+        } else {
+            this.modalBackground.classList.add("modalBackground--mobileFullscreen");
         }
     }
 

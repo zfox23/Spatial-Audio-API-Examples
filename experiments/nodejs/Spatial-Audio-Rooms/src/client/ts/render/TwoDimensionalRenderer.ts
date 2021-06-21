@@ -72,11 +72,6 @@ export class TwoDimensionalRenderer {
             youTubePlayerContainer.style.height = `calc(100vh - ${bottomBarHeight} - 150px)`;
         }
 
-        let modalBackground = <HTMLElement>document.querySelector(".modalBackground");
-        if (modalBackground) {
-            modalBackground.style.height = `calc(100vh - ${bottomBarHeight})`;
-        }
-
         this.normalModeCanvas.width = window.innerWidth;
         this.normalModeCanvas.style.height = `${window.innerHeight - bottomBarHeight}px`;
         this.normalModeCanvas.height = window.innerHeight - bottomBarHeight;
