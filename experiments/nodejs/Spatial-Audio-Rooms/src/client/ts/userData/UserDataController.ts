@@ -89,7 +89,7 @@ class MyAvatar {
             volumeDecibelsPeak: undefined,
             volumeThreshold: -60,
             hiFiGain: 1.0,
-            hiFiGainSliderValue: "11",
+            hiFiGainSliderValue: "21",
             isAudioInputMuted: false,
             echoCancellationEnabled: false,
             agcEnabled: false,

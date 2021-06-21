@@ -748,7 +748,7 @@ export class UIController {
         let avatarContextMenu__hiFiGainSlider = document.createElement("input");
         avatarContextMenu__hiFiGainSlider.type = "range";
         avatarContextMenu__hiFiGainSlider.min = "0";
-        avatarContextMenu__hiFiGainSlider.max = "21";
+        avatarContextMenu__hiFiGainSlider.max = "41";
         avatarContextMenu__hiFiGainSlider.value = userData.hiFiGainSliderValue;
         avatarContextMenu__hiFiGainSlider.step = "1";
         avatarContextMenu__hiFiGainSlider.classList.add("avatarContextMenu__hiFiGainSlider");
@@ -941,12 +941,12 @@ export class UIController {
 
     hiFiGainFromSliderValue(hiFiGainSliderValue: string) {
         // Make the UI look nice with a default gain slider value of 1.0 instead of 1.05...
-        if (hiFiGainSliderValue === "11") {
+        if (hiFiGainSliderValue === "21") {
             return 1.0;
         } else if (hiFiGainSliderValue === "0") {
             return 0.0;
         } else {
-            return Utilities.logarithmicScale(parseInt(hiFiGainSliderValue), 1, 21, 1, 110) / 10;
+            return Utilities.logarithmicScale(parseInt(hiFiGainSliderValue), 1, 41, 1, 110) / 10;
         }
     }
 }
