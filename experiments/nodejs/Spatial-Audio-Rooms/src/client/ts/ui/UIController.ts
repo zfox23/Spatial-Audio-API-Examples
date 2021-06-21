@@ -1,9 +1,12 @@
-import { connectionController, physicsController, roomController, twoDimensionalRenderer, uiThemeController, userDataController, userInputController, webSocketConnectionController } from '..';
+import { connectionController, physicsController, roomController, s3Controller, twoDimensionalRenderer, uiThemeController, userDataController, userInputController, webSocketConnectionController } from '..';
 import '../../css/controls.scss';
 import { AudionetInitResponse } from '../connection/ConnectionController';
 import { UserData } from '../userData/UserDataController';
 import { Utilities } from '../utilities/Utilities';
-import { PHYSICS } from '../constants/constants';
+import { AVATAR, PHYSICS } from '../constants/constants';
+import ChooseColorButtonImage from '../../images/chooseColorButtonImage.png';
+import AddPhotoButtonImage from '../../images/photo-select-icon.png';
+import MuteForEveryoneButtonIcon from '../../images/mute-for-everyone-button-icon.svg';
 
 export class UIController {
     playOverlay: HTMLElement;
@@ -56,6 +59,7 @@ export class UIController {
         let bottomBar = document.createElement("div");
         bottomBar.classList.add("bottomBar");
         bottomBar.addEventListener("click", (e) => { userInputController.hideSettingsMenu(); });
+        bottomBar.addEventListener("click", this.hideAvatarContextMenu.bind(this));
         document.body.appendChild(bottomBar);
 
         let bottomControlsContainer = document.createElement("div");
@@ -70,11 +74,12 @@ export class UIController {
         myProfileImage.classList.add("myProfileImage");
         myProfileImage.addEventListener("click", (e) => {
             this.showAvatarContextMenu(userDataController.myAvatar.myUserData);
+            e.stopPropagation();
         });
         myProfileImageContainer.appendChild(myProfileImage);
         myProfileContainer.appendChild(myProfileImageContainer);
 
-        let myDisplayName = document.createElement("span");
+        let myDisplayName = document.createElement("p");
         myDisplayName.classList.add("myDisplayName");
         myProfileContainer.appendChild(myDisplayName);
 
@@ -83,6 +88,7 @@ export class UIController {
         editMyProfileLink.classList.add("editMyProfileLink");
         editMyProfileLink.addEventListener("click", (e) => {
             this.showAvatarContextMenu(userDataController.myAvatar.myUserData);
+            e.stopPropagation();
         });
         myProfileContainer.appendChild(editMyProfileLink);
 
@@ -134,10 +140,48 @@ export class UIController {
     }
 
     updateMyProfileImage() {
-        let myProfileImage = document.querySelector(".myProfileImage");
-        if (myProfileImage) {
-            (<HTMLElement>myProfileImage).style.backgroundColor = userDataController.myAvatar.myUserData.colorHex;
+        let avatarContextMenu__removeLink = document.querySelector(".avatarContextMenu__removeLink");
+        let myProfileImage = <HTMLElement>document.querySelector(".myProfileImage");
+
+        if (!userDataController.myAvatar.myUserData.profileImageURL || userDataController.myAvatar.myUserData.profileImageURL.length === 0) {
+            let avatarContextMenu__imageFile: HTMLInputElement = document.querySelector(".avatarContextMenu__imageFile");
+            if (avatarContextMenu__imageFile) {
+                avatarContextMenu__imageFile.value = null;
+            }
+            if (avatarContextMenu__removeLink) {
+                avatarContextMenu__removeLink.classList.add("displayNone");
+            }
+            if (myProfileImage) {
+                myProfileImage.style.backgroundColor = userDataController.myAvatar.myUserData.colorHex;
+                myProfileImage.style.backgroundImage = "none";
+            }
+
+            userDataController.myAvatar.myUserData.profileImageEl = undefined;
+        } else {
+            if (avatarContextMenu__removeLink) {
+                avatarContextMenu__removeLink.classList.remove("displayNone");
+            }
+            if (myProfileImage) {
+                myProfileImage.style.backgroundImage = `url(${userDataController.myAvatar.myUserData.profileImageURL})`;
+            }
+
+            let myProfileImageEl = new Image();
+            myProfileImageEl.addEventListener("load", () => {
+                userDataController.myAvatar.myUserData.profileImageEl = myProfileImageEl;
+                this.maybeUpdateAvatarContextMenu(userDataController.myAvatar.myUserData);
+            });
+            myProfileImageEl.src = userDataController.myAvatar.myUserData.profileImageURL;
         }
+
+        if (myProfileImage) {
+            myProfileImage.style.borderColor = userDataController.myAvatar.myUserData.colorHex;
+        }
+
+        this.maybeUpdateAvatarContextMenu(userDataController.myAvatar.myUserData);
+        webSocketConnectionController.updateMyUserDataOnWebSocketServer();
+        try {
+            roomController.updateRoomList();
+        } catch (e) { }
     }
 
     updateMyDisplayName() {
@@ -220,13 +264,19 @@ export class UIController {
 
     hideAvatarContextMenu() {
         this.modalBackground.classList.add("displayNone");
+        this.modalBackground.classList.remove("modalBackground--mobileFullscreen");
         this.avatarContextMenu.classList.add("displayNone");
         this.avatarContextMenu.removeAttribute('visit-id-hash');
-    }
+        this.avatarContextMenu.classList.remove("avatarContextMenu--mine");
 
+        let bottomControlsContainer = document.querySelector(".bottomControlsContainer");
+        if (bottomControlsContainer) {
+            bottomControlsContainer.classList.remove("displayNone");
+        }
+    }
+    
     generateCloseButtonUI() {
         let closeButton = document.createElement("button");
-        closeButton.innerHTML = "X";
         closeButton.classList.add("avatarContextMenu__closeButton");
         uiThemeController.refreshThemedElements();
         closeButton.addEventListener("click", (e) => {
@@ -235,45 +285,198 @@ export class UIController {
         this.avatarContextMenu.appendChild(closeButton);
     }
 
-    generateDisplayNameUI(userData: UserData) {
+    generateHeader(userData: UserData) {
         let displayName;
+
+        let avatarContextMenu__customizeContainer = document.createElement("div");
+        avatarContextMenu__customizeContainer.classList.add("avatarContextMenu__customizeContainer");
+
+        let avatarContextMenu__avatarRepresentation = document.createElement("div");
+        avatarContextMenu__avatarRepresentation.classList.add("avatarContextMenu__avatarRepresentation");
+
+        let avatarContextMenu__h1 = document.createElement("h1");
+        avatarContextMenu__h1.classList.add("avatarContextMenu__h1");
+        avatarContextMenu__h1.innerHTML = "Profile";
+        this.avatarContextMenu.appendChild(avatarContextMenu__h1);
+
         if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash) {
             displayName = document.createElement("input");
-            displayName.classList.add("avatarContextMenu__displayName--mine");
+            displayName.classList.add("avatarContextMenu__displayName", "avatarContextMenu__displayName--mine");
             displayName.type = "text";
             displayName.value = userData.displayName;
 
             displayName.addEventListener('input', (e) => {
                 userDataController.myAvatar.onMyDisplayNameChanged((<HTMLInputElement>e.target).value);
             });
+            
+            let colorHexInput = document.createElement("input");
+            colorHexInput.classList.add("avatarContextMenu__colorHexInput", "displayNone");
+            colorHexInput.type = "color";
+            colorHexInput.value = userData.colorHex || Utilities.hexColorFromString(userData.visitIDHash);
+            colorHexInput.classList.add("avatarContextMenu__colorHexInput--mine");
+            colorHexInput.addEventListener('input', (e) => {
+                userDataController.myAvatar.onMyColorHexChanged((<HTMLInputElement>e.target).value);
+            });
+            avatarContextMenu__avatarRepresentation.appendChild(colorHexInput);
+            
+            let avatarContextMenu__avatarCircle = document.createElement("div");
+            avatarContextMenu__avatarCircle.classList.add("avatarContextMenu__avatarCircle", "avatarContextMenu__avatarCircle--mine");
+            avatarContextMenu__avatarCircle.style.backgroundColor = userData.colorHex;
+            avatarContextMenu__avatarCircle.style.borderColor = userData.colorHex;
+            if (userData.profileImageEl && userData.profileImageEl.complete) {
+                avatarContextMenu__avatarCircle.style.backgroundImage = `url(${userDataController.myAvatar.myUserData.profileImageURL})`;
+            }
+            avatarContextMenu__avatarCircle.addEventListener('click', (e) => {
+                colorHexInput.click();
+            });
+            avatarContextMenu__avatarRepresentation.appendChild(avatarContextMenu__avatarCircle);
+
+            if (userData.profileImageURL && userData.profileImageURL.length > 0) {
+                let removeLink = document.createElement("a");
+                removeLink.classList.add("avatarContextMenu__removeLink");
+                removeLink.innerHTML = `Remove`;
+                removeLink.addEventListener("click", (e) => {
+                    userDataController.myAvatar.onMyProfileImageURLChanged("");
+                });
+                avatarContextMenu__avatarRepresentation.appendChild(removeLink);
+            }
+
+            avatarContextMenu__customizeContainer.appendChild(avatarContextMenu__avatarRepresentation);
+
+            let chooseColorButton = document.createElement("button");
+            chooseColorButton.classList.add("avatarContextMenu__chooseColorButton");
+            chooseColorButton.addEventListener('click', (e) => {
+                colorHexInput.click();
+            });
+            let chooseColorButtonImage = document.createElement("img");
+            chooseColorButtonImage.classList.add("avatarContextMenu__chooseColorButtonImage");
+            chooseColorButtonImage.src = ChooseColorButtonImage;
+            chooseColorButton.appendChild(chooseColorButtonImage);
+            let chooseColorButtonText = document.createElement("span");
+            chooseColorButtonText.classList.add("avatarContextMenu__chooseColorButtonText");
+            chooseColorButtonText.innerHTML = "Choose Color";
+            chooseColorButton.appendChild(chooseColorButtonText);
+            avatarContextMenu__customizeContainer.appendChild(chooseColorButton);
+            
+            let avatarContextMenu__imageFile = document.createElement("input");
+            avatarContextMenu__imageFile.classList.add("avatarContextMenu__imageFile");
+            avatarContextMenu__imageFile.type = "file";
+            avatarContextMenu__imageFile.accept = "image/*"
+            avatarContextMenu__imageFile.addEventListener("change", (e) => {
+                let selectedFile = (<HTMLInputElement>(e.currentTarget)).files;
+                if (selectedFile.length === 1) {
+                    let imageFile = selectedFile[0];
+
+                    let fileReader = new FileReader();
+                    fileReader.onload = (fileLoadedEvent) => {
+                        let srcData = fileLoadedEvent.target.result;
+                        let newImage = document.createElement('img');
+                        newImage.addEventListener('load', (event) => {
+                            this.updateProfileImageFromBase64String((<HTMLImageElement>event.currentTarget).src);
+                        });
+                        newImage.src = srcData as string;
+                    }
+                    fileReader.readAsDataURL(imageFile);
+                }
+            })
+            avatarContextMenu__customizeContainer.appendChild(avatarContextMenu__imageFile);
+            
+            let addPhotoButton = document.createElement("button");
+            addPhotoButton.classList.add("avatarContextMenu__addPhotoButton");
+            addPhotoButton.addEventListener('click', (e) => {
+                avatarContextMenu__imageFile.click();
+            });
+            let addPhotoButtonImage = document.createElement("img");
+            addPhotoButtonImage.classList.add("avatarContextMenu__addPhotoButtonImage");
+            addPhotoButtonImage.src = AddPhotoButtonImage;
+            addPhotoButton.appendChild(addPhotoButtonImage);
+            let addPhotoButtonText = document.createElement("span");
+            addPhotoButtonText.classList.add("avatarContextMenu__addPhotoButtonText");
+            addPhotoButtonText.innerHTML = "Add Photo";
+            addPhotoButton.appendChild(addPhotoButtonText);
+            avatarContextMenu__customizeContainer.appendChild(addPhotoButton);
+
+            this.avatarContextMenu.appendChild(displayName);
+            this.avatarContextMenu.appendChild(avatarContextMenu__customizeContainer);
         } else {
             displayName = document.createElement("h1");
+            displayName.classList.add("avatarContextMenu__displayName");
             displayName.innerText = userData.displayName && userData.displayName.length > 0 ? userData.displayName : userData.providedUserID;
+
+            let avatarContextMenu__avatarCircle = document.createElement("div");
+            avatarContextMenu__avatarCircle.classList.add("avatarContextMenu__avatarCircle");
+            avatarContextMenu__avatarCircle.style.backgroundColor = userData.colorHex;
+            avatarContextMenu__avatarCircle.style.borderColor = userData.colorHex;
+            if (userData.profileImageEl && userData.profileImageEl.complete) {
+                avatarContextMenu__avatarCircle.style.backgroundImage = `url(${userData.profileImageURL})`;
+            }
+            avatarContextMenu__avatarRepresentation.appendChild(avatarContextMenu__avatarCircle);
+            avatarContextMenu__customizeContainer.appendChild(avatarContextMenu__avatarRepresentation);
+
+            avatarContextMenu__customizeContainer.appendChild(displayName);
+            this.avatarContextMenu.appendChild(avatarContextMenu__customizeContainer);
         }
-        displayName.classList.add("avatarContextMenu__displayName");
-        this.avatarContextMenu.appendChild(displayName);
 
         uiThemeController.refreshThemedElements();
     }
 
-    generateColorHexUI(userData: UserData) {
-        let colorHexInput;
-        colorHexInput = document.createElement("input");
-        colorHexInput.type = "color";
-        colorHexInput.value = userData.colorHex || Utilities.hexColorFromString(userData.visitIDHash);
-
-        if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash) {
-            colorHexInput.classList.add("avatarContextMenu__colorHexInput--mine");
-
-            colorHexInput.addEventListener('input', (e) => {
-                userDataController.myAvatar.onMyColorHexChanged((<HTMLInputElement>e.target).value);
+    updateProfileImageFromBase64String(newBase64String: string) {
+        // Draw the image
+        let image = new Image();
+        image.onload = () => {
+            // Create canvas
+            let tempProfileImageCanvas = document.createElement('canvas');
+            let tempCtx = tempProfileImageCanvas.getContext('2d');
+            // Set width and height
+            tempProfileImageCanvas.width = AVATAR.PROFILE_IMAGE_DIMENSIONS_MAX_PX;
+            tempProfileImageCanvas.height = AVATAR.PROFILE_IMAGE_DIMENSIONS_MAX_PX;
+    
+            let imgRatio = image.height / image.width;
+            let canvasRatio = tempProfileImageCanvas.height / tempProfileImageCanvas.width;
+    
+            if (imgRatio > canvasRatio) {
+                let h = tempProfileImageCanvas.width * imgRatio;
+                tempCtx.drawImage(image, 0, (tempProfileImageCanvas.height - h) / 2, tempProfileImageCanvas.width, h);
+            } else {
+                let w = tempProfileImageCanvas.width * canvasRatio / imgRatio;
+                tempCtx.drawImage(image, (tempProfileImageCanvas.width - w) / 2, 0, w, tempProfileImageCanvas.height);
+            }
+    
+            let imageData = tempCtx.getImageData(0, 0, AVATAR.PROFILE_IMAGE_DIMENSIONS_MAX_PX, AVATAR.PROFILE_IMAGE_DIMENSIONS_MAX_PX);
+            let selectedPixel: any;
+            for (let i = 0; i < AVATAR.PROFILE_IMAGE_DIMENSIONS_MAX_PX; i++) {
+                for (let j = 0; j < AVATAR.PROFILE_IMAGE_DIMENSIONS_MAX_PX; j++) {
+                    let rgba = Utilities.getPixelDataFromCanvasImageData(imageData.data, i, j, imageData.width);
+                    let hsv = Utilities.RGBtoHSV(rgba);
+                    if (!selectedPixel || (hsv.s > selectedPixel.s && hsv.v > 0.3 && hsv.v < 0.8)) {
+                        selectedPixel = { x: i, y: j, rgba: rgba, s: hsv.s, v: hsv.v };
+                    }
+                }
+            }
+    
+            tempProfileImageCanvas.toBlob((blob) => {
+                tempProfileImageCanvas.remove();
+                let s3KeyName = `${Utilities.generateUUID(true)}.png`;
+                s3Controller.s3.upload({
+                    Bucket: s3Controller.bucketName,
+                    Key: s3KeyName,
+                    Body: blob,
+                    ACL: "public-read"
+                }, (err, data) => {
+                    if (err) {
+                        console.log(`There was an error uploading your photo:\n${err.message}`);
+                        return;
+                    }
+        
+                    console.log(`Successfully uploaded photo! URL:\n${data.Location}`);
+    
+                    userDataController.myAvatar.onMyProfileImageURLChanged(data.Location);
+                    let newHexColor = Utilities.RGBAtoHex(selectedPixel.rgba, true);
+                    userDataController.myAvatar.onMyColorHexChanged(newHexColor);
+                });
             });
-        } else {
-            colorHexInput.disabled = true;
-        }
-
-        colorHexInput.classList.add("avatarContextMenu__colorHexInput");
-        this.avatarContextMenu.appendChild(colorHexInput);
+        };
+        image.src = newBase64String;
     }
 
     generateEchoCancellationUI(userData: UserData) {
@@ -284,6 +487,17 @@ export class UIController {
         let echoCancellationContainer = document.createElement("div");
         echoCancellationContainer.classList.add("echoCancellationContainer");
         this.avatarContextMenu.appendChild(echoCancellationContainer);
+
+        let echoCancellationCheckboxLabel = document.createElement("label");
+        echoCancellationCheckboxLabel.setAttribute("for", "echoCancellationCheckbox");
+        echoCancellationCheckboxLabel.classList.add("echoCancellationCheckboxLabel");
+        echoCancellationCheckboxLabel.innerHTML = "Echo Cancellation";
+        echoCancellationContainer.appendChild(echoCancellationCheckboxLabel);
+
+        let echoCancellationSwitchLabel = document.createElement("label");
+        echoCancellationSwitchLabel.classList.add("switch");
+        let echoCancellationSwitchSlider = document.createElement("span");
+        echoCancellationSwitchSlider.classList.add("slider");
 
         let echoCancellationCheckbox = document.createElement("input");
         echoCancellationCheckbox.id = "echoCancellationCheckbox";
@@ -302,13 +516,11 @@ export class UIController {
                 }
             }
         });
-        echoCancellationContainer.appendChild(echoCancellationCheckbox);
 
-        let echoCancellationCheckboxLabel = document.createElement("label");
-        echoCancellationCheckboxLabel.setAttribute("for", "echoCancellationCheckbox");
-        echoCancellationCheckboxLabel.classList.add("echoCancellationCheckboxLabel");
-        echoCancellationCheckboxLabel.innerHTML = "Echo Cancellation";
-        echoCancellationContainer.appendChild(echoCancellationCheckboxLabel);
+        echoCancellationSwitchLabel.appendChild(echoCancellationCheckbox);
+        echoCancellationSwitchLabel.appendChild(echoCancellationSwitchSlider);
+
+        echoCancellationContainer.appendChild(echoCancellationSwitchLabel);
     }
 
     generateAGCUI(userData: UserData) {
@@ -319,6 +531,17 @@ export class UIController {
         let agcContainer = document.createElement("div");
         agcContainer.classList.add("agcContainer");
         this.avatarContextMenu.appendChild(agcContainer);
+
+        let agcCheckboxLabel = document.createElement("label");
+        agcCheckboxLabel.setAttribute("for", "agcCheckbox");
+        agcCheckboxLabel.classList.add("agcCheckboxLabel");
+        agcCheckboxLabel.innerHTML = "Automatic Gain Control";
+        agcContainer.appendChild(agcCheckboxLabel);
+
+        let agcSwitchLabel = document.createElement("label");
+        agcSwitchLabel.classList.add("switch");
+        let agcSwitchSlider = document.createElement("span");
+        agcSwitchSlider.classList.add("slider");
 
         let agcCheckbox = document.createElement("input");
         agcCheckbox.id = "agcCheckbox";
@@ -337,13 +560,11 @@ export class UIController {
                 }
             }
         });
-        agcContainer.appendChild(agcCheckbox);
 
-        let agcCheckboxLabel = document.createElement("label");
-        agcCheckboxLabel.setAttribute("for", "agcCheckbox");
-        agcCheckboxLabel.classList.add("agcCheckboxLabel");
-        agcCheckboxLabel.innerHTML = "Automatic Gain Control";
-        agcContainer.appendChild(agcCheckboxLabel);
+        agcSwitchLabel.appendChild(agcCheckbox);
+        agcSwitchLabel.appendChild(agcSwitchSlider);
+
+        agcContainer.appendChild(agcSwitchLabel);
     }
 
     generateNoiseSuppressionUI(userData: UserData) {
@@ -354,6 +575,17 @@ export class UIController {
         let noiseSuppressionContainer = document.createElement("div");
         noiseSuppressionContainer.classList.add("noiseSuppressionContainer");
         this.avatarContextMenu.appendChild(noiseSuppressionContainer);
+
+        let noiseSuppressionCheckboxLabel = document.createElement("label");
+        noiseSuppressionCheckboxLabel.setAttribute("for", "noiseSuppressionCheckbox");
+        noiseSuppressionCheckboxLabel.classList.add("noiseSuppressionCheckboxLabel");
+        noiseSuppressionCheckboxLabel.innerHTML = "Noise Suppression";
+        noiseSuppressionContainer.appendChild(noiseSuppressionCheckboxLabel);
+
+        let noiseSuppressionSwitchLabel = document.createElement("label");
+        noiseSuppressionSwitchLabel.classList.add("switch");
+        let noiseSuppressionSwitchSlider = document.createElement("span");
+        noiseSuppressionSwitchSlider.classList.add("slider");
 
         let noiseSuppressionCheckbox = document.createElement("input");
         noiseSuppressionCheckbox.id = "noiseSuppressionCheckbox";
@@ -372,13 +604,11 @@ export class UIController {
                 }
             }
         });
-        noiseSuppressionContainer.appendChild(noiseSuppressionCheckbox);
 
-        let noiseSuppressionCheckboxLabel = document.createElement("label");
-        noiseSuppressionCheckboxLabel.setAttribute("for", "noiseSuppressionCheckbox");
-        noiseSuppressionCheckboxLabel.classList.add("noiseSuppressionCheckboxLabel");
-        noiseSuppressionCheckboxLabel.innerHTML = "Noise Suppression";
-        noiseSuppressionContainer.appendChild(noiseSuppressionCheckboxLabel);
+        noiseSuppressionSwitchLabel.appendChild(noiseSuppressionCheckbox);
+        noiseSuppressionSwitchLabel.appendChild(noiseSuppressionSwitchSlider);
+
+        noiseSuppressionContainer.appendChild(noiseSuppressionSwitchLabel);
     }
 
     generateStereoInputUI(userData: UserData) {
@@ -390,6 +620,17 @@ export class UIController {
         stereoInputContainer.classList.add("stereoInputContainer");
         this.avatarContextMenu.appendChild(stereoInputContainer);
 
+        let stereoInputCheckboxLabel = document.createElement("label");
+        stereoInputCheckboxLabel.setAttribute("for", "stereoInputCheckbox");
+        stereoInputCheckboxLabel.classList.add("stereoInputCheckboxLabel");
+        stereoInputCheckboxLabel.innerHTML = "Stereo Input";
+        stereoInputContainer.appendChild(stereoInputCheckboxLabel);
+
+        let stereoInputSwitchLabel = document.createElement("label");
+        stereoInputSwitchLabel.classList.add("switch");
+        let stereoInputSwitchSlider = document.createElement("span");
+        stereoInputSwitchSlider.classList.add("slider");
+
         let stereoInputCheckbox = document.createElement("input");
         stereoInputCheckbox.id = "stereoInputCheckbox";
         stereoInputCheckbox.classList.add("stereoInputCheckbox");
@@ -399,13 +640,11 @@ export class UIController {
             let newStereoInputStatus = (<HTMLInputElement>e.target).checked;
             userInputController.setStereoInputStatus(newStereoInputStatus)
         });
-        stereoInputContainer.appendChild(stereoInputCheckbox);
 
-        let stereoInputCheckboxLabel = document.createElement("label");
-        stereoInputCheckboxLabel.setAttribute("for", "stereoInputCheckbox");
-        stereoInputCheckboxLabel.classList.add("stereoInputCheckboxLabel");
-        stereoInputCheckboxLabel.innerHTML = "Stereo Input";
-        stereoInputContainer.appendChild(stereoInputCheckboxLabel);
+        stereoInputSwitchLabel.appendChild(stereoInputCheckbox);
+        stereoInputSwitchLabel.appendChild(stereoInputSwitchSlider);
+
+        stereoInputContainer.appendChild(stereoInputSwitchLabel);
     }
 
     generateUserGainForThisConnectionUI(userData: UserData) {
@@ -427,6 +666,9 @@ export class UIController {
         avatarContextMenu__userGainForThisConnectionHeader.innerHTML = `Volume (Personal): ${Math.round(userData.userGainForThisConnection * 100)}%`;
         avatarContextMenu__userGainForThisConnectionHeader.classList.add("avatarContextMenu__userGainForThisConnectionHeader");
         avatarContextMenu__userGainForThisConnectionContainer.appendChild(avatarContextMenu__userGainForThisConnectionHeader);
+
+        let avatarContextMenu__userGainForThisConnectionSliderContainer = document.createElement("div");
+        avatarContextMenu__userGainForThisConnectionSliderContainer.classList.add("avatarContextMenu__userGainForThisConnectionSliderContainer");
 
         let avatarContextMenu__userGainForThisConnectionSlider = document.createElement("input");
         avatarContextMenu__userGainForThisConnectionSlider.type = "range";
@@ -450,7 +692,31 @@ export class UIController {
             this.maybeUpdateAvatarContextMenu(userData);
         });
 
-        avatarContextMenu__userGainForThisConnectionContainer.appendChild(avatarContextMenu__userGainForThisConnectionSlider);
+        let avatarContextMenu__userGainForThisConnectionSliderLeftImage = document.createElement("div");
+        avatarContextMenu__userGainForThisConnectionSliderLeftImage.classList.add("avatarContextMenu__userGainForThisConnectionSliderLeftImage");
+
+        let avatarContextMenu__userGainForThisConnectionSliderRightImage = document.createElement("div");
+        avatarContextMenu__userGainForThisConnectionSliderRightImage.classList.add("avatarContextMenu__userGainForThisConnectionSliderRightImage");
+
+        avatarContextMenu__userGainForThisConnectionSliderContainer.appendChild(avatarContextMenu__userGainForThisConnectionSliderLeftImage);
+        avatarContextMenu__userGainForThisConnectionSliderContainer.appendChild(avatarContextMenu__userGainForThisConnectionSlider);
+        avatarContextMenu__userGainForThisConnectionSliderContainer.appendChild(avatarContextMenu__userGainForThisConnectionSliderRightImage);
+        avatarContextMenu__userGainForThisConnectionContainer.appendChild(avatarContextMenu__userGainForThisConnectionSliderContainer);
+
+        let avatarContextMenu__userGainForThisConnectionFooter = document.createElement("p");
+        avatarContextMenu__userGainForThisConnectionFooter.innerHTML = `<div class="avatarContextMenu__userGainForThisConnectionFooterImage"></div> Controls how loud this person is <strong>for just you</strong>`;
+        avatarContextMenu__userGainForThisConnectionFooter.classList.add("avatarContextMenu__userGainForThisConnectionFooter");
+        avatarContextMenu__userGainForThisConnectionContainer.appendChild(avatarContextMenu__userGainForThisConnectionFooter);
+    }
+
+    onHiFiGainSliderValueChanged(slider: HTMLInputElement, userData: UserData) {
+        let gainSliderValue = slider.value;
+        if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash) {
+            userInputController.setHiFiGainFromSliderValue(gainSliderValue);
+        } else {
+            webSocketConnectionController.requestToChangeHiFiGainSliderValue(userData.visitIDHash, gainSliderValue);
+        }
+        this.maybeUpdateAvatarContextMenu(userData);
     }
 
     generateHiFiGainUI(userData: UserData) {
@@ -463,13 +729,16 @@ export class UIController {
         this.avatarContextMenu.appendChild(avatarContextMenu__hiFiGainContainer);
 
         let avatarContextMenu__hiFiGainHeader = document.createElement("h3");
-        avatarContextMenu__hiFiGainHeader.innerHTML = `HiFi Gain (Global): ${Math.round(userData.hiFiGain * 100)}%`;
+        avatarContextMenu__hiFiGainHeader.innerHTML = `Mic Volume: ${Math.round(userData.hiFiGain * 100)}%`;
         avatarContextMenu__hiFiGainHeader.classList.add("avatarContextMenu__hiFiGainHeader");
         avatarContextMenu__hiFiGainContainer.appendChild(avatarContextMenu__hiFiGainHeader);
 
+        let avatarContextMenu__hiFiGainSliderContainer = document.createElement("div");
+        avatarContextMenu__hiFiGainSliderContainer.classList.add("avatarContextMenu__hiFiGainSliderContainer");
+
         let avatarContextMenu__hiFiGainSlider = document.createElement("input");
         avatarContextMenu__hiFiGainSlider.type = "range";
-        avatarContextMenu__hiFiGainSlider.min = "1";
+        avatarContextMenu__hiFiGainSlider.min = "0";
         avatarContextMenu__hiFiGainSlider.max = "21";
         avatarContextMenu__hiFiGainSlider.value = userData.hiFiGainSliderValue;
         avatarContextMenu__hiFiGainSlider.step = "1";
@@ -477,19 +746,34 @@ export class UIController {
 
         // The `input` event fires as the user is changing the value of the slider.
         avatarContextMenu__hiFiGainSlider.addEventListener("input", (e) => {
-            let gainSliderValue = (<HTMLInputElement>e.target).value;
-            if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash) {
-                userInputController.setHiFiGainFromSliderValue(gainSliderValue);
-            } else {
-                webSocketConnectionController.requestToChangeHiFiGainSliderValue(userData.visitIDHash, gainSliderValue);
-            }
+            this.onHiFiGainSliderValueChanged((<HTMLInputElement>e.target), userData);
         });
 
-        avatarContextMenu__hiFiGainContainer.appendChild(avatarContextMenu__hiFiGainSlider);
+        let avatarContextMenu__hiFiGainSliderLeftImage = document.createElement("div");
+        avatarContextMenu__hiFiGainSliderLeftImage.classList.add("avatarContextMenu__hiFiGainSliderLeftImage");
+        avatarContextMenu__hiFiGainSliderLeftImage.addEventListener("click", (e) => {
+            avatarContextMenu__hiFiGainSlider.value = "0";
+            this.onHiFiGainSliderValueChanged(avatarContextMenu__hiFiGainSlider, userData);
+        });
+
+        let avatarContextMenu__hiFiGainSliderRightImage = document.createElement("div");
+        avatarContextMenu__hiFiGainSliderRightImage.classList.add("avatarContextMenu__hiFiGainSliderRightImage");
+
+        avatarContextMenu__hiFiGainSliderContainer.appendChild(avatarContextMenu__hiFiGainSliderLeftImage);
+        avatarContextMenu__hiFiGainSliderContainer.appendChild(avatarContextMenu__hiFiGainSlider);
+        avatarContextMenu__hiFiGainSliderContainer.appendChild(avatarContextMenu__hiFiGainSliderRightImage);
+        avatarContextMenu__hiFiGainContainer.appendChild(avatarContextMenu__hiFiGainSliderContainer);
+
+        if (userData.visitIDHash !== userDataController.myAvatar.myUserData.visitIDHash) {
+            let avatarContextMenu__hiFiGainFooter = document.createElement("p");
+            avatarContextMenu__hiFiGainFooter.innerHTML = `<div class="avatarContextMenu__hiFiGainFooterImage"></div> Controls how loud this person is <strong>for everyone</strong>`;
+            avatarContextMenu__hiFiGainFooter.classList.add("avatarContextMenu__hiFiGainFooter");
+            avatarContextMenu__hiFiGainContainer.appendChild(avatarContextMenu__hiFiGainFooter);
+        }
     }
 
     generateVolumeThresholdUI(userData: UserData) {
-        if (typeof (userData.volumeThreshold) !== "number") {
+        if (userData.visitIDHash !== userDataController.myAvatar.myUserData.visitIDHash || typeof (userData.volumeThreshold) !== "number") {
             return;
         }
 
@@ -498,7 +782,7 @@ export class UIController {
         this.avatarContextMenu.appendChild(avatarContextMenu__volumeThresholdContainer);
 
         let avatarContextMenu__volumeThresholdHeader = document.createElement("h3");
-        avatarContextMenu__volumeThresholdHeader.innerHTML = `Mic Threshold (Global): ${userData.volumeThreshold} dB`;
+        avatarContextMenu__volumeThresholdHeader.innerHTML = `Mic Threshold: ${userData.volumeThreshold} dB`;
         avatarContextMenu__volumeThresholdHeader.classList.add("avatarContextMenu__volumeThresholdHeader");
         avatarContextMenu__volumeThresholdContainer.appendChild(avatarContextMenu__volumeThresholdHeader);
 
@@ -523,18 +807,23 @@ export class UIController {
     }
 
     generateMuteForAllUI(userData: UserData) {
-        if (typeof (userData.hiFiGain) !== "number") {
+        if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash || typeof (userData.hiFiGain) !== "number") {
             return;
         }
 
-        let muteForAllButton;
-        muteForAllButton = document.createElement("button");
+        let muteForAllButton = document.createElement("button");
         muteForAllButton.classList.add("avatarContextMenu__muteForAllButton");
-        muteForAllButton.innerHTML = "Mute this user's mic (Global)";
         muteForAllButton.addEventListener('click', (e) => {
             webSocketConnectionController.requestToMuteAudioInputDevice(userData.visitIDHash);
         });
-        muteForAllButton.classList.add("avatarContextMenu__muteForAllButton");
+        let muteForAllButtonImage = document.createElement("img");
+        muteForAllButtonImage.classList.add("avatarContextMenu__muteForAllButtonImage");
+        muteForAllButtonImage.src = MuteForEveryoneButtonIcon;
+        muteForAllButton.appendChild(muteForAllButtonImage);
+        let muteForAllButtonText = document.createElement("span");
+        muteForAllButtonImage.classList.add("avatarContextMenu__muteForAllButtonText");
+        muteForAllButtonText.innerHTML = "Mute for everyone";
+        muteForAllButton.appendChild(muteForAllButtonText);
         this.avatarContextMenu.appendChild(muteForAllButton);
     }
 
@@ -544,8 +833,7 @@ export class UIController {
         this.avatarContextMenu.innerHTML = ``;
 
         this.generateCloseButtonUI();
-        this.generateDisplayNameUI(userData);
-        this.generateColorHexUI(userData);
+        this.generateHeader(userData);
         this.generateEchoCancellationUI(userData);
         this.generateAGCUI(userData);
         this.generateNoiseSuppressionUI(userData);
@@ -561,8 +849,16 @@ export class UIController {
         this.avatarContextMenu.classList.remove("displayNone");
 
         if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash) {
+            this.avatarContextMenu.classList.add("avatarContextMenu--mine");
             this.hasCompletedTutorial = true;
             localStorage.setItem("hasCompletedTutorial", "true");
+
+            let bottomControlsContainer = document.querySelector(".bottomControlsContainer");
+            if (bottomControlsContainer) {
+                bottomControlsContainer.classList.add("displayNone");
+            }
+        } else {
+            this.modalBackground.classList.add("modalBackground--mobileFullscreen");
         }
     }
 
@@ -572,6 +868,30 @@ export class UIController {
         }
 
         (<HTMLHeadingElement>this.avatarContextMenu.querySelector('.avatarContextMenu__displayName')).innerText = userData.displayName ? userData.displayName : userData.providedUserID;
+
+        let avatarContextMenu__avatarCircle = <HTMLElement>document.querySelector(".avatarContextMenu__avatarCircle");
+        if (avatarContextMenu__avatarCircle) {
+            avatarContextMenu__avatarCircle.style.backgroundColor = userData.colorHex;
+
+            if (userData.profileImageEl && userData.profileImageEl.complete) {
+                avatarContextMenu__avatarCircle.style.backgroundImage = `url(${userData.profileImageURL})`;
+                avatarContextMenu__avatarCircle.style.borderColor = userData.colorHex;
+
+                let avatarContextMenu__removeLink = document.querySelector(".avatarContextMenu__removeLink");
+                let avatarContextMenu__avatarRepresentation = document.querySelector(".avatarContextMenu__avatarRepresentation");
+                if (!avatarContextMenu__removeLink && avatarContextMenu__avatarRepresentation) {
+                    let removeLink = document.createElement("a");
+                    removeLink.classList.add("avatarContextMenu__removeLink");
+                    removeLink.innerHTML = `Remove`;
+                    removeLink.addEventListener("click", (e) => {
+                        userDataController.myAvatar.onMyProfileImageURLChanged("");
+                    });
+                    avatarContextMenu__avatarRepresentation.appendChild(removeLink);
+                }
+            } else {
+                avatarContextMenu__avatarCircle.style.backgroundImage = "none";
+            }
+        }
 
         let echoCancellationCheckbox = this.avatarContextMenu.querySelector(".echoCancellationCheckbox");
         if (echoCancellationCheckbox) {
@@ -592,7 +912,7 @@ export class UIController {
         let avatarContextMenu__hiFiGainHeader = <HTMLHeadingElement>this.avatarContextMenu.querySelector(".avatarContextMenu__hiFiGainHeader");
         if (avatarContextMenu__hiFiGainSlider) {
             avatarContextMenu__hiFiGainSlider.value = userData.hiFiGainSliderValue;
-            avatarContextMenu__hiFiGainHeader.innerHTML = `HiFi Gain (Global): ${Math.round(userData.hiFiGain * 100)}%`;
+            avatarContextMenu__hiFiGainHeader.innerHTML = `Mic Volume: ${Math.round(userData.hiFiGain * 100)}%`;
         }
 
         let avatarContextMenu__userGainForThisConnectionSlider = <HTMLInputElement>this.avatarContextMenu.querySelector(".avatarContextMenu__userGainForThisConnectionSlider");
@@ -606,7 +926,7 @@ export class UIController {
         let avatarContextMenu__volumeThresholdHeader = <HTMLHeadingElement>this.avatarContextMenu.querySelector(".avatarContextMenu__volumeThresholdHeader");
         if (avatarContextMenu__volumeThresholdSlider) {
             avatarContextMenu__volumeThresholdSlider.value = userData.volumeThreshold.toString();
-            avatarContextMenu__volumeThresholdHeader.innerHTML = `Mic Threshold (Global): ${userData.volumeThreshold} dB`;
+            avatarContextMenu__volumeThresholdHeader.innerHTML = `Mic Threshold: ${userData.volumeThreshold} dB`;
         }
     }
 
@@ -614,6 +934,8 @@ export class UIController {
         // Make the UI look nice with a default gain slider value of 1.0 instead of 1.05...
         if (hiFiGainSliderValue === "11") {
             return 1.0;
+        } else if (hiFiGainSliderValue === "0") {
+            return 0.0;
         } else {
             return Utilities.logarithmicScale(parseInt(hiFiGainSliderValue), 1, 21, 1, 110) / 10;
         }

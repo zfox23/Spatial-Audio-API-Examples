@@ -72,11 +72,6 @@ export class TwoDimensionalRenderer {
             youTubePlayerContainer.style.height = `calc(100vh - ${bottomBarHeight} - 150px)`;
         }
 
-        let modalBackground = <HTMLElement>document.querySelector(".modalBackground");
-        if (modalBackground) {
-            modalBackground.style.height = `calc(100vh - ${bottomBarHeight})`;
-        }
-
         this.normalModeCanvas.width = window.innerWidth;
         this.normalModeCanvas.style.height = `${window.innerHeight - bottomBarHeight}px`;
         this.normalModeCanvas.height = window.innerHeight - bottomBarHeight;
@@ -99,7 +94,6 @@ export class TwoDimensionalRenderer {
     }
 
     drawAvatarBase({ userData }: { userData: UserData }) {
-        let isMine = userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash;
         let normalModeCTX = this.normalModeCTX;
         let pxPerM = physicsController.pxPerMCurrent;
         let avatarRadiusM = AVATAR.RADIUS_M;
@@ -123,23 +117,31 @@ export class TwoDimensionalRenderer {
 
         let colorHex = userData.colorHex || Utilities.hexColorFromString(userData.visitIDHash);
 
-        if (userData.orientationEulerCurrent) {
-            normalModeCTX.beginPath();
-            normalModeCTX.arc(0, -avatarRadiusM * AVATAR.DIRECTION_CLOUD_RADIUS_MULTIPLIER * pxPerM, avatarRadiusM * AVATAR.DIRECTION_CLOUD_RADIUS_MULTIPLIER * pxPerM, 0, Math.PI, false);
-            let grad = normalModeCTX.createLinearGradient(0, 0, 0, -avatarRadiusM * AVATAR.DIRECTION_CLOUD_RADIUS_MULTIPLIER * pxPerM);
-            grad.addColorStop(0.0, colorHex);
-            grad.addColorStop(1.0, colorHex + "00");
-            normalModeCTX.fillStyle = grad;
-            normalModeCTX.fill();
-            normalModeCTX.closePath();
-        }
-
         normalModeCTX.fillStyle = colorHex;
         normalModeCTX.beginPath();
         normalModeCTX.arc(0, 0, avatarRadiusPX, 0, 2 * Math.PI);
         normalModeCTX.fill();
         normalModeCTX.closePath();
+
         normalModeCTX.rotate(-amtToRotateAvatar);
+        
+        if (userData.profileImageEl && userData.profileImageEl.complete) {
+            let amtToRotateProfileImage = this.canvasRotationDegrees * Math.PI / 180;
+            normalModeCTX.rotate(amtToRotateProfileImage);
+            normalModeCTX.beginPath();
+            normalModeCTX.arc(0, 0, avatarRadiusPX, 0, Math.PI * 2, true);
+            normalModeCTX.closePath();
+            normalModeCTX.save();
+            normalModeCTX.clip();
+
+            normalModeCTX.drawImage(userData.profileImageEl, -avatarRadiusPX, -avatarRadiusPX, avatarRadiusPX * 2, avatarRadiusPX * 2);
+
+            normalModeCTX.beginPath();
+            normalModeCTX.arc(0, 0, avatarRadiusPX, 0, Math.PI * 2, true);
+            normalModeCTX.closePath();
+            normalModeCTX.restore();
+            normalModeCTX.rotate(-amtToRotateProfileImage);
+        }
     }
 
     drawAvatarVideo({ userData }: { userData: UserData }) {
@@ -163,7 +165,7 @@ export class TwoDimensionalRenderer {
 
     drawAvatarLabel({ userData }: { userData: UserData }) {
         // Don't draw the avatar label if we're drawing that avatar's video.
-        if (videoController.providedUserIDToVideoElementMap.has(userData.providedUserID)) {
+        if (videoController.providedUserIDToVideoElementMap.has(userData.providedUserID) || userData.profileImageEl) {
             return;
         }
 

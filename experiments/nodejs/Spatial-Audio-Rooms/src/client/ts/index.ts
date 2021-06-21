@@ -3,6 +3,7 @@ import { PathsController } from './ai/PathsController';
 import { AVDevicesController } from './avDevices/AVDevicesController';
 import { AppConfigController } from './config/AppConfigController';
 import { ConnectionController } from './connection/ConnectionController';
+import { S3Controller } from './connection/S3Controller';
 import { WebSocketConnectionController } from './connection/WebSocketConnectionController';
 import { PhysicsController } from './physics/PhysicsController';
 import { TwoDimensionalRenderer } from './render/TwoDimensionalRenderer';
@@ -21,6 +22,7 @@ import { VideoController } from './video/VideoController';
 
 export const appConfigController = new AppConfigController();
 export const connectionController = new ConnectionController();
+export const s3Controller = new S3Controller();
 export const webSocketConnectionController = new WebSocketConnectionController();
 export const avDevicesController = new AVDevicesController();
 export const uiController = new UIController();

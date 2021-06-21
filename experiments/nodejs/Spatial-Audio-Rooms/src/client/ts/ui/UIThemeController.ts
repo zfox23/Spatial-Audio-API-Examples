@@ -72,6 +72,7 @@ export class UIThemeController {
         this.addThemedElementFromClassName("roomInfoContainer--mine");
         this.addThemedElementFromClassName("modalBackground");
         this.addThemedElementFromClassName("avatarContextMenu");
+        this.addThemedElementFromClassName("avatarContextMenu__h1");
         this.addThemedElementFromClassName("avatarContextMenu__closeButton");
         this.addThemedElementFromClassName("body");
         this.addThemedElementFromClassName("loadingScreen--text");

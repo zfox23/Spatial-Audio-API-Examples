@@ -2,13 +2,13 @@
 @use "./themes";
 
 @font-face {
-    font-family: Roboto;
-    src: url('../fonts/Roboto-Regular.ttf')
+    font-family: Graphik;
+    src: url('../fonts/Graphik-Regular.ttf')
 }
 
 @font-face {
-    font-family: Roboto-Bold;
-    src: url('../fonts/Roboto-Bold.ttf')
+    font-family: Graphik-Bold;
+    src: url('../fonts/Graphik-Bold.ttf')
 }
 
 body {
@@ -17,7 +17,7 @@ body {
     width: 100vw;
     height: 100vh;
     overflow: hidden;
-    font-family: 'Roboto', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Graphik', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .body {
@@ -48,9 +48,9 @@ body {
     z-index: map-get(z-indices.$z-index, aboveModal);
 
     &--icon {
-        background-size: 200px;
-        width: 250px;
-        height: 250px;
+        background-size: 150px;
+        width: 150px;
+        height: 150px;
         position: fixed;
         z-index: 1;
 
@@ -60,11 +60,11 @@ body {
         animation-timing-function: linear;
 
         &--light-theme {
-            background: url('../images/icons/light-theme/hifi.svg') no-repeat center center;
+            background: url('../images/icons/light-theme/loader.png') no-repeat center center;
         }
     
         &--dark-theme {
-            background: url('../images/icons/dark-theme/hifi-dark.svg') no-repeat center center;
+            background: url('../images/icons/dark-theme/loader.png') no-repeat center center;
         }
     }
 
@@ -78,6 +78,8 @@ body {
 
     &--text {
         z-index: 2;
+        position: relative;
+        top: 100px;
 
         &--light-theme {
             color: map-get(themes.$light-theme, on-body-background);
