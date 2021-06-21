@@ -263,8 +263,8 @@ export class PhysicsController {
         this.smoothZoomDurationMS = PHYSICS.SMOOTH_ZOOM_DURATION_SWITCH_ROOMS_MS;
         this.smoothZoomStartTimestamp = undefined;
         // TODO: Change this to ensure that users can always see all rooms "nearby", instead of just 15m/2 away when fully zoomed out.
-        this.pxPerMMin = Math.min(this.normalModeCanvas.width, this.normalModeCanvas.height) / 15;
-        this.pxPerMTarget = Math.min(this.normalModeCanvas.width, this.normalModeCanvas.height) / (2 * room.seatingRadiusM + 2 * UI.AVATAR_PADDING_FOR_CAMERA);
+        this.pxPerMMin = Math.min(this.normalModeCanvas.width, this.normalModeCanvas.height - 48) / 15;
+        this.pxPerMTarget = Math.min(this.normalModeCanvas.width, this.normalModeCanvas.height - 48) / (2 * room.seatingRadiusM + 2 * UI.AVATAR_PADDING_FOR_CAMERA);
         this.pxPerMMax = this.pxPerMTarget;
     }
 
