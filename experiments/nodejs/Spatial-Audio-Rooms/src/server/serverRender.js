@@ -2,9 +2,7 @@ const auth = require('../../auth.json');
 const { ADJECTIVES, NOUNS } = require('./words');
 const { uppercaseFirstLetter, generateHiFiJWT, generateTwilioAccessToken } = require('./utilities');
 
-async function renderApp(isInProdMode, req, callback) {
-    let spaceName = req.params.spaceName || req.query.spaceName || auth.HIFI_DEFAULT_SPACE_NAME;
-
+async function renderApp(isInProdMode, appConfigURL, spaceName, req, callback) {
     let providedUserID = `${uppercaseFirstLetter(ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)])}${uppercaseFirstLetter(NOUNS[Math.floor(Math.random() * NOUNS.length)])}`;
     providedUserID += Math.floor(Math.random() * Math.floor(1000));
 
@@ -28,6 +26,7 @@ async function renderApp(isInProdMode, req, callback) {
         const HIFI_ENDPOINT_URL = "${auth.HIFI_ENDPOINT_URL}";
         const TWILIO_JWT = "${twilioJWT}";
         const APP_MODE = "web";
+        const APP_CONFIG_URL = "${appConfigURL}";
     </script>
     ${isInProdMode ? '<link rel="stylesheet" href="/spatial-audio-rooms/index.css">' : ''}
 </head>

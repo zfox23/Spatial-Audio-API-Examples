@@ -7,6 +7,7 @@ import SeatingRadius1Image2 from "../../../server/static/rooms/room-with-seating
 import { Landmark } from "../ui/LandmarksController";
 declare var HIFI_SPACE_NAME: string;
 declare var APP_MODE: string;
+declare var APP_CONFIG_URL: string;
 
 const CONFIG_JSON_VERSIONS = {
     "v1.0.0": {
@@ -56,32 +57,26 @@ export class AppConfigController {
     }
 
     async downloadConfigJSON() {
-        let searchParams = new URLSearchParams(location.search);
-        if (searchParams.has("config") || APP_MODE === "electron") {
-            console.log(`Downloading application configuration JSON file...`);
-            let configURL = APP_MODE === "electron" ? "watchParty.json" : searchParams.get("config");
-            let configResponse, configJSON;
-            try {
-                configResponse = await fetch(configURL);
-            } catch (e) {
-                console.error(`Couldn't fetch config from \`${configURL}\`! Error:\n${e}\n\nInitializing default rooms...`);
-                this.initializeDefaultRooms();
-                return;
-            }
-
-            try {
-                configJSON = await configResponse.json();
-            } catch (e) {
-                console.error(`Couldn't get JSON config from \`${configURL}\`! Error:\n${e}\n\nInitializing default rooms...`);
-                this.initializeDefaultRooms();
-                return;
-            }
-
-            this.parseConfigJSON(configJSON);
-        } else {
-            console.log(`Using default application configuration...`);
+        console.log(`Downloading application configuration JSON file...`);
+        let configURL = APP_MODE === "electron" ? "watchParty.json" : APP_CONFIG_URL;
+        let configResponse, configJSON;
+        try {
+            configResponse = await fetch(configURL);
+        } catch (e) {
+            console.error(`Couldn't fetch config from \`${configURL}\`! Error:\n${e}\n\nInitializing default rooms...`);
             this.initializeDefaultRooms();
+            return;
         }
+
+        try {
+            configJSON = await configResponse.json();
+        } catch (e) {
+            console.error(`Couldn't get JSON config from \`${configURL}\`! Error:\n${e}\n\nInitializing default rooms...`);
+            this.initializeDefaultRooms();
+            return;
+        }
+
+        this.parseConfigJSON(configJSON);
 
         console.log(`Application configuration complete!`);
 

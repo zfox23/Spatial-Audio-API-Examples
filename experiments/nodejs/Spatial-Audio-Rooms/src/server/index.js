@@ -11,6 +11,11 @@ const crypto = require('crypto');
 const fetch = require('node-fetch');
 const { URLSearchParams } = require('url');
 const auth = require('../../auth.json');
+const { generateHiFiJWT } = require('./utilities');
+
+// This may need to be configurable in the future.
+// For now, all instances of SAR will use the "Standard" JSON configuration.
+const appConfigURL = "/spatial-audio-rooms/standard.json";
 
 const app = express();
 const PORT = 8180;
@@ -63,14 +68,155 @@ app.use('/spatial-audio-rooms', express.static(DIST_DIR));
 app.use('/spatial-audio-rooms', express.static(path.join(__dirname, "static")));
 app.use(require('body-parser').urlencoded({ extended: true }));
 
-app.get('/spatial-audio-rooms', async (req, res, next) => {
-    require('./serverRender')(isInProdMode, req, async (err, page) => {
+app.get('/spatial-audio-rooms', connectToSpace);
+app.get('/spatial-audio-rooms/:spaceName', connectToSpace);
+let spaceNamesWithModifiedZonesThisSession = [];
+async function connectToSpace(req, res, next) {
+    let spaceName = req.params.spaceName || req.query.spaceName || auth.HIFI_DEFAULT_SPACE_NAME;
+
+    require('./serverRender')(isInProdMode, appConfigURL, spaceName, req, async (err, page) => {
         if (err) {
             return next(err);
         }
         res.send(page);
+
+        // This exists so we don't have to do all of the below operations every time someone connects to
+        // a SAR session.
+        // If the zone configuration doesn't get properly set below, it may never get properly set.
+        // That would cause a bug.
+        // Also, the code below currently assumes that all Rooms in a SAR app configuation should be
+        // acoustically isolated from each other.
+        if (spaceNamesWithModifiedZonesThisSession.indexOf(spaceName) > -1) {
+            return;
+        }
+        spaceNamesWithModifiedZonesThisSession.push(spaceName);
+
+        let adminHiFiJWT = await generateHiFiJWT("Admin", spaceName, true);
+
+        let listSpacesJSON;
+        try {
+            let listSpaces = await fetch(`https://${auth.HIFI_ENDPOINT_URL}/api/v1/spaces/?token=${adminHiFiJWT}`);
+            listSpacesJSON = await listSpaces.json();
+        } catch (e) {
+            console.error(`There was an error when listing spaces. Error:\n${JSON.stringify(e)}`);
+            return;
+        }
+        
+        let spaceID = listSpacesJSON.find((space) => { return space["name"] === spaceName; });
+        if (!spaceID) {
+            console.error(`There was an error when getting the space ID.`);
+            return;
+        }
+        spaceID = spaceID["space-id"];
+        
+        let listZonesJSON;
+        let listZonesFetchURL = `https://${auth.HIFI_ENDPOINT_URL}/api/v1/spaces/${spaceID}/settings/zones?token=${adminHiFiJWT}`;
+        try {
+            let listZones = await fetch(listZonesFetchURL);
+            listZonesJSON = await listZones.json();
+        } catch (e) {
+            console.error(`There was an error when listing zones. Error:\n${JSON.stringify(e)}`);
+            return;
+        }
+
+        let appConfigJSON;
+        let appConfigFetchURL = `${req.headers.host}${appConfigURL}`;
+        if (appConfigFetchURL.indexOf("http") !== 0) {
+            appConfigFetchURL = `${(isInHTTPSMode ? "https://" : "http://")}${appConfigFetchURL}`;
+        }
+        try {
+            let appConfig = await fetch(appConfigFetchURL);
+            appConfigJSON = await appConfig.json();
+        } catch (e) {
+            console.error(`There was an error when downloading the App Config JSON from "${appConfigFetchURL}\". Error:\n${JSON.stringify(e)}`);
+            return;
+        }
+
+        if (!appConfigJSON.rooms || !Array.isArray(appConfigJSON.rooms)) {
+            console.error(`The App Config JSON does not contain any rooms.`);
+            return;
+        }
+
+        let needsZoneUpdate = false;
+        appConfigJSON.rooms.forEach((room) => {
+            let roomName = room.name;
+            if (!listZonesJSON.find((zone) => { return zone.name === roomName; })) {
+                needsZoneUpdate = true;
+            }
+        });
+
+        if (!needsZoneUpdate) {
+            return;
+        }
+
+        console.log(`${spaceName}: The space named "${spaceName}" with space-id "${spaceID}" needs its zone attenuation configuration updated.`);
+
+        let deleteZonesJSON;
+        try {
+            console.log(`${spaceName}: Deleting all existing zones...`);
+            let deleteZones = await fetch(`https://${auth.HIFI_ENDPOINT_URL}/api/v1/spaces/${spaceID}/settings/zones?token=${adminHiFiJWT}`, {method: "DELETE"});
+            deleteZonesJSON = await deleteZones.json();
+        } catch (e) {
+            console.error(`There was an error when deleting all zones. Error:\n${JSON.stringify(e)}`);
+            return;
+        }
+        console.log(`${spaceName}: Successfully deleted all existing zones! Response:\n${JSON.stringify(deleteZonesJSON, null, 4)}`);
+
+        let newZonesJSON;
+        let params = [];
+        try {
+            console.log(`${spaceName}: Creating new zones...`);
+            appConfigJSON.rooms.forEach((room) => {
+                params.push({
+                    "name": room.name,
+                    "x-min": room.roomCenter.x - room.dimensions.x / 2,
+                    "y-min": room.roomCenter.y - room.dimensions.y / 2 - 1, // `-1` because this will be `0` otherwise
+                    "z-min": room.roomCenter.z - room.dimensions.z / 2,
+                    "x-max": room.roomCenter.x + room.dimensions.x / 2,
+                    "y-max": room.roomCenter.y + room.dimensions.y / 2 + 1, // `+1` because this will be `0` otherwise
+                    "z-max": room.roomCenter.z + room.dimensions.z / 2,
+                });
+            });
+            let newZones = await fetch(`https://${auth.HIFI_ENDPOINT_URL}/api/v1/spaces/${spaceID}/settings/zones?token=${adminHiFiJWT}`, { method: 'POST', body: JSON.stringify(params), headers: { 'Content-Type': 'application/json' }});
+            newZonesJSON = await newZones.json();
+        } catch (e) {
+            console.error(`There was an error when creating new zones. Error:\n${JSON.stringify(e)}`);
+            return;
+        }
+        console.log(`${spaceName}: Successfully created new zones! Response:\n${JSON.stringify(newZonesJSON, null, 4)}`);
+
+        console.log(`${spaceName}: Creating new zone attenuation relationships...`);
+        let listenerZoneID, sourceZoneID;
+        params = [];
+        for (let i = 0; i < newZonesJSON.length; i++) {
+            listenerZoneID = newZonesJSON[i]["id"];
+            for (let j = 0; j < newZonesJSON.length; j++) {
+                sourceZoneID = newZonesJSON[j]["id"];
+
+                if (listenerZoneID === sourceZoneID) {
+                    continue;
+                }
+
+                params.push({
+                    "source-zone-id": sourceZoneID,
+                    "listener-zone-id": listenerZoneID,
+                    "za-offset": 0,
+                    "attenuation": -0.000001,
+                    "frequency-rolloff": 0.0001
+                });
+            }
+        }
+        let newZoneAttenuationsJSON;
+        try {
+            let newZoneAttenuations = await fetch(`https://${auth.HIFI_ENDPOINT_URL}/api/v1/spaces/${spaceID}/settings/zone_attenuations?token=${adminHiFiJWT}`, { method: 'POST', body: JSON.stringify(params), headers: { 'Content-Type': 'application/json' }});
+            newZoneAttenuationsJSON = await newZoneAttenuations.json();
+        } catch (e) {
+            console.error(`There was an error when creating new zone attenuations. Error:\n${JSON.stringify(e)}`);
+            return;
+        }
+        console.log(`${spaceName}: Created new zone attenuation relationships! Response:\n${JSON.stringify(newZoneAttenuationsJSON, null, 4)}`);
     });
-});
+}
 
 app.get('/spatial-audio-rooms/slack', (req, res, next) => {
     let code = req.query.code;
@@ -103,15 +249,6 @@ app.get('/spatial-audio-rooms/slack', (req, res, next) => {
             console.error(errorString)
             res.send(errorString);
         });
-});
-
-app.get('/spatial-audio-rooms/:spaceName', async (req, res, next) => {
-    require('./serverRender')(isInProdMode, req, async (err, page) => {
-        if (err) {
-            return next(err);
-        }
-        res.send(page);
-    });
 });
 
 app.post('/spatial-audio-rooms/create', (req, res, next) => {
