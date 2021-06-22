@@ -66,7 +66,7 @@ export class ConnectionController {
             }
             
             if (typeof (avDevicesController.inputAudioMediaStream.getAudioTracks()[0].getConstraints()) !== "undefined") {
-                if (inputAudioMediaStreamTrackConstraints) {
+                if (inputAudioMediaStreamTrackConstraints && inputAudioMediaStreamTrackConstraints.echoCancellation !== undefined) {
                     userDataController.myAvatar.myUserData.echoCancellationEnabled = !!inputAudioMediaStreamTrackConstraints.echoCancellation.valueOf();
                 } else {
                     userDataController.myAvatar.myUserData.echoCancellationEnabled = !!avDevicesController.audioConstraints.echoCancellation.valueOf();
@@ -74,7 +74,7 @@ export class ConnectionController {
             }
             
             if (typeof (avDevicesController.audioConstraints.autoGainControl) !== "undefined") {
-                if (inputAudioMediaStreamTrackConstraints) {
+                if (inputAudioMediaStreamTrackConstraints && inputAudioMediaStreamTrackConstraints.autoGainControl !== undefined) {
                     userDataController.myAvatar.myUserData.agcEnabled = !!inputAudioMediaStreamTrackConstraints.autoGainControl.valueOf();
                 } else {
                     userDataController.myAvatar.myUserData.agcEnabled = !!avDevicesController.audioConstraints.autoGainControl.valueOf();
@@ -82,7 +82,7 @@ export class ConnectionController {
             }
             
             if (typeof (avDevicesController.audioConstraints.noiseSuppression) !== "undefined") {
-                if (inputAudioMediaStreamTrackConstraints) {
+                if (inputAudioMediaStreamTrackConstraints && inputAudioMediaStreamTrackConstraints.noiseSuppression !== undefined) {
                     userDataController.myAvatar.myUserData.noiseSuppressionEnabled = !!inputAudioMediaStreamTrackConstraints.noiseSuppression.valueOf();
                 } else {
                     userDataController.myAvatar.myUserData.noiseSuppressionEnabled = !!avDevicesController.audioConstraints.noiseSuppression.valueOf();
