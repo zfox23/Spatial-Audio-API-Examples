@@ -119,7 +119,8 @@ app.post('/spatial-audio-rooms/create', (req, res, next) => {
 
     let slackCommandText = req.body.text;
     if (slackCommandText && slackCommandText.length > 0) {
-        spaceURL = `https://experiments.highfidelity.com/spatial-audio-rooms/${slackCommandText}/?config=/spatial-audio-rooms/watchParty.json`;
+        let slackCommandTextTrimmed = slackCommandText.trim();
+        spaceURL = `https://experiments.highfidelity.com/spatial-audio-rooms/${slackCommandTextTrimmed}/?config=/spatial-audio-rooms/watchParty.json`;
 
         res.json({
             "response_type": 'in_channel',
@@ -128,7 +129,7 @@ app.post('/spatial-audio-rooms/create', (req, res, next) => {
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": `<${spaceURL}|Click here to join the Spatial Audio Room named "${slackCommandText}".>`
+                        "text": `<${spaceURL}|Click here to join the Spatial Audio Room named "${slackCommandTextTrimmed}".>`
                     }
                 }
             ]
