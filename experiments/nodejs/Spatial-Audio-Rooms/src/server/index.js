@@ -130,7 +130,7 @@ app.post('/spatial-audio-rooms/create', (req, res, next) => {
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": `<${spaceURL}|Click here to join the Spatial Audio Room named "${slackCommandTextTrimmed}".>`
+                        "text": `<${spaceURL}|Click here to join the Spatial Audio Room named "${slackCommandTextTrimmedURIEncoded}".>`
                     }
                 }
             ]
