@@ -120,7 +120,8 @@ app.post('/spatial-audio-rooms/create', (req, res, next) => {
     let slackCommandText = req.body.text;
     if (slackCommandText && slackCommandText.length > 0) {
         let slackCommandTextTrimmed = slackCommandText.trim();
-        spaceURL = `https://experiments.highfidelity.com/spatial-audio-rooms/${slackCommandTextTrimmed}/?config=/spatial-audio-rooms/watchParty.json`;
+        let slackCommandTextTrimmedURIEncoded = encodeURI(slackCommandTextTrimmed);
+        spaceURL = `https://experiments.highfidelity.com/spatial-audio-rooms/${slackCommandTextTrimmedURIEncoded}/?config=/spatial-audio-rooms/watchParty.json`;
 
         res.json({
             "response_type": 'in_channel',
