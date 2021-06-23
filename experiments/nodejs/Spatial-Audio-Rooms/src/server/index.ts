@@ -256,63 +256,51 @@ app.get('/spatial-audio-rooms/slack', (req: any, res: any, next: any) => {
 });
 
 app.post('/spatial-audio-rooms/create', (req: any, res: any, next: any) => {
-    let spaceURL;
+    let slackChannelID = req.body.channel_id;
+    if (!slackChannelID) {
+        console.error(`Couldn't generate Spatial Audio Room link. Request body:\n${JSON.stringify(req.body)}`);
+        res.json({
+            "response_type": "ephemeral",
+            "text": "Sorry, I couldn't generate a Spatial Audio Room for you."
+        });
+        return;
+    }
 
+    let channelText;
     let slackCommandText = req.body.text;
     if (slackCommandText && slackCommandText.length > 0) {
-        analyticsController.logEvent(ServerAnalyticsEventCategory.SlackBotUsed, new SlackBotUsedEvent(req.body.user_id, req.body.team_id, true));
-
         let slackCommandTextTrimmed = slackCommandText.trim();
-        let slackCommandTextTrimmedURIEncoded = encodeURI(slackCommandTextTrimmed);
-        spaceURL = `https://experiments.highfidelity.com/spatial-audio-rooms/${slackCommandTextTrimmedURIEncoded}/`;
-
-        res.json({
-            "response_type": 'in_channel',
-            "blocks": [
-                {
-                    "type": "section",
-                    "text": {
-                        "type": "mrkdwn",
-                        "text": `<${spaceURL}|Click here to join the Spatial Audio Room named "${slackCommandTextTrimmedURIEncoded}".>`
-                    }
-                }
-            ]
-        });
-    } else {
-        analyticsController.logEvent(ServerAnalyticsEventCategory.SlackBotUsed, new SlackBotUsedEvent(req.body.user_id, req.body.team_id, false));
-
-        let stringToHash;
-
-        let slackChannelID = req.body.channel_id;
-        if (slackChannelID) {
-            stringToHash = slackChannelID;
-        }
-
-        if (!stringToHash) {
-            console.error(`Couldn't generate Spatial Audio Room link. Request body:\n${JSON.stringify(req.body)}`);
-            res.json({
-                "response_type": "ephemeral",
-                "text": "Sorry, I couldn't generate a Spatial Audio Room for you."
-            });
-            return;
-        }
+        let stringToHash = `${slackChannelID}/${slackCommandText}`;
 
         let hash = crypto.createHash('md5').update(stringToHash).digest('hex');
-        spaceURL = `https://experiments.highfidelity.com/spatial-audio-rooms/${hash}/`;
+        let spaceURL = `https://experiments.highfidelity.com/spatial-audio-rooms/${hash}/`;
 
-        res.json({
-            "response_type": 'in_channel',
-            "blocks": [
-                {
-                    "type": "section",
-                    "text": {
-                        "type": "mrkdwn",
-                        "text": `<${spaceURL}|Click here to join the Spatial Audio Room associated with this Slack channel.>`
-                    }
-                }
-            ]
-        });
+        channelText = `<${spaceURL}|Click here to join the Spatial Audio Room named "${slackCommandTextTrimmed}".>`;
+
+        analyticsController.logEvent(ServerAnalyticsEventCategory.SlackBotUsed, new SlackBotUsedEvent(req.body.user_id, req.body.team_id, true));
+    } else {
+        let stringToHash = slackChannelID;
+
+        let hash = crypto.createHash('md5').update(stringToHash).digest('hex');
+        let spaceURL = `https://experiments.highfidelity.com/spatial-audio-rooms/${hash}/`;
+
+        channelText = `<${spaceURL}|Click here to join the Spatial Audio Room associated with this Slack channel.>`;
+
+        analyticsController.logEvent(ServerAnalyticsEventCategory.SlackBotUsed, new SlackBotUsedEvent(req.body.user_id, req.body.team_id, false));
     }
+
+    res.json({
+        "response_type": 'in_channel',
+        "blocks": [
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": channelText
+                }
+            }
+        ]
+    });
 });
 
 app.get('/spatial-audio-rooms/:spaceName', connectToSpace);
