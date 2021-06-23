@@ -10,9 +10,12 @@ const express = require('express');
 import * as crypto from "crypto";
 import fetch from 'node-fetch';
 import { URLSearchParams } from "url";
+import { ServerAnalyticsController, ServerAnalyticsEventCategory, SlackBotAddedEvent, SlackBotUsedEvent, UserConnectedOrDisconnectedEvent } from "./analytics/ServerAnalyticsController";
 const auth = require('../../../auth.json');
 const { generateHiFiJWT } = require('./utilities');
 import { renderApp } from "./serverRender";
+
+const analyticsController = new ServerAnalyticsController();
 
 // This may need to be configurable in the future.
 // For now, all instances of SAR will use the "Standard" JSON configuration.
@@ -236,6 +239,7 @@ app.get('/spatial-audio-rooms/slack', (req: any, res: any, next: any) => {
         .then((json: any) => {
             console.log(json);
             if (json && json.ok) {
+                analyticsController.logEvent(ServerAnalyticsEventCategory.SlackBotAdded, new SlackBotAddedEvent());
                 let okString = `<p>The HiFi Helper bot has been successfully added to the Slack workspace named "${json.team.name}"! Try typing <code>/hifi</code> in any Slack channel.</p>`;
                 console.log(okString);
                 res.status(200).send(okString)
@@ -257,9 +261,11 @@ app.post('/spatial-audio-rooms/create', (req: any, res: any, next: any) => {
 
     let slackCommandText = req.body.text;
     if (slackCommandText && slackCommandText.length > 0) {
+        analyticsController.logEvent(ServerAnalyticsEventCategory.SlackBotUsed, new SlackBotUsedEvent(req.body.user_id, req.body.team_id, true));
+
         let slackCommandTextTrimmed = slackCommandText.trim();
         let slackCommandTextTrimmedURIEncoded = encodeURI(slackCommandTextTrimmed);
-        spaceURL = `https://experiments.highfidelity.com/spatial-audio-rooms/${slackCommandTextTrimmedURIEncoded}/?config=/spatial-audio-rooms/watchParty.json`;
+        spaceURL = `https://experiments.highfidelity.com/spatial-audio-rooms/${slackCommandTextTrimmedURIEncoded}/`;
 
         res.json({
             "response_type": 'in_channel',
@@ -274,6 +280,8 @@ app.post('/spatial-audio-rooms/create', (req: any, res: any, next: any) => {
             ]
         });
     } else {
+        analyticsController.logEvent(ServerAnalyticsEventCategory.SlackBotUsed, new SlackBotUsedEvent(req.body.user_id, req.body.team_id, false));
+
         let stringToHash;
 
         let slackChannelID = req.body.channel_id;
@@ -291,7 +299,7 @@ app.post('/spatial-audio-rooms/create', (req: any, res: any, next: any) => {
         }
 
         let hash = crypto.createHash('md5').update(stringToHash).digest('hex');
-        spaceURL = `https://experiments.highfidelity.com/spatial-audio-rooms/${hash}/?config=/spatial-audio-rooms/watchParty.json`;
+        spaceURL = `https://experiments.highfidelity.com/spatial-audio-rooms/${hash}/`;
 
         res.json({
             "response_type": 'in_channel',
@@ -342,6 +350,7 @@ class ServerSpaceInfo {
 }
 
 class Participant {
+    userUUID: string;
     socketID: string;
     spaceName: string;
     visitIDHash: string;
@@ -358,6 +367,7 @@ class Participant {
     currentWatchPartyRoomName: string;
 
     constructor({
+        userUUID,
         socketID,
         spaceName,
         visitIDHash,
@@ -373,6 +383,7 @@ class Participant {
         volumeThreshold,
         currentWatchPartyRoomName,
     }: {
+        userUUID: string,
         socketID: string,
         spaceName: string,
         visitIDHash: string,
@@ -388,6 +399,7 @@ class Participant {
         volumeThreshold: number,
         currentWatchPartyRoomName: string,
     }) {
+        this.userUUID = userUUID;
         this.socketID = socketID;
         this.spaceName = spaceName;
         this.visitIDHash = visitIDHash;
@@ -461,6 +473,7 @@ function onWatchPartyUserLeft(visitIDHash: string) {
 let spaceInformation: any = {};
 socketIOServer.on("connection", (socket: any) => {
     socket.on("addParticipant", ({
+        userUUID,
         spaceName,
         visitIDHash,
         currentSeatID,
@@ -475,6 +488,7 @@ socketIOServer.on("connection", (socket: any) => {
         volumeThreshold,
         currentWatchPartyRoomName,
     }: {
+        userUUID: string,
         spaceName: string,
         visitIDHash: string,
         currentSeatID: string,
@@ -501,6 +515,7 @@ socketIOServer.on("connection", (socket: any) => {
         console.log(`${Date.now()}: In ${spaceName}, adding participant:\nHashed Visit ID: \`${visitIDHash}\`\nDisplay Name: \`${displayName}\`\nColor: ${colorHex}\n`);
 
         let me = new Participant({
+            userUUID,
             socketID: socket.id,
             spaceName,
             visitIDHash,
@@ -523,6 +538,8 @@ socketIOServer.on("connection", (socket: any) => {
 
         socket.to(spaceName).emit("onParticipantsAddedOrEdited", [me]);
         socket.emit("onParticipantsAddedOrEdited", spaceInformation[spaceName].participants.filter((participant: Participant) => { return participant.visitIDHash !== visitIDHash; }));
+
+        analyticsController.logEvent(ServerAnalyticsEventCategory.UserConnected, new UserConnectedOrDisconnectedEvent(spaceName, userUUID));
     });
 
     socket.on("editParticipant", ({
@@ -605,6 +622,7 @@ socketIOServer.on("connection", (socket: any) => {
             let currentSpace = spaceInformation[allSpaces[i]];
             let participantToRemove = currentSpace.participants.find((participant: Participant) => { return participant.socketID === socket.id; });
             if (participantToRemove) {
+                analyticsController.logEvent(ServerAnalyticsEventCategory.UserDisconnected, new UserConnectedOrDisconnectedEvent(participantToRemove.spaceName, participantToRemove.userUUID));
                 onWatchPartyUserLeft(participantToRemove.visitIDHash);
                 console.log(`${Date.now()}: In ${allSpaces[i]}, removing participant with Hashed Visit ID: \`${participantToRemove.visitIDHash}\`!`);
                 currentSpace.participants = currentSpace.participants.filter((participant: Participant) => { return participant.socketID !== socket.id; });

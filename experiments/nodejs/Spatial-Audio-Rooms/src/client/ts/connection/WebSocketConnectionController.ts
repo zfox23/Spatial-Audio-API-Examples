@@ -1,6 +1,7 @@
 import { avDevicesController, connectionController, localSoundsController, roomController, signalsController, uiController, userDataController, userInputController, watchPartyController } from "..";
 import { SoundParams } from "../sounds/LocalSoundsController";
 import { SignalParams } from "../ui/SignalsController";
+import { Utilities } from "../utilities/Utilities";
 declare var HIFI_SPACE_NAME: string;
 declare var APP_MODE: string;
 
@@ -240,8 +241,14 @@ export class WebSocketConnectionController {
         }
 
         const myUserData = userDataController.myAvatar.myUserData;
+        let userUUID = localStorage.getItem('userUUID');
+        if (!userUUID) {
+            userUUID = Utilities.generateUUID(true);
+            localStorage.setItem('userUUID', userUUID);
+        }
 
         this.socket.emit("addParticipant", {
+            userUUID: userUUID,
             spaceName: HIFI_SPACE_NAME,
             visitIDHash: myUserData.visitIDHash,
             currentSeatID: myUserData.currentSeat ? myUserData.currentSeat.seatID : "",
