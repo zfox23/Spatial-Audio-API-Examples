@@ -67,7 +67,7 @@ if (!isInProdMode) {
     });
 }
 
-const DIST_DIR = path.join(__dirname, "..", "..", "dist");
+const DIST_DIR = path.join(__dirname, "..", "..", "..", "dist");
 app.use('/spatial-audio-rooms', express.static(DIST_DIR));
 app.use('/spatial-audio-rooms', express.static(path.join(__dirname, "static")));
 app.use(require('body-parser').urlencoded({ extended: true }));
