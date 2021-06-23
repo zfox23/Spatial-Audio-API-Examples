@@ -94,7 +94,14 @@ export class ServerAnalyticsController {
         switch (category) {
             case ServerAnalyticsEventCategory.SlackBotUsed:
                 e = <SlackBotUsedEvent>details;
-                detailsText = `${e.team_id}/${e.user_id} used the Slack bot. Their request ${e.containedExplicitRoomName ? "DID" : "DID NOT"} explicitly ask for a room name.`;
+    
+                let isHiFiEmployee = false;
+                let slackTeamID = e.team_id;
+                if (slackTeamID && slackTeamID === "T025Q3X6R") {
+                    isHiFiEmployee = true;
+                }
+
+                detailsText = `${isHiFiEmployee ? "HIFI EMPLOYEE " : ""}${e.team_id}/${e.user_id} used the Slack bot. Their request ${e.containedExplicitRoomName ? "DID" : "DID NOT"} explicitly ask for a room name.`;
                 break;
             case ServerAnalyticsEventCategory.UserConnected:
             case ServerAnalyticsEventCategory.UserDisconnected:
