@@ -7,11 +7,12 @@ const fs = require('fs');
 const webpack = require('webpack');
 const path = require('path');
 const express = require('express');
-const crypto = require('crypto');
-const fetch = require('node-fetch');
-const { URLSearchParams } = require('url');
-const auth = require('../../auth.json');
+import * as crypto from "crypto";
+import fetch from 'node-fetch';
+import { URLSearchParams } from "url";
+const auth = require('../../../auth.json');
 const { generateHiFiJWT } = require('./utilities');
+import { renderApp } from "./serverRender";
 
 // This may need to be configurable in the future.
 // For now, all instances of SAR will use the "Standard" JSON configuration.
@@ -25,7 +26,7 @@ if (!isInProdMode) {
     const webpackDevMiddleware = require('webpack-dev-middleware');
     const chokidar = require('chokidar');
 
-    const WEBPACK_CONFIG = require('../../webpack.config.js')();
+    const WEBPACK_CONFIG = require('../../../webpack.config.js')();
     const WEBPACK_COMPILER = webpack(WEBPACK_CONFIG);
 
     const devMiddleWare = webpackDevMiddleware(WEBPACK_COMPILER, { publicPath: WEBPACK_CONFIG.output.publicPath, });
@@ -39,7 +40,7 @@ if (!isInProdMode) {
     app.use(devMiddleWare);
     app.use(hotMiddleware);
 
-    const watcher = chokidar.watch('./src/server');
+    const watcher = chokidar.watch('.');
     watcher.on('ready', () => {
         watcher.on('all', () => {
             console.log("Clearing server module cache...");
@@ -52,7 +53,7 @@ if (!isInProdMode) {
         });
     });
 
-    WEBPACK_COMPILER.hooks.compilation.tap('ClearClientModuleCachePlugin', (stats) => {
+    WEBPACK_COMPILER.hooks.compilation.tap('ClearClientModuleCachePlugin', (stats: any) => {
         console.log("Clearing client module cache...");
         hotMiddleware.publish({ action: 'reload' });
         Object.keys(require.cache).forEach((id) => {
@@ -70,11 +71,11 @@ app.use(require('body-parser').urlencoded({ extended: true }));
 
 app.get('/spatial-audio-rooms', connectToSpace);
 app.get('/spatial-audio-rooms/:spaceName', connectToSpace);
-let spaceNamesWithModifiedZonesThisSession = [];
-async function connectToSpace(req, res, next) {
+let spaceNamesWithModifiedZonesThisSession: Array<string> = [];
+async function connectToSpace(req: any, res: any, next: any) {
     let spaceName = req.params.spaceName || req.query.spaceName || auth.HIFI_DEFAULT_SPACE_NAME;
 
-    require('./serverRender')(isInProdMode, appConfigURL, spaceName, req, async (err, page) => {
+    renderApp(isInProdMode, appConfigURL, spaceName, req, async (err: any, page: any) => {
         if (err) {
             return next(err);
         }
@@ -102,14 +103,14 @@ async function connectToSpace(req, res, next) {
             return;
         }
         
-        let spaceID = listSpacesJSON.find((space) => { return space["name"] === spaceName; });
+        let spaceID = listSpacesJSON.find((space: any) => { return space["name"] === spaceName; });
         if (!spaceID) {
             console.error(`There was an error when getting the space ID.`);
             return;
         }
         spaceID = spaceID["space-id"];
         
-        let listZonesJSON;
+        let listZonesJSON: Array<any>;
         let listZonesFetchURL = `https://${auth.HIFI_ENDPOINT_URL}/api/v1/spaces/${spaceID}/settings/zones?token=${adminHiFiJWT}`;
         try {
             let listZones = await fetch(listZonesFetchURL);
@@ -138,9 +139,9 @@ async function connectToSpace(req, res, next) {
         }
 
         let needsZoneUpdate = false;
-        appConfigJSON.rooms.forEach((room) => {
+        appConfigJSON.rooms.forEach((room: any) => {
             let roomName = room.name;
-            if (!listZonesJSON.find((zone) => { return zone.name === roomName; })) {
+            if (!listZonesJSON.find((zone: any) => { return zone.name === roomName; })) {
                 needsZoneUpdate = true;
             }
         });
@@ -163,10 +164,10 @@ async function connectToSpace(req, res, next) {
         console.log(`${spaceName}: Successfully deleted all existing zones! Response:\n${JSON.stringify(deleteZonesJSON, null, 4)}`);
 
         let newZonesJSON;
-        let params = [];
+        let params: Array<any> = [];
         try {
             console.log(`${spaceName}: Creating new zones...`);
-            appConfigJSON.rooms.forEach((room) => {
+            appConfigJSON.rooms.forEach((room: any) => {
                 params.push({
                     "name": room.name,
                     "x-min": room.roomCenter.x - room.dimensions.x / 2,
@@ -218,7 +219,7 @@ async function connectToSpace(req, res, next) {
     });
 }
 
-app.get('/spatial-audio-rooms/slack', (req, res, next) => {
+app.get('/spatial-audio-rooms/slack', (req: any, res: any, next: any) => {
     let code = req.query.code;
     if (!code) {
         res.sendStatus(500);
@@ -231,8 +232,8 @@ app.get('/spatial-audio-rooms/slack', (req, res, next) => {
     params.append('client_secret', auth.SLACK_CLIENT_SECRET);
 
     fetch("https://slack.com/api/oauth.v2.access", { method: 'POST', body: params })
-        .then(res => res.json())
-        .then(json => {
+        .then((res: any) => res.json())
+        .then((json: any) => {
             console.log(json);
             if (json && json.ok) {
                 let okString = `<p>The HiFi Helper bot has been successfully added to the Slack workspace named "${json.team.name}"! Try typing <code>/hifi</code> in any Slack channel.</p>`;
@@ -244,14 +245,14 @@ app.get('/spatial-audio-rooms/slack', (req, res, next) => {
                 res.status(500).send(errorString);
             }
         })
-        .catch(e => {
+        .catch((e: any) => {
             let errorString = `There was an error when contacting Slack. More information:\n${JSON.stringify(e)}`;
             console.error(errorString)
             res.send(errorString);
         });
 });
 
-app.post('/spatial-audio-rooms/create', (req, res, next) => {
+app.post('/spatial-audio-rooms/create', (req: any, res: any, next: any) => {
     let spaceURL;
 
     let slackCommandText = req.body.text;
@@ -327,19 +328,66 @@ const socketIOServer = require("socket.io")(httpOrHttpsServer, {
     }
 });
 
-socketIOServer.on("error", (e) => {
+socketIOServer.on("error", (e: any) => {
     console.error(e);
 });
 
 class ServerSpaceInfo {
-    constructor({ spaceName } = {}) {
+    spaceName: string;
+    participants: Array<Participant> = [];
+
+    constructor({ spaceName }: { spaceName: string }) {
         this.spaceName = spaceName;
-        this.participants = [];
     }
 }
 
 class Participant {
-    constructor({ socketID, spaceName, visitIDHash, currentSeatID, displayName, colorHex, profileImageURL, isAudioInputMuted, echoCancellationEnabled, agcEnabled, noiseSuppressionEnabled, hiFiGainSliderValue, volumeThreshold, currentWatchPartyRoomName, } = {}) {
+    socketID: string;
+    spaceName: string;
+    visitIDHash: string;
+    currentSeatID: string;
+    displayName: string;
+    colorHex: string;
+    profileImageURL: string;
+    isAudioInputMuted: boolean;
+    echoCancellationEnabled: boolean;
+    agcEnabled: boolean;
+    noiseSuppressionEnabled: boolean;
+    hiFiGainSliderValue: string;
+    volumeThreshold: number;
+    currentWatchPartyRoomName: string;
+
+    constructor({
+        socketID,
+        spaceName,
+        visitIDHash,
+        currentSeatID,
+        displayName,
+        colorHex,
+        profileImageURL,
+        isAudioInputMuted,
+        echoCancellationEnabled,
+        agcEnabled,
+        noiseSuppressionEnabled,
+        hiFiGainSliderValue,
+        volumeThreshold,
+        currentWatchPartyRoomName,
+    }: {
+        socketID: string,
+        spaceName: string,
+        visitIDHash: string,
+        currentSeatID: string,
+        displayName: string,
+        colorHex: string,
+        profileImageURL: string,
+        isAudioInputMuted: boolean,
+        echoCancellationEnabled: boolean,
+        agcEnabled: boolean,
+        noiseSuppressionEnabled: boolean,
+        hiFiGainSliderValue: string,
+        volumeThreshold: number,
+        currentWatchPartyRoomName: string,
+    }) {
         this.socketID = socketID;
         this.spaceName = spaceName;
         this.visitIDHash = visitIDHash;
@@ -357,7 +405,7 @@ class Participant {
     }
 }
 
-function onWatchNewVideo(newVideoURL, spaceName, roomName) {
+function onWatchNewVideo(newVideoURL: string, spaceName: string, roomName: string) {
     if (!spaceInformation[spaceName]["rooms"][roomName]) {
         console.error(`In \`onWatchNewVideo()\`, no \`spaceInformation["${spaceName}"]["rooms"]["${roomName}"]\`!`);
         return;
@@ -382,7 +430,7 @@ function onWatchNewVideo(newVideoURL, spaceName, roomName) {
     }
 }
 
-function onWatchPartyUserLeft(visitIDHash) {
+function onWatchPartyUserLeft(visitIDHash: string) {
     console.log(`Removing watcher with ID \`${visitIDHash}\`.`);
 
     let spaceInformationKeys = Object.keys(spaceInformation);
@@ -410,14 +458,42 @@ function onWatchPartyUserLeft(visitIDHash) {
     }
 }
 
-let spaceInformation = {};
-socketIOServer.on("connection", (socket) => {
-    socket.on("addParticipant", ({ spaceName, visitIDHash, currentSeatID, displayName, colorHex, profileImageURL, isAudioInputMuted, echoCancellationEnabled, agcEnabled, noiseSuppressionEnabled, hiFiGainSliderValue, volumeThreshold, currentWatchPartyRoomName, } = {}) => {
+let spaceInformation: any = {};
+socketIOServer.on("connection", (socket: any) => {
+    socket.on("addParticipant", ({
+        spaceName,
+        visitIDHash,
+        currentSeatID,
+        displayName,
+        colorHex,
+        profileImageURL,
+        isAudioInputMuted,
+        echoCancellationEnabled,
+        agcEnabled,
+        noiseSuppressionEnabled,
+        hiFiGainSliderValue,
+        volumeThreshold,
+        currentWatchPartyRoomName,
+    }: {
+        spaceName: string,
+        visitIDHash: string,
+        currentSeatID: string,
+        displayName: string,
+        colorHex: string,
+        profileImageURL: string,
+        isAudioInputMuted: boolean,
+        echoCancellationEnabled: boolean,
+        agcEnabled: boolean,
+        noiseSuppressionEnabled: boolean,
+        hiFiGainSliderValue: string,
+        volumeThreshold: number,
+        currentWatchPartyRoomName: string,
+    }) => {
         if (!spaceInformation[spaceName]) {
             spaceInformation[spaceName] = new ServerSpaceInfo({ spaceName });
         }
 
-        if (spaceInformation[spaceName].participants.find((participant) => { return participant.visitIDHash === visitIDHash; })) {
+        if (spaceInformation[spaceName].participants.find((participant: Participant) => { return participant.visitIDHash === visitIDHash; })) {
             // Already had info about this participant.
             return;
         }
@@ -446,11 +522,39 @@ socketIOServer.on("connection", (socket) => {
         socket.join(spaceName);
 
         socket.to(spaceName).emit("onParticipantsAddedOrEdited", [me]);
-        socket.emit("onParticipantsAddedOrEdited", spaceInformation[spaceName].participants.filter((participant) => { return participant.visitIDHash !== visitIDHash; }));
+        socket.emit("onParticipantsAddedOrEdited", spaceInformation[spaceName].participants.filter((participant: Participant) => { return participant.visitIDHash !== visitIDHash; }));
     });
 
-    socket.on("editParticipant", ({ spaceName, visitIDHash, currentSeatID, displayName, colorHex, profileImageURL, isAudioInputMuted, echoCancellationEnabled, agcEnabled, noiseSuppressionEnabled, hiFiGainSliderValue, volumeThreshold, currentWatchPartyRoomName, } = {}) => {
-        let participantToEdit = spaceInformation[spaceName].participants.find((participant) => {
+    socket.on("editParticipant", ({
+        spaceName,
+        visitIDHash,
+        currentSeatID,
+        displayName,
+        colorHex,
+        profileImageURL,
+        isAudioInputMuted,
+        echoCancellationEnabled,
+        agcEnabled,
+        noiseSuppressionEnabled,
+        hiFiGainSliderValue,
+        volumeThreshold,
+        currentWatchPartyRoomName,
+    }: {
+        spaceName: string,
+        visitIDHash: string,
+        currentSeatID: string,
+        displayName: string,
+        colorHex: string,
+        profileImageURL: string,
+        isAudioInputMuted: boolean,
+        echoCancellationEnabled: boolean,
+        agcEnabled: boolean,
+        noiseSuppressionEnabled: boolean,
+        hiFiGainSliderValue: string,
+        volumeThreshold: number,
+        currentWatchPartyRoomName: string,
+    }) => {
+        let participantToEdit = spaceInformation[spaceName].participants.find((participant: Participant) => {
             return participant.visitIDHash === visitIDHash;
         });
 
@@ -499,18 +603,26 @@ socketIOServer.on("connection", (socket) => {
 
         for (let i = 0; i < allSpaces.length; i++) {
             let currentSpace = spaceInformation[allSpaces[i]];
-            let participantToRemove = currentSpace.participants.find((participant) => { return participant.socketID === socket.id; });
+            let participantToRemove = currentSpace.participants.find((participant: Participant) => { return participant.socketID === socket.id; });
             if (participantToRemove) {
                 onWatchPartyUserLeft(participantToRemove.visitIDHash);
                 console.log(`${Date.now()}: In ${allSpaces[i]}, removing participant with Hashed Visit ID: \`${participantToRemove.visitIDHash}\`!`);
-                currentSpace.participants = currentSpace.participants.filter((participant) => { return participant.socketID !== socket.id; });
+                currentSpace.participants = currentSpace.participants.filter((participant: Participant) => { return participant.socketID !== socket.id; });
             }
         }
     });
 
-    socket.on("requestToEnableEchoCancellation", ({ spaceName, toVisitIDHash, fromVisitIDHash } = {}) => {
+    socket.on("requestToEnableEchoCancellation", ({
+        spaceName,
+        toVisitIDHash,
+        fromVisitIDHash
+    }: {
+        spaceName: string,
+        toVisitIDHash: string,
+        fromVisitIDHash: string
+    }) => {
         if (!spaceInformation[spaceName]) { return; }
-        let participant = spaceInformation[spaceName].participants.find((participant) => { return participant.visitIDHash === toVisitIDHash; });
+        let participant = spaceInformation[spaceName].participants.find((participant: Participant) => { return participant.visitIDHash === toVisitIDHash; });
         if (!participant) {
             console.error(`requestToEnableEchoCancellation: Couldn't get participant from \`spaceInformation[${spaceName}].participants[]\` with Visit ID Hash \`${toVisitIDHash}\`!`);
             return;
@@ -522,9 +634,17 @@ socketIOServer.on("connection", (socket) => {
         socketIOServer.to(participant.socketID).emit("onRequestToEnableEchoCancellation", { fromVisitIDHash });
     });
 
-    socket.on("requestToDisableEchoCancellation", ({ spaceName, toVisitIDHash, fromVisitIDHash } = {}) => {
+    socket.on("requestToDisableEchoCancellation", ({
+        spaceName,
+        toVisitIDHash,
+        fromVisitIDHash
+    }: {
+        spaceName: string,
+        toVisitIDHash: string,
+        fromVisitIDHash: string
+    }) => {
         if (!spaceInformation[spaceName]) { return; }
-        let participant = spaceInformation[spaceName].participants.find((participant) => { return participant.visitIDHash === toVisitIDHash; });
+        let participant = spaceInformation[spaceName].participants.find((participant: Participant) => { return participant.visitIDHash === toVisitIDHash; });
         if (!participant) {
             console.error(`requestToDisableEchoCancellation: Couldn't get participant from \`spaceInformation[spaceName].participants[]\` with Visit ID Hash \`${toVisitIDHash}\`!`);
             return;
@@ -536,9 +656,17 @@ socketIOServer.on("connection", (socket) => {
         socketIOServer.to(participant.socketID).emit("onRequestToDisableEchoCancellation", { fromVisitIDHash });
     });
 
-    socket.on("requestToEnableAGC", ({ spaceName, toVisitIDHash, fromVisitIDHash } = {}) => {
+    socket.on("requestToEnableAGC", ({
+        spaceName,
+        toVisitIDHash,
+        fromVisitIDHash
+    }: {
+        spaceName: string,
+        toVisitIDHash: string,
+        fromVisitIDHash: string
+    }) => {
         if (!spaceInformation[spaceName]) { return; }
-        let participant = spaceInformation[spaceName].participants.find((participant) => { return participant.visitIDHash === toVisitIDHash; });
+        let participant = spaceInformation[spaceName].participants.find((participant: Participant) => { return participant.visitIDHash === toVisitIDHash; });
         if (!participant) {
             console.error(`requestToEnableAGC: Couldn't get participant from \`spaceInformation[${spaceName}].participants[]\` with Visit ID Hash \`${toVisitIDHash}\`!`);
             return;
@@ -550,9 +678,17 @@ socketIOServer.on("connection", (socket) => {
         socketIOServer.to(participant.socketID).emit("onRequestToEnableAGC", { fromVisitIDHash });
     });
 
-    socket.on("requestToDisableAGC", ({ spaceName, toVisitIDHash, fromVisitIDHash } = {}) => {
+    socket.on("requestToDisableAGC", ({
+        spaceName,
+        toVisitIDHash,
+        fromVisitIDHash
+    }: {
+        spaceName: string,
+        toVisitIDHash: string,
+        fromVisitIDHash: string
+    }) => {
         if (!spaceInformation[spaceName]) { return; }
-        let participant = spaceInformation[spaceName].participants.find((participant) => { return participant.visitIDHash === toVisitIDHash; });
+        let participant = spaceInformation[spaceName].participants.find((participant: Participant) => { return participant.visitIDHash === toVisitIDHash; });
         if (!participant) {
             console.error(`requestToDisableAGC: Couldn't get participant from \`spaceInformation[spaceName].participants[]\` with Visit ID Hash \`${toVisitIDHash}\`!`);
             return;
@@ -564,9 +700,17 @@ socketIOServer.on("connection", (socket) => {
         socketIOServer.to(participant.socketID).emit("onRequestToDisableAGC", { fromVisitIDHash });
     });
 
-    socket.on("requestToEnableNoiseSuppression", ({ spaceName, toVisitIDHash, fromVisitIDHash } = {}) => {
+    socket.on("requestToEnableNoiseSuppression", ({
+        spaceName,
+        toVisitIDHash,
+        fromVisitIDHash
+    }: {
+        spaceName: string,
+        toVisitIDHash: string,
+        fromVisitIDHash: string
+    }) => {
         if (!spaceInformation[spaceName]) { return; }
-        let participant = spaceInformation[spaceName].participants.find((participant) => { return participant.visitIDHash === toVisitIDHash; });
+        let participant = spaceInformation[spaceName].participants.find((participant: Participant) => { return participant.visitIDHash === toVisitIDHash; });
         if (!participant) {
             console.error(`requestToEnableNoiseSuppression: Couldn't get participant from \`spaceInformation[${spaceName}].participants[]\` with Visit ID Hash \`${toVisitIDHash}\`!`);
             return;
@@ -578,9 +722,17 @@ socketIOServer.on("connection", (socket) => {
         socketIOServer.to(participant.socketID).emit("onRequestToEnableNoiseSuppression", { fromVisitIDHash });
     });
 
-    socket.on("requestToDisableNoiseSuppression", ({ spaceName, toVisitIDHash, fromVisitIDHash } = {}) => {
+    socket.on("requestToDisableNoiseSuppression", ({
+        spaceName,
+        toVisitIDHash,
+        fromVisitIDHash
+    }: {
+        spaceName: string,
+        toVisitIDHash: string,
+        fromVisitIDHash: string
+    }) => {
         if (!spaceInformation[spaceName]) { return; }
-        let participant = spaceInformation[spaceName].participants.find((participant) => { return participant.visitIDHash === toVisitIDHash; });
+        let participant = spaceInformation[spaceName].participants.find((participant: Participant) => { return participant.visitIDHash === toVisitIDHash; });
         if (!participant) {
             console.error(`requestToDisableNoiseSuppression: Couldn't get participant from \`spaceInformation[spaceName].participants[]\` with Visit ID Hash \`${toVisitIDHash}\`!`);
             return;
@@ -592,9 +744,19 @@ socketIOServer.on("connection", (socket) => {
         socketIOServer.to(participant.socketID).emit("onRequestToDisableNoiseSuppression", { fromVisitIDHash });
     });
 
-    socket.on("requestToChangeHiFiGainSliderValue", ({ spaceName, toVisitIDHash, fromVisitIDHash, newHiFiGainSliderValue } = {}) => {
+    socket.on("requestToChangeHiFiGainSliderValue", ({
+        spaceName,
+        toVisitIDHash,
+        fromVisitIDHash,
+        newHiFiGainSliderValue
+    }: {
+        spaceName: string,
+        toVisitIDHash: string,
+        fromVisitIDHash: string,
+        newHiFiGainSliderValue: number
+    }) => {
         if (!spaceInformation[spaceName]) { return; }
-        let participant = spaceInformation[spaceName].participants.find((participant) => { return participant.visitIDHash === toVisitIDHash; });
+        let participant = spaceInformation[spaceName].participants.find((participant: Participant) => { return participant.visitIDHash === toVisitIDHash; });
         if (!participant) {
             console.error(`requestToChangeHiFiGainSliderValue: Couldn't get participant from \`spaceInformation[spaceName].participants[]\` with Visit ID Hash \`${toVisitIDHash}\`!`);
             return;
@@ -606,9 +768,19 @@ socketIOServer.on("connection", (socket) => {
         socketIOServer.to(participant.socketID).emit("onRequestToChangeHiFiGainSliderValue", { fromVisitIDHash, newHiFiGainSliderValue });
     });
 
-    socket.on("requestToChangeVolumeThreshold", ({ spaceName, toVisitIDHash, fromVisitIDHash, newVolumeThreshold } = {}) => {
+    socket.on("requestToChangeVolumeThreshold", ({
+        spaceName,
+        toVisitIDHash,
+        fromVisitIDHash,
+        newVolumeThreshold
+    }: {
+        spaceName: string,
+        toVisitIDHash: string,
+        fromVisitIDHash: string,
+        newVolumeThreshold: number
+    }) => {
         if (!spaceInformation[spaceName]) { return; }
-        let participant = spaceInformation[spaceName].participants.find((participant) => { return participant.visitIDHash === toVisitIDHash; });
+        let participant = spaceInformation[spaceName].participants.find((participant: Participant) => { return participant.visitIDHash === toVisitIDHash; });
         if (!participant) {
             console.error(`requestToChangeVolumeThreshold: Couldn't get participant from \`spaceInformation[spaceName].participants[]\` with Visit ID Hash \`${toVisitIDHash}\`!`);
             return;
@@ -620,9 +792,17 @@ socketIOServer.on("connection", (socket) => {
         socketIOServer.to(participant.socketID).emit("onRequestToChangeVolumeThreshold", { fromVisitIDHash, newVolumeThreshold });
     });
 
-    socket.on("requestToMuteAudioInputDevice", ({ spaceName, toVisitIDHash, fromVisitIDHash } = {}) => {
+    socket.on("requestToMuteAudioInputDevice", ({
+        spaceName,
+        toVisitIDHash,
+        fromVisitIDHash
+    }: {
+        spaceName: string,
+        toVisitIDHash: string,
+        fromVisitIDHash: string
+    }) => {
         if (!spaceInformation[spaceName]) { return; }
-        let participant = spaceInformation[spaceName].participants.find((participant) => { return participant.visitIDHash === toVisitIDHash; });
+        let participant = spaceInformation[spaceName].participants.find((participant: Participant) => { return participant.visitIDHash === toVisitIDHash; });
         if (!participant) {
             console.error(`requestToMuteAudioInputDevice: Couldn't get participant from \`spaceInformation[spaceName].participants[]\` with Visit ID Hash \`${toVisitIDHash}\`!`);
             return;
@@ -634,15 +814,31 @@ socketIOServer.on("connection", (socket) => {
         socketIOServer.to(participant.socketID).emit("onRequestToMuteAudioInputDevice", { fromVisitIDHash });
     });
 
-    socket.on("addParticle", ({ visitIDHash, spaceName, particleData } = {}) => {
+    socket.on("addParticle", ({
+        visitIDHash,
+        spaceName,
+        particleData
+    }: {
+        visitIDHash: string,
+        spaceName: string,
+        particleData: any
+    }) => {
         socket.to(spaceName).emit("requestParticleAdd", { visitIDHash, particleData });
     });
 
-    socket.on("addSound", ({ visitIDHash, spaceName, soundParams } = {}) => {
+    socket.on("addSound", ({
+        visitIDHash,
+        spaceName,
+        soundParams
+    }: {
+        visitIDHash: string,
+        spaceName: string,
+        soundParams: any
+    }) => {
         socket.to(spaceName).emit("requestSoundAdd", { visitIDHash, soundParams });
     });
 
-    socket.on("watchPartyUserJoined", (visitIDHash, spaceName, roomName) => {
+    socket.on("watchPartyUserJoined", (visitIDHash: string, spaceName: string, roomName: string) => {
         console.log(`In ${spaceName}/${roomName}, adding watcher with ID \`${visitIDHash}\`.`);
 
         if (!spaceInformation[spaceName]["rooms"]) {
@@ -666,11 +862,11 @@ socketIOServer.on("connection", (socket) => {
         }
     });
 
-    socket.on("watchPartyUserLeft", (visitIDHash) => {
+    socket.on("watchPartyUserLeft", (visitIDHash: string) => {
         onWatchPartyUserLeft(visitIDHash);
     });
 
-    socket.on("enqueueNewVideo", (visitIDHash, newVideoURL, spaceName, roomName) => {
+    socket.on("enqueueNewVideo", (visitIDHash: string, newVideoURL: string, spaceName: string, roomName: string) => {
         if (!spaceInformation[spaceName]) {
             return;
         }
@@ -687,7 +883,7 @@ socketIOServer.on("connection", (socket) => {
         onWatchNewVideo(newVideoURL, spaceName, roomName);
     });
 
-    socket.on("requestVideoSeek", (visitIDHash, seekTimeSeconds, spaceName, roomName) => {
+    socket.on("requestVideoSeek", (visitIDHash: string, seekTimeSeconds: number, spaceName: string, roomName: string) => {
         if (!spaceInformation[spaceName]["rooms"][roomName]) {
             return;
         }
@@ -700,7 +896,7 @@ socketIOServer.on("connection", (socket) => {
         socketIOServer.sockets.in(spaceName).emit("videoSeek", roomName, visitIDHash, spaceInformation[spaceName]["rooms"][roomName].currentVideoSeekTime);
     });
 
-    socket.on("setSeekTime", (visitIDHash, seekTimeSeconds, spaceName, roomName) => {
+    socket.on("setSeekTime", (visitIDHash: string, seekTimeSeconds: number, spaceName: string, roomName: string) => {
         if (!spaceInformation[spaceName]["rooms"][roomName]) {
             return;
         }
@@ -709,7 +905,7 @@ socketIOServer.on("connection", (socket) => {
         spaceInformation[spaceName]["rooms"][roomName].currentVideoSeekTimeSetTimestamp = Date.now();
     });
 
-    socket.on("newPlayerState", (visitIDHash, newPlayerState, seekTimeSeconds, spaceName, roomName) => {
+    socket.on("newPlayerState", (visitIDHash: string, newPlayerState: number, seekTimeSeconds: number, spaceName: string, roomName: string) => {
         if (!spaceInformation[spaceName]["rooms"][roomName]) {
             return;
         }
@@ -731,7 +927,7 @@ socketIOServer.on("connection", (socket) => {
         spaceInformation[spaceName]["rooms"][roomName].currentPlayerState = newPlayerState;
     });
 
-    socket.on("youTubeVideoEnded", (visitIDHash, spaceName, roomName) => {
+    socket.on("youTubeVideoEnded", (visitIDHash: string, spaceName: string, roomName: string) => {
         if (!(spaceInformation[spaceName] && spaceInformation[spaceName]["rooms"][roomName])) {
             return;
         }
@@ -745,7 +941,7 @@ socketIOServer.on("connection", (socket) => {
     });
 });
 
-httpOrHttpsServer.listen(PORT, (err) => {
+httpOrHttpsServer.listen(PORT, (err: any) => {
     if (err) {
         throw err;
     }

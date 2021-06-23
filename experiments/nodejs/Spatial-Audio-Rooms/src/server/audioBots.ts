@@ -1,12 +1,12 @@
 const { MediaStream, nonstandard: { RTCAudioSource } } = require('wrtc'); // Used to create the `MediaStream` containing your Audio Bot's audio.
-const fetch = require('node-fetch'); // Used to download the MP3 or WAV file from the server.
+import fetch from 'node-fetch'; // Used to download the MP3 or WAV file from the server.
 const path = require('path'); // Used to verify that the specified audio file is an MP3 or WAV file.
 const decode = require('audio-decode'); // Used to decode the audio file present on your local disk.
 const format = require('audio-format'); // Allows us to retrieve available format properties from an audio-like object, such as our `AudioBuffer`.
 const convert = require('pcm-convert'); // Allows us to convert our `AudioBuffer` into the proper `int16` format.
-const { HiFiAudioAPIData, HiFiCommunicator, Point3D, preciseInterval } = require('hifi-spatial-audio'); // Used to interface with the Spatial Audio API.
+import { HiFiAudioAPIData, HiFiCommunicator, Point3D, preciseInterval } from 'hifi-spatial-audio'; // Used to interface with the Spatial Audio API.
 const { generateHiFiJWT } = require('./utilities');
-const auth = require('../../auth.json');
+const auth = require('../../../auth.json');
 
 /**
  * Play the audio from a file into a High Fidelity Space. The audio will loop indefinitely.
@@ -16,7 +16,7 @@ const auth = require('../../auth.json');
  * @param {object} position - The {x, y, z} point at which to spatialize the audio.
  * @param {number} hiFiGain - Set above 1 to boost the volume of the bot, or set below 1 to attenuate the volume of the bot.
  */
-async function startAudioBot(providedUserID, audioURL, position, hiFiGain) {
+async function startAudioBot(providedUserID: string, audioURL: string, position: Point3D, hiFiGain: number) {
     // Make sure we've been passed an `audioPath`...
     if (!audioURL) {
         console.error(`Audio URL not specified!`);

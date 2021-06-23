@@ -1,8 +1,8 @@
-const auth = require('../../auth.json');
-const { ADJECTIVES, NOUNS } = require('./words');
-const { uppercaseFirstLetter, generateHiFiJWT, generateTwilioAccessToken } = require('./utilities');
+const auth = require('../../../auth.json');
+import { ADJECTIVES, NOUNS } from './words';
+import { uppercaseFirstLetter, generateHiFiJWT, generateTwilioAccessToken } from './utilities';
 
-async function renderApp(isInProdMode, appConfigURL, spaceName, req, callback) {
+export async function renderApp(isInProdMode: boolean, appConfigURL: string, spaceName: string, req: any, callback: any) {
     let providedUserID = `${uppercaseFirstLetter(ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)])}${uppercaseFirstLetter(NOUNS[Math.floor(Math.random() * NOUNS.length)])}`;
     providedUserID += Math.floor(Math.random() * Math.floor(1000));
 
@@ -43,5 +43,3 @@ async function renderApp(isInProdMode, appConfigURL, spaceName, req, callback) {
 
     callback(null, page);
 }
-
-module.exports = renderApp;

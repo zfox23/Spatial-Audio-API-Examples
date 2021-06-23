@@ -1,4 +1,4 @@
-const ADJECTIVES = [
+export const ADJECTIVES = [
     "adaptable",
     "adventurous",
     "affectionate",
@@ -54,7 +54,7 @@ const ADJECTIVES = [
     "zealous",
 ];
 
-const NOUNS = [
+export const NOUNS = [
     "aardvark",
     "aircraft",
     "airfare",
@@ -148,6 +148,3 @@ const NOUNS = [
     "winner",
     "winter"
 ];
-
-module.exports.ADJECTIVES = ADJECTIVES;
-module.exports.NOUNS = NOUNS;
