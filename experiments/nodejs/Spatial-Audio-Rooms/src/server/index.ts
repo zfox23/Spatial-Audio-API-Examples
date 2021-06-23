@@ -73,7 +73,6 @@ app.use('/spatial-audio-rooms', express.static(path.join(__dirname, "static")));
 app.use(require('body-parser').urlencoded({ extended: true }));
 
 app.get('/spatial-audio-rooms', connectToSpace);
-app.get('/spatial-audio-rooms/:spaceName', connectToSpace);
 let spaceNamesWithModifiedZonesThisSession: Array<string> = [];
 async function connectToSpace(req: any, res: any, next: any) {
     let spaceName = req.params.spaceName || req.query.spaceName || auth.HIFI_DEFAULT_SPACE_NAME;
@@ -315,6 +314,8 @@ app.post('/spatial-audio-rooms/create', (req: any, res: any, next: any) => {
         });
     }
 });
+
+app.get('/spatial-audio-rooms/:spaceName', connectToSpace);
 
 let httpOrHttpsServer;
 if (isInHTTPSMode) {
