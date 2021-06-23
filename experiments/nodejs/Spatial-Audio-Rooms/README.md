@@ -79,3 +79,17 @@ If you'd like to run the Spatial Audio Rooms client as a native app, try one of 
     - If you've already built the Electron app via `npm run make`, this command will start up the Electron app.
 - `npm run package`
     - This command will build the necessary client files, invoke Electron to transform those files into a native app, then package the native app into an installer for your current platform.
+
+## Getting Analytics about Spatial Audio Rooms Usage
+1. Install `postgresql` on your local machine.
+2. Configure `postgresql` locally, then create a new database (called `sar`, for example).
+3. Create a new schema inside that new database called `analytics`.
+4. Configure `auth.json` to connect to your PostgreSQL database.
+
+Certain analytics, such as "Server Started", "User Connected", and "User Disconnected" will both be printed to the server's logs and be added to the Postgres database.
+
+You can use commands like the below to access the analytics from the database:
+```
+SELECT * FROM analytics.events
+ORDER BY id ASC;
+```
