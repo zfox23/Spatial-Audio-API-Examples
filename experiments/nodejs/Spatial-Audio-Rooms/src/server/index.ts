@@ -163,7 +163,7 @@ async function connectToSpace(req: any, res: any, next: any) {
             console.error(`There was an error when deleting all zones. Error:\n${JSON.stringify(e)}`);
             return;
         }
-        console.log(`${spaceName}: Successfully deleted all existing zones! Response:\n${JSON.stringify(deleteZonesJSON, null, 4)}`);
+        console.log(`${spaceName}: Successfully deleted all existing zones!`);
 
         let newZonesJSON;
         let params: Array<any> = [];
@@ -186,7 +186,7 @@ async function connectToSpace(req: any, res: any, next: any) {
             console.error(`There was an error when creating new zones. Error:\n${JSON.stringify(e)}`);
             return;
         }
-        console.log(`${spaceName}: Successfully created new zones! Response:\n${JSON.stringify(newZonesJSON, null, 4)}`);
+        console.log(`${spaceName}: Successfully created new zones!`);
 
         console.log(`${spaceName}: Creating new zone attenuation relationships...`);
         let listenerZoneID, sourceZoneID;
@@ -217,7 +217,7 @@ async function connectToSpace(req: any, res: any, next: any) {
             console.error(`There was an error when creating new zone attenuations. Error:\n${JSON.stringify(e)}`);
             return;
         }
-        console.log(`${spaceName}: Created new zone attenuation relationships! Response:\n${JSON.stringify(newZoneAttenuationsJSON, null, 4)}`);
+        console.log(`${spaceName}: Created new zone attenuation relationships!`);
     });
 }
 
