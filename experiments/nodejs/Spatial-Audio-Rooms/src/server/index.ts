@@ -340,6 +340,7 @@ class ServerSpaceInfo {
 
 class Participant {
     userUUID: string;
+    sessionStartTimestamp: number;
     socketID: string;
     spaceName: string;
     visitIDHash: string;
@@ -357,6 +358,7 @@ class Participant {
 
     constructor({
         userUUID,
+        sessionStartTimestamp,
         socketID,
         spaceName,
         visitIDHash,
@@ -373,6 +375,7 @@ class Participant {
         currentWatchPartyRoomName,
     }: {
         userUUID: string,
+        sessionStartTimestamp: number,
         socketID: string,
         spaceName: string,
         visitIDHash: string,
@@ -389,6 +392,7 @@ class Participant {
         currentWatchPartyRoomName: string,
     }) {
         this.userUUID = userUUID;
+        this.sessionStartTimestamp = sessionStartTimestamp;
         this.socketID = socketID;
         this.spaceName = spaceName;
         this.visitIDHash = visitIDHash;
@@ -463,6 +467,7 @@ let spaceInformation: any = {};
 socketIOServer.on("connection", (socket: any) => {
     socket.on("addParticipant", ({
         userUUID,
+        sessionStartTimestamp,
         spaceName,
         visitIDHash,
         currentSeatID,
@@ -478,6 +483,7 @@ socketIOServer.on("connection", (socket: any) => {
         currentWatchPartyRoomName,
     }: {
         userUUID: string,
+        sessionStartTimestamp: number,
         spaceName: string,
         visitIDHash: string,
         currentSeatID: string,
@@ -505,6 +511,7 @@ socketIOServer.on("connection", (socket: any) => {
 
         let me = new Participant({
             userUUID,
+            sessionStartTimestamp,
             socketID: socket.id,
             spaceName,
             visitIDHash,
@@ -528,7 +535,7 @@ socketIOServer.on("connection", (socket: any) => {
         socket.to(spaceName).emit("onParticipantsAddedOrEdited", [me]);
         socket.emit("onParticipantsAddedOrEdited", spaceInformation[spaceName].participants.filter((participant: Participant) => { return participant.visitIDHash !== visitIDHash; }));
 
-        analyticsController.logEvent(ServerAnalyticsEventCategory.UserConnected, new UserConnectedOrDisconnectedEvent(spaceName, userUUID));
+        analyticsController.logEvent(ServerAnalyticsEventCategory.UserConnected, new UserConnectedOrDisconnectedEvent(spaceName, userUUID, sessionStartTimestamp));
     });
 
     socket.on("editParticipant", ({
@@ -611,7 +618,7 @@ socketIOServer.on("connection", (socket: any) => {
             let currentSpace = spaceInformation[allSpaces[i]];
             let participantToRemove = currentSpace.participants.find((participant: Participant) => { return participant.socketID === socket.id; });
             if (participantToRemove) {
-                analyticsController.logEvent(ServerAnalyticsEventCategory.UserDisconnected, new UserConnectedOrDisconnectedEvent(participantToRemove.spaceName, participantToRemove.userUUID));
+                analyticsController.logEvent(ServerAnalyticsEventCategory.UserDisconnected, new UserConnectedOrDisconnectedEvent(participantToRemove.spaceName, participantToRemove.userUUID, participantToRemove.sessionStartTimestamp));
                 onWatchPartyUserLeft(participantToRemove.visitIDHash);
                 console.log(`${Date.now()}: In ${allSpaces[i]}, removing participant with Hashed Visit ID: \`${participantToRemove.visitIDHash}\`!`);
                 currentSpace.participants = currentSpace.participants.filter((participant: Participant) => { return participant.socketID !== socket.id; });

@@ -249,6 +249,7 @@ export class WebSocketConnectionController {
 
         this.socket.emit("addParticipant", {
             userUUID: userUUID,
+            sessionStartTimestamp: Date.now(),
             spaceName: HIFI_SPACE_NAME,
             visitIDHash: myUserData.visitIDHash,
             currentSeatID: myUserData.currentSeat ? myUserData.currentSeat.seatID : "",

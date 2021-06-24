@@ -29,10 +29,12 @@ export class SlackBotUsedEvent {
 export class UserConnectedOrDisconnectedEvent {
     spaceName: string;
     userUUID: string;
+    sessionStartTimestamp: number;
 
-    constructor(spaceName: string, userUUID: string) {
+    constructor(spaceName: string, userUUID: string, sessionStartTimestamp: number) {
         this.spaceName = spaceName;
         this.userUUID = userUUID;
+        this.sessionStartTimestamp = sessionStartTimestamp;
     }
 }
 
@@ -106,7 +108,7 @@ export class ServerAnalyticsController {
             case ServerAnalyticsEventCategory.UserConnected:
             case ServerAnalyticsEventCategory.UserDisconnected:
                 e = <UserConnectedOrDisconnectedEvent>details;
-                detailsText = `${e.spaceName}/${e.userUUID}`;
+                detailsText = `${e.spaceName}/${e.userUUID}/${e.sessionStartTimestamp}`;
                 break;
             default:
                 if (details) {
