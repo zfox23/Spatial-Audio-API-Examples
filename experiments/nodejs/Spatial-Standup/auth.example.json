@@ -1,0 +1,19 @@
+{
+    "HIFI_APP_ID": "",
+    "HIFI_APP_SECRET": "",
+    "HIFI_DEFAULT_SPACE_NAME": "spatial-standup-space",
+    "HIFI_ENDPOINT_URL": "api.highfidelity.com",
+
+    "TWILIO_ACCOUNT_SID": "",
+    "TWILIO_API_KEY_SID": "",
+    "TWILIO_API_KEY_SECRET": "",
+
+    "SLACK_CLIENT_ID": "",
+    "SLACK_CLIENT_SECRET": "",
+
+    "ANALYTICS_POSTGRES_DB_USER": "",
+    "ANALYTICS_POSTGRES_DB_HOST": "",
+    "ANALYTICS_POSTGRES_DB_DATABASE": "",
+    "ANALYTICS_POSTGRES_DB_PASSWORD": "",
+    "ANALYTICS_POSTGRES_DB_PORT": ""
+}

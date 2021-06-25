@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+        "outDir": "./dist/",
+        "noImplicitAny": true,
+        "module": "es6",
+        "moduleResolution": "node",
+        "target": "es6",
+        "allowJs": true,
+        "esModuleInterop": true
+    },
+    "include": ["src/client", "index.d.ts"],
+    "exclude": ["node_modules", "**/*.spec.ts", "**/*.test.ts", "src/discordBot"]
+}

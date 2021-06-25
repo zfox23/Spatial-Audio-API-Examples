@@ -1,0 +1,59 @@
+@use "./themes";
+@use "./z-indices";
+@import './include-media';
+$bottom-controls-container-height: 72px;
+$watch-party-mode-canvas-height: 150px;
+
+.watchPartyModeCanvas {
+    position: fixed;
+    width: 100%;
+    height: $watch-party-mode-canvas-height;
+    z-index: map-get(z-indices.$z-index, canvas);
+    bottom: $bottom-controls-container-height;
+    touch-action: none;
+
+    &:focus {
+        outline-style: none;
+    }
+
+    &--light-theme {
+        background-color: map-get(themes.$light-theme, watch-party-canvas-background);
+    }
+
+    &--dark-theme {
+        background-color: map-get(themes.$dark-theme, watch-party-canvas-background);
+    }
+}
+
+.watchPartyInstructions {
+    position: absolute;
+    z-index: map-get(z-indices.$z-index, watchPartyInstructions);
+    font-family: 'Graphik-Bold', 'Helvetica', 'Arial', sans-serif;
+    font-size: 22px;
+    margin: 12px;
+
+    &--light-theme {
+        color: map-get(themes.$light-theme, text-primary);
+    }
+
+    &--dark-theme {
+        color: map-get(themes.$dark-theme, text-primary);
+    }
+}
+
+.youTubePlayerContainer {
+    position: fixed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    bottom: $bottom-controls-container-height;
+    top: 0;
+    width: 100%;
+    height: calc(100vh - #{$bottom-controls-container-height} - #{$watch-party-mode-canvas-height});
+}
+
+.youTubePlayerElement {
+    width: 100%;
+    height: 100%;
+    z-index: map-get(z-indices.$z-index, canvas);
+}

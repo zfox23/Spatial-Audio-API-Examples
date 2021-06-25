@@ -1,0 +1,54 @@
+@use "./z-indices";
+@use "./themes";
+
+.signalButtonContainer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    margin: 4px;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    -ms-box-sizing: border-box;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    z-index: map-get(z-indices.$z-index, ui);
+}
+
+.signalButton {
+    border: none;
+    cursor: pointer;
+    pointer-events: all;
+    width: 50px;
+    height: 50px;
+}
+
+.signalButton:focus {
+    outline: none;
+}
+
+.signalButton:focus-visible {
+    border: 2px solid rgb(255, 255, 255, 0.1);
+    border-radius: 4px;
+    outline: none;
+}
+
+.signalButton--positive {
+    background: url('../images/starBubble.png') transparent no-repeat center center;
+}
+
+.signalButton--negative {
+    background: url('../images/redLineBubble.png') transparent no-repeat center center;
+}
+
+.signalButton--active {
+    border-radius: 4px;
+
+    &--light-theme {
+        background-color: map-get(themes.$light-theme, active-signal-button-background);
+    }
+
+    &--dark-theme {
+        background-color: map-get(themes.$dark-theme, active-signal-button-background);
+    }
+}

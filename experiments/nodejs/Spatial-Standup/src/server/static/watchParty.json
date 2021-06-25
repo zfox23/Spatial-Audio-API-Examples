@@ -1,0 +1,227 @@
+{
+    "name": "Watch Party Config",
+    "comments": "A config JSON associated with Watch Party rooms.",
+    "configJSONVersion": "v1.0.0",
+    "theme": "dark",
+    "backgroundColorHex": "#0C0227",
+    "rooms": [
+        {
+            "name": "Kitchen",
+            "roomCenter": { "x": 0, "z": 0 },
+            "seatingCenter": { "x": 0.0844, "z": 0.1177 },
+            "dimensions": { "x": 5, "z": 7.4240 },
+            "seatingRadiusM": 0.8,
+            "roomImageSRC": "/spatial-standup/rooms/WatchParty-Kitchen-bg.jpg",
+            "numSeatsInRoom": 7
+        },
+        {
+            "name": "Living Room",
+            "roomType": "watchParty",
+            "roomCenter": { "x": -5.275, "z": 0 },
+            "seatingCenter": { "x": -5.05, "z": -1.303 },
+            "dimensions": { "x": 5.5511, "z": 7.4240 },
+            "seatingRadiusM": 1.15,
+            "roomImageSRC": "/spatial-standup/rooms/WatchParty-LivingRoom-bg.jpg",
+            "numSeatsInRoom": 6
+        }
+    ],
+    "landmarks": [
+        {
+            "name": "Coffee Cup 1",
+            "drawName": false,
+            "positionM": { "x": 0.31953906617506567, "z": -0.1850733523822899 },
+            "radiusM": 0.05,
+            "clickSoundSRC": ["/spatial-standup/sounds/clink1.wav", "/spatial-standup/sounds/clink2.wav", "/spatial-standup/sounds/clink3.wav", "/spatial-standup/sounds/clink4.wav", "/spatial-standup/sounds/clink5.wav", "/spatial-standup/sounds/clink6.wav"]
+        },
+        {
+            "name": "Coffee Cup 2",
+            "drawName": false,
+            "positionM": { "x": 0.176238154992299, "z": -0.2476757169935605 },
+            "radiusM": 0.05,
+            "clickSoundSRC": ["/spatial-standup/sounds/clink1.wav", "/spatial-standup/sounds/clink2.wav", "/spatial-standup/sounds/clink3.wav", "/spatial-standup/sounds/clink4.wav", "/spatial-standup/sounds/clink5.wav", "/spatial-standup/sounds/clink6.wav"]
+        },
+        {
+            "name": "Coffee Cup 3",
+            "drawName": false,
+            "positionM": { "x": 0.29609, "z": 0.37069 },
+            "radiusM": 0.05,
+            "clickSoundSRC": ["/spatial-standup/sounds/clink1.wav", "/spatial-standup/sounds/clink2.wav", "/spatial-standup/sounds/clink3.wav", "/spatial-standup/sounds/clink4.wav", "/spatial-standup/sounds/clink5.wav", "/spatial-standup/sounds/clink6.wav"]
+        },
+        {
+            "name": "Coffee Cup 4",
+            "drawName": false,
+            "positionM": { "x": -0.18862, "z": 0.21769 },
+            "radiusM": 0.05,
+            "clickSoundSRC": ["/spatial-standup/sounds/clink1.wav", "/spatial-standup/sounds/clink2.wav", "/spatial-standup/sounds/clink3.wav", "/spatial-standup/sounds/clink4.wav", "/spatial-standup/sounds/clink5.wav", "/spatial-standup/sounds/clink6.wav"]
+        },
+        {
+            "name": "Books 01",
+            "drawName": false,
+            "positionM": { "x": -0.251139, "z": -0.1386879 },
+            "radiusM": 0.1,
+            "randomSoundRate": true,
+            "clickSoundSRC": "/spatial-standup/sounds/bookflip.wav"
+        },
+        {
+            "name": "Cookies",
+            "drawName": false,
+            "positionM": { "x": -0.33921, "z": 1.949988 },
+            "radiusM": 0.15,
+            "randomSoundRate": true,
+            "clickSoundSRC": "/spatial-standup/sounds/mmmcookies.wav"
+        },
+        {
+            "name": "Plants 01",
+            "drawName": false,
+            "positionM": { "x": 1.409203, "z": -1.06315 },
+            "radiusM": 0.2,
+            "randomSoundRate": true,
+            "clickSoundSRC": ["/spatial-standup/sounds/rustle1.wav", "/spatial-standup/sounds/rustle2.wav", "/spatial-standup/sounds/rustle3.wav", "/spatial-standup/sounds/rustle4.wav", "/spatial-standup/sounds/rustle5.wav"]
+        },
+        {
+            "name": "Plants 02",
+            "drawName": false,
+            "positionM": { "x": -1.742308, "z": 0.36206 },
+            "radiusM": 0.2,
+            "randomSoundRate": true,
+            "clickSoundSRC": ["/spatial-standup/sounds/rustle1.wav", "/spatial-standup/sounds/rustle2.wav", "/spatial-standup/sounds/rustle3.wav", "/spatial-standup/sounds/rustle4.wav", "/spatial-standup/sounds/rustle5.wav"]
+        },
+        {
+            "name": "Plants 03",
+            "drawName": false,
+            "positionM": { "x": -0.381195, "z": -1.3029072 },
+            "radiusM": 0.2,
+            "randomSoundRate": true,
+            "clickSoundSRC": ["/spatial-standup/sounds/rustle1.wav", "/spatial-standup/sounds/rustle2.wav", "/spatial-standup/sounds/rustle3.wav", "/spatial-standup/sounds/rustle4.wav", "/spatial-standup/sounds/rustle5.wav"]
+        },
+        {
+            "name": "Fridge",
+            "drawName": false,
+            "positionM": { "x": -1.12252, "z": 1.414775 },
+            "radiusM": 0.2,
+            "clickSoundSRC": "/spatial-standup/sounds/fridgeOpen.wav"
+        },
+        {
+            "name": "Faucet",
+            "drawName": false,
+            "positionM": { "x": 1.688328, "z": 1.420752 },
+            "radiusM": 0.2,
+            "clickSoundSRC": "/spatial-standup/sounds/faucet.wav"
+        },
+        {
+            "name": "Birds",
+            "drawName": false,
+            "positionM": { "x": 0.043778, "z": 2.395408 },
+            "radiusM": 0.25,
+            "clickSoundSRC": ["/spatial-standup/sounds/birds01.wav", "/spatial-standup/sounds/birds02.wav", "/spatial-standup/sounds/birds03.wav", "/spatial-standup/sounds/birds04.wav"]
+        },
+        {
+            "name": "Light 01",
+            "drawName": false,
+            "positionM": { "x": 0.72614, "z": -1.31744 },
+            "radiusM": 0.2,
+            "randomSoundRate": true,
+            "clickSoundSRC": ["/spatial-standup/sounds/light01.wav", "/spatial-standup/sounds/light02.wav"]
+        },
+        {
+            "name": "Light 02",
+            "drawName": false,
+            "positionM": { "x": -4.14495, "z": 0.10721 },
+            "radiusM": 0.2,
+            "randomSoundRate": true,
+            "clickSoundSRC": ["/spatial-standup/sounds/light01.wav", "/spatial-standup/sounds/light02.wav"]
+        },
+        {
+            "name": "Light 03",
+            "drawName": false,
+            "positionM": { "x": -6.3101196, "z": 0.1086598 },
+            "radiusM": 0.2,
+            "randomSoundRate": true,
+            "clickSoundSRC": ["/spatial-standup/sounds/light01.wav", "/spatial-standup/sounds/light02.wav"]
+        },
+        {
+            "name": "Books 02",
+            "drawName": false,
+            "positionM": { "x": -4.228164, "z": -0.4053757 },
+            "radiusM": 0.1,
+            "randomSoundRate": true,
+            "clickSoundSRC": "/spatial-standup/sounds/bookflip.wav"
+        },
+        {
+            "name": "Coffee Cup 5",
+            "drawName": false,
+            "positionM": { "x": -4.89234, "z": -0.705028 },
+            "radiusM": 0.05,
+            "clickSoundSRC": ["/spatial-standup/sounds/clink1.wav", "/spatial-standup/sounds/clink2.wav", "/spatial-standup/sounds/clink3.wav", "/spatial-standup/sounds/clink4.wav", "/spatial-standup/sounds/clink5.wav", "/spatial-standup/sounds/clink6.wav"]
+        },
+        {
+            "name": "Coffee Cup 6",
+            "drawName": false,
+            "positionM": { "x": -5.375879, "z": -0.5217492 },
+            "radiusM": 0.05,
+            "clickSoundSRC": ["/spatial-standup/sounds/clink1.wav", "/spatial-standup/sounds/clink2.wav", "/spatial-standup/sounds/clink3.wav", "/spatial-standup/sounds/clink4.wav", "/spatial-standup/sounds/clink5.wav", "/spatial-standup/sounds/clink6.wav"]
+        },
+        {
+            "name": "Plants 04",
+            "drawName": false,
+            "positionM": { "x": -7.06590, "z": -1.56945 },
+            "radiusM": 0.2,
+            "randomSoundRate": true,
+            "clickSoundSRC": ["/spatial-standup/sounds/rustle1.wav", "/spatial-standup/sounds/rustle2.wav", "/spatial-standup/sounds/rustle3.wav", "/spatial-standup/sounds/rustle4.wav", "/spatial-standup/sounds/rustle5.wav"]
+        },
+        {
+            "name": "Plants 05",
+            "drawName": false,
+            "positionM": { "x": -7.58717, "z": 0.1824596 },
+            "radiusM": 0.2,
+            "randomSoundRate": true,
+            "clickSoundSRC": ["/spatial-standup/sounds/rustle1.wav", "/spatial-standup/sounds/rustle2.wav", "/spatial-standup/sounds/rustle3.wav", "/spatial-standup/sounds/rustle4.wav", "/spatial-standup/sounds/rustle5.wav"]
+        },
+        {
+            "name": "Plants 06",
+            "drawName": false,
+            "positionM": { "x": -2.87257, "z": -0.023831 },
+            "radiusM": 0.2,
+            "randomSoundRate": true,
+            "clickSoundSRC": ["/spatial-standup/sounds/rustle1.wav", "/spatial-standup/sounds/rustle2.wav", "/spatial-standup/sounds/rustle3.wav", "/spatial-standup/sounds/rustle4.wav", "/spatial-standup/sounds/rustle5.wav"]
+        },
+        {
+            "name": "Crickets 01",
+            "drawName": false,
+            "positionM": { "x": -3.87257, "z": 0.5440933 },
+            "radiusM": 0.25,
+            "clickSoundSRC": ["/spatial-standup/sounds/crickets01.wav", "/spatial-standup/sounds/crickets02.wav", "/spatial-standup/sounds/crickets03.wav", "/spatial-standup/sounds/crickets04.wav"]
+        },
+        {
+            "name": "Crickets 02",
+            "drawName": false,
+            "positionM": { "x": -6.4896, "z": 0.599525 },
+            "radiusM": 0.25,
+            "clickSoundSRC": ["/spatial-standup/sounds/crickets01.wav", "/spatial-standup/sounds/crickets02.wav", "/spatial-standup/sounds/crickets03.wav", "/spatial-standup/sounds/crickets04.wav"]
+        },
+        {
+            "name": "Pillow 01",
+            "drawName": false,
+            "positionM": { "x": -5.58536, "z": -0.024593 },
+            "radiusM": 0.1,
+            "randomSoundRate": true,
+            "clickSoundSRC": ["/spatial-standup/sounds/pillow01.wav", "/spatial-standup/sounds/pillow02.wav"]
+        },
+        {
+            "name": "Pillow 02",
+            "drawName": false,
+            "positionM": { "x": -4.63425, "z": -0.0501181 },
+            "radiusM": 0.1,
+            "randomSoundRate": true,
+            "clickSoundSRC": ["/spatial-standup/sounds/pillow01.wav", "/spatial-standup/sounds/pillow02.wav"]
+        },
+        {
+            "name": "Door Between Kitchen and Living Room",
+            "drawName": false,
+            "positionM": { "x": -3.02725, "z": -1.3916 },
+            "radiusM": 0.3,
+            "randomSoundRate": true,
+            "clickSoundSRC": "/spatial-standup/sounds/doorcreak.wav"
+        }
+    ]
+}

@@ -1,0 +1,19 @@
+{
+    "name": "Website Demo Config",
+    "comments": "A config JSON. Yay",
+    "configJSONVersion": "v1.0.0",
+    "theme": "light",
+    "backgroundColorHex": "#FFFFFF",
+    "rooms": [
+        {
+            "name": " ",
+            "roomCenter": { "x": 0, "z": 0 },
+            "seatingCenter": { "x": 0, "z": 0 },
+            "dimensions": { "x": 13, "z": 7.3125 },
+            "seatingRadiusM": 0.00001,
+            "roomImageSRC": "/spatial-standup/rooms/website-demo.png",
+            "numSeatsInRoom": 1
+        }
+    ],
+    "landmarks": []
+}

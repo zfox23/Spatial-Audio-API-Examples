@@ -1,0 +1,100 @@
+@use "./z-indices";
+@use "./themes";
+
+@font-face {
+    font-family: Graphik;
+    src: url('../fonts/Graphik-Regular.ttf')
+}
+
+@font-face {
+    font-family: Graphik-Bold;
+    src: url('../fonts/Graphik-Bold.ttf')
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    font-family: 'Graphik', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.body {
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
+    -webkit-tap-highlight-color: transparent;
+    
+    &--light-theme {
+        background-color: map-get(themes.$light-theme, body-background);
+    }
+
+    &--dark-theme {
+        background-color: map-get(themes.$dark-theme, body-background);
+    }
+}
+
+.loadingScreen {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    align-content: center;
+    background-color: map-get(themes.$light-theme, loading-background);
+    z-index: map-get(z-indices.$z-index, aboveModal);
+
+    &--icon {
+        background-size: 150px;
+        width: 150px;
+        height: 150px;
+        position: fixed;
+        z-index: 1;
+
+        animation-name: spin;
+        animation-duration: 4000ms;
+        animation-iteration-count: infinite;
+        animation-timing-function: linear;
+
+        &--light-theme {
+            background: url('../images/icons/light-theme/loader.png') no-repeat center center;
+        }
+    
+        &--dark-theme {
+            background: url('../images/icons/dark-theme/loader.png') no-repeat center center;
+        }
+    }
+
+    @keyframes spin { 
+        from { 
+            transform: rotate(0deg); 
+        } to { 
+            transform: rotate(360deg); 
+        }
+    }
+
+    &--text {
+        z-index: 2;
+        position: relative;
+        top: 100px;
+
+        &--light-theme {
+            color: map-get(themes.$light-theme, on-body-background);
+        }
+    
+        &--dark-theme {
+            color: map-get(themes.$dark-theme, on-body-background);
+        }
+    }
+}
+
+.displayNone {
+    display: none !important;
+}
+
+.cursorPointer {
+    cursor: pointer;
+}
