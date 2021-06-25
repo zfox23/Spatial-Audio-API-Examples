@@ -266,31 +266,14 @@ app.post('/spatial-standup/create', (req: any, res: any, next: any) => {
         return;
     }
 
-    let channelText;
-    let slackCommandText = req.body.text;
-    let slackCommandTextTrimmed;
-    if (slackCommandText) {
-        slackCommandTextTrimmed = slackCommandText.trim();
-    }
-    if (slackCommandText && slackCommandTextTrimmed.length > 0) {
-        let stringToHash = `${slackChannelID}/${slackCommandText}`;
+    let stringToHash = slackChannelID;
 
-        let hash = crypto.createHash('md5').update(stringToHash).digest('hex');
-        let spaceURL = `https://experiments.highfidelity.com/spatial-standup/${hash}/`;
+    let hash = crypto.createHash('md5').update(stringToHash).digest('hex');
+    let spaceURL = `https://experiments.highfidelity.com/spatial-standup/${hash}/`;
 
-        channelText = `<${spaceURL}|Click here to join the Spatial Standup named "${slackCommandTextTrimmed}".>`;
+    let channelText = `<${spaceURL}|Click here to join the Spatial Standup associated with this Slack channel.>`;
 
-        analyticsController.logEvent(ServerAnalyticsEventCategory.SlackBotUsed, new SlackBotUsedEvent(req.body.user_id, req.body.team_id, true));
-    } else {
-        let stringToHash = slackChannelID;
-
-        let hash = crypto.createHash('md5').update(stringToHash).digest('hex');
-        let spaceURL = `https://experiments.highfidelity.com/spatial-standup/${hash}/`;
-
-        channelText = `<${spaceURL}|Click here to join the Spatial Standup associated with this Slack channel.>`;
-
-        analyticsController.logEvent(ServerAnalyticsEventCategory.SlackBotUsed, new SlackBotUsedEvent(req.body.user_id, req.body.team_id, false));
-    }
+    analyticsController.logEvent(ServerAnalyticsEventCategory.SlackBotUsed, new SlackBotUsedEvent(req.body.user_id, req.body.team_id, false));
 
     res.json({
         "response_type": 'in_channel',
