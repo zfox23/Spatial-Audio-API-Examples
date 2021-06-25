@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="702.64" height="227.09" fill="none" version="1.1" viewBox="0 0 702.64 227.09" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+ <metadata>
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:title/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <path d="m276.57 553.56c152.75 0 276.57-123.5 276.57-275.84s-123.83-275.84-276.57-275.84c-152.75 0-276.57 123.5-276.57 275.84s123.82 275.84 276.57 275.84z" clip-path="url(#clipPath960)" fill="url(#paint0_radial)" opacity=".19"/>
+ <path d="m276.57 488.32c116.62 0 211.17-94.293 211.17-210.61s-94.542-210.61-211.17-210.61-211.17 94.293-211.17 210.61 94.542 210.61 211.17 210.61z" clip-path="url(#clipPath956)" fill="url(#paint1_radial)" opacity=".54"/>
+ <path d="m276.57 441.72c90.822 0 164.45-73.431 164.45-164.01s-73.626-164.01-164.45-164.01-164.45 73.431-164.45 164.01 73.626 164.01 164.45 164.01z" clip-path="url(#clipPath952)" fill="#0028ba"/>
+ <path d="m426.07 486.45c116.62 0 211.17-94.293 211.17-210.61s-94.542-210.61-211.17-210.61-211.17 94.293-211.17 210.61 94.543 210.61 211.17 210.61z" clip-path="url(#clipPath948)" fill="url(#paint2_radial)"/>
+ <path d="m426.07 551.68c152.75 0 276.57-123.5 276.57-275.84s-123.82-275.84-276.57-275.84-276.57 123.5-276.57 275.84 123.82 275.84 276.57 275.84z" clip-path="url(#clipPath944)" fill="url(#paint3_radial)" opacity=".4"/>
+ <path d="m426.07 439.86c90.822 0 164.45-73.431 164.45-164.01 0-90.582-73.626-164.01-164.45-164.01-90.823 0-164.45 73.432-164.45 164.01 0 90.583 73.625 164.01 164.45 164.01z" clip-path="url(#clipPath940)" fill="#ff001a"/>
+ <path d="m426.07 704.52c152.75 0 276.57-123.5 276.57-275.84s-123.82-275.84-276.57-275.84-276.57 123.5-276.57 275.84 123.82 275.84 276.57 275.84z" clip-path="url(#clipPath936)" fill="url(#paint4_radial)" opacity=".4"/>
+ <path d="m426.07 639.28c116.62 0 211.17-94.293 211.17-210.61s-94.542-210.61-211.17-210.61-211.17 94.293-211.17 210.61 94.543 210.61 211.17 210.61z" clip-path="url(#clipPath932)" fill="url(#paint5_radial)"/>
+ <path d="m276.57 702.65c152.75 0 276.57-123.5 276.57-275.84s-123.83-275.84-276.57-275.84c-152.75 0-276.57 123.5-276.57 275.84s123.82 275.84 276.57 275.84z" clip-path="url(#clipPath928)" fill="url(#paint6_radial)" opacity=".19"/>
+ <path d="m276.57 637.42c116.62 0 211.17-94.293 211.17-210.61s-94.542-210.61-211.17-210.61-211.17 94.293-211.17 210.61 94.542 210.61 211.17 210.61z" clip-path="url(#clipPath924)" fill="url(#paint7_radial)" opacity=".54"/>
+ <path d="m426.07 589.46h-151.37c-89.699 0-164.45-72.688-164.45-164.01v-149.1c0-89.462 72.88-164.01 164.45-164.01h151.37c89.699 0 164.45 72.688 164.45 164.01v149.1c0 91.326-74.749 164.01-164.45 164.01z" clip-path="url(#clipPath920)" fill="#000"/>
+ <defs>
+  <radialGradient id="paint0_radial" cx="0" cy="0" r="1" gradientTransform="matrix(244.36,130.59,-130.4,244,275.06,280.39)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#0028BA" stop-opacity=".3" offset="0"/>
+   <stop stop-color="#007AFF" offset="1"/>
+  </radialGradient>
+  <radialGradient id="paint1_radial" cx="0" cy="0" r="1" gradientTransform="matrix(186.56,99.703,-99.557,186.28,275.06,280.38)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#0028BA" stop-opacity=".3" offset="0"/>
+   <stop stop-color="#007AFF" offset="1"/>
+  </radialGradient>
+  <radialGradient id="paint2_radial" cx="0" cy="0" r="1" gradientTransform="matrix(186.56,99.703,-99.557,186.28,425.22,278.53)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#FF3ED6" stop-opacity="0" offset="0"/>
+   <stop stop-color="#EC1E79" stop-opacity=".2" offset=".5729"/>
+   <stop stop-color="#FF001A" stop-opacity=".4" offset="1"/>
+  </radialGradient>
+  <radialGradient id="paint3_radial" cx="0" cy="0" r="1" gradientTransform="matrix(244.36,130.59,-130.4,244,425.22,278.53)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#FF3ED6" stop-opacity="0" offset="0"/>
+   <stop stop-color="#EC1E79" stop-opacity=".2" offset=".5729"/>
+   <stop stop-color="#FF001A" stop-opacity=".4" offset="1"/>
+  </radialGradient>
+  <radialGradient id="paint4_radial" cx="0" cy="0" r="1" gradientTransform="matrix(244.36,130.59,-130.4,244,425.22,431.26)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#FF3ED6" stop-opacity="0" offset="0"/>
+   <stop stop-color="#EC1E79" stop-opacity=".2" offset=".5729"/>
+   <stop stop-color="#FF52DE" offset="1"/>
+  </radialGradient>
+  <radialGradient id="paint5_radial" cx="0" cy="0" r="1" gradientTransform="matrix(186.56,99.703,-99.557,186.28,425.22,431.26)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#FF3ED6" stop-opacity="0" offset="0"/>
+   <stop stop-color="#EC1E79" stop-opacity=".2" offset=".5729"/>
+   <stop stop-color="#FF52DE" stop-opacity=".7" offset="1"/>
+  </radialGradient>
+  <radialGradient id="paint6_radial" cx="0" cy="0" r="1" gradientTransform="matrix(244.36,130.59,-130.4,244,275.35,428.92)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#0028BA" stop-opacity=".3" offset="0"/>
+   <stop stop-color="#0028BA" stop-opacity=".9" offset="1"/>
+  </radialGradient>
+  <radialGradient id="paint7_radial" cx="0" cy="0" r="1" gradientTransform="matrix(186.56,99.703,-99.557,186.28,275.35,428.92)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#0028BA" stop-opacity=".3" offset="0"/>
+   <stop stop-color="#0028BA" offset="1"/>
+  </radialGradient>
+  <clipPath id="clipPath920">
+   <rect x="-204.25" y="-148.17" width="1096" height="375.26" ry="35.077" fill="#8e9297" stroke="#000" stroke-width=".5" style="paint-order:stroke fill markers"/>
+  </clipPath>
+  <clipPath id="clipPath924">
+   <rect x="-204.25" y="-148.17" width="1096" height="375.26" ry="35.077" fill="#8e9297" stroke="#000" stroke-width=".5" style="paint-order:stroke fill markers"/>
+  </clipPath>
+  <clipPath id="clipPath928">
+   <rect x="-204.25" y="-148.17" width="1096" height="375.26" ry="35.077" fill="#8e9297" stroke="#000" stroke-width=".5" style="paint-order:stroke fill markers"/>
+  </clipPath>
+  <clipPath id="clipPath932">
+   <rect x="-204.25" y="-148.17" width="1096" height="375.26" ry="35.077" fill="#8e9297" stroke="#000" stroke-width=".5" style="paint-order:stroke fill markers"/>
+  </clipPath>
+  <clipPath id="clipPath936">
+   <rect x="-204.25" y="-148.17" width="1096" height="375.26" ry="35.077" fill="#8e9297" stroke="#000" stroke-width=".5" style="paint-order:stroke fill markers"/>
+  </clipPath>
+  <clipPath id="clipPath940">
+   <rect x="-204.25" y="-148.17" width="1096" height="375.26" ry="35.077" fill="#8e9297" stroke="#000" stroke-width=".5" style="paint-order:stroke fill markers"/>
+  </clipPath>
+  <clipPath id="clipPath944">
+   <rect x="-204.25" y="-148.17" width="1096" height="375.26" ry="35.077" fill="#8e9297" stroke="#000" stroke-width=".5" style="paint-order:stroke fill markers"/>
+  </clipPath>
+  <clipPath id="clipPath948">
+   <rect x="-204.25" y="-148.17" width="1096" height="375.26" ry="35.077" fill="#8e9297" stroke="#000" stroke-width=".5" style="paint-order:stroke fill markers"/>
+  </clipPath>
+  <clipPath id="clipPath952">
+   <rect x="-204.25" y="-148.17" width="1096" height="375.26" ry="35.077" fill="#8e9297" stroke="#000" stroke-width=".5" style="paint-order:stroke fill markers"/>
+  </clipPath>
+  <clipPath id="clipPath956">
+   <rect x="-204.25" y="-148.17" width="1096" height="375.26" ry="35.077" fill="#8e9297" stroke="#000" stroke-width=".5" style="paint-order:stroke fill markers"/>
+  </clipPath>
+  <clipPath id="clipPath960">
+   <rect x="-204.25" y="-148.17" width="1096" height="375.26" ry="35.077" fill="#8e9297" stroke="#000" stroke-width=".5" style="paint-order:stroke fill markers"/>
+  </clipPath>
+ </defs>
+</svg>

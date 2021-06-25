@@ -5,14 +5,22 @@ $bottom-controls-container-height: 72px;
 
 .playOverlay {
     position: fixed;
-    display: flex;
-    justify-content: center;
-    align-items: center;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
+    display: flex;
+    align-items: center;
+    align-content: center;
+    justify-content: space-between;
+    margin: 0;
+    padding: 0;
+    flex-direction: column;
     z-index: map-get(z-indices.$z-index, aboveModal);
+    background-image: url('../images/play-screen-footer.svg');
+    background-repeat: no-repeat;
+    background-size: auto 250px;
+    background-position: center 100%;
 
     &--light-theme {
         background-color: map-get(themes.$light-theme, play-overlay-scrim);
@@ -22,31 +30,57 @@ $bottom-controls-container-height: 72px;
         background-color: map-get(themes.$dark-theme, play-overlay-scrim);
     }
 
-    &__container {
+    &__header {
         display: flex;
-        flex-wrap: wrap;
-        align-items: flex-start;
         align-content: center;
-        margin: 0 auto;
-        padding: 12px;
-        flex-direction: column;
-        width: 350px;
-        max-width: 90%;
+        align-items: center;
+        margin: 4vh auto 0 auto;
+        position: relative;
+        left: -48px;
+
+        &Image {
+            width: 72px;
+            height: 72px;
+            background: url('../images/spatial-standup-logo.svg') no-repeat center center;
+            background-size: contain;
+            margin: 0 8px 0 0;
+        }
+
+        &TextContainer {
+            display: flex;
+            flex-direction: column;
+        }
+
+        &TextTop {
+            font-family: 'Graphik-Bold', 'Helvetica', 'Arial', sans-serif;
+            margin: 0 0 6px 0;
+            font-size: 24px;
+            line-height: 24px;
+            color: #000000;
+        }
+        
+        &TextBottom {
+            font-family: 'Graphik', 'Helvetica', 'Arial', sans-serif;
+            margin: 0;
+            font-size: 14px;
+            line-height: 14px;
+            color: #7D7D7D;
+            font-weight: 400;
+        }
     }
 
-    &__header {
-        height: 90px;
-        background: url('../images/high-fidelity-banner.svg') no-repeat center center;
-        background-size: contain;
-        align-self: flex-start;
-        width: 180px;
-        margin: 0;
-        line-height: 50px;
+    &__playContainer {
+        display: flex;
+        flex-direction: column;
+        margin: 0 auto 72px auto;
+
     }
 
     &__playText {
         font-family: 'Graphik-Bold', 'Helvetica', 'Arial', sans-serif;
         width: 100%;
+        text-align: center;
+        margin: 0 auto;
 
         &--light-theme {
             color: map-get(themes.$light-theme, play-overlay);
@@ -57,17 +91,14 @@ $bottom-controls-container-height: 72px;
         }
 
         @include media(">tablet") {
-            margin: 24px 0 0 0;
             font-size: 36px;
         }
 
         @include media(">phone", "<=tablet") {
-            margin: 24px 0 0 0;
             font-size: 36px;
         }
 
         @include media("<=phone") {
-            margin: 12px 0 0 0;
             font-size: 32px;
         }
     }
@@ -86,13 +117,14 @@ $bottom-controls-container-height: 72px;
         }
 
         @include media("<=phone") {
-            line-height: 36px;
-            font-size: 36px;
+            line-height: 48px;
+            font-size: 48px;
         }
     }
 
     &__thenPress {
         position: relative;
+        top: 0;
 
         &--light-theme {
             color: map-get(themes.$light-theme, text-secondary);
@@ -101,25 +133,13 @@ $bottom-controls-container-height: 72px;
         &--dark-theme {
             color: map-get(themes.$dark-theme, text-secondary);
         }
-
-        @include media(">tablet") {
-            top: 6px;
-        }
-
-        @include media(">phone", "<=tablet") {
-            top: 6px;
-        }
-
-        @include media("<=phone") {
-            top: 6px;
-        }
     }
 
     &__button {
         background: url('../images/play.svg') no-repeat center center;
         /* play by Aneeque Ahmed from the Noun Project */
         background-size: contain;
-        margin: 20px auto;
+        margin: 8px auto 0 auto;
         padding: 0;
         position: relative;
         display: inline-block;
@@ -181,26 +201,26 @@ $bottom-controls-container-height: 72px;
         }
     }
 
-    &__separator {
-        width: 100%;
-        height: 1px;
-        background-color: #24A3FF;
-        margin: 24px 0;
+    &__footer {
+        width: 332px;
+        max-width: 80vw;
+        text-align: left;
+        margin: 0 0 8px 0;
     }
 
     &__byContinuing {
         font-family: 'Graphik', 'Helvetica', 'Arial', sans-serif;
         font-size: 16px;
         line-height: 18px;
-        color: #8F8F8F;
+        color: #ABABAB;
 
         &>a {
             font-family: 'Graphik-Bold', 'Helvetica', 'Arial', sans-serif;
-            color: #8F8F8F;
+            color: #ABABAB;
             text-decoration: none;
 
             &:visited {
-                color: #8F8F8F;
+                color: #ABABAB;
             }
         }
     }

@@ -30,36 +30,49 @@ export class UIController {
         this.playOverlay.classList.add("playOverlay");
         document.body.appendChild(this.playOverlay);
 
-        let playContainer = document.createElement("div");
-        playContainer.classList.add("playOverlay__container");
-        this.playOverlay.appendChild(playContainer);
-
         let playHeader = document.createElement("div");
         playHeader.classList.add("playOverlay__header");
-        playContainer.appendChild(playHeader);
+        let playOverlay__headerImage = document.createElement("div");
+        playOverlay__headerImage.classList.add("playOverlay__headerImage");
+        playHeader.appendChild(playOverlay__headerImage);
+        let playOverlay__headerTextContainer = document.createElement("div");
+        playOverlay__headerTextContainer.classList.add("playOverlay__headerTextContainer");
+        let playOverlay__headerTextTop = document.createElement("h1");
+        playOverlay__headerTextTop.classList.add("playOverlay__headerTextTop");
+        playOverlay__headerTextTop.innerHTML = `Spatial Standup`;
+        playOverlay__headerTextContainer.appendChild(playOverlay__headerTextTop);
+        let playOverlay__headerTextBottom = document.createElement("h2");
+        playOverlay__headerTextBottom.classList.add("playOverlay__headerTextBottom");
+        playOverlay__headerTextBottom.innerHTML = `Powered by High Fidelity`;
+        playOverlay__headerTextContainer.appendChild(playOverlay__headerTextBottom);
+        playHeader.appendChild(playOverlay__headerTextContainer);
+        this.playOverlay.appendChild(playHeader);
+
+        let playOverlay__playContainer = document.createElement("div");
+        playOverlay__playContainer.classList.add("playOverlay__playContainer");
+        this.playOverlay.appendChild(playOverlay__playContainer);
 
         let playText = document.createElement("h2");
         playText.classList.add("playOverlay__playText");
         playText.innerHTML = `Put on your <span class="playOverlay__headphones">headphones</span> <span class="playOverlay__thenPress">then press play:</span>`;
-        playContainer.appendChild(playText);
-
+        playOverlay__playContainer.appendChild(playText);
         let playButton = document.createElement("button");
         playButton.setAttribute('aria-label', "Enter Spatial Standup");
         playButton.classList.add("playOverlay__button");
-
         let playAnimation = document.createElement("div");
         playAnimation.classList.add("playOverlay__playAnimation");
         playButton.appendChild(playAnimation);
-        playContainer.appendChild(playButton);
+        playOverlay__playContainer.appendChild(playButton);
 
-        let playOverlay__separator = document.createElement("div");
-        playOverlay__separator.classList.add("playOverlay__separator");
-        playContainer.appendChild(playOverlay__separator);
+        let playOverlay__footer = document.createElement("div");
+        playOverlay__footer.classList.add("playOverlay__footer");
 
         let playOverlay__byContinuing = document.createElement("p");
         playOverlay__byContinuing.classList.add("playOverlay__byContinuing");
         playOverlay__byContinuing.innerHTML = `By continuing, you agree to High Fidelity's <a href="https://www.highfidelity.com/terms-of-service" target="_blank">Terms of Service</a> and <a href="https://www.highfidelity.com/privacy" target="_blank">Privacy Policy</a>.`
-        playContainer.appendChild(playOverlay__byContinuing);
+        playOverlay__footer.appendChild(playOverlay__byContinuing);
+
+        this.playOverlay.appendChild(playOverlay__footer);
 
         playButton.addEventListener("click", (e) => { this.startConnectionProcess(); });
     }
@@ -146,6 +159,38 @@ export class UIController {
         this.modalBackground.classList.add("modalBackground", "displayNone");
         this.modalBackground.addEventListener("click", this.hideAvatarContextMenu.bind(this));
         document.body.appendChild(this.modalBackground);
+    }
+
+    showFTUE() {
+        let ftueOuterContainer = document.createElement("div");
+        ftueOuterContainer.classList.add("ftueOuterContainer");
+
+        let ftueInnerContainer = document.createElement("div");
+        ftueInnerContainer.classList.add("ftueInnerContainer");
+        ftueOuterContainer.appendChild(ftueInnerContainer);
+
+        let ftueInnerContainer__text = document.createElement("div");
+        ftueInnerContainer__text.classList.add("ftueInnerContainer__text");
+        ftueInnerContainer__text.innerHTML = `<div class="ftueInnerContainer__emoji">🥳</div>
+<h1>You made it!</h1>
+<p>This is a live space where you can see and talk with other people.</p>
+<p>Your display name is "<strong>${userDataController.myAvatar.myUserData.displayName}</strong>". You can change this in your <a class="ftueInnerContainer__profileLink">PROFILE</a>.</p>`
+ftueInnerContainer.appendChild(ftueInnerContainer__text);
+
+        let ftueInnerContainer__okButton = document.createElement("button");
+        ftueInnerContainer__okButton.classList.add("ftueInnerContainer__okButton");
+        ftueInnerContainer__okButton.innerHTML = `OK, thanks!`;
+        ftueInnerContainer__okButton.addEventListener("click", (e) => {
+            ftueOuterContainer.remove();
+        });
+        ftueInnerContainer.appendChild(ftueInnerContainer__okButton);
+
+        document.body.appendChild(ftueOuterContainer);
+
+        document.querySelector(".ftueInnerContainer__profileLink").addEventListener("click", (e) => {
+            ftueOuterContainer.remove();
+            this.showAvatarContextMenu(userDataController.myAvatar.myUserData);
+        });
     }
 
     updateMyProfileImage() {
@@ -268,7 +313,6 @@ export class UIController {
         }
         
         this.hideLoadingOverlay();
-        roomController.toggleRoomList();
     }
 
     hideAvatarContextMenu() {

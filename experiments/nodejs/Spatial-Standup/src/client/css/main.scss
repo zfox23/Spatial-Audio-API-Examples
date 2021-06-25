@@ -1,5 +1,6 @@
 @use "./z-indices";
 @use "./themes";
+$bottom-controls-container-height: 72px;
 
 @font-face {
     font-family: Graphik;
@@ -87,6 +88,73 @@ body {
     
         &--dark-theme {
             color: map-get(themes.$dark-theme, on-body-background);
+        }
+    }
+}
+
+.ftueOuterContainer {
+    position: fixed;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    top: 0;
+    left: 0;
+    bottom: $bottom-controls-container-height;
+    width: 100vw;
+    z-index: map-get(z-indices.$z-index, modalBackground);
+    pointer-events: none;
+}
+
+.ftueInnerContainer {
+    background: rgba(0, 0, 0, 0.75);
+    border-radius: 8px;
+    padding: 16px 24px 24px 24px;
+    width: 312px;
+    text-align: center;
+    pointer-events: all;
+
+    &__text {
+        color: #FFFFFF;
+        font-family: 'Graphik', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0 0 24px 0;
+
+        &>h1 {
+            font-size: 22px;
+            line-height: 26px;
+            margin: 0 0 24px 0;
+        }
+
+        &>p {
+            font-size: 18px;
+            line-height: 22px;
+            margin: 0 0 14px 0;
+        }
+    }
+
+    &__emoji {
+        font-size: 40px;
+        margin: 0 0 8px 0;
+    }
+
+    &__profileLink {
+        cursor: pointer;
+        text-decoration: underline;
+    }
+
+    &__okButton {
+        font-family: 'Graphik', Tahoma, Geneva, Verdana, sans-serif;
+        width: 118px;
+        height: 34px;
+        background: radial-gradient(95.59% 206.12% at 47.81% -44.9%, #54A2FF 0%, #1479FB 100%);
+        border-radius: 7px;
+        cursor: pointer;
+        border: none;
+        color: #FFFFFF;
+        font-size: 16px;
+        line-height: 16px;
+
+        &:hover {
+            background: radial-gradient(95.59% 206.12% at 47.81% -44.9%, #1479FB 0%, #54A2FF 100% );
         }
     }
 }

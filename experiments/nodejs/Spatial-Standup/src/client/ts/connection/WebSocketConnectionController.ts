@@ -245,7 +245,11 @@ export class WebSocketConnectionController {
         if (!userUUID) {
             userUUID = Utilities.generateUUID(true);
             localStorage.setItem('userUUID', userUUID);
+
+            uiController.showFTUE();
         }
+        // TODO remove
+        uiController.showFTUE();
 
         this.socket.emit("addParticipant", {
             userUUID: userUUID,
