@@ -248,8 +248,6 @@ export class WebSocketConnectionController {
 
             uiController.showFTUE();
         }
-        // TODO remove
-        uiController.showFTUE();
 
         this.socket.emit("addParticipant", {
             userUUID: userUUID,
