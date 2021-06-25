@@ -268,8 +268,11 @@ app.post('/spatial-standup/create', (req: any, res: any, next: any) => {
 
     let channelText;
     let slackCommandText = req.body.text;
-    if (slackCommandText && slackCommandText.length > 0) {
-        let slackCommandTextTrimmed = slackCommandText.trim();
+    let slackCommandTextTrimmed;
+    if (slackCommandText) {
+        slackCommandTextTrimmed = slackCommandText.trim();
+    }
+    if (slackCommandText && slackCommandTextTrimmed.length > 0) {
         let stringToHash = `${slackChannelID}/${slackCommandText}`;
 
         let hash = crypto.createHash('md5').update(stringToHash).digest('hex');
