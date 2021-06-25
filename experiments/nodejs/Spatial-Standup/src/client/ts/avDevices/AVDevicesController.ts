@@ -11,6 +11,17 @@ export class AVDevicesController {
 
     constructor() {
         this.audioConstraints = getBestAudioConstraints();
+
+        if (localStorage.getItem("echoCancellation") === "true") {
+            this.audioConstraints.echoCancellation = true;
+        }
+        if (localStorage.getItem("autoGainControl") === "true") {
+            this.audioConstraints.autoGainControl = true;
+        }
+        if (localStorage.getItem("noiseSuppression") === "true") {
+            this.audioConstraints.noiseSuppression = true;
+        }
+
         this.inputAudioMediaStream = undefined;
         this.outputAudioElement = document.createElement("audio");
         this.outputAudioElement.classList.add("outputAudioElement", "displayNone");

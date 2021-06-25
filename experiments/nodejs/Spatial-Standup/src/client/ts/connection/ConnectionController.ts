@@ -71,6 +71,8 @@ export class ConnectionController {
                 } else {
                     userDataController.myAvatar.myUserData.echoCancellationEnabled = !!avDevicesController.audioConstraints.echoCancellation.valueOf();
                 }
+
+                localStorage.setItem("echoCancellation", userDataController.myAvatar.myUserData.echoCancellationEnabled ? "true" : "false");
             }
             
             if (typeof (avDevicesController.audioConstraints.autoGainControl) !== "undefined") {
@@ -79,6 +81,8 @@ export class ConnectionController {
                 } else {
                     userDataController.myAvatar.myUserData.agcEnabled = !!avDevicesController.audioConstraints.autoGainControl.valueOf();
                 }
+
+                localStorage.setItem("autoGainControl", userDataController.myAvatar.myUserData.agcEnabled ? "true" : "false");
             }
             
             if (typeof (avDevicesController.audioConstraints.noiseSuppression) !== "undefined") {
@@ -87,6 +91,8 @@ export class ConnectionController {
                 } else {
                     userDataController.myAvatar.myUserData.noiseSuppressionEnabled = !!avDevicesController.audioConstraints.noiseSuppression.valueOf();
                 }
+
+                localStorage.setItem("noiseSuppression", userDataController.myAvatar.myUserData.noiseSuppressionEnabled ? "true" : "false");
             }
 
             if (webSocketConnectionController) {
