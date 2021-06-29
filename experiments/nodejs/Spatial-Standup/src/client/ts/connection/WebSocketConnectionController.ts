@@ -28,8 +28,8 @@ export class WebSocketConnectionController {
     retrievedInitialWebSocketServerData: boolean = false;
 
     constructor() {
-        const socketURL = APP_MODE === "web" ? "" : "https://experiments.highfidelity.com";
-        this.socket = io(socketURL, { path: '/spatial-standup/socket.io' });
+        const socketURL = APP_MODE === "web" ? "" : "https://standup.highfidelity.com";
+        this.socket = io(socketURL, { path: '/socket.io' });
 
         this.socket.on("connect", (socket: any) => {
             console.log(`Connected to Socket.IO WebSocket server!`);

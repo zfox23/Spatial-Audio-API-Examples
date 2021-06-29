@@ -19,7 +19,7 @@ const analyticsController = new ServerAnalyticsController();
 
 // This may need to be configurable in the future.
 // For now, all instances of SS will use the "Standard" JSON configuration.
-const appConfigURL = "/spatial-standup/standard.json";
+const appConfigURL = "/standard.json";
 
 const app = express();
 const PORT = 8180;
@@ -68,11 +68,11 @@ if (!isInProdMode) {
 }
 
 const DIST_DIR = path.join(__dirname, "..", "..", "..", "dist");
-app.use('/spatial-standup', express.static(DIST_DIR));
-app.use('/spatial-standup', express.static(path.join(__dirname, "static")));
+app.use('/', express.static(DIST_DIR));
+app.use('/', express.static(path.join(__dirname, "static")));
 app.use(require('body-parser').urlencoded({ extended: true }));
 
-app.get('/spatial-standup', connectToSpace);
+app.get('/', connectToSpace);
 let spaceNamesWithModifiedZonesThisSession: Array<string> = [];
 async function connectToSpace(req: any, res: any, next: any) {
     let spaceName = req.params.spaceName || req.query.spaceName || auth.HIFI_DEFAULT_SPACE_NAME;
@@ -221,7 +221,7 @@ async function connectToSpace(req: any, res: any, next: any) {
     });
 }
 
-app.get('/spatial-standup/slack', (req: any, res: any, next: any) => {
+app.get('/slack', (req: any, res: any, next: any) => {
     let code = req.query.code;
     if (!code) {
         res.sendStatus(500);
@@ -255,7 +255,7 @@ app.get('/spatial-standup/slack', (req: any, res: any, next: any) => {
         });
 });
 
-app.post('/spatial-standup/create', (req: any, res: any, next: any) => {
+app.post('/create', (req: any, res: any, next: any) => {
     let slackChannelID = req.body.channel_id;
     if (!slackChannelID) {
         console.error(`Couldn't generate Spatial Standup link. Request body:\n${JSON.stringify(req.body)}`);
@@ -269,7 +269,7 @@ app.post('/spatial-standup/create', (req: any, res: any, next: any) => {
     let stringToHash = slackChannelID;
 
     let hash = crypto.createHash('md5').update(stringToHash).digest('hex');
-    let spaceURL = `https://experiments.highfidelity.com/spatial-standup/${hash}/`;
+    let spaceURL = `https://standup.highfidelity.com/${hash}/`;
 
     let channelText = `<${spaceURL}|Click here to join the Spatial Standup associated with this Slack channel.>`;
 
@@ -289,7 +289,7 @@ app.post('/spatial-standup/create', (req: any, res: any, next: any) => {
     });
 });
 
-app.get('/spatial-standup/:spaceName', connectToSpace);
+app.get('/:spaceName', connectToSpace);
 
 let httpOrHttpsServer;
 if (isInHTTPSMode) {
@@ -304,7 +304,7 @@ if (isInHTTPSMode) {
 }
 
 const socketIOServer = require("socket.io")(httpOrHttpsServer, {
-    path: '/spatial-standup/socket.io',
+    path: '/socket.io',
     cors: {
         origins: [`https://localhost:${PORT}`, `http://localhost:${PORT}`, `https://192.168.1.23:${PORT}`, `http://192.168.1.23:${PORT}`],
         methods: ["GET", "POST"]
@@ -942,5 +942,5 @@ httpOrHttpsServer.listen(PORT, (err: any) => {
     if (err) {
         throw err;
     }
-    console.log(`${Date.now()}: Spatial Standup is ready. Go to this URL in your browser: ${isInHTTPSMode ? "https" : "http"}://localhost:${PORT}/spatial-standup`);
+    console.log(`${Date.now()}: Spatial Standup is ready. Go to this URL in your browser: ${isInHTTPSMode ? "https" : "http"}://localhost:${PORT}/`);
 });

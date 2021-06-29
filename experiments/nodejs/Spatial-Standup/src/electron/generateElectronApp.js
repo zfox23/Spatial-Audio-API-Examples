@@ -74,9 +74,10 @@ function copyConfigJSON() {
             return;
         }
 
-        let stringToReplace = `/spatial-standup/`;
-        // Replace all instaces of the full path in the CSS with "".
-        data = data.replace(new RegExp(stringToReplace, 'g'), "https://experiments.highfidelity.com/spatial-standup/");
+        // This isn't needed anymore now that we're hosting the app at the root directory. But that may cause problems for Electron app generation...Will worry about that later.
+        // let stringToReplace = `/`;
+        // // Replace all instaces of the full path in the CSS with "".
+        // data = data.replace(new RegExp(stringToReplace, 'g'), "https://standup.highfidelity.com/");
         // Write the file back out.
         fs.writeFile(destWatchPartyJSONPath, data, (err) => {
             if (err) {

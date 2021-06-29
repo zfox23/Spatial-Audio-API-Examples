@@ -26,7 +26,7 @@
             "drawName": false,
             "positionM": { "x": 0, "z": 0 },
             "radiusM": 0.2,
-            "clickSoundSRC": "/spatial-standup/sounds/pinkNoise.wav"
+            "clickSoundSRC": "/sounds/pinkNoise.wav"
         }
     ]
 }

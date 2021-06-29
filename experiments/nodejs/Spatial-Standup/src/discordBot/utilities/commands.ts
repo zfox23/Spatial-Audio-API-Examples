@@ -8,7 +8,7 @@ export async function handleHiFiCommand({ interaction, guild, channel }: { inter
 
     let hash = crypto.createHash('md5').update(stringToHash).digest('hex');
 
-    const spaceURL = `https://experiments.highfidelity.com/spatial-standup/${hash}/?config=/spatial-standup/watchParty.json`;
+    const spaceURL = `https://standup.highfidelity.com/${hash}/`;
 
     let embed = new MessageEmbed()
         .addField(`Your High Fidelity Spatial Standup`, spaceURL, false)

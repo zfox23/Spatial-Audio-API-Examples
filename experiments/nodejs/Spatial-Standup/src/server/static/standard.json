@@ -22,7 +22,7 @@
             },
             "numSeatsInRoom": 12,
             "seatingRadiusM": 1.2,
-            "roomImageSRC": "/spatial-standup/rooms/Room1.jpg"
+            "roomImageSRC": "/rooms/Room1.jpg"
         },
         {
             "name": "Large Room",
@@ -43,7 +43,7 @@
             },
             "numSeatsInRoom": 20,
             "seatingRadiusM": 2,
-            "roomImageSRC": "/spatial-standup/rooms/Room2.jpg"
+            "roomImageSRC": "/rooms/Room2.jpg"
         }
     ],
     "landmarks": [
@@ -57,11 +57,11 @@
             },
             "radiusM": 0.45,
             "clickSoundSRC": [
-                "/spatial-standup/sounds/rustle1.wav",
-                "/spatial-standup/sounds/rustle2.wav",
-                "/spatial-standup/sounds/rustle3.wav",
-                "/spatial-standup/sounds/rustle4.wav",
-                "/spatial-standup/sounds/rustle5.wav"
+                "/sounds/rustle1.wav",
+                "/sounds/rustle2.wav",
+                "/sounds/rustle3.wav",
+                "/sounds/rustle4.wav",
+                "/sounds/rustle5.wav"
             ]
         },
         {
@@ -74,12 +74,12 @@
             },
             "radiusM": 0.45,
             "clickSoundSRC": [
-                "/spatial-standup/sounds/clink1.wav",
-                "/spatial-standup/sounds/clink2.wav",
-                "/spatial-standup/sounds/clink3.wav",
-                "/spatial-standup/sounds/clink4.wav",
-                "/spatial-standup/sounds/clink5.wav",
-                "/spatial-standup/sounds/clink6.wav"
+                "/sounds/clink1.wav",
+                "/sounds/clink2.wav",
+                "/sounds/clink3.wav",
+                "/sounds/clink4.wav",
+                "/sounds/clink5.wav",
+                "/sounds/clink6.wav"
             ]
         },
         {
@@ -92,9 +92,9 @@
             },
             "radiusM": 0.45,
             "clickSoundSRC": [
-                "/spatial-standup/sounds/purr01.wav",
-                "/spatial-standup/sounds/purr02.wav",
-                "/spatial-standup/sounds/purr03.wav"
+                "/sounds/purr01.wav",
+                "/sounds/purr02.wav",
+                "/sounds/purr03.wav"
             ]
         },
         {
@@ -108,7 +108,7 @@
             "radiusM": 0.45,
             "randomSoundRate": true,
             "clickSoundSRC": [
-                "/spatial-standup/sounds/cork.wav"
+                "/sounds/cork.wav"
             ]
         },
         {
@@ -122,7 +122,7 @@
             "radiusM": 0.45,
             "randomSoundRate": true,
             "clickSoundSRC": [
-                "/spatial-standup/sounds/gong.mp3"
+                "/sounds/gong.mp3"
             ]
         },
         {
@@ -135,9 +135,9 @@
             },
             "radiusM": 0.55,
             "clickSoundSRC": [
-                "/spatial-standup/sounds/copier01.wav",
-                "/spatial-standup/sounds/copier02.wav",
-                "/spatial-standup/sounds/copier03.wav"
+                "/sounds/copier01.wav",
+                "/sounds/copier02.wav",
+                "/sounds/copier03.wav"
             ]
         },
         {
@@ -150,7 +150,7 @@
             },
             "radiusM": 0.45,
             "clickSoundSRC": [
-                "/spatial-standup/sounds/clock.wav"
+                "/sounds/clock.wav"
             ]
         },
         {
@@ -163,11 +163,11 @@
             },
             "radiusM": 0.45,
             "clickSoundSRC": [
-                "/spatial-standup/sounds/rustle1.wav",
-                "/spatial-standup/sounds/rustle2.wav",
-                "/spatial-standup/sounds/rustle3.wav",
-                "/spatial-standup/sounds/rustle4.wav",
-                "/spatial-standup/sounds/rustle5.wav"
+                "/sounds/rustle1.wav",
+                "/sounds/rustle2.wav",
+                "/sounds/rustle3.wav",
+                "/sounds/rustle4.wav",
+                "/sounds/rustle5.wav"
             ]
         },
         {
@@ -180,11 +180,11 @@
             },
             "radiusM": 0.45,
             "clickSoundSRC": [
-                "/spatial-standup/sounds/rustle1.wav",
-                "/spatial-standup/sounds/rustle2.wav",
-                "/spatial-standup/sounds/rustle3.wav",
-                "/spatial-standup/sounds/rustle4.wav",
-                "/spatial-standup/sounds/rustle5.wav"
+                "/sounds/rustle1.wav",
+                "/sounds/rustle2.wav",
+                "/sounds/rustle3.wav",
+                "/sounds/rustle4.wav",
+                "/sounds/rustle5.wav"
             ]
         },
         {
@@ -197,12 +197,12 @@
             },
             "radiusM": 0.45,
             "clickSoundSRC": [
-                "/spatial-standup/sounds/clink1.wav",
-                "/spatial-standup/sounds/clink2.wav",
-                "/spatial-standup/sounds/clink3.wav",
-                "/spatial-standup/sounds/clink4.wav",
-                "/spatial-standup/sounds/clink5.wav",
-                "/spatial-standup/sounds/clink6.wav"
+                "/sounds/clink1.wav",
+                "/sounds/clink2.wav",
+                "/sounds/clink3.wav",
+                "/sounds/clink4.wav",
+                "/sounds/clink5.wav",
+                "/sounds/clink6.wav"
             ]
         },
         {
@@ -215,11 +215,11 @@
             },
             "radiusM": 0.45,
             "clickSoundSRC": [
-                "/spatial-standup/sounds/rustle1.wav",
-                "/spatial-standup/sounds/rustle2.wav",
-                "/spatial-standup/sounds/rustle3.wav",
-                "/spatial-standup/sounds/rustle4.wav",
-                "/spatial-standup/sounds/rustle5.wav"
+                "/sounds/rustle1.wav",
+                "/sounds/rustle2.wav",
+                "/sounds/rustle3.wav",
+                "/sounds/rustle4.wav",
+                "/sounds/rustle5.wav"
             ]
         },
         {
@@ -232,10 +232,10 @@
             },
             "radiusM": 0.45,
             "clickSoundSRC": [
-                "/spatial-standup/sounds/crickets01.wav",
-                "/spatial-standup/sounds/crickets02.wav",
-                "/spatial-standup/sounds/crickets03.wav",
-                "/spatial-standup/sounds/crickets04.wav"
+                "/sounds/crickets01.wav",
+                "/sounds/crickets02.wav",
+                "/sounds/crickets03.wav",
+                "/sounds/crickets04.wav"
             ]
         },
         {
@@ -248,10 +248,10 @@
             },
             "radiusM": 0.45,
             "clickSoundSRC": [
-                "/spatial-standup/sounds/wind01.wav",
-                "/spatial-standup/sounds/wind02.wav",
-                "/spatial-standup/sounds/wind03.wav",
-                "/spatial-standup/sounds/wind04.wav"
+                "/sounds/wind01.wav",
+                "/sounds/wind02.wav",
+                "/sounds/wind03.wav",
+                "/sounds/wind04.wav"
             ]
         },
         {
@@ -264,10 +264,10 @@
             },
             "radiusM": 0.45,
             "clickSoundSRC": [
-                "/spatial-standup/sounds/crickets01.wav",
-                "/spatial-standup/sounds/crickets02.wav",
-                "/spatial-standup/sounds/crickets03.wav",
-                "/spatial-standup/sounds/crickets04.wav"
+                "/sounds/crickets01.wav",
+                "/sounds/crickets02.wav",
+                "/sounds/crickets03.wav",
+                "/sounds/crickets04.wav"
             ]
         },
         {
@@ -280,11 +280,11 @@
             },
             "radiusM": 0.45,
             "clickSoundSRC": [
-                "/spatial-standup/sounds/rustle1.wav",
-                "/spatial-standup/sounds/rustle2.wav",
-                "/spatial-standup/sounds/rustle3.wav",
-                "/spatial-standup/sounds/rustle4.wav",
-                "/spatial-standup/sounds/rustle5.wav"
+                "/sounds/rustle1.wav",
+                "/sounds/rustle2.wav",
+                "/sounds/rustle3.wav",
+                "/sounds/rustle4.wav",
+                "/sounds/rustle5.wav"
             ]
         },
         {
@@ -297,11 +297,11 @@
             },
             "radiusM": 0.45,
             "clickSoundSRC": [
-                "/spatial-standup/sounds/rustle1.wav",
-                "/spatial-standup/sounds/rustle2.wav",
-                "/spatial-standup/sounds/rustle3.wav",
-                "/spatial-standup/sounds/rustle4.wav",
-                "/spatial-standup/sounds/rustle5.wav"
+                "/sounds/rustle1.wav",
+                "/sounds/rustle2.wav",
+                "/sounds/rustle3.wav",
+                "/sounds/rustle4.wav",
+                "/sounds/rustle5.wav"
             ]
         }
     ]

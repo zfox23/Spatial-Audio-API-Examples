@@ -396,7 +396,7 @@ export class WatchPartyController {
         this.youTubePlayer = new YT.Player('youTubePlayerElement', {
             height: '100%',
             width: '100%',
-            playerVars: { 'autoplay': false, 'controls': true, 'modestbranding': true, 'origin': "https://experiments.highfidelity.com", 'playsinline': 1 },
+            playerVars: { 'autoplay': false, 'controls': true, 'modestbranding': true, 'origin': "https://standup.highfidelity.com", 'playsinline': 1 },
             events: {
                 'onReady': this.onPlayerReady.bind(this),
                 'onStateChange': this.onPlayerStateChange.bind(this),

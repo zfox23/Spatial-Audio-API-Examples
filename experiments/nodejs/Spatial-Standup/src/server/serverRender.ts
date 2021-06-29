@@ -26,7 +26,7 @@ export async function renderApp(isInProdMode: boolean, appConfigURL: string, spa
         const APP_MODE = "web";
         const APP_CONFIG_URL = "${appConfigURL}";
     </script>
-    ${isInProdMode ? '<link rel="stylesheet" href="/spatial-standup/index.css">' : ''}
+    ${isInProdMode ? '<link rel="stylesheet" href="/index.css">' : ''}
 </head>
 
 <body>
@@ -34,7 +34,7 @@ export async function renderApp(isInProdMode: boolean, appConfigURL: string, spa
         <div class="loadingScreen--icon"></div>
         <div class="loadingScreen--text">L O A D I N G</div>
     </div>
-    <script src="/spatial-standup/index.js"></script>
+    <script src="/index.js"></script>
 </body>
 
 </html>`;
