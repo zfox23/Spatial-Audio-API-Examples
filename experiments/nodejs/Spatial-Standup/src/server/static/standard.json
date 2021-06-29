@@ -5,21 +5,304 @@
     "rooms": [
         {
             "name": "Small Room",
-            "roomCenter": { "x": -4.3, "y": 0, "z": -1.055 },
-            "seatingCenter": {"x": -4.397745090149535, "y": 0, "z": -1.0481428664107273},
-            "dimensions": {"x": 6.59, "y": 0, "z": 7.19 },
+            "roomCenter": {
+                "x": -4.3,
+                "y": 0,
+                "z": -1.055
+            },
+            "seatingCenter": {
+                "x": -4.397745090149535,
+                "y": 0,
+                "z": -1.0481428664107273
+            },
+            "dimensions": {
+                "x": 6.59,
+                "y": 0,
+                "z": 7.19
+            },
             "numSeatsInRoom": 12,
             "seatingRadiusM": 1.2,
             "roomImageSRC": "/spatial-standup/rooms/Room1.jpg"
         },
         {
             "name": "Large Room",
-            "roomCenter": { "x": 3.30, "y": 0, "z": 0 },
-            "seatingCenter": {"x": 3.51459649122807, "y": 0, "z": 0.10519298245614023},
-            "dimensions": {"x": 8.64, "y": 0, "z": 9.304 },
+            "roomCenter": {
+                "x": 3.3,
+                "y": 0,
+                "z": 0
+            },
+            "seatingCenter": {
+                "x": 3.51459649122807,
+                "y": 0,
+                "z": 0.10519298245614023
+            },
+            "dimensions": {
+                "x": 8.64,
+                "y": 0,
+                "z": 9.304
+            },
             "numSeatsInRoom": 20,
-            "seatingRadiusM": 2.0,
+            "seatingRadiusM": 2,
             "roomImageSRC": "/spatial-standup/rooms/Room2.jpg"
+        }
+    ],
+    "landmarks": [
+        {
+            "name": "Foliage 01",
+            "drawName": false,
+            "positionM": {
+                "x": -3.378620687318536,
+                "y": 0,
+                "z": 1.1980475246163171
+            },
+            "radiusM": 0.45,
+            "clickSoundSRC": [
+                "/spatial-standup/sounds/rustle1.wav",
+                "/spatial-standup/sounds/rustle2.wav",
+                "/spatial-standup/sounds/rustle3.wav",
+                "/spatial-standup/sounds/rustle4.wav",
+                "/spatial-standup/sounds/rustle5.wav"
+            ]
+        },
+        {
+            "name": "Coffee Cup 01",
+            "drawName": false,
+            "positionM": {
+                "x": -2.56093924476906,
+                "y": 0,
+                "z": 1.1508110098749158
+            },
+            "radiusM": 0.45,
+            "clickSoundSRC": [
+                "/spatial-standup/sounds/clink1.wav",
+                "/spatial-standup/sounds/clink2.wav",
+                "/spatial-standup/sounds/clink3.wav",
+                "/spatial-standup/sounds/clink4.wav",
+                "/spatial-standup/sounds/clink5.wav",
+                "/spatial-standup/sounds/clink6.wav"
+            ]
+        },
+        {
+            "name": "Cat 01",
+            "drawName": false,
+            "positionM": {
+                "x": -6.462895775478181,
+                "y": 0,
+                "z": 0.5243426542044971
+            },
+            "radiusM": 0.45,
+            "clickSoundSRC": [
+                "/spatial-standup/sounds/purr01.wav",
+                "/spatial-standup/sounds/purr02.wav",
+                "/spatial-standup/sounds/purr03.wav"
+            ]
+        },
+        {
+            "name": "Bottle Cork 01",
+            "drawName": false,
+            "positionM": {
+                "x": -6.08952520908214,
+                "y": 0,
+                "z": -3.245564668985571
+            },
+            "radiusM": 0.45,
+            "randomSoundRate": true,
+            "clickSoundSRC": [
+                "/spatial-standup/sounds/cork.wav"
+            ]
+        },
+        {
+            "name": "Gong 01",
+            "drawName": false,
+            "positionM": {
+                "x": -3.358492295121326,
+                "y": 0,
+                "z": -3.4604719066098832
+            },
+            "radiusM": 0.45,
+            "randomSoundRate": true,
+            "clickSoundSRC": [
+                "/spatial-standup/sounds/gong.wav"
+            ]
+        },
+        {
+            "name": "Copier 01",
+            "drawName": false,
+            "positionM": {
+                "x": 0.17314571268011236,
+                "y": 0,
+                "z": 2.997448947258574
+            },
+            "radiusM": 0.55,
+            "clickSoundSRC": [
+                "/spatial-standup/sounds/copier01.wav",
+                "/spatial-standup/sounds/copier02.wav",
+                "/spatial-standup/sounds/copier03.wav"
+            ]
+        },
+        {
+            "name": "Clock 01",
+            "drawName": false,
+            "positionM": {
+                "x": -0.5326368824807319,
+                "y": 0,
+                "z": -0.3261355869883915
+            },
+            "radiusM": 0.45,
+            "clickSoundSRC": [
+                "/spatial-standup/sounds/clock.wav"
+            ]
+        },
+        {
+            "name": "Foliage 02",
+            "drawName": false,
+            "positionM": {
+                "x": 0.17430373068177096,
+                "y": 0,
+                "z": -0.14692569696596025
+            },
+            "radiusM": 0.45,
+            "clickSoundSRC": [
+                "/spatial-standup/sounds/rustle1.wav",
+                "/spatial-standup/sounds/rustle2.wav",
+                "/spatial-standup/sounds/rustle3.wav",
+                "/spatial-standup/sounds/rustle4.wav",
+                "/spatial-standup/sounds/rustle5.wav"
+            ]
+        },
+        {
+            "name": "Foliage 03",
+            "drawName": false,
+            "positionM": {
+                "x": 1.240325592250797,
+                "y": 0,
+                "z": -3.556623199046847
+            },
+            "radiusM": 0.45,
+            "clickSoundSRC": [
+                "/spatial-standup/sounds/rustle1.wav",
+                "/spatial-standup/sounds/rustle2.wav",
+                "/spatial-standup/sounds/rustle3.wav",
+                "/spatial-standup/sounds/rustle4.wav",
+                "/spatial-standup/sounds/rustle5.wav"
+            ]
+        },
+        {
+            "name": "Coffee Cup 02",
+            "drawName": false,
+            "positionM": {
+                "x": 2.9926024666882034,
+                "y": 0,
+                "z": -4.030760996941402
+            },
+            "radiusM": 0.45,
+            "clickSoundSRC": [
+                "/spatial-standup/sounds/clink1.wav",
+                "/spatial-standup/sounds/clink2.wav",
+                "/spatial-standup/sounds/clink3.wav",
+                "/spatial-standup/sounds/clink4.wav",
+                "/spatial-standup/sounds/clink5.wav",
+                "/spatial-standup/sounds/clink6.wav"
+            ]
+        },
+        {
+            "name": "Foliage 04",
+            "drawName": false,
+            "positionM": {
+                "x": 5.7397935957282975,
+                "y": 0,
+                "z": -3.647304142897455
+            },
+            "radiusM": 0.45,
+            "clickSoundSRC": [
+                "/spatial-standup/sounds/rustle1.wav",
+                "/spatial-standup/sounds/rustle2.wav",
+                "/spatial-standup/sounds/rustle3.wav",
+                "/spatial-standup/sounds/rustle4.wav",
+                "/spatial-standup/sounds/rustle5.wav"
+            ]
+        },
+        {
+            "name": "Crickets 01",
+            "drawName": false,
+            "positionM": {
+                "x": 6.942212255496984,
+                "y": 0,
+                "z": -0.5680354089282394
+            },
+            "radiusM": 0.45,
+            "clickSoundSRC": [
+                "/spatial-standup/sounds/crickets01.wav",
+                "/spatial-standup/sounds/crickets02.wav",
+                "/spatial-standup/sounds/crickets03.wav",
+                "/spatial-standup/sounds/crickets04.wav"
+            ]
+        },
+        {
+            "name": "Wind 01",
+            "drawName": false,
+            "positionM": {
+                "x": 6.903755213537309,
+                "y": 0,
+                "z": 0.3459480069984049
+            },
+            "radiusM": 0.45,
+            "clickSoundSRC": [
+                "/spatial-standup/sounds/wind01.wav",
+                "/spatial-standup/sounds/wind02.wav",
+                "/spatial-standup/sounds/wind03.wav",
+                "/spatial-standup/sounds/wind04.wav"
+            ]
+        },
+        {
+            "name": "Crickets 02",
+            "drawName": false,
+            "positionM": {
+                "x": 6.999648300147573,
+                "y": 0,
+                "z": 2.049956083126549
+            },
+            "radiusM": 0.45,
+            "clickSoundSRC": [
+                "/spatial-standup/sounds/crickets01.wav",
+                "/spatial-standup/sounds/crickets02.wav",
+                "/spatial-standup/sounds/crickets03.wav",
+                "/spatial-standup/sounds/crickets04.wav"
+            ]
+        },
+        {
+            "name": "Foliage 05",
+            "drawName": false,
+            "positionM": {
+                "x": 0.24536483661277475,
+                "y": 0,
+                "z": 4.186842284546593
+            },
+            "radiusM": 0.45,
+            "clickSoundSRC": [
+                "/spatial-standup/sounds/rustle1.wav",
+                "/spatial-standup/sounds/rustle2.wav",
+                "/spatial-standup/sounds/rustle3.wav",
+                "/spatial-standup/sounds/rustle4.wav",
+                "/spatial-standup/sounds/rustle5.wav"
+            ]
+        },
+        {
+            "name": "Foliage 06",
+            "drawName": false,
+            "positionM": {
+                "x": 5.664868280874181,
+                "y": 0,
+                "z": 3.255840619597199
+            },
+            "radiusM": 0.45,
+            "clickSoundSRC": [
+                "/spatial-standup/sounds/rustle1.wav",
+                "/spatial-standup/sounds/rustle2.wav",
+                "/spatial-standup/sounds/rustle3.wav",
+                "/spatial-standup/sounds/rustle4.wav",
+                "/spatial-standup/sounds/rustle5.wav"
+            ]
         }
     ]
 }
