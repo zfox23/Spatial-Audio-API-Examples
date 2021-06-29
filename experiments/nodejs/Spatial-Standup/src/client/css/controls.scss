@@ -58,7 +58,7 @@ $bottom-controls-container-height: 72px;
             line-height: 24px;
             color: #000000;
         }
-        
+
         &TextBottom {
             font-family: 'Graphik', 'Helvetica', 'Arial', sans-serif;
             margin: 0;
@@ -322,6 +322,7 @@ $bottom-controls-container-height: 72px;
                 opacity: 0;
                 transition: .1s ease-in-out;
             }
+
             &:hover:before {
                 filter: saturate(0.4) blur(5px);
                 opacity: 0.6;
@@ -362,6 +363,7 @@ $bottom-controls-container-height: 72px;
                 transition: .1s ease-in-out;
                 z-index: -1;
             }
+
             &:hover:before {
                 filter: saturate(0.4) blur(5px);
                 opacity: 0.6;
@@ -403,6 +405,7 @@ $bottom-controls-container-height: 72px;
                 opacity: 0;
                 transition: .1s ease-in-out;
             }
+
             &:hover:before {
                 filter: saturate(0.4) blur(5px);
                 opacity: 0.6;
@@ -443,6 +446,7 @@ $bottom-controls-container-height: 72px;
                 transition: .1s ease-in-out;
                 z-index: -1;
             }
+
             &:hover:before {
                 filter: saturate(0.4) blur(5px);
                 opacity: 0.6;
@@ -496,6 +500,7 @@ $bottom-controls-container-height: 72px;
                 opacity: 0;
                 transition: .1s ease-in-out;
             }
+
             &:hover:before {
                 filter: saturate(0.4) blur(5px);
                 opacity: 0.6;
@@ -536,6 +541,7 @@ $bottom-controls-container-height: 72px;
                 transition: .1s ease-in-out;
                 z-index: -1;
             }
+
             &:hover:before {
                 filter: saturate(0.4) blur(5px);
                 opacity: 0.6;
@@ -576,6 +582,7 @@ $bottom-controls-container-height: 72px;
             opacity: 0;
             transition: .1s ease-in-out;
         }
+
         &:hover:before {
             filter: saturate(0.4) blur(5px);
             opacity: 0.6;
@@ -1088,7 +1095,7 @@ $bottom-controls-container-height: 72px;
             width: 100vw;
             height: 100vh;
         }
-        
+
         @include media(">phone") {
             padding: 0;
             border-radius: 4px;
@@ -1193,6 +1200,29 @@ $bottom-controls-container-height: 72px;
         margin: 0 12px 0 0;
     }
 
+    &__colorPickerContainer {
+        background-color: #EEEEEF;
+        padding: 12px;
+        left: 24px;
+        position: absolute;
+        top: 140px;
+        border-radius: 7px;
+        height: 230px;
+        box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.25);
+
+        &:after {
+            content: "";
+            position: absolute;
+            margin-top: -6px;
+            margin-left: -5px;
+            border-left: 12px solid transparent;
+            border-right: 12px solid transparent;
+            border-bottom: 12px solid #EEEEEF;
+            left: 15px;
+            top: -6px;
+        }
+    }
+
     &__removeLink {
         text-align: center;
         text-decoration: underline;
@@ -1215,8 +1245,6 @@ $bottom-controls-container-height: 72px;
 
         &--mine {
             cursor: pointer;
-            position: relative;
-            top: -20px;
         }
     }
 
@@ -1254,6 +1282,10 @@ $bottom-controls-container-height: 72px;
 
         &Text {
             color: #FFFFFF;
+        }
+
+        &:hover {
+            background: radial-gradient(95.59% 206.12% at 47.81% -44.9%, #1479FB 0%, #54A2FF 100%);
         }
     }
 
@@ -1424,6 +1456,12 @@ $bottom-controls-container-height: 72px;
             margin: 0 8px 0 0;
         }
     }
+}
+
+// Avatar color picker
+.Scp {
+    position: relative;
+    top: 24px;
 }
 
 .echoCancellation,

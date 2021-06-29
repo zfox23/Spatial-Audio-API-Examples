@@ -7,6 +7,7 @@ import { AVATAR, PHYSICS, UI } from '../constants/constants';
 import ChooseColorButtonImage from '../../images/chooseColorButtonImage.png';
 import AddPhotoButtonImage from '../../images/photo-select-icon.png';
 import MuteForEveryoneButtonIcon from '../../images/mute-for-everyone-button-icon.svg';
+import ColorPicker from 'simple-color-picker';
 
 export class UIController {
     playOverlay: HTMLElement;
@@ -362,16 +363,6 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
                 userDataController.myAvatar.onMyDisplayNameChanged((<HTMLInputElement>e.target).value);
             });
             
-            let colorHexInput = document.createElement("input");
-            colorHexInput.classList.add("avatarContextMenu__colorHexInput");
-            colorHexInput.type = "color";
-            colorHexInput.value = userData.colorHex || Utilities.hexColorFromString(userData.visitIDHash);
-            colorHexInput.classList.add("avatarContextMenu__colorHexInput--mine");
-            colorHexInput.addEventListener('input', (e) => {
-                userDataController.myAvatar.onMyColorHexChanged((<HTMLInputElement>e.target).value);
-            });
-            avatarContextMenu__avatarRepresentation.appendChild(colorHexInput);
-            
             let avatarContextMenu__avatarCircle = document.createElement("div");
             avatarContextMenu__avatarCircle.classList.add("avatarContextMenu__avatarCircle", "avatarContextMenu__avatarCircle--mine");
             avatarContextMenu__avatarCircle.style.backgroundColor = userData.colorHex;
@@ -379,10 +370,37 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
             if (userData.profileImageEl && userData.profileImageEl.complete) {
                 avatarContextMenu__avatarCircle.style.backgroundImage = `url(${userDataController.myAvatar.myUserData.profileImageURL})`;
             }
-            avatarContextMenu__avatarCircle.addEventListener('click', (e) => {
-                colorHexInput.click();
+            avatarContextMenu__avatarCircle.addEventListener("click", (e) => {
+                avatarContextMenu__colorPickerContainer.classList.toggle("displayNone");
+                e.stopPropagation();
             });
             avatarContextMenu__avatarRepresentation.appendChild(avatarContextMenu__avatarCircle);
+
+            let avatarContextMenu__colorPickerContainer = document.createElement("div");
+            avatarContextMenu__colorPickerContainer.classList.add("avatarContextMenu__colorPickerContainer", "displayNone");
+            avatarContextMenu__colorPickerContainer.addEventListener("click", (e) => {
+                e.stopPropagation();
+            });
+            let avatarContextMenu__closeColorPickerButton = document.createElement("div");
+            avatarContextMenu__closeColorPickerButton.classList.add("avatarContextMenu__closeButton");
+            avatarContextMenu__closeColorPickerButton.addEventListener("click", (e) => {
+                avatarContextMenu__colorPickerContainer.classList.add("displayNone");
+            });
+            avatarContextMenu__colorPickerContainer.appendChild(avatarContextMenu__closeColorPickerButton);
+            this.avatarContextMenu.appendChild(avatarContextMenu__colorPickerContainer);
+            this.avatarContextMenu.addEventListener("click", (e) => {
+                avatarContextMenu__colorPickerContainer.classList.add("displayNone");
+            });
+
+            const colorPicker = new ColorPicker({
+                el: avatarContextMenu__colorPickerContainer,
+                color: userData.colorHex,
+                width: 200,
+                height: 200
+            });
+            colorPicker.onChange((e: string) => {
+                userDataController.myAvatar.onMyColorHexChanged(e);
+            });
 
             if (userData.profileImageURL && userData.profileImageURL.length > 0) {
                 let removeLink = document.createElement("a");
@@ -399,7 +417,8 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
             let chooseColorButton = document.createElement("button");
             chooseColorButton.classList.add("avatarContextMenu__chooseColorButton");
             chooseColorButton.addEventListener('click', (e) => {
-                colorHexInput.click();
+                avatarContextMenu__colorPickerContainer.classList.remove("displayNone");
+                e.stopPropagation();
             });
             let chooseColorButtonImage = document.createElement("img");
             chooseColorButtonImage.classList.add("avatarContextMenu__chooseColorButtonImage");
