@@ -490,6 +490,12 @@ export class RoomController {
             roomInfoContainer__occupant.addEventListener("mouseleave", (e) => {
                 this.currentlyHoveringOverVisitIDHash = undefined;
             });
+            
+            // This code works around a Safari rendering bug - see HIFI-727.
+            roomInfoContainer__occupant.classList.add("displayNone");
+            setTimeout(() => {
+                roomInfoContainer__occupant.classList.remove("displayNone");
+            }, 10);
         });
 
         this.topBar__allRoomsPeopleCount.innerHTML = totalNumOccupiedSeats.toString();
