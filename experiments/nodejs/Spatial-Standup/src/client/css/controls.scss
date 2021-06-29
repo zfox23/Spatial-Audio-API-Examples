@@ -925,8 +925,8 @@ $bottom-controls-container-height: 72px;
 .roomInfoContainer {
     display: flex;
     flex-direction: column;
-    margin: 0 0 24px 0;
-    padding: 12px;
+    margin: 0 0 16px 0;
+    padding: 8px 12px 12px 4px;
 
     &--light-theme {
         color: map-get(themes.$light-theme, room-list-container);
@@ -948,10 +948,18 @@ $bottom-controls-container-height: 72px;
 
     &__header {
         cursor: pointer;
-        margin: 0 0 12px 0;
+        padding: 12px;
+        margin: 0 0 4px 2px;
         font-size: 14px;
         line-height: 14px;
         text-transform: uppercase;
+        background-color: #FFFFFF;
+        border-radius: 6px;
+        width: fit-content;
+
+        &:hover {
+            box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.1);
+        }
     }
 
     &__peopleIcon {
@@ -969,7 +977,7 @@ $bottom-controls-container-height: 72px;
         display: flex;
         flex-direction: column;
         margin: 0;
-        padding: 0;
+        padding: 0 0 0 14px;
     }
 
     &__occupant {
@@ -990,6 +998,7 @@ $bottom-controls-container-height: 72px;
 
         &TextTop {
             margin: 0 0 2px 0;
+            text-decoration: underline;
         }
 
         &TextBottom {
@@ -997,6 +1006,10 @@ $bottom-controls-container-height: 72px;
             margin: 0;
             font-size: 11px;
             color: #8E9297;
+        }
+
+        &DisplayName {
+            text-decoration: underline;
         }
     }
 
