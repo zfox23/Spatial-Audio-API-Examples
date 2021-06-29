@@ -588,7 +588,7 @@ export class UserInputController {
                 for (let i = 0; i < roomController.rooms.length; i++) {
                     let room = roomController.rooms[i];
                     this.hoveredSeat = room.seats.find((seat) => {
-                        return !seat.occupiedUserData && Utilities.getDistanceBetween2DPoints(seat.position.x, seat.position.z, hoverM.x, hoverM.z) < ROOM.SEAT_RADIUS_M;
+                        return !seat.occupiedUserData && Utilities.getDistanceBetween2DPoints(seat.position.x, seat.position.z, hoverM.x, hoverM.z) < ROOM.SEAT_RADIUS_HOVER_M;
                     });
 
                     if (this.hoveredSeat) {

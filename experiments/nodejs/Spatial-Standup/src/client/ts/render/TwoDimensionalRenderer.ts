@@ -355,10 +355,11 @@ export class TwoDimensionalRenderer {
         let amountToRotateSeatImage = this.canvasRotationDegrees * Math.PI / 180;
         normalModeCTX.rotate(amountToRotateSeatImage);
 
-        const seatRadiusPX = ROOM.SEAT_RADIUS_M * pxPerM;
         if (userInputController.hoveredSeat && userInputController.hoveredSeat.seatID === seat.seatID) {
+            const seatRadiusPX = ROOM.SEAT_RADIUS_HOVER_M * pxPerM;
             normalModeCTX.drawImage(seatIconHover, -seatRadiusPX, -seatRadiusPX, seatRadiusPX * 2, seatRadiusPX * 2);
         } else {
+            const seatRadiusPX = ROOM.SEAT_RADIUS_IDLE_M * pxPerM;
             normalModeCTX.drawImage(seatIconIdle, -seatRadiusPX, -seatRadiusPX, seatRadiusPX * 2, seatRadiusPX * 2);
         }
 
