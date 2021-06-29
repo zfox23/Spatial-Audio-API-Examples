@@ -169,8 +169,12 @@ export class WebSocketConnectionController {
 
         this.socket.on("onRequestToEnableEchoCancellation", ({ fromVisitIDHash }: { fromVisitIDHash: string }) => {
             console.warn(`Got a request from \`${fromVisitIDHash}\` to enable echo cancellation!`);
-            avDevicesController.audioConstraints.echoCancellation = true;
-            connectionController.setNewInputAudioMediaStream();
+            if (typeof (navigator) !== "undefined" && typeof (navigator.mediaDevices) !== "undefined" && typeof (navigator.mediaDevices.getSupportedConstraints) !== "undefined" && navigator.mediaDevices.getSupportedConstraints().echoCancellation) {
+                avDevicesController.audioConstraints.echoCancellation = true;
+                connectionController.setNewInputAudioMediaStream();
+            } else {
+                console.warn("Can't enable echoCancellation; current browser doesn't support that constraint!");
+            }
         });
 
         this.socket.on("onRequestToDisableEchoCancellation", ({ fromVisitIDHash }: { fromVisitIDHash: string }) => {
@@ -181,8 +185,12 @@ export class WebSocketConnectionController {
 
         this.socket.on("onRequestToEnableAGC", ({ fromVisitIDHash }: { fromVisitIDHash: string }) => {
             console.warn(`Got a request from \`${fromVisitIDHash}\` to enable AGC!`);
-            avDevicesController.audioConstraints.autoGainControl = true;
-            connectionController.setNewInputAudioMediaStream();
+            if (typeof (navigator) !== "undefined" && typeof (navigator.mediaDevices) !== "undefined" && typeof (navigator.mediaDevices.getSupportedConstraints) !== "undefined" && navigator.mediaDevices.getSupportedConstraints().autoGainControl) {
+                avDevicesController.audioConstraints.autoGainControl = true;
+                connectionController.setNewInputAudioMediaStream();
+            } else {
+                console.warn("Can't enable autoGainControl; current browser doesn't support that constraint!");
+            }
         });
 
         this.socket.on("onRequestToDisableAGC", ({ fromVisitIDHash }: { fromVisitIDHash: string }) => {
@@ -193,8 +201,13 @@ export class WebSocketConnectionController {
 
         this.socket.on("onRequestToEnableNoiseSuppression", ({ fromVisitIDHash }: { fromVisitIDHash: string }) => {
             console.warn(`Got a request from \`${fromVisitIDHash}\` to enable Noise Suppression!`);
-            avDevicesController.audioConstraints.noiseSuppression = true;
-            connectionController.setNewInputAudioMediaStream();
+            
+            if (typeof (navigator) !== "undefined" && typeof (navigator.mediaDevices) !== "undefined" && typeof (navigator.mediaDevices.getSupportedConstraints) !== "undefined" && navigator.mediaDevices.getSupportedConstraints().noiseSuppression) {
+                avDevicesController.audioConstraints.noiseSuppression = true;
+                connectionController.setNewInputAudioMediaStream();
+            } else {
+                console.warn("Can't enable noiseSuppression; current browser doesn't support that constraint!");
+            }
         });
 
         this.socket.on("onRequestToDisableNoiseSuppression", ({ fromVisitIDHash }: { fromVisitIDHash: string }) => {

@@ -1,7 +1,6 @@
 import { HiFiCommunicator, HiFiLogger, HiFiLogLevel, getBestAudioConstraints, HiFiUserDataStreamingScopes, ReceivedHiFiAudioAPIData, UserDataSubscription, AvailableUserDataSubscriptionComponents, OrientationEuler3D, Point3D } from 'hifi-spatial-audio';
 import { avDevicesController, roomController, uiController, userDataController, videoController, webSocketConnectionController } from '..';
 import { Utilities } from '../utilities/Utilities';
-import { WebSocketConnectionController } from './WebSocketConnectionController';
 
 declare var HIFI_JWT: string;
 declare var HIFI_ENDPOINT_URL: string;
@@ -283,12 +282,6 @@ export class ConnectionController {
 
                 if (typeof (currentDataFromServer.volumeDecibels) === "number") {
                     currentLocalUserData.volumeDecibels = currentDataFromServer.volumeDecibels;
-
-                    if (isMine) {
-                        let currentPeak = currentLocalUserData.volumeDecibelsPeak;
-                        let newPeak = Math.max(currentPeak, currentLocalUserData.volumeDecibels);
-                        currentLocalUserData.volumeDecibelsPeak = newPeak;
-                    }
                 }
             } else {
                 console.log(`Received data about new user from Spatial Audio API: ${JSON.stringify(currentDataFromServer)}`);
@@ -364,5 +357,7 @@ export class ConnectionController {
                 return localUserData.visitIDHash !== disconnectedUserData.hashedVisitID;
             });
         }
+
+        roomController.updateRoomList();
     }
 }

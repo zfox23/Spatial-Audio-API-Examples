@@ -40,7 +40,6 @@ export class MyAvatarEars {
             orientationEulerCurrent: undefined,
             orientationEulerTarget: undefined,
             volumeDecibels: undefined,
-            volumeDecibelsPeak: undefined,
             volumeThreshold: -60,
             hiFiGain: 1.0,
             hiFiGainSliderValue: "21",

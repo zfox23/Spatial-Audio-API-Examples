@@ -115,9 +115,27 @@ export class TwoDimensionalRenderer {
 
         let colorHex = userData.colorHex || Utilities.hexColorFromString(userData.visitIDHash);
 
-        normalModeCTX.fillStyle = colorHex;
+        if (userData.orientationEulerCurrent !== undefined) {
+            normalModeCTX.beginPath();
+            normalModeCTX.arc(0, 0, AVATAR.DIRECTION_CIRCLE_RADIUS_M * pxPerM, -Math.PI, 0);
+            let grad = normalModeCTX.createLinearGradient(
+                -AVATAR.DIRECTION_CIRCLE_RADIUS_M * pxPerM,
+                0,
+                AVATAR.DIRECTION_CIRCLE_RADIUS_M * pxPerM,
+                0
+            );
+            grad.addColorStop(0.1, '#FFFFFF00');
+            grad.addColorStop(0.5, '#FFFFFFFF');
+            grad.addColorStop(0.9, '#FFFFFF00');
+            normalModeCTX.strokeStyle = grad;
+            normalModeCTX.lineWidth = 4;
+            normalModeCTX.stroke();
+            normalModeCTX.closePath();
+        }
+
         normalModeCTX.beginPath();
         normalModeCTX.arc(0, 0, avatarRadiusPX, 0, 2 * Math.PI);
+        normalModeCTX.fillStyle = colorHex;
         normalModeCTX.fill();
         normalModeCTX.closePath();
 
@@ -331,11 +349,6 @@ export class TwoDimensionalRenderer {
     }
 
     drawUnoccupiedSeat(seat: SpatialAudioSeat) {
-        // Don't draw unoccupied seats if the seats are too small (determined by `userInputController.zoomedOutTooFarToRenderSeats`).
-        if (userInputController.zoomedOutTooFarToRenderSeats) {
-            return;
-        }
-
         let normalModeCTX = this.normalModeCTX;
         let pxPerM = physicsController.pxPerMCurrent;
         normalModeCTX.translate(seat.position.x * pxPerM, seat.position.z * pxPerM);

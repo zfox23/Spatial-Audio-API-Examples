@@ -474,7 +474,7 @@ export class RoomController {
                 if (userData.colorHex) {
                     occupantInnerHTML += `<span class="roomInfoContainer__occupantAvatar" style="background-color:${userData.colorHex};border-color:${userData.colorHex};background-image:url(${userData.profileImageURL ? userData.profileImageURL : "none"});"></span>`;
                 }
-                occupantInnerHTML += userData.displayName && userData.displayName.length > 0 ? userData.displayName : userData.providedUserID;
+                occupantInnerHTML += `<span>${userData.displayName && userData.displayName.length > 0 ? userData.displayName : userData.providedUserID}</span>`;
                 if (userData.currentRoom) {
                     document.querySelector(`[data-room-name="${userData.currentRoom.name}"]`).appendChild(roomInfoContainer__occupant);
                 }

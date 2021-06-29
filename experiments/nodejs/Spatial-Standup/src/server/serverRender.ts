@@ -9,8 +9,6 @@ export async function renderApp(isInProdMode: boolean, appConfigURL: string, spa
     let hiFiJWT = await generateHiFiJWT(providedUserID, spaceName, false);
     let twilioJWT = generateTwilioAccessToken(providedUserID, spaceName);
 
-    console.log(`${Date.now()}: Speaker \`${providedUserID}\` connected to the HiFi Space \`${spaceName}\`.`);
-
     const page = `<!doctype html>
 <html lang="en">
 

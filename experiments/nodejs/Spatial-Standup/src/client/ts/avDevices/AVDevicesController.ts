@@ -12,14 +12,16 @@ export class AVDevicesController {
     constructor() {
         this.audioConstraints = getBestAudioConstraints();
 
-        if (localStorage.getItem("echoCancellation") === "true") {
-            this.audioConstraints.echoCancellation = true;
-        }
-        if (localStorage.getItem("autoGainControl") === "true") {
-            this.audioConstraints.autoGainControl = true;
-        }
-        if (localStorage.getItem("noiseSuppression") === "true") {
-            this.audioConstraints.noiseSuppression = true;
+        if (typeof (navigator) !== "undefined" && typeof (navigator.mediaDevices) !== "undefined" && typeof (navigator.mediaDevices.getSupportedConstraints) !== "undefined") {
+            if (localStorage.getItem("echoCancellation") === "true" && navigator.mediaDevices.getSupportedConstraints().echoCancellation) {
+                this.audioConstraints.echoCancellation = true;
+            }
+            if (localStorage.getItem("autoGainControl") === "true" && navigator.mediaDevices.getSupportedConstraints().autoGainControl) {
+                this.audioConstraints.autoGainControl = true;
+            }
+            if (localStorage.getItem("noiseSuppression") === "true" && navigator.mediaDevices.getSupportedConstraints().noiseSuppression) {
+                this.audioConstraints.noiseSuppression = true;
+            }
         }
 
         this.inputAudioMediaStream = undefined;

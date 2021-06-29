@@ -41,8 +41,6 @@ export class PhysicsController {
         let mustTransmit = false;
         let dataToTransmit: DataToTransmitToHiFi = {};
 
-        let myAvatarMoved = false;
-        let otherAvatarMoved = false;
         let allUserData = userDataController.allOtherUserData.concat(userDataController.myAvatar.myUserData);
         allUserData.forEach((userData) => {
             let isMine = userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash;
@@ -85,12 +83,6 @@ export class PhysicsController {
                         userData.positionCurrent = new Point3D();
                     }
                     Object.assign(userData.positionCurrent, userData.positionTarget);
-
-                    if (isMine) {
-                        myAvatarMoved = true;
-                    } else {
-                        otherAvatarMoved = true;
-                    }
                 }
                 userData.positionCircleCenter = undefined;
                 userData.positionStart = undefined;
@@ -161,10 +153,8 @@ export class PhysicsController {
 
                     if (isMine) {
                         dataToTransmit.position = userData.positionCurrent;
-                        myAvatarMoved = true;
                         mustTransmit = true;
                     } else {
-                        otherAvatarMoved = true;
                     }
                 }
 
@@ -292,12 +282,5 @@ export class PhysicsController {
             this.smoothZoomStartTimestamp = undefined;
             this.smoothZoomDurationMS = PHYSICS.SMOOTH_ZOOM_DURATION_NORMAL_MS;
         }
-
-        this.determineZoomedOutTooFarToRenderSeats();
-    }
-
-    determineZoomedOutTooFarToRenderSeats() {
-        let roomSeatRadiusPX = ROOM.SEAT_RADIUS_M * this.pxPerMCurrent;
-        userInputController.zoomedOutTooFarToRenderSeats = roomSeatRadiusPX < UI.MIN_SEAT_RADIUS_FOR_SEAT_VISIBILITY_PX;
     }
 }

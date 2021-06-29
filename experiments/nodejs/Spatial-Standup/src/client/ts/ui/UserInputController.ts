@@ -19,7 +19,6 @@ export class UserInputController {
     lastDistanceBetweenLeftClickEvents: number;
     hoveredUserData: UserData;
     hoveredSeat: SpatialAudioSeat;
-    zoomedOutTooFarToRenderSeats: boolean = false;
     hoveredRoom: SpatialStandupRoom;
     hoveredLandmark: Landmark;
 
@@ -392,18 +391,30 @@ export class UserInputController {
     }
 
     setEchoCancellationStatus(newEchoCancellationStatus: boolean) {
-        avDevicesController.audioConstraints.echoCancellation = newEchoCancellationStatus;
-        connectionController.setNewInputAudioMediaStream();
+        if (typeof (navigator) !== "undefined" && typeof (navigator.mediaDevices) !== "undefined" && typeof (navigator.mediaDevices.getSupportedConstraints) !== "undefined" && navigator.mediaDevices.getSupportedConstraints().echoCancellation) {
+            avDevicesController.audioConstraints.echoCancellation = newEchoCancellationStatus;
+            connectionController.setNewInputAudioMediaStream();
+        } else {
+            console.warn("Can't set echoCancellation constraint; current browser doesn't support that constraint!");
+        }
     }
 
     setAGCStatus(newAGCStatus: boolean) {
-        avDevicesController.audioConstraints.autoGainControl = newAGCStatus;
-        connectionController.setNewInputAudioMediaStream();
+        if (typeof (navigator) !== "undefined" && typeof (navigator.mediaDevices) !== "undefined" && typeof (navigator.mediaDevices.getSupportedConstraints) !== "undefined" && navigator.mediaDevices.getSupportedConstraints().autoGainControl) {
+            avDevicesController.audioConstraints.autoGainControl = newAGCStatus;
+            connectionController.setNewInputAudioMediaStream();
+        } else {
+            console.warn("Can't set autoGainControl constraint; current browser doesn't support that constraint!");
+        }
     }
 
     setNoiseSuppressionStatus(newNSStatus: boolean) {
-        avDevicesController.audioConstraints.noiseSuppression = newNSStatus;
-        connectionController.setNewInputAudioMediaStream();
+        if (typeof (navigator) !== "undefined" && typeof (navigator.mediaDevices) !== "undefined" && typeof (navigator.mediaDevices.getSupportedConstraints) !== "undefined" && navigator.mediaDevices.getSupportedConstraints().noiseSuppression) {
+            avDevicesController.audioConstraints.noiseSuppression = newNSStatus;
+            connectionController.setNewInputAudioMediaStream();
+        } else {
+            console.warn("Can't set noiseSuppression constraint; current browser doesn't support that constraint!");
+        }
     }
 
     setStereoInputStatus(newStereoInputStatus: boolean) {
@@ -504,7 +515,7 @@ export class UserInputController {
 
         if (event instanceof PointerEvent && event.pointerId) {
             this.pushEvent(event);
-        } else if (event instanceof TouchEvent && event.changedTouches) {
+        } else if (typeof TouchEvent !== "undefined" && event instanceof TouchEvent && event.changedTouches) {
             let touches = event.changedTouches;
             for (let i = 0; i < touches.length; i++) {
                 let currentEvent = touches[i];
@@ -519,7 +530,7 @@ export class UserInputController {
             }
         }
 
-        if (event instanceof TouchEvent && event.touches && event.touches.length > 1) {
+        if (typeof TouchEvent !== "undefined" && event instanceof TouchEvent && event.touches && event.touches.length > 1) {
             return;
         }
 
@@ -566,7 +577,7 @@ export class UserInputController {
             }
 
             this.hoveredUserData = userDataController.allOtherUserData.find((userData) => {
-                return userData.positionCurrent && Utilities.getDistanceBetween2DPoints(userData.positionCurrent.x, userData.positionCurrent.z, hoverM.x, hoverM.z) < AVATAR.RADIUS_M;
+                return userData.displayName && userData.positionCurrent && Utilities.getDistanceBetween2DPoints(userData.positionCurrent.x, userData.positionCurrent.z, hoverM.x, hoverM.z) < AVATAR.RADIUS_M;
             });
 
             if (!this.hoveredUserData && Utilities.getDistanceBetween2DPoints(userDataController.myAvatar.myUserData.positionCurrent.x, userDataController.myAvatar.myUserData.positionCurrent.z, hoverM.x, hoverM.z) < AVATAR.RADIUS_M) {
@@ -574,33 +585,14 @@ export class UserInputController {
             }
 
             if (!this.hoveredUserData) {
-                if (this.zoomedOutTooFarToRenderSeats) {
-                    this.hoveredSeat = undefined;
-                } else {
-                    for (let i = 0; i < roomController.rooms.length; i++) {
-                        let room = roomController.rooms[i];
-                        this.hoveredSeat = room.seats.find((seat) => {
-                            return !seat.occupiedUserData && Utilities.getDistanceBetween2DPoints(seat.position.x, seat.position.z, hoverM.x, hoverM.z) < ROOM.SEAT_RADIUS_M;
-                        });
-
-                        if (this.hoveredSeat) {
-                            break;
-                        }
-                    }
-                }
-            }
-
-            if (!(this.hoveredUserData && this.hoveredSeat)) {
-                this.hoveredRoom = undefined;
-
                 for (let i = 0; i < roomController.rooms.length; i++) {
                     let room = roomController.rooms[i];
+                    this.hoveredSeat = room.seats.find((seat) => {
+                        return !seat.occupiedUserData && Utilities.getDistanceBetween2DPoints(seat.position.x, seat.position.z, hoverM.x, hoverM.z) < ROOM.SEAT_RADIUS_M;
+                    });
 
-                    if (Utilities.getDistanceBetween2DPoints(room.seatingCenter.x, room.seatingCenter.z, hoverM.x, hoverM.z) < room.seatingRadiusM) {
-                        if (this.zoomedOutTooFarToRenderSeats) {
-                            this.hoveredRoom = room;
-                            break;
-                        }
+                    if (this.hoveredSeat) {
+                        break;
                     }
                 }
             }
@@ -629,7 +621,7 @@ export class UserInputController {
                         this.pointerEventCache[i] = event;
                     }
                 }
-            } else if (event instanceof TouchEvent && event.changedTouches) {
+            } else if (typeof TouchEvent !== "undefined" && event instanceof TouchEvent && event.changedTouches) {
                 let touches = event.changedTouches;
                 for (let i = 0; i < touches.length; i++) {
                     let currentEvent = this.getEventFromCacheByID(touches[i].identifier);
@@ -671,7 +663,7 @@ export class UserInputController {
 
         if (event instanceof PointerEvent && event.pointerId) {
             this.removeEvent(event);
-        } else if (event instanceof TouchEvent && event.changedTouches) {
+        } else if (typeof TouchEvent !== "undefined" && event instanceof TouchEvent && event.changedTouches) {
             let touches = event.changedTouches;
             for (let i = touches.length - 1; i >= 0; i--) {
                 let currentEvent = this.getEventFromCacheByID(touches[i].identifier);
@@ -685,7 +677,7 @@ export class UserInputController {
             this.leftClickStartPositionPX = undefined;
         }
     
-        if ((event instanceof TouchEvent && event.touches && event.touches.length > 0) || this.pointerEventCache.length > 0) {
+        if ((typeof TouchEvent !== "undefined" && event instanceof TouchEvent && event.touches && event.touches.length > 0) || this.pointerEventCache.length > 0) {
             return;
         }
 
@@ -702,7 +694,7 @@ export class UserInputController {
             this.normalModeCanvas.removeEventListener('mouseup', this.handleGestureOnCanvasEnd, true);
         }
 
-        if ((event instanceof TouchEvent && event.touches.length === 0) || ((event instanceof PointerEvent || event instanceof MouseEvent) && event.buttons === 0)) {
+        if ((typeof TouchEvent !== "undefined" && event instanceof TouchEvent && event.touches.length === 0) || ((event instanceof PointerEvent || event instanceof MouseEvent) && event.buttons === 0)) {
             let gesturePointPX = Utilities.getGesturePointFromEvent(event);
             if (this.leftClickStartPositionPX && Utilities.getDistanceBetween2DPoints(this.leftClickStartPositionPX.x, this.leftClickStartPositionPX.y, gesturePointPX.x, gesturePointPX.y) <= CONTROLS.FUZZY_LEFT_CLICK_DISTANCE_PX) {
                 this.leftClickStartPositionPX = undefined;
@@ -710,7 +702,7 @@ export class UserInputController {
             }
         }
 
-        if ((event instanceof TouchEvent && event.touches.length === 0) || ((event instanceof PointerEvent || event instanceof MouseEvent) && event.buttons === 0) && this.leftClickStartPositionPX !== undefined) {
+        if ((typeof TouchEvent !== "undefined" && event instanceof TouchEvent && event.touches.length === 0) || ((event instanceof PointerEvent || event instanceof MouseEvent) && event.buttons === 0) && this.leftClickStartPositionPX !== undefined) {
             this.leftClickStartPositionPX = undefined;
             this.lastDistanceBetweenLeftClickEvents = 0;
         }

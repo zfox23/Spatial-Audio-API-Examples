@@ -3,7 +3,7 @@ import '../../css/controls.scss';
 import { AudionetInitResponse } from '../connection/ConnectionController';
 import { UserData } from '../userData/UserDataController';
 import { Utilities } from '../utilities/Utilities';
-import { AVATAR, PHYSICS } from '../constants/constants';
+import { AVATAR, PHYSICS, UI } from '../constants/constants';
 import ChooseColorButtonImage from '../../images/chooseColorButtonImage.png';
 import AddPhotoButtonImage from '../../images/photo-select-icon.png';
 import MuteForEveryoneButtonIcon from '../../images/mute-for-everyone-button-icon.svg';
@@ -363,7 +363,7 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
             });
             
             let colorHexInput = document.createElement("input");
-            colorHexInput.classList.add("avatarContextMenu__colorHexInput", "displayNone");
+            colorHexInput.classList.add("avatarContextMenu__colorHexInput");
             colorHexInput.type = "color";
             colorHexInput.value = userData.colorHex || Utilities.hexColorFromString(userData.visitIDHash);
             colorHexInput.classList.add("avatarContextMenu__colorHexInput--mine");
@@ -866,9 +866,6 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
 
         let muteForAllButton = document.createElement("button");
         muteForAllButton.classList.add("avatarContextMenu__muteForAllButton");
-        muteForAllButton.addEventListener('click', (e) => {
-            webSocketConnectionController.requestToMuteAudioInputDevice(userData.visitIDHash);
-        });
         let muteForAllButtonImage = document.createElement("img");
         muteForAllButtonImage.classList.add("avatarContextMenu__muteForAllButtonImage");
         muteForAllButtonImage.src = MuteForEveryoneButtonIcon;
@@ -877,6 +874,15 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
         muteForAllButtonImage.classList.add("avatarContextMenu__muteForAllButtonText");
         muteForAllButtonText.innerHTML = "Mute for everyone";
         muteForAllButton.appendChild(muteForAllButtonText);
+
+        muteForAllButton.addEventListener('click', (e) => {
+            webSocketConnectionController.requestToMuteAudioInputDevice(userData.visitIDHash);
+            muteForAllButtonText.innerHTML = "Muted!";
+            setTimeout(() => {
+                muteForAllButtonText.innerHTML = "Mute for everyone";
+            }, UI.BUTTON_TEXT_CHANGE_TIMEOUT_MS);
+        });
+
         this.avatarContextMenu.appendChild(muteForAllButton);
     }
 
@@ -925,6 +931,7 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
         let avatarContextMenu__avatarCircle = <HTMLElement>document.querySelector(".avatarContextMenu__avatarCircle");
         if (avatarContextMenu__avatarCircle) {
             avatarContextMenu__avatarCircle.style.backgroundColor = userData.colorHex;
+            avatarContextMenu__avatarCircle.style.borderColor = userData.colorHex;
 
             if (userData.profileImageEl && userData.profileImageEl.complete) {
                 avatarContextMenu__avatarCircle.style.backgroundImage = `url(${userData.profileImageURL})`;
