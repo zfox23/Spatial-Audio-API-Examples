@@ -552,7 +552,7 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
     }
 
     generateEchoCancellationUI(userData: UserData) {
-        if (typeof (userData.echoCancellationEnabled) !== "boolean") {
+        if (typeof (userData.echoCancellationEnabled) !== "boolean" || !(typeof (navigator) !== "undefined" && typeof (navigator.mediaDevices) !== "undefined" && typeof (navigator.mediaDevices.getSupportedConstraints) !== "undefined" && navigator.mediaDevices.getSupportedConstraints().echoCancellation)) {
             return;
         }
 
@@ -596,7 +596,7 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
     }
 
     generateAGCUI(userData: UserData) {
-        if (typeof (userData.agcEnabled) !== "boolean") {
+        if (typeof (userData.agcEnabled) !== "boolean" || !(typeof (navigator) !== "undefined" && typeof (navigator.mediaDevices) !== "undefined" && typeof (navigator.mediaDevices.getSupportedConstraints) !== "undefined" && navigator.mediaDevices.getSupportedConstraints().autoGainControl)) {
             return;
         }
 
@@ -640,7 +640,7 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
     }
 
     generateNoiseSuppressionUI(userData: UserData) {
-        if (typeof (userData.noiseSuppressionEnabled) !== "boolean") {
+        if (typeof (userData.noiseSuppressionEnabled) !== "boolean" || !(typeof (navigator) !== "undefined" && typeof (navigator.mediaDevices) !== "undefined" && typeof (navigator.mediaDevices.getSupportedConstraints) !== "undefined" && navigator.mediaDevices.getSupportedConstraints().noiseSuppression)) {
             return;
         }
 
