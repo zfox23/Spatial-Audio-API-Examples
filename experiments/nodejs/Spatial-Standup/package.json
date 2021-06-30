@@ -12,7 +12,7 @@
     "server": "npm run server:build && node -r esm ./src/server/dist/index.js dev false",
     "server:dev": "npm run server:build && node -r esm ./src/server/dist/index.js dev false",
     "server:dev:https": "npm run server:build && node -r esm ./src/server/dist/index.js dev true",
-    "server:prod": "npm run server:build && node -r esm ./src/server/dist/index.js prod false",
+    "server:prod": "npm run client:prod && npm run server:build && node -r esm ./src/server/dist/index.js prod false",
     "audiobots": "node -r esm ./src/server/audioBots.js",
     "discord": "tsc --p ./src/discordBot/ && node ./src/discordBot/dist/index.js",
     "electron": "webpack --env electron && node -r esm ./src/electron/generateElectronApp.js && electron .",
