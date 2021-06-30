@@ -107,7 +107,28 @@ async function connectToSpace(req: any, res: any, next: any) {
         
         let spaceID = listSpacesJSON.find((space: any) => { return space["name"] === spaceName; });
         if (!spaceID) {
-            console.error(`There was an error when getting the space ID.`);
+            console.log(`Creating a new Space with name \`${spaceName}\`...`);
+            let createSpaceJSON;
+            try {
+                let createSpace = await fetch(`https://${auth.HIFI_ENDPOINT_URL}/api/v1/spaces/create?name=${spaceName}&token=${adminHiFiJWT}`);
+                createSpaceJSON = await createSpace.json();
+            } catch (e) {
+                console.error(`There was an error when creating a new space with name \`${spaceName}\`. Error:\n${JSON.stringify(e)}`);
+                return;
+            }
+            
+            try {
+                let listSpaces = await fetch(`https://${auth.HIFI_ENDPOINT_URL}/api/v1/spaces/?token=${adminHiFiJWT}`);
+                listSpacesJSON = await listSpaces.json();
+            } catch (e) {
+                console.error(`There was an error when listing spaces. Error:\n${JSON.stringify(e)}`);
+                return;
+            }
+
+            spaceID = listSpacesJSON.find((space: any) => { return space["name"] === spaceName; });
+        }
+        if (!spaceID) {
+            console.error(`There was an error when getting the space ID for the space named ${spaceName}.`);
             return;
         }
         spaceID = spaceID["space-id"];
