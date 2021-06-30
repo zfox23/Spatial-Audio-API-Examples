@@ -118,12 +118,13 @@ async function connectToSpace(req: any, res: any, next: any) {
             }
 
             spaceID = createSpaceJSON["space-id"];
+        } else {
+            spaceID = spaceID["space-id"];
         }
         if (!spaceID) {
             console.error(`There was an error when getting the space ID for the space named ${spaceName}.`);
             return;
         }
-        spaceID = spaceID["space-id"];
         
         let listZonesJSON: Array<any>;
         let listZonesFetchURL = `https://${auth.HIFI_ENDPOINT_URL}/api/v1/spaces/${spaceID}/settings/zones?token=${adminHiFiJWT}`;
