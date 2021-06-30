@@ -266,12 +266,22 @@ app.post('/create', (req: any, res: any, next: any) => {
         return;
     }
 
+    let isHiFiEmployee = false;
+    let slackTeamID = req.body.team_id;
+    if (slackTeamID && slackTeamID === "T025Q3X6R") {
+        isHiFiEmployee = true;
+    }
+    
     let stringToHash = slackChannelID;
-
     let hash = crypto.createHash('md5').update(stringToHash).digest('hex');
-    let spaceURL = `https://standup.highfidelity.com/${hash}/`;
-
-    let channelText = `<${spaceURL}|Click here to join the Spatial Standup associated with this Slack channel.>`;
+    let spaceURL, channelText;
+    if (isHiFiEmployee) {
+        spaceURL = `https://standup-staging.highfidelity.com/${hash}/`;
+        channelText = `<${spaceURL}|Click here to join the _staging_ Spatial Standup associated with this Slack channel.>`;
+    } else {
+        spaceURL = `https://standup.highfidelity.com/${hash}/`;
+        channelText = `<${spaceURL}|Click here to join the Spatial Standup associated with this Slack channel.>`;
+    }
 
     analyticsController.logEvent(ServerAnalyticsEventCategory.SlackBotUsed, new SlackBotUsedEvent(req.body.user_id, req.body.team_id, false));
 
