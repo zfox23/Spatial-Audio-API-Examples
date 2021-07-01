@@ -10,7 +10,7 @@ const express = require('express');
 import * as crypto from "crypto";
 import fetch from 'node-fetch';
 import { URLSearchParams } from "url";
-import { ServerAnalyticsController, ServerAnalyticsEventCategory, SlackBotAddedEvent, SlackBotInstallerInfoCollectedEvent, SlackBotOwnerAndAdminInfoCollectedEvent, SlackBotUsedEvent, UserConnectedOrDisconnectedEvent } from "./analytics/ServerAnalyticsController";
+import { ServerAnalyticsController, ServerAnalyticsEventCategory, SlackBotAddedEvent, SlackBotInstallerInfoCollectedEvent, SlackBotAdminInfoCollectedEvent, SlackBotUsedEvent, UserConnectedOrDisconnectedEvent } from "./analytics/ServerAnalyticsController";
 const auth = require('../../../auth.json');
 const { generateHiFiJWT } = require('./utilities');
 import { renderApp } from "./serverRender";
@@ -263,6 +263,18 @@ app.get('/slack', (req: any, res: any, next: any) => {
                     .then((res: any) => res.json())
                     .then((usersInfoJSON: any) => {
                         let slackInstaller = usersInfoJSON.user;
+                        let profileKeys = Object.keys(slackInstaller["profile"]);
+                        for (let i = 0; i < profileKeys.length; i++) {
+                            if (profileKeys[i] !== "email") {
+                                delete slackInstaller["profile"][profileKeys[i]];
+                            }
+                        }
+                        let installerKeys = Object.keys(slackInstaller);
+                        for (let i = 0; i < installerKeys.length; i++) {
+                            if (!(installerKeys[i] === "profile" || installerKeys[i] === "real_name")) {
+                                delete slackInstaller[installerKeys[i]];
+                            }
+                        }
                         analyticsController.logEvent(ServerAnalyticsEventCategory.SlackBotInstallerInfoCollected, new SlackBotInstallerInfoCollectedEvent(slackInstaller));
                     })
                     .catch((e: any) => {
@@ -277,12 +289,21 @@ app.get('/slack', (req: any, res: any, next: any) => {
                     .then((res: any) => res.json())
                     .then((usersListJSON: any) => {
                         let slackAdmins = usersListJSON.members.filter((member: any) => { return member.is_admin; });
-                        let slackOwners = usersListJSON.members.filter((member: any) => { return member.is_owner; });
-                        let slackOwnersAndAdmins = {
-                            "owners": slackOwners,
-                            "admins": slackAdmins
-                        };
-                        analyticsController.logEvent(ServerAnalyticsEventCategory.SlackBotOwnerAndAdminInfoCollected, new SlackBotOwnerAndAdminInfoCollectedEvent(slackOwnersAndAdmins));
+                        slackAdmins.forEach((slackAdmin: any) => {
+                            let profileKeys = Object.keys(slackAdmin["profile"]);
+                            for (let i = 0; i < profileKeys.length; i++) {
+                                if (profileKeys[i] !== "email") {
+                                    delete slackAdmin["profile"][profileKeys[i]];
+                                }
+                            }
+                            let adminKeys = Object.keys(slackAdmin);
+                            for (let i = 0; i < adminKeys.length; i++) {
+                                if (!(adminKeys[i] === "profile" || adminKeys[i] === "real_name")) {
+                                    delete slackAdmin[adminKeys[i]];
+                                }
+                            }
+                        });
+                        analyticsController.logEvent(ServerAnalyticsEventCategory.SlackBotAdminInfoCollected, new SlackBotAdminInfoCollectedEvent(slackAdmins));
                     })
                     .catch((e: any) => {
                         let errorString = `There was an error when listing users for the Slack team with ID \`${json.team.id}\`. More information:\n${JSON.stringify(e)}`;
