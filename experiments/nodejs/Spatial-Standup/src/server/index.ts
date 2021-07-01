@@ -263,6 +263,7 @@ app.get('/slack', (req: any, res: any, next: any) => {
                 fetch("https://slack.com/api/users.list", { method: 'POST', body: usersListParams })
                     .then((res: any) => res.json())
                     .then((usersListJSON: any) => {
+                        console.log("LISTING SLACK USERS:");
                         console.log(usersListJSON);
                     })
                     .catch((e: any) => {
