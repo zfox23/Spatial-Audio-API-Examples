@@ -257,18 +257,18 @@ app.get('/slack', (req: any, res: any, next: any) => {
                 console.log(okString);
                 res.status(200).send(okString)
 
-                const usersListParams = new URLSearchParams();
-                usersListParams.append("token", json.access_token);
-                usersListParams.append("team_id", json.team.id);
-                fetch("https://slack.com/api/users.list", { method: 'POST', body: usersListParams })
+                const usersInfoParams = new URLSearchParams();
+                usersInfoParams.append("token", json.access_token);
+                usersInfoParams.append("user", json.authed_user);
+                fetch("https://slack.com/api/users.info", { method: 'POST', body: usersInfoParams })
                     .then((res: any) => res.json())
-                    .then((usersListJSON: any) => {
-                        console.log("LISTING SLACK USERS:");
+                    .then((usersInfoJSON: any) => {
                         console.log(json);
-                        console.log(usersListJSON);
+                        console.log("LISTING SLACK USERS:");
+                        console.log(usersInfoJSON);
                     })
                     .catch((e: any) => {
-                        let errorString = `There was an error when listing users for the Slack team with ID \`${json.team.id}\`. More information:\n${JSON.stringify(e)}`;
+                        let errorString = `There was an error when getting information about the user who installed the Slack bot for the Slack team with ID \`${json.team.id}\`. More information:\n${JSON.stringify(e)}`;
                         console.error(errorString);
                     })
             } else {
