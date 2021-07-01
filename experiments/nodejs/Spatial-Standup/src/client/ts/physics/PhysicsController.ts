@@ -1,8 +1,7 @@
 import { OrientationEuler3D, Point3D } from "hifi-spatial-audio";
 import { connectionController, localSoundsController, particleController, pathsController, roomController, uiController, userDataController, userInputController } from "..";
-import { PHYSICS, UI, ROOM, CONTROLS, TIME, AVATAR } from "../constants/constants";
+import { PHYSICS, UI, ROOM, CONTROLS, TIME } from "../constants/constants";
 import { SpatialStandupRoom } from "../ui/RoomController";
-import { VolumeVisualization } from "../userData/UserDataController";
 import { Utilities, DataToTransmitToHiFi, EasingFunctions } from "../utilities/Utilities";
 
 export class PhysicsController {
@@ -29,7 +28,6 @@ export class PhysicsController {
         this.lastNow = now;
 
         this.computeAvatarPositionsAndOrientations(now, dt);
-        this.computeVolumeVisualizations(now, dt);
         particleController.updateAllParticles(now, dt);
         this.computePXPerM(now);
     }
@@ -244,59 +242,6 @@ export class PhysicsController {
                     localSoundsController.onMyGlobalPositionChanged(userData.positionCurrent);
                 }
             }
-        });
-    }
-
-    computeVolumeVisualizations(timestamp: number, deltaTimestampMS: number) {
-        let allUserData = userDataController.allOtherUserData.concat(userDataController.myAvatar.myUserData);
-        allUserData.forEach((userData) => {            
-            if (!userData.volumeDecibelsMinimum || userData.volumeDecibels < userData.volumeDecibelsMinimum) {
-                userData.volumeDecibelsMinimum = userData.volumeDecibels;
-            }
-            if (!userData.volumeDecibelsMaximum || userData.volumeDecibels > userData.volumeDecibelsMaximum) {
-                userData.volumeDecibelsMaximum = userData.volumeDecibels;
-            }
-
-            // Decay this value so users who are quiet for a while will have a powerful
-            // volume visualization when they first start speaking again.
-            userData.volumeDecibelsMaximum -= PHYSICS.VOLUME_DB_MAX_DECAY_PER_S * deltaTimestampMS / 1000;
-            
-            if (userData.volumeDecibels >= (((userData.volumeDecibelsMaximum - userData.volumeDecibelsMinimum) * PHYSICS.VOLUME_VISUALIZATION_THRESHOLD_MULTIPLIER) + userData.volumeDecibelsMinimum) && !userData.volumeVisualizationRateLimiter && userData.positionCurrent) {
-                let visualizationMultiplier;
-                let denominator = userData.volumeDecibelsMaximum - userData.volumeDecibelsMinimum;
-                if (denominator) {
-                    visualizationMultiplier = (userData.volumeDecibels - userData.volumeDecibelsMinimum) / (userData.volumeDecibelsMaximum - userData.volumeDecibelsMinimum);
-                } else {
-                    visualizationMultiplier = 1;
-                }
-                visualizationMultiplier = Utilities.linearScale(visualizationMultiplier, PHYSICS.VOLUME_VISUALIZATION_THRESHOLD_MULTIPLIER, 1.0, PHYSICS.VOLUME_VISUALIZATION_MULTIPLIER_MIN, PHYSICS.VOLUME_VISUALIZATION_MULTIPLIER_MAX, true);
-                userData.volumeVisualizations.add(new VolumeVisualization({
-                    visualizationMultiplier: visualizationMultiplier,
-                    startTimestamp: timestamp,
-                    startPosition: new Point3D({x: userData.positionCurrent.x, y: userData.positionCurrent.y, z: userData.positionCurrent.z }),
-                    endPosition: new Point3D({
-                        "x": userData.positionCurrent.x + (AVATAR.VOLUME_VISUALIZATION_RADIUS_MAX_M * visualizationMultiplier - AVATAR.RADIUS_M - AVATAR.VOLUME_VISUALIZATION_RADIUS_OFFSET_M) * Math.sin(-userData.orientationEulerCurrent.yawDegrees * Math.PI / 180),
-                        "y": 0,
-                        "z": userData.positionCurrent.z - (AVATAR.VOLUME_VISUALIZATION_RADIUS_MAX_M * visualizationMultiplier - AVATAR.RADIUS_M - AVATAR.VOLUME_VISUALIZATION_RADIUS_OFFSET_M) * Math.cos(-userData.orientationEulerCurrent.yawDegrees * Math.PI / 180)
-                    })
-                }));
-                userData.volumeVisualizationRateLimiter = setTimeout(() => {
-                    userData.volumeVisualizationRateLimiter = undefined;
-                }, PHYSICS.VOLUME_VISUALIZATION_LIFETIME_MS / 2);
-            }
-
-            if (!userData.volumeVisualizations) {
-                return;
-            }
-
-            userData.volumeVisualizations.forEach((volumeVisualization) => {
-                if (volumeVisualization.done) {
-                    userData.volumeVisualizations.delete(volumeVisualization);
-                    return;
-                }
-
-                volumeVisualization.tick(timestamp, deltaTimestampMS);
-            });
         });
     }
 
