@@ -79,16 +79,27 @@ export class TwoDimensionalRenderer {
         } catch (e) { }
     }
 
-    drawVolumeBubble({ userData }: { userData: UserData }) {
-        if (userData.volumeDecibels < userData.volumeThreshold) {
-            return;
-        }
+    drawVolumeVisualizations({ userData }: { userData: UserData }) {
         let normalModeCTX = this.normalModeCTX;
-        normalModeCTX.beginPath();
-        normalModeCTX.arc(0, 0, Utilities.linearScale(userData.volumeDecibels, AVATAR.MIN_VOLUME_DB, AVATAR.MAX_VOLUME_DB, AVATAR.RADIUS_M, AVATAR.RADIUS_M * AVATAR.MAX_VOLUME_DB_AVATAR_RADIUS_MULTIPLIER) * physicsController.pxPerMCurrent, 0, 2 * Math.PI);
-        normalModeCTX.fillStyle = userData.colorHex || Utilities.hexColorFromString(userData.visitIDHash);
-        normalModeCTX.fill();
-        normalModeCTX.closePath();
+        let pxPerM = physicsController.pxPerMCurrent;
+
+        userData.volumeVisualizations.forEach((volumeVisualization) => {
+            normalModeCTX.translate(volumeVisualization.currentPosition.x * pxPerM, volumeVisualization.currentPosition.z * pxPerM);
+            normalModeCTX.globalAlpha = volumeVisualization.currentOpacity;
+            normalModeCTX.beginPath();
+            normalModeCTX.arc(0, 0, volumeVisualization.currentRadiusM * pxPerM, 0, 2 * Math.PI);
+            let color = userData.colorHex || Utilities.hexColorFromString(userData.visitIDHash);
+            let grad = normalModeCTX.createRadialGradient(0, 0, 0, 0, 0, volumeVisualization.currentRadiusM * pxPerM);
+            grad.addColorStop(0.0, color);
+            grad.addColorStop(0.95, color);
+            grad.addColorStop(1.0, color + "00");
+            normalModeCTX.fillStyle = grad;
+            normalModeCTX.fill();
+            normalModeCTX.closePath();
+            normalModeCTX.translate(-volumeVisualization.currentPosition.x * pxPerM, -volumeVisualization.currentPosition.z * pxPerM);
+        });
+
+        normalModeCTX.globalAlpha = 1.0;
     }
 
     drawAvatarBase({ userData }: { userData: UserData }) {
@@ -276,13 +287,13 @@ export class TwoDimensionalRenderer {
         let normalModeCTX = this.normalModeCTX;
         let pxPerM = physicsController.pxPerMCurrent;
 
+        this.drawVolumeVisualizations({ userData });
+
         normalModeCTX.translate(userData.positionCurrent.x * pxPerM, userData.positionCurrent.z * pxPerM);
 
         if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash && !uiController.hasCompletedTutorial) {
             this.drawTutorialGlow();
         }
-
-        this.drawVolumeBubble({ userData });
         this.drawAvatarBase({ userData });
         this.drawAvatarVideo({ userData });
         this.drawAvatarLabel({ userData });

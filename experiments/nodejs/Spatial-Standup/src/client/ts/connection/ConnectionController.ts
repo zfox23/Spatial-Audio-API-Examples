@@ -297,6 +297,7 @@ export class ConnectionController {
                     positionCurrent: currentDataFromServer.position,
                     orientationEulerCurrent: currentDataFromServer.orientationEuler,
                     volumeDecibels: currentDataFromServer.volumeDecibels,
+                    volumeVisualizations: new Set(),
                     userGainForThisConnection: 1.0,
                     tempData: {},
                 });
