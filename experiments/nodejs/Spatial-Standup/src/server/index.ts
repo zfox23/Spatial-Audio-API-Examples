@@ -10,7 +10,7 @@ const express = require('express');
 import * as crypto from "crypto";
 import fetch from 'node-fetch';
 import { URLSearchParams } from "url";
-import { ServerAnalyticsController, ServerAnalyticsEventCategory, SlackBotAddedEvent, SlackBotUsedEvent, UserConnectedOrDisconnectedEvent } from "./analytics/ServerAnalyticsController";
+import { ServerAnalyticsController, ServerAnalyticsEventCategory, SlackBotAddedEvent, SlackBotInstallerInfoCollectedEvent, SlackBotOwnerAndAdminInfoCollectedEvent, SlackBotUsedEvent, UserConnectedOrDisconnectedEvent } from "./analytics/ServerAnalyticsController";
 const auth = require('../../../auth.json');
 const { generateHiFiJWT } = require('./utilities');
 import { renderApp } from "./serverRender";
@@ -104,7 +104,7 @@ async function connectToSpace(req: any, res: any, next: any) {
             console.error(`There was an error when listing spaces. Error:\n${JSON.stringify(e)}`);
             return;
         }
-        
+
         let spaceID = listSpacesJSON.find((space: any) => { return space["name"] === spaceName; });
         if (!spaceID) {
             console.log(`Creating a new Space with name \`${spaceName}\`...`);
@@ -125,7 +125,7 @@ async function connectToSpace(req: any, res: any, next: any) {
             console.error(`There was an error when getting the space ID for the space named ${spaceName}.`);
             return;
         }
-        
+
         let listZonesJSON: Array<any>;
         let listZonesFetchURL = `https://${auth.HIFI_ENDPOINT_URL}/api/v1/spaces/${spaceID}/settings/zones?token=${adminHiFiJWT}`;
         try {
@@ -171,7 +171,7 @@ async function connectToSpace(req: any, res: any, next: any) {
         let deleteZonesJSON;
         try {
             console.log(`${spaceName}: Deleting all existing zones...`);
-            let deleteZones = await fetch(`https://${auth.HIFI_ENDPOINT_URL}/api/v1/spaces/${spaceID}/settings/zones?token=${adminHiFiJWT}`, {method: "DELETE"});
+            let deleteZones = await fetch(`https://${auth.HIFI_ENDPOINT_URL}/api/v1/spaces/${spaceID}/settings/zones?token=${adminHiFiJWT}`, { method: "DELETE" });
             deleteZonesJSON = await deleteZones.json();
         } catch (e) {
             console.error(`There was an error when deleting all zones. Error:\n${JSON.stringify(e)}`);
@@ -194,7 +194,7 @@ async function connectToSpace(req: any, res: any, next: any) {
                     "z-max": room.roomCenter.z + room.dimensions.z / 2,
                 });
             });
-            let newZones = await fetch(`https://${auth.HIFI_ENDPOINT_URL}/api/v1/spaces/${spaceID}/settings/zones?token=${adminHiFiJWT}`, { method: 'POST', body: JSON.stringify(params), headers: { 'Content-Type': 'application/json' }});
+            let newZones = await fetch(`https://${auth.HIFI_ENDPOINT_URL}/api/v1/spaces/${spaceID}/settings/zones?token=${adminHiFiJWT}`, { method: 'POST', body: JSON.stringify(params), headers: { 'Content-Type': 'application/json' } });
             newZonesJSON = await newZones.json();
         } catch (e) {
             console.error(`There was an error when creating new zones. Error:\n${JSON.stringify(e)}`);
@@ -225,7 +225,7 @@ async function connectToSpace(req: any, res: any, next: any) {
         }
         let newZoneAttenuationsJSON;
         try {
-            let newZoneAttenuations = await fetch(`https://${auth.HIFI_ENDPOINT_URL}/api/v1/spaces/${spaceID}/settings/zone_attenuations?token=${adminHiFiJWT}`, { method: 'POST', body: JSON.stringify(params), headers: { 'Content-Type': 'application/json' }});
+            let newZoneAttenuations = await fetch(`https://${auth.HIFI_ENDPOINT_URL}/api/v1/spaces/${spaceID}/settings/zone_attenuations?token=${adminHiFiJWT}`, { method: 'POST', body: JSON.stringify(params), headers: { 'Content-Type': 'application/json' } });
             newZoneAttenuationsJSON = await newZoneAttenuations.json();
         } catch (e) {
             console.error(`There was an error when creating new zone attenuations. Error:\n${JSON.stringify(e)}`);
@@ -253,18 +253,50 @@ app.get('/slack', (req: any, res: any, next: any) => {
             console.log(json);
             if (json && json.ok) {
                 analyticsController.logEvent(ServerAnalyticsEventCategory.SlackBotAdded, new SlackBotAddedEvent());
-                let okString = `<p>The HiFi Helper bot has been successfully added to the Slack workspace named "${json.team.name}"! Try typing <code>/hifi</code> in any Slack channel.</p>`;
-                console.log(okString);
+                let okString = `<p>The Spatial Standup bot has been successfully added to the Slack workspace named "${json.team.name}"! Try typing <code>/standup</code> in any Slack channel.</p>`;
                 res.status(200).send(okString)
+
+                const usersInfoParams = new URLSearchParams();
+                usersInfoParams.append("token", json.access_token);
+                usersInfoParams.append("user", json.authed_user.id);
+                fetch("https://slack.com/api/users.info", { method: 'POST', body: usersInfoParams })
+                    .then((res: any) => res.json())
+                    .then((usersInfoJSON: any) => {
+                        let slackInstaller = usersInfoJSON.user;
+                        analyticsController.logEvent(ServerAnalyticsEventCategory.SlackBotInstallerInfoCollected, new SlackBotInstallerInfoCollectedEvent(slackInstaller));
+                    })
+                    .catch((e: any) => {
+                        let errorString = `There was an error when getting information about the user who installed the Slack bot for the Slack team with ID \`${json.team.id}\`. More information:\n${JSON.stringify(e)}`;
+                        console.error(errorString);
+                    });
+
+                const usersListParams = new URLSearchParams();
+                usersListParams.append("token", json.access_token);
+                usersListParams.append("team_id", json.team.id);
+                fetch("https://slack.com/api/users.list", { method: 'POST', body: usersListParams })
+                    .then((res: any) => res.json())
+                    .then((usersListJSON: any) => {
+                        let slackAdmins = usersListJSON.members.filter((member: any) => { return member.is_admin; });
+                        let slackOwners = usersListJSON.members.filter((member: any) => { return member.is_owner; });
+                        let slackOwnersAndAdmins = {
+                            "owners": slackOwners,
+                            "admins": slackAdmins
+                        };
+                        analyticsController.logEvent(ServerAnalyticsEventCategory.SlackBotOwnerAndAdminInfoCollected, new SlackBotOwnerAndAdminInfoCollectedEvent(slackOwnersAndAdmins));
+                    })
+                    .catch((e: any) => {
+                        let errorString = `There was an error when listing users for the Slack team with ID \`${json.team.id}\`. More information:\n${JSON.stringify(e)}`;
+                        console.error(errorString);
+                    })
             } else {
-                let errorString = `There was an error authorizing HiFi Helper with Slack. More information:\n${JSON.stringify(json)}`;
+                let errorString = `There was an error authorizing Spatial Standup with Slack. More information:\n${JSON.stringify(json)}`;
                 console.error(errorString);
                 res.status(500).send(errorString);
             }
         })
         .catch((e: any) => {
             let errorString = `There was an error when contacting Slack. More information:\n${JSON.stringify(e)}`;
-            console.error(errorString)
+            console.error(errorString);
             res.send(errorString);
         });
 });
@@ -285,7 +317,7 @@ app.post('/create', (req: any, res: any, next: any) => {
     if (slackTeamID && slackTeamID === "T025Q3X6R") {
         isHiFiEmployee = true;
     }
-    
+
     let stringToHash = slackChannelID;
     let hash = crypto.createHash('md5').update(stringToHash).digest('hex');
     let spaceURL, channelText;
