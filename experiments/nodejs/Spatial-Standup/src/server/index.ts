@@ -259,7 +259,7 @@ app.get('/slack', (req: any, res: any, next: any) => {
 
                 const usersInfoParams = new URLSearchParams();
                 usersInfoParams.append("token", json.access_token);
-                usersInfoParams.append("user", json.authed_user);
+                usersInfoParams.append("user", json.authed_user.id);
                 fetch("https://slack.com/api/users.info", { method: 'POST', body: usersInfoParams })
                     .then((res: any) => res.json())
                     .then((usersInfoJSON: any) => {
