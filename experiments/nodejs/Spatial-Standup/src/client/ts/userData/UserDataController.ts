@@ -17,7 +17,7 @@ interface TempUserData {
 }
 
 export class VolumeVisualization {
-    volumeDecibels: number;
+    visualizationMultiplier: number;
     startTimestamp: number;
     startPosition: Point3D;
     currentPosition: Point3D;
@@ -27,9 +27,9 @@ export class VolumeVisualization {
     timer: NodeJS.Timer;
     done: boolean = false;
 
-    constructor({ volumeDecibels, startTimestamp, startPosition, endPosition }: { volumeDecibels: number, startTimestamp: number, startPosition: Point3D, endPosition: Point3D }) {
+    constructor({ visualizationMultiplier, startTimestamp, startPosition, endPosition }: { visualizationMultiplier: number, startTimestamp: number, startPosition: Point3D, endPosition: Point3D }) {
         this.startTimestamp = startTimestamp;
-        this.volumeDecibels = volumeDecibels;
+        this.visualizationMultiplier = visualizationMultiplier;
         this.startPosition = startPosition;
         this.currentPosition = new Point3D({x: startPosition.x, y: startPosition.y, z: startPosition.z }),
         this.endPosition = endPosition;
@@ -41,7 +41,7 @@ export class VolumeVisualization {
     }
 
     tick(timestamp: number, deltaTimestampMS: number) {
-        this.currentRadiusM = Utilities.linearScale(EasingFunctions.easeOutExponential((timestamp - this.startTimestamp) / PHYSICS.VOLUME_VISUALIZATION_LIFETIME_MS), 0, 1, AVATAR.RADIUS_M, AVATAR.VOLUME_VISUALIZATION_RADIUS_FINAL_M);
+        this.currentRadiusM = Utilities.linearScale(EasingFunctions.easeOutExponential((timestamp - this.startTimestamp) / PHYSICS.VOLUME_VISUALIZATION_LIFETIME_MS), 0, 1, AVATAR.RADIUS_M, AVATAR.VOLUME_VISUALIZATION_RADIUS_MAX_M * this.visualizationMultiplier);
         this.currentPosition.x = Utilities.linearScale(EasingFunctions.easeOutExponential((timestamp - this.startTimestamp) / PHYSICS.VOLUME_VISUALIZATION_LIFETIME_MS), 0, 1, this.startPosition.x, this.endPosition.x);
         this.currentPosition.z = Utilities.linearScale(EasingFunctions.easeOutExponential((timestamp - this.startTimestamp) / PHYSICS.VOLUME_VISUALIZATION_LIFETIME_MS), 0, 1, this.startPosition.z, this.endPosition.z);
         this.currentOpacity = Utilities.linearScale(timestamp, this.startTimestamp, this.startTimestamp + PHYSICS.VOLUME_VISUALIZATION_LIFETIME_MS, 1.0, 0.0);
