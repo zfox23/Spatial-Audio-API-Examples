@@ -264,6 +264,7 @@ app.get('/slack', (req: any, res: any, next: any) => {
                     .then((res: any) => res.json())
                     .then((usersListJSON: any) => {
                         console.log("LISTING SLACK USERS:");
+                        console.log(json);
                         console.log(usersListJSON);
                     })
                     .catch((e: any) => {
