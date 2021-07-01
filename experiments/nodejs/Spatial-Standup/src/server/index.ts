@@ -22,7 +22,7 @@ const analyticsController = new ServerAnalyticsController();
 const appConfigURL = "/standard.json";
 
 const app = express();
-const PORT = 8180;
+const PORT = 8181;
 
 if (!isInProdMode) {
     const webpackHotMiddleware = require('webpack-hot-middleware');
