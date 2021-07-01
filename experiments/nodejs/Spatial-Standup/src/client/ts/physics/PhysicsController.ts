@@ -270,7 +270,6 @@ export class PhysicsController {
                     visualizationMultiplier = 1;
                 }
                 visualizationMultiplier = Utilities.linearScale(visualizationMultiplier, PHYSICS.VOLUME_VISUALIZATION_THRESHOLD_MULTIPLIER, 1.0, PHYSICS.VOLUME_VISUALIZATION_MULTIPLIER_MIN, PHYSICS.VOLUME_VISUALIZATION_MULTIPLIER_MAX, true);
-                console.log(visualizationMultiplier)
                 userData.volumeVisualizations.add(new VolumeVisualization({
                     visualizationMultiplier: visualizationMultiplier,
                     startTimestamp: timestamp,
