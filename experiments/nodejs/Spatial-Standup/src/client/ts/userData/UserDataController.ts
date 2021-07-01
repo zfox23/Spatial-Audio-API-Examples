@@ -16,38 +16,6 @@ interface TempUserData {
     scrimOpacityInterval?: NodeJS.Timer;
 }
 
-export class VolumeVisualization {
-    visualizationMultiplier: number;
-    startTimestamp: number;
-    startPosition: Point3D;
-    currentPosition: Point3D;
-    endPosition: Point3D;
-    currentRadiusM: number;
-    currentOpacity: number;
-    timer: NodeJS.Timer;
-    done: boolean = false;
-
-    constructor({ visualizationMultiplier, startTimestamp, startPosition, endPosition }: { visualizationMultiplier: number, startTimestamp: number, startPosition: Point3D, endPosition: Point3D }) {
-        this.startTimestamp = startTimestamp;
-        this.visualizationMultiplier = visualizationMultiplier;
-        this.startPosition = startPosition;
-        this.currentPosition = new Point3D({x: startPosition.x, y: startPosition.y, z: startPosition.z }),
-        this.endPosition = endPosition;
-        this.currentRadiusM = AVATAR.RADIUS_M;
-        this.currentOpacity = 1.0;
-        this.timer = setTimeout(() => {
-            this.done = true;
-        }, PHYSICS.VOLUME_VISUALIZATION_LIFETIME_MS);
-    }
-
-    tick(timestamp: number, deltaTimestampMS: number) {
-        this.currentRadiusM = Utilities.linearScale(EasingFunctions.easeOutExponential((timestamp - this.startTimestamp) / PHYSICS.VOLUME_VISUALIZATION_LIFETIME_MS), 0, 1, AVATAR.RADIUS_M, AVATAR.VOLUME_VISUALIZATION_RADIUS_MAX_M * this.visualizationMultiplier);
-        this.currentPosition.x = Utilities.linearScale(EasingFunctions.easeOutExponential((timestamp - this.startTimestamp) / PHYSICS.VOLUME_VISUALIZATION_LIFETIME_MS), 0, 1, this.startPosition.x, this.endPosition.x);
-        this.currentPosition.z = Utilities.linearScale(EasingFunctions.easeOutExponential((timestamp - this.startTimestamp) / PHYSICS.VOLUME_VISUALIZATION_LIFETIME_MS), 0, 1, this.startPosition.z, this.endPosition.z);
-        this.currentOpacity = Utilities.linearScale(timestamp, this.startTimestamp, this.startTimestamp + PHYSICS.VOLUME_VISUALIZATION_LIFETIME_MS, 1.0, 0.0);
-    }
-}
-
 export interface UserData {
     visitIDHash?: string;
     providedUserID?: string;
@@ -66,11 +34,6 @@ export interface UserData {
     orientationEulerCurrent?: OrientationEuler3D;
     orientationEulerTarget?: OrientationEuler3D;
     volumeDecibels?: number;
-    volumeDecibelsMinimum?: number;
-    volumeDecibelsMaximum?: number;
-    volumeDecibelsVisualizationThreshold?: number;
-    volumeVisualizationRateLimiter?: NodeJS.Timer;
-    volumeVisualizations?: Set<VolumeVisualization>;
     userGainForThisConnection?: number;
     hiFiGain?: number;
     hiFiGainSliderValue?: string;
@@ -99,7 +62,7 @@ export interface AvatarVelocity {
 class MyAvatar {
     myUserData: UserData;
     currentMode: MyAvatarModes;
-    linearVelocityMPerS: AvatarVelocity = { x: 0, z: 0, forward: 0, right: 0 };
+    linearVelocityMPerS: AvatarVelocity = {x: 0, z: 0, forward: 0, right: 0};
     rotationalVelocityDegreesPerS: number = 0;
 
     constructor() {
@@ -122,7 +85,6 @@ class MyAvatar {
             orientationEulerTarget: undefined,
             userGainForThisConnection: 1.0,
             volumeDecibels: undefined,
-            volumeVisualizations: new Set(),
             volumeThreshold: -60,
             hiFiGain: 1.0,
             hiFiGainSliderValue: "21",
@@ -178,7 +140,7 @@ class MyAvatar {
             console.error(`\`positionSelfInRoom()\`: Couldn't determine current room!`);
             return;
         }
-
+        
         console.log(`Positioning self in room ${targetRoom.name}...`);
 
         let newSeat = targetRoom.getOptimalOpenSeat();
@@ -226,7 +188,7 @@ class MyAvatar {
             Object.assign(myUserData.positionCurrent, targetSeat.position);
             localSoundsController.onMyGlobalPositionChanged(myUserData.positionCurrent);
             myUserData.positionTarget = undefined;
-
+            
             dataToTransmit.position = myUserData.positionCurrent;
         }
         // We enter this case if this is the first time we're moving to a new seat.
@@ -300,18 +262,18 @@ class MyAvatar {
                 }, PHYSICS.PHYSICS_TICKRATE_MS);
             });
             if (currentRoom === targetRoom) {
-                let transitionCircleCenter = new Point3D({ x: currentRoom.seatingCenter.x, z: currentRoom.seatingCenter.z });
+                let transitionCircleCenter = new Point3D({x: currentRoom.seatingCenter.x, z: currentRoom.seatingCenter.z});
 
-                let orientationEulerInitial = new OrientationEuler3D({ yawDegrees: myUserData.orientationEulerCurrent.yawDegrees });
-                let orientationEulerFinal = new OrientationEuler3D({ yawDegrees: targetSeat.orientation.yawDegrees });
+                let orientationEulerInitial = new OrientationEuler3D({yawDegrees: myUserData.orientationEulerCurrent.yawDegrees});
+                let orientationEulerFinal = new OrientationEuler3D({yawDegrees: targetSeat.orientation.yawDegrees});
 
-                let step1PositionStart = new Point3D({ x: myUserData.positionCurrent.x, z: myUserData.positionCurrent.z });
+                let step1PositionStart = new Point3D({x: myUserData.positionCurrent.x, z: myUserData.positionCurrent.z});
                 let step1PositionTheta = Math.atan2(step1PositionStart.z - transitionCircleCenter.z, step1PositionStart.x - transitionCircleCenter.x);
                 let step1PositionEnd = new Point3D({
                     "x": (currentRoom.seatingRadiusM + AVATAR.RADIUS_M * 3) * Math.cos(step1PositionTheta) + transitionCircleCenter.x,
                     "z": (currentRoom.seatingRadiusM + AVATAR.RADIUS_M * 3) * Math.sin(step1PositionTheta) + transitionCircleCenter.z
                 });
-                let step3PositionEnd = new Point3D({ x: targetSeat.position.x, z: targetSeat.position.z });
+                let step3PositionEnd = new Point3D({x: targetSeat.position.x, z: targetSeat.position.z});
                 let step2PositionTheta = Math.atan2(step3PositionEnd.z - transitionCircleCenter.z, step3PositionEnd.x - transitionCircleCenter.x);
 
                 while (step1PositionTheta > step2PositionTheta) {
@@ -359,10 +321,10 @@ class MyAvatar {
                 newPath.onDeactivated.push(() => { physicsController.autoComputePXPerMFromRoom(targetRoom); })
 
                 newPath.pathWaypoints.push(new Waypoint({
-                    positionStart: new Point3D({ x: myUserData.positionCurrent.x, z: myUserData.positionCurrent.z }),
-                    positionTarget: new Point3D({ x: targetSeat.position.x, z: targetSeat.position.z }),
-                    orientationEulerStart: new OrientationEuler3D({ yawDegrees: myUserData.orientationEulerCurrent.yawDegrees }),
-                    orientationEulerTarget: new OrientationEuler3D({ yawDegrees: targetSeat.orientation.yawDegrees }),
+                    positionStart: new Point3D({x: myUserData.positionCurrent.x, z: myUserData.positionCurrent.z}),
+                    positionTarget: new Point3D({x: targetSeat.position.x, z: targetSeat.position.z}),
+                    orientationEulerStart: new OrientationEuler3D({yawDegrees: myUserData.orientationEulerCurrent.yawDegrees}),
+                    orientationEulerTarget: new OrientationEuler3D({yawDegrees: targetSeat.orientation.yawDegrees}),
                     durationMS: 2000,
                     easingFunction: EasingFunctions.easeOutQuad
                 }));
@@ -410,7 +372,7 @@ class MyAvatar {
 
         watchPartyController.leaveWatchParty();
         document.querySelector(".watchPartyControlsContainer").classList.add("displayNone");
-
+        
         roomController.updateRoomList();
     }
 
