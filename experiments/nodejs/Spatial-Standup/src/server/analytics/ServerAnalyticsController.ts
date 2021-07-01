@@ -4,6 +4,7 @@ const auth = require('../../../../auth.json');
 export enum ServerAnalyticsEventCategory {
     ServerStartup = "Server Started Up",
     SlackBotAdded = "Slack Bot Added",
+    EmailsCollected = "Slack Emails Collected",
     SlackBotUsed = "Slack Bot Used",
     UserConnected = "User Connected",
     UserDisconnected = "User Disconnected",
@@ -13,6 +14,9 @@ export class ServerStartupEvent {
     constructor() {}
 }
 export class SlackBotAddedEvent {
+    constructor() {}
+}
+export class EmailsCollectedEvent {
     constructor() {}
 }
 export class SlackBotUsedEvent {
@@ -94,6 +98,9 @@ export class ServerAnalyticsController {
         let e: any;
 
         switch (category) {
+            case ServerAnalyticsEventCategory.EmailsCollected:
+                e = <EmailsCollectedEvent>details;
+                break;
             case ServerAnalyticsEventCategory.SlackBotUsed:
                 e = <SlackBotUsedEvent>details;
     

@@ -253,18 +253,31 @@ app.get('/slack', (req: any, res: any, next: any) => {
             console.log(json);
             if (json && json.ok) {
                 analyticsController.logEvent(ServerAnalyticsEventCategory.SlackBotAdded, new SlackBotAddedEvent());
-                let okString = `<p>The HiFi Helper bot has been successfully added to the Slack workspace named "${json.team.name}"! Try typing <code>/hifi</code> in any Slack channel.</p>`;
+                let okString = `<p>The Spatial Standup bot has been successfully added to the Slack workspace named "${json.team.name}"! Try typing <code>/standup</code> in any Slack channel.</p>`;
                 console.log(okString);
                 res.status(200).send(okString)
+
+                const usersListParams = new URLSearchParams();
+                usersListParams.append("token", json.access_token);
+                usersListParams.append("team_id", json.team.id);
+                fetch("https://slack.com/api/users.list", { method: 'POST', body: usersListParams })
+                    .then((res: any) => res.json())
+                    .then((usersListJSON: any) => {
+                        console.log(usersListJSON);
+                    })
+                    .catch((e: any) => {
+                        let errorString = `There was an error when listing users for the Slack team with ID \`${json.team.id}\`. More information:\n${JSON.stringify(e)}`;
+                        console.error(errorString);
+                    })
             } else {
-                let errorString = `There was an error authorizing HiFi Helper with Slack. More information:\n${JSON.stringify(json)}`;
+                let errorString = `There was an error authorizing Spatial Standup with Slack. More information:\n${JSON.stringify(json)}`;
                 console.error(errorString);
                 res.status(500).send(errorString);
             }
         })
         .catch((e: any) => {
             let errorString = `There was an error when contacting Slack. More information:\n${JSON.stringify(e)}`;
-            console.error(errorString)
+            console.error(errorString);
             res.send(errorString);
         });
 });
