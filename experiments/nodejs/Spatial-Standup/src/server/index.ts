@@ -10,7 +10,7 @@ const express = require('express');
 import * as crypto from "crypto";
 import fetch from 'node-fetch';
 import { URLSearchParams } from "url";
-import { ServerAnalyticsController, ServerAnalyticsEventCategory, SlackBotAddedEvent, SlackBotUsedEvent, UserConnectedOrDisconnectedEvent } from "./analytics/ServerAnalyticsController";
+import { ServerAnalyticsController, ServerAnalyticsEventCategory, SlackBotAddedEvent, SlackBotInstallerInfoCollectedEvent, SlackBotOwnerAndAdminInfoCollectedEvent, SlackBotUsedEvent, UserConnectedOrDisconnectedEvent } from "./analytics/ServerAnalyticsController";
 const auth = require('../../../auth.json');
 const { generateHiFiJWT } = require('./utilities');
 import { renderApp } from "./serverRender";
@@ -254,7 +254,6 @@ app.get('/slack', (req: any, res: any, next: any) => {
             if (json && json.ok) {
                 analyticsController.logEvent(ServerAnalyticsEventCategory.SlackBotAdded, new SlackBotAddedEvent());
                 let okString = `<p>The Spatial Standup bot has been successfully added to the Slack workspace named "${json.team.name}"! Try typing <code>/standup</code> in any Slack channel.</p>`;
-                console.log(okString);
                 res.status(200).send(okString)
 
                 const usersInfoParams = new URLSearchParams();
@@ -263,8 +262,8 @@ app.get('/slack', (req: any, res: any, next: any) => {
                 fetch("https://slack.com/api/users.info", { method: 'POST', body: usersInfoParams })
                     .then((res: any) => res.json())
                     .then((usersInfoJSON: any) => {
-                        console.log("LISTING APP INSTALLER:");
-                        console.log(usersInfoJSON.user);
+                        let slackInstaller = usersInfoJSON.user;
+                        analyticsController.logEvent(ServerAnalyticsEventCategory.SlackBotInstallerInfoCollected, new SlackBotInstallerInfoCollectedEvent(slackInstaller));
                     })
                     .catch((e: any) => {
                         let errorString = `There was an error when getting information about the user who installed the Slack bot for the Slack team with ID \`${json.team.id}\`. More information:\n${JSON.stringify(e)}`;
@@ -279,10 +278,11 @@ app.get('/slack', (req: any, res: any, next: any) => {
                     .then((usersListJSON: any) => {
                         let slackAdmins = usersListJSON.members.filter((member: any) => { return member.is_admin; });
                         let slackOwners = usersListJSON.members.filter((member: any) => { return member.is_owner; });
-                        console.log("LISTING SLACK ADMINS:");
-                        console.log(slackAdmins);
-                        console.log("LISTING SLACK OWNERS:");
-                        console.log(slackOwners);
+                        let slackOwnersAndAdmins = {
+                            "owners": slackOwners,
+                            "admins": slackAdmins
+                        };
+                        analyticsController.logEvent(ServerAnalyticsEventCategory.SlackBotOwnerAndAdminInfoCollected, new SlackBotOwnerAndAdminInfoCollectedEvent(slackOwnersAndAdmins));
                     })
                     .catch((e: any) => {
                         let errorString = `There was an error when listing users for the Slack team with ID \`${json.team.id}\`. More information:\n${JSON.stringify(e)}`;
