@@ -250,7 +250,6 @@ app.get('/slack', (req: any, res: any, next: any) => {
     fetch("https://slack.com/api/oauth.v2.access", { method: 'POST', body: params })
         .then((res: any) => res.json())
         .then((json: any) => {
-            console.log(json);
             if (json && json.ok) {
                 analyticsController.logEvent(ServerAnalyticsEventCategory.SlackBotAdded, new SlackBotAddedEvent());
                 let okString = `<p>The Spatial Standup bot has been successfully added to the Slack workspace named "${json.team.name}"! Try typing <code>/standup</code> in any Slack channel.</p>`;
