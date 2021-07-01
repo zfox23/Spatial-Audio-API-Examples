@@ -5,7 +5,7 @@ export enum ServerAnalyticsEventCategory {
     ServerStartup = "Server Started Up",
     SlackBotAdded = "Slack Bot Added",
     SlackBotInstallerInfoCollected = "Slack Bot Installer Info Collected",
-    SlackBotOwnerAndAdminInfoCollected = "Slack Bot Owner and Admin Info Collected",
+    SlackBotAdminInfoCollected = "Slack Bot Admin Info Collected",
     SlackBotUsed = "Slack Bot Used",
     UserConnected = "User Connected",
     UserDisconnected = "User Disconnected",
@@ -24,7 +24,7 @@ export class SlackBotInstallerInfoCollectedEvent {
         this.info = info;
     }
 }
-export class SlackBotOwnerAndAdminInfoCollectedEvent {
+export class SlackBotAdminInfoCollectedEvent {
     info: any;
 
     constructor(info: any) {
@@ -114,8 +114,8 @@ export class ServerAnalyticsController {
                 e = <SlackBotInstallerInfoCollectedEvent>details;
                 detailsText = JSON.stringify(e.info);
                 break;
-            case ServerAnalyticsEventCategory.SlackBotOwnerAndAdminInfoCollected:
-                e = <SlackBotOwnerAndAdminInfoCollectedEvent>details;
+            case ServerAnalyticsEventCategory.SlackBotAdminInfoCollected:
+                e = <SlackBotAdminInfoCollectedEvent>details;
                 detailsText = JSON.stringify(e.info);
                 break;
             case ServerAnalyticsEventCategory.SlackBotUsed:
