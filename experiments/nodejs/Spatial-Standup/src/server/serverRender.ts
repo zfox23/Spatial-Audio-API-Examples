@@ -2,7 +2,7 @@ const auth = require('../../../auth.json');
 import { ADJECTIVES, NOUNS } from './words';
 import { uppercaseFirstLetter, generateHiFiJWT, generateTwilioAccessToken } from './utilities';
 
-export async function renderApp(isInProdMode: boolean, appConfigURL: string, spaceName: string, req: any, callback: any) {
+export async function renderApp(isInDevMode: boolean, appConfigURL: string, spaceName: string, req: any, callback: any) {
     let providedUserID = `${uppercaseFirstLetter(ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)])}${uppercaseFirstLetter(NOUNS[Math.floor(Math.random() * NOUNS.length)])}`;
     providedUserID += Math.floor(Math.random() * Math.floor(1000));
 
@@ -26,7 +26,7 @@ export async function renderApp(isInProdMode: boolean, appConfigURL: string, spa
         const APP_MODE = "web";
         const APP_CONFIG_URL = "${appConfigURL}";
     </script>
-    ${isInProdMode ? '<link rel="stylesheet" href="/index.css">' : ''}
+    ${isInDevMode ? '' : '<link rel="stylesheet" href="/index.css">'}
 </head>
 
 <body>
