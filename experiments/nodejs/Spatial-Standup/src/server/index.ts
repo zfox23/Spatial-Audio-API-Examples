@@ -1,7 +1,8 @@
-const isInProdMode = process.argv.slice(2)[0] === "prod";
+let serverMode = process.argv.slice(2)[0]; // Should be "dev", "staging", or "prod".
 const isInHTTPSMode = process.argv.slice(2)[1] === "true";
 
-console.warn(`*****\nServer production mode status: ${isInProdMode}\n*****\n`);
+console.warn(`*****\nServer mode: ${serverMode}\n*****\n`);
+console.warn(`*****\nServer HTTPS mode status: ${isInHTTPSMode}\n*****\n`);
 
 const fs = require('fs');
 const webpack = require('webpack');
@@ -22,9 +23,9 @@ const analyticsController = new ServerAnalyticsController();
 const appConfigURL = "/standard.json";
 
 const app = express();
-const PORT = 8180;
+const PORT = serverMode === "staging" ? 8181 : 8180;
 
-if (!isInProdMode) {
+if (serverMode === "dev") {
     const webpackHotMiddleware = require('webpack-hot-middleware');
     const webpackDevMiddleware = require('webpack-dev-middleware');
     const chokidar = require('chokidar');
@@ -77,7 +78,7 @@ let spaceNamesWithModifiedZonesThisSession: Array<string> = [];
 async function connectToSpace(req: any, res: any, next: any) {
     let spaceName = req.params.spaceName || req.query.spaceName || auth.HIFI_DEFAULT_SPACE_NAME;
 
-    renderApp(isInProdMode, appConfigURL, spaceName, req, async (err: any, page: any) => {
+    renderApp(serverMode === "dev", appConfigURL, spaceName, req, async (err: any, page: any) => {
         if (err) {
             return next(err);
         }
@@ -327,29 +328,35 @@ app.post('/create', (req: any, res: any, next: any) => {
         console.error(`Couldn't generate Spatial Standup link. Request body:\n${JSON.stringify(req.body)}`);
         res.json({
             "response_type": "ephemeral",
-            "text": "Sorry, I couldn't generate a Spatial Standup for you."
+            "text": "Sorry, I couldn't generate a Spatial Standup link for you."
         });
         return;
     }
 
-    let isHiFiEmployee = false;
-    let slackTeamID = req.body.team_id;
-    if (slackTeamID && slackTeamID === "T025Q3X6R") {
-        isHiFiEmployee = true;
-    }
-
-    let stringToHash = slackChannelID;
-    let hash = crypto.createHash('md5').update(stringToHash).digest('hex');
-    let spaceURL, channelText;
-    if (isHiFiEmployee) {
-        spaceURL = `https://standup-staging.highfidelity.com/${hash}/`;
-        channelText = `<${spaceURL}|Click here to join the _staging_ Spatial Standup associated with this Slack channel.>`;
+    let channelText;
+    let commandText = req.body.text;
+    if (commandText && commandText === "help") {
+        channelText = `Typing \`/standup\` generates a unique link to <https://spatialstandup.com|High Fidelity's Spatial Standup>, where you and your team can collaborate via spatial audio and video in a comfortable environment. The generated link is unique to this Slack channel.`;
     } else {
-        spaceURL = `https://standup.highfidelity.com/${hash}/`;
-        channelText = `<${spaceURL}|Click here to join the Spatial Standup associated with this Slack channel.>`;
-    }
+        let isHiFiEmployee = false;
+        let slackTeamID = req.body.team_id;
+        if (slackTeamID && slackTeamID === "T025Q3X6R") {
+            isHiFiEmployee = true;
+        }
+        
+        let stringToHash = slackChannelID;
+        let hash = crypto.createHash('md5').update(stringToHash).digest('hex');
+        let spaceURL;
+        if (isHiFiEmployee) {
+            spaceURL = `https://standup-staging.highfidelity.com/${hash}/`;
+            channelText = `<${spaceURL}|Click here to join the _staging_ Spatial Standup associated with this Slack channel.>`;
+        } else {
+            spaceURL = `https://standup.highfidelity.com/${hash}/`;
+            channelText = `<${spaceURL}|Click here to join the Spatial Standup associated with this Slack channel.>`;
+        }
 
-    analyticsController.logEvent(ServerAnalyticsEventCategory.SlackBotUsed, new SlackBotUsedEvent(req.body.user_id, req.body.team_id, false));
+        analyticsController.logEvent(ServerAnalyticsEventCategory.SlackBotUsed, new SlackBotUsedEvent(req.body.user_id, req.body.team_id, false));
+    }
 
     res.json({
         "response_type": 'in_channel',
