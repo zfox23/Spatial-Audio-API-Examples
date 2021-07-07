@@ -1,5 +1,5 @@
 import { Point3D } from "hifi-spatial-audio";
-import { appConfigController, localSoundsController } from "..";
+import { appConfigController, howlerController } from "..";
 import { Utilities } from "../utilities/Utilities";
 
 export class Landmark {
@@ -62,7 +62,7 @@ export class LandmarksController {
                 src = clickedLandmark.clickSoundSRC;
             }
 
-            localSoundsController.playSound({
+            howlerController.playSound({
                 src,
                 positionM: clickedLandmark.positionM,
                 randomSoundRate: clickedLandmark.randomSoundRate,

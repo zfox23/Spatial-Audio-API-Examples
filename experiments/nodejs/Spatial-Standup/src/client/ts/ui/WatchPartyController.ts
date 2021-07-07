@@ -1,5 +1,5 @@
 import '../../css/watchParty.scss';
-import { connectionController, localSoundsController, roomController, uiController, userDataController, userInputController, videoController, webSocketConnectionController } from "..";
+import { connectionController, howlerController, roomController, uiController, userDataController, userInputController, videoController, webSocketConnectionController } from "..";
 import { SpatialStandupRoom } from "./RoomController";
 import { MyAvatarModes, UserData } from "../userData/UserDataController";
 import { Utilities } from '../utilities/Utilities';
@@ -267,7 +267,7 @@ export class WatchPartyController {
         if (hifiCommunicator) {
             hifiCommunicator.updateUserDataAndTransmit({ orientationEuler: new OrientationEuler3D({ yawDegrees: lockedYawDegrees }) });
         }
-        localSoundsController.updateHowlerOrientation(userDataController.myAvatar.myUserData.orientationEulerCurrent);
+        howlerController.updateHowlerOrientation(userDataController.myAvatar.myUserData.orientationEulerCurrent);
     }
 
     joinWatchParty(watchPartyRoomName: string) {

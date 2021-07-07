@@ -1,4 +1,4 @@
-import { accessibilityController, appConfigController, avDevicesController, connectionController, editorModeController, landmarksController, localSoundsController, pathsController, physicsController, roomController, signalsController, twoDimensionalRenderer, uiController, uiThemeController, userDataController, watchPartyController, webSocketConnectionController } from "..";
+import { accessibilityController, appConfigController, avDevicesController, connectionController, editorModeController, landmarksController, howlerController, pathsController, physicsController, roomController, signalsController, twoDimensionalRenderer, uiController, uiThemeController, userDataController, watchPartyController, webSocketConnectionController } from "..";
 import { AVATAR, ROOM, CONTROLS, PHYSICS, PARTICLES } from "../constants/constants";
 import { UserData } from "../userData/UserDataController";
 import { Utilities } from "../utilities/Utilities";
@@ -697,7 +697,7 @@ export class UserInputController {
                     if (hifiCommunicator) {
                         hifiCommunicator.updateUserDataAndTransmit({ orientationEuler: new OrientationEuler3D({ yawDegrees: newYawDegrees }) });
                     }
-                    localSoundsController.updateHowlerOrientation(userDataController.myAvatar.myUserData.orientationEulerCurrent);
+                    howlerController.updateHowlerOrientation(userDataController.myAvatar.myUserData.orientationEulerCurrent);
                 }
             }
         } else if (this.pointerEventCache.length <= 1 && (event instanceof MouseEvent || event instanceof PointerEvent)) {

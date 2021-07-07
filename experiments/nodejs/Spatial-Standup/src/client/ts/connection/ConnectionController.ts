@@ -1,6 +1,9 @@
 import { HiFiCommunicator, HiFiLogger, HiFiLogLevel, getBestAudioConstraints, HiFiUserDataStreamingScopes, ReceivedHiFiAudioAPIData, UserDataSubscription, AvailableUserDataSubscriptionComponents, OrientationEuler3D, Point3D } from 'hifi-spatial-audio';
-import { avDevicesController, roomController, uiController, userDataController, videoController, webSocketConnectionController } from '..';
+import { avDevicesController, howlerController, localSoundsController, roomController, uiController, userDataController, videoController, webSocketConnectionController } from '..';
 import { Utilities } from '../utilities/Utilities';
+import YouConnected from '../../audio/youConnected.wav';
+import SomeoneElseConnected from '../../audio/someoneElseConnected.wav';
+import SomeoneElseDisconnected from '../../audio/someoneElseDisconnected.wav';
 
 declare var HIFI_JWT: string;
 declare var HIFI_ENDPOINT_URL: string;
@@ -177,6 +180,8 @@ export class ConnectionController {
                 userDataController.myAvatar.onMyColorHexChanged(Utilities.hexColorFromString(userDataController.myAvatar.myUserData.visitIDHash));
             }
 
+            localSoundsController.playSound({ src: YouConnected });
+
             resolve(audionetInitResponse);
         });
     }
@@ -236,6 +241,8 @@ export class ConnectionController {
                         currentLocalUserData.positionCurrent = new Point3D();
                         Object.assign(currentLocalUserData.positionCurrent, targetPosition);
                         currentLocalUserData.positionTarget = undefined;
+
+                        howlerController.playSound({ src: SomeoneElseConnected, positionM: targetPosition });
                     } else {
                         if (!currentLocalUserData.positionStart) {
                             currentLocalUserData.positionStart = new Point3D();
@@ -300,6 +307,10 @@ export class ConnectionController {
                     userGainForThisConnection: 1.0,
                     tempData: {},
                 });
+
+                if (currentDataFromServer.position) {
+                    howlerController.playSound({ src: SomeoneElseConnected, positionM: currentDataFromServer.position });
+                }
             }
         }
             
@@ -348,6 +359,10 @@ export class ConnectionController {
             let localUser = userDataController.allOtherUserData.find((localUserData) => {
                 return localUserData.visitIDHash === disconnectedUserData.hashedVisitID;
             });
+
+            if (localUser) {
+                howlerController.playSound({ src: SomeoneElseDisconnected, positionM: localUser.positionCurrent });
+            }
 
             if (localUser && localUser.currentSeat) {
                 localUser.currentSeat.occupiedUserData = undefined;

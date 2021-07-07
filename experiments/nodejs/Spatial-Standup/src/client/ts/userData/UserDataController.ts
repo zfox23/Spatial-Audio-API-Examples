@@ -1,7 +1,8 @@
 import { OrientationEuler3D, Point3D } from "hifi-spatial-audio";
-import { userDataController, connectionController, roomController, physicsController, pathsController, uiController, twoDimensionalRenderer, webSocketConnectionController, watchPartyController, localSoundsController, uiThemeController } from "..";
+import { userDataController, connectionController, roomController, physicsController, pathsController, uiController, twoDimensionalRenderer, webSocketConnectionController, watchPartyController, howlerController, uiThemeController } from "..";
 import { Path, Waypoint } from "../ai/PathsController";
 import { AVATAR, PHYSICS, UI } from "../constants/constants";
+import { chairSounds } from "../sounds/LocalSoundsController";
 import { SpatialAudioSeat, SpatialStandupRoom, SpatialStandupRoomType } from "../ui/RoomController";
 import { DataToTransmitToHiFi, EasingFunctions, Utilities } from "../utilities/Utilities";
 import { MyAvatarEars } from "./MyAvatarEars";
@@ -186,7 +187,7 @@ class MyAvatar {
             myUserData.positionStart = undefined;
             myUserData.positionCurrent = new Point3D();
             Object.assign(myUserData.positionCurrent, targetSeat.position);
-            localSoundsController.onMyGlobalPositionChanged(myUserData.positionCurrent);
+            howlerController.onMyGlobalPositionChanged(myUserData.positionCurrent);
             myUserData.positionTarget = undefined;
             
             dataToTransmit.position = myUserData.positionCurrent;
@@ -196,7 +197,7 @@ class MyAvatar {
             myUserData.orientationEulerStart = undefined;
             myUserData.orientationEulerCurrent = new OrientationEuler3D();
             myUserData.orientationEulerCurrent.yawDegrees = targetSeat.orientation.yawDegrees;
-            localSoundsController.updateHowlerOrientation(myUserData.orientationEulerCurrent);
+            howlerController.updateHowlerOrientation(myUserData.orientationEulerCurrent);
             myUserData.orientationEulerTarget = undefined;
 
             dataToTransmit.orientationEuler = myUserData.orientationEulerCurrent;
@@ -212,6 +213,8 @@ class MyAvatar {
                 console.warn(`\`moveToNewSeat()\`: Couldn't transmit user data!`);
             }
             physicsController.autoComputePXPerMFromRoom(targetSeat.room);
+        } else {
+            howlerController.playSound({ src: chairSounds[Math.floor(Math.random() * chairSounds.length)], randomSoundRate: true, positionM: myUserData.positionCurrent});
         }
 
         let currentRoom = myUserData.currentRoom;

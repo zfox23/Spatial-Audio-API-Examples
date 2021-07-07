@@ -1,5 +1,5 @@
-import { avDevicesController, connectionController, localSoundsController, roomController, signalsController, twoDimensionalRenderer, uiController, userDataController, userInputController, watchPartyController } from "..";
-import { SoundParams } from "../sounds/LocalSoundsController";
+import { avDevicesController, connectionController, howlerController, roomController, signalsController, twoDimensionalRenderer, uiController, userDataController, userInputController, watchPartyController } from "..";
+import { SoundParams, HowlerController, chairSounds } from "../sounds/LocalSoundsController";
 import { SignalParams } from "../ui/SignalsController";
 import { Utilities } from "../utilities/Utilities";
 declare var HIFI_SPACE_NAME: string;
@@ -103,6 +103,8 @@ export class WebSocketConnectionController {
                         if (localUserData.currentSeat) {
                             localUserData.currentSeat.occupiedUserData = localUserData;
                             localUserData.currentRoom = localUserData.currentSeat.room;
+
+                            howlerController.playSound({ src: chairSounds[Math.floor(Math.random() * chairSounds.length)], randomSoundRate: true, positionM: localUserData.positionCurrent, volume: 0.3 });
                         } else {
                             localUserData.currentRoom = undefined;
                         }
@@ -244,7 +246,7 @@ export class WebSocketConnectionController {
             let parsedSoundParams: SoundParams = JSON.parse(soundParams);
 
             console.log(`"${visitIDHash}" requested to play a sound!`);
-            localSoundsController.playSound(parsedSoundParams);
+            howlerController.playSound(parsedSoundParams);
         });
     }
 
