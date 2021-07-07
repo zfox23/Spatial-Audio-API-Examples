@@ -75,12 +75,18 @@ export class UIController {
 
         this.playOverlay.appendChild(playOverlay__footer);
 
-        playButton.addEventListener("click", (e) => { this.startConnectionProcess(); });
+        playButton.addEventListener("click", (e) => {
+            this.startConnectionProcess();
+            document.querySelector(".bottomBar").classList.remove("displayNone");
+            document.querySelector(".topBar").classList.remove("displayNone");
+            document.querySelector(".bottomRightControlsContainer").classList.remove("displayNone");
+            twoDimensionalRenderer.updateCanvasDimensions();
+        });
     }
 
     initMainUI() {
         let bottomBar = document.createElement("div");
-        bottomBar.classList.add("bottomBar");
+        bottomBar.classList.add("bottomBar", "displayNone");
         bottomBar.addEventListener("click", (e) => { userInputController.hideSettingsMenu(); });
         bottomBar.addEventListener("click", this.hideAvatarContextMenu.bind(this));
         document.body.appendChild(bottomBar);
@@ -248,7 +254,7 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
 
     initBottomRightControls() {
         let bottomRightControlsContainer = document.createElement("div");
-        bottomRightControlsContainer.classList.add("bottomRightControlsContainer");
+        bottomRightControlsContainer.classList.add("bottomRightControlsContainer", "displayNone");
         document.body.appendChild(bottomRightControlsContainer);
 
         let zoomInContainer = document.createElement("div");

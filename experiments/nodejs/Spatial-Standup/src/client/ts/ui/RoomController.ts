@@ -266,7 +266,7 @@ export class RoomController {
         this.rooms = [];
 
         let topBar = document.createElement("div");
-        topBar.classList.add("topBar");
+        topBar.classList.add("topBar", "displayNone");
         topBar.addEventListener("click", this.hideRoomList.bind(this));
         document.body.appendChild(topBar);
 
