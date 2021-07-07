@@ -98,13 +98,13 @@ export class WebSocketConnectionController {
                     if (typeof (currentSeatID) === "string") {
                         if (localUserData.currentSeat) {
                             localUserData.currentSeat.occupiedUserData = undefined;
+
+                            howlerController.playSound({ src: chairSounds[Math.floor(Math.random() * chairSounds.length)], randomSoundRate: true, positionM: localUserData.positionCurrent, volume: 0.3 });
                         }
                         localUserData.currentSeat = roomController.getSeatFromSeatID(currentSeatID);
                         if (localUserData.currentSeat) {
                             localUserData.currentSeat.occupiedUserData = localUserData;
                             localUserData.currentRoom = localUserData.currentSeat.room;
-
-                            howlerController.playSound({ src: chairSounds[Math.floor(Math.random() * chairSounds.length)], randomSoundRate: true, positionM: localUserData.positionCurrent, volume: 0.3 });
                         } else {
                             localUserData.currentRoom = undefined;
                         }
