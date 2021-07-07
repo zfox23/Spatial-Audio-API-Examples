@@ -241,11 +241,15 @@ export class UserInputController {
 
                     if (seat.occupiedUserData) {
                         this.highlightedUserData = seat.occupiedUserData;
+                        accessibilityController.speak(this.highlightedUserData.displayName, "polite", 250);
                     } else {
                         this.highlightedUserData = undefined;
                     }
 
                     this.highlightedSeat = seat;
+                    if (!this.highlightedUserData && this.highlightedSeat) {
+                        accessibilityController.speak("Open seat.", "polite", 250);
+                    }
                 }
                 break;
             case CONTROLS.K_KEY_CODE:

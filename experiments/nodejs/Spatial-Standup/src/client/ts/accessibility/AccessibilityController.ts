@@ -3,7 +3,7 @@
 export class AccessibilityController {
     constructor() {}
 
-    speak(text: string, priority?: string) {
+    speak(text: string, priority?: string, delayMS?: number) {
         let el = document.createElement("div");
         let id = "speak-" + Date.now();
         el.setAttribute("id", id);
@@ -16,7 +16,7 @@ export class AccessibilityController {
         // Lower timeouts work inconsistently.
         setTimeout(() => {
           document.getElementById(id).innerHTML = text;
-        }, 100);
+        }, delayMS || 100);
   
         setTimeout(() => {
             document.body.removeChild(document.getElementById(id));
