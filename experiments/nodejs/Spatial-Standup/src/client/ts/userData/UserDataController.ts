@@ -349,6 +349,11 @@ class MyAvatar {
         }
         webSocketConnectionController.updateMyUserDataOnWebSocketServer();
 
+        let normalModeCanvas = document.querySelector(".normalModeCanvas");
+        if (normalModeCanvas) {
+            normalModeCanvas.setAttribute("aria-label", myUserData.currentRoom.altText);
+        }
+
         roomController.updateRoomList();
 
         userDataController.myAvatarEars.onMouthMovedToNewSeat(targetSeat);

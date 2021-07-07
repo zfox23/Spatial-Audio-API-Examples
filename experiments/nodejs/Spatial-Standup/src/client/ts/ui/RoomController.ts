@@ -34,6 +34,7 @@ export enum SpatialStandupRoomType {
 
 export class SpatialStandupRoom {
     name: string;
+    altText: string;
     seatingCenter: Point3D;
     dimensions: Point3D;
     seatingRadiusM: number;
@@ -47,6 +48,7 @@ export class SpatialStandupRoom {
 
     constructor({
         name,
+        altText,
         seatingCenter,
         seatingRadiusM,
         roomCenter,
@@ -57,6 +59,7 @@ export class SpatialStandupRoom {
         roomType = SpatialStandupRoomType.Normal,
     }: {
         name: string,
+        altText: string,
         seatingCenter: Point3D,
         seatingRadiusM?: number,
         roomCenter?: Point3D,
@@ -67,6 +70,7 @@ export class SpatialStandupRoom {
         roomType?: SpatialStandupRoomType
     }) {
         this.name = name;
+        this.altText = altText;
         this.seatingCenter = seatingCenter;
         this.roomCenter = roomCenter || this.seatingCenter;
         this.roomYawOrientationDegrees = roomYawOrientationDegrees;
