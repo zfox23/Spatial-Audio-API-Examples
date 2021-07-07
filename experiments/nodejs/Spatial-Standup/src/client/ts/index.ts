@@ -1,4 +1,5 @@
 import '../css/main.scss';
+import { AccessibilityController } from './accessibility/AccessibilityController';
 import { PathsController } from './ai/PathsController';
 import { AVDevicesController } from './avDevices/AVDevicesController';
 import { AppConfigController } from './config/AppConfigController';
@@ -20,6 +21,7 @@ import { WatchPartyController } from './ui/WatchPartyController';
 import { UserDataController } from './userData/UserDataController';
 import { VideoController } from './video/VideoController';
 
+export const accessibilityController = new AccessibilityController();
 export const appConfigController = new AppConfigController();
 export const connectionController = new ConnectionController();
 export const s3Controller = new S3Controller();

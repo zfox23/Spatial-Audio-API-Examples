@@ -112,6 +112,7 @@ export class VideoController {
 
         this.toggleVideoButton.classList.add("toggleVideoButton--muted");
         this.toggleVideoButton.classList.remove("toggleVideoButton--unmuted");
+        this.toggleVideoButton.setAttribute("aria-label", "Enable your Camera");
         uiThemeController.clearThemesFromElement(<HTMLElement>this.toggleVideoButton, 'toggleVideoButton--unmuted', false);
         uiThemeController.refreshThemedElements();
     }
@@ -146,6 +147,7 @@ export class VideoController {
         uiThemeController.clearThemesFromElement(<HTMLElement>this.toggleVideoButton, 'toggleVideoButton--muted', false);
         this.toggleVideoButton.classList.add("toggleVideoButton--unmuted");
         uiThemeController.refreshThemedElements();
+        this.toggleVideoButton.setAttribute("aria-label", "Disable your Camera");
     }
 
     async toggleVideo() {

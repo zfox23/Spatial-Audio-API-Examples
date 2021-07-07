@@ -1,4 +1,4 @@
-import { appConfigController, avDevicesController, connectionController, editorModeController, landmarksController, localSoundsController, pathsController, physicsController, roomController, signalsController, twoDimensionalRenderer, uiController, uiThemeController, userDataController, watchPartyController, webSocketConnectionController } from "..";
+import { accessibilityController, appConfigController, avDevicesController, connectionController, editorModeController, landmarksController, localSoundsController, pathsController, physicsController, roomController, signalsController, twoDimensionalRenderer, uiController, uiThemeController, userDataController, watchPartyController, webSocketConnectionController } from "..";
 import { AVATAR, ROOM, CONTROLS, PHYSICS, PARTICLES } from "../constants/constants";
 import { UserData } from "../userData/UserDataController";
 import { Utilities } from "../utilities/Utilities";
@@ -182,6 +182,8 @@ export class UserInputController {
         if (settingsMenu) {
             settingsMenu.remove();
         }
+
+        this.toggleSettingsButton.setAttribute("aria-label", "Open Device Settings");
     }
 
     toggleShowSettingsMenu() {
@@ -191,46 +193,51 @@ export class UserInputController {
         if (settingsMenu) {
             this.hideSettingsMenu();
         } else {
+            this.toggleSettingsButton.setAttribute("aria-label", "Close Device Settings");
             navigator.mediaDevices.enumerateDevices()
                 .then((devices) => {
                     settingsMenu = document.createElement("div");
                     settingsMenu.classList.add("settingsMenu");
 
-                    let closeButton = document.createElement("button");
-                    closeButton.classList.add("settingsMenu__closeButton");
-                    closeButton.addEventListener("click", (e) => {
-                        this.hideSettingsMenu();
-                    });
-                    settingsMenu.appendChild(closeButton);
-
-                    let settingsMenu__header = document.createElement("h2");
+                    let settingsMenu__header = document.createElement("h1");
+                    settingsMenu__header.id = "settingsMenu__header";
+                    settingsMenu__header.setAttribute("aria-label", "Audio and Video Devices Menu");
                     settingsMenu__header.classList.add("settingsMenu__h1");
                     settingsMenu__header.innerHTML = "Devices";
                     settingsMenu.appendChild(settingsMenu__header);
 
                     let changeAudioInputDeviceMenu__header = document.createElement("h2");
+                    changeAudioInputDeviceMenu__header.id = "changeAudioInputDeviceMenu__header";
+                    changeAudioInputDeviceMenu__header.setAttribute("aria-label", "Audio Input Device");
                     changeAudioInputDeviceMenu__header.classList.add("settingsMenu__h2");
                     changeAudioInputDeviceMenu__header.innerHTML = `AUDIO INPUT DEVICE`;
 
                     let changeAudioInputDeviceMenu__select = document.createElement("select");
+                    changeAudioInputDeviceMenu__select.setAttribute("aria-labelledby", "settingsMenu__header changeAudioInputDeviceMenu__header");
                     changeAudioInputDeviceMenu__select.classList.add("settingsMenu__select");
 
                     let numAudioInputDevices = 0;
 
                     let changeAudioOutputDeviceMenu__header = document.createElement("h2");
+                    changeAudioOutputDeviceMenu__header.id = "changeAudioOutputDeviceMenu__header";
+                    changeAudioOutputDeviceMenu__header.setAttribute("aria-label", "Audio Output Device");
                     changeAudioOutputDeviceMenu__header.classList.add("settingsMenu__h2");
                     changeAudioOutputDeviceMenu__header.innerHTML = `AUDIO OUTPUT DEVICE`;
 
                     let changeAudioOutputDeviceMenu__select = document.createElement("select");
+                    changeAudioOutputDeviceMenu__select.setAttribute("aria-labelledby", "settingsMenu__header changeAudioOutputDeviceMenu__header");
                     changeAudioOutputDeviceMenu__select.classList.add("settingsMenu__select");
 
                     let numAudioOutputDevices = 0;
 
                     let changeVideoDeviceMenu__header = document.createElement("h2");
+                    changeVideoDeviceMenu__header.id = "changeVideoDeviceMenu__header";
+                    changeVideoDeviceMenu__header.setAttribute("aria-label", "Camera Device");
                     changeVideoDeviceMenu__header.classList.add("settingsMenu__h2");
                     changeVideoDeviceMenu__header.innerHTML = `VIDEO DEVICE`;
 
                     let changeVideoDeviceMenu__select = document.createElement("select");
+                    changeVideoDeviceMenu__select.setAttribute("aria-labelledby", "settingsMenu__header changeVideoDeviceMenu__header");
                     changeVideoDeviceMenu__select.classList.add("settingsMenu__select");
 
                     let numVideoDevices = 0;
@@ -320,6 +327,14 @@ export class UserInputController {
                         settingsMenu.appendChild(changeVideoDeviceMenu__select);
                     }
 
+                    let closeButton = document.createElement("button");
+                    closeButton.setAttribute("aria-label", "Close Device Settings");
+                    closeButton.classList.add("settingsMenu__closeButton");
+                    closeButton.addEventListener("click", (e) => {
+                        this.hideSettingsMenu();
+                    });
+                    settingsMenu.appendChild(closeButton);
+
                     document.body.appendChild(settingsMenu);
                     uiThemeController.refreshThemedElements();
                 })
@@ -331,6 +346,12 @@ export class UserInputController {
 
     async toggleInputMute() {
         await this.setInputMute(!userDataController.myAvatar.myUserData.isAudioInputMuted);
+
+        if (userDataController.myAvatar.myUserData.isAudioInputMuted) {
+            this.toggleInputMuteButton.setAttribute("aria-label", "Un-mute your Input Audio Device");
+        } else {
+            this.toggleInputMuteButton.setAttribute("aria-label", "Mute your Input Audio Device");
+        }
     }
 
     async setInputMute(newMuteStatus: boolean) {
@@ -363,6 +384,12 @@ export class UserInputController {
 
     toggleOutputMute() {
         this.setOutputMute(!avDevicesController.outputAudioElement.muted);
+
+        if (avDevicesController.outputAudioElement.muted) {
+            this.toggleOutputMuteButton.setAttribute("aria-label", "Un-mute your Output Audio Device");
+        } else {
+            this.toggleOutputMuteButton.setAttribute("aria-label", "Mute your Output Audio Device");
+        }
     }
 
     setOutputMute(newMuteStatus: boolean) {
@@ -433,6 +460,8 @@ export class UserInputController {
         });
         uiController.maybeUpdateAvatarContextMenu(userDataController.myAvatar.myUserData);
         webSocketConnectionController.updateMyUserDataOnWebSocketServer();
+
+        return newHiFiGain;
     }
 
     setVolumeThreshold(newVolumeThreshold: number) {
@@ -576,6 +605,8 @@ export class UserInputController {
                 return;
             }
 
+            let wasHoveringOverUser = !!this.hoveredUserData;
+
             this.hoveredUserData = userDataController.allOtherUserData.find((userData) => {
                 return userData.displayName && userData.positionCurrent && Utilities.getDistanceBetween2DPoints(userData.positionCurrent.x, userData.positionCurrent.z, hoverM.x, hoverM.z) < AVATAR.RADIUS_M;
             });
@@ -584,12 +615,23 @@ export class UserInputController {
                 this.hoveredUserData = userDataController.myAvatar.myUserData;
             }
 
+            if (!wasHoveringOverUser && this.hoveredUserData) {
+                accessibilityController.speak(`Hovering over ${this.hoveredUserData.displayName}.`);
+            }
+
             if (!this.hoveredUserData) {
                 for (let i = 0; i < roomController.rooms.length; i++) {
                     let room = roomController.rooms[i];
+
+                    let wasHoveringOverSeat = !!this.hoveredSeat;
+
                     this.hoveredSeat = room.seats.find((seat) => {
                         return !seat.occupiedUserData && Utilities.getDistanceBetween2DPoints(seat.position.x, seat.position.z, hoverM.x, hoverM.z) < ROOM.SEAT_RADIUS_HOVER_M;
                     });
+
+                    if (!wasHoveringOverSeat && this.hoveredSeat) {
+                        accessibilityController.speak(`Hovering over vacant seat in ${room.name}.`);
+                    }
 
                     if (this.hoveredSeat) {
                         break;
@@ -598,15 +640,25 @@ export class UserInputController {
             }
 
             if (!(this.hoveredUserData && this.hoveredSeat && this.hoveredRoom)) {
-                this.hoveredLandmark = undefined;
+                let wasHoveringOverLandmark = !!this.hoveredLandmark;
+                let found = false;
 
                 for (let i = 0; i < landmarksController.landmarks.length; i++) {
                     let landmark = landmarksController.landmarks[i];
 
                     if (Utilities.getDistanceBetween2DPoints(landmark.positionM.x, landmark.positionM.z, hoverM.x, hoverM.z) < landmark.radiusM) {
                         this.hoveredLandmark = landmark;
+                        found = true;
                         break;
                     }
+                }
+
+                if (!found) {
+                    this.hoveredLandmark = undefined;
+                }
+
+                if (!wasHoveringOverLandmark && this.hoveredLandmark) {
+                    accessibilityController.speak(`Hovering over ${this.hoveredLandmark.name}.`);
                 }
             }
         } else if (this.pointerEventCache.length === 2) {

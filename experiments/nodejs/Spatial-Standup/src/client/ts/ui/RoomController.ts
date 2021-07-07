@@ -254,6 +254,7 @@ export class SpatialStandupRoom {
 }
 
 export class RoomController {
+    topBar: HTMLDivElement;
     roomsInitialized: boolean = false;
     rooms: Array<SpatialStandupRoom>;
     showRoomListButton: HTMLButtonElement;
@@ -265,14 +266,13 @@ export class RoomController {
     constructor() {
         this.rooms = [];
 
-        let topBar = document.createElement("div");
-        topBar.classList.add("topBar", "displayNone");
-        topBar.addEventListener("click", this.hideRoomList.bind(this));
-        document.body.appendChild(topBar);
+        this.topBar = document.querySelector(".topBar");
+        this.topBar.addEventListener("click", this.hideRoomList.bind(this));
 
         this.showRoomListButton = document.createElement("button");
         this.showRoomListButton.classList.add("showRoomListButton");
-        topBar.appendChild(this.showRoomListButton);
+        this.showRoomListButton.setAttribute("aria-label", "Show Rooms List");
+        this.topBar.appendChild(this.showRoomListButton);
         this.showRoomListButton.addEventListener("click", (e) => {
             this.toggleRoomList();
             e.stopPropagation();
@@ -285,7 +285,7 @@ export class RoomController {
             this.toggleRoomList();
             e.stopPropagation();
         });
-        topBar.appendChild(topBar__roomsHeader);
+        this.topBar.appendChild(topBar__roomsHeader);
 
         let topBar__peopleIcon = document.createElement("div");
         topBar__peopleIcon.classList.add("topBar__peopleIcon");
@@ -293,7 +293,7 @@ export class RoomController {
             this.toggleRoomList();
             e.stopPropagation();
         });
-        topBar.appendChild(topBar__peopleIcon);
+        this.topBar.appendChild(topBar__peopleIcon);
 
         this.topBar__allRoomsPeopleCount = document.createElement("p");
         this.topBar__allRoomsPeopleCount.classList.add("topBar__allRoomsPeopleCount");
@@ -302,15 +302,10 @@ export class RoomController {
             this.toggleRoomList();
             e.stopPropagation();
         });
-        topBar.appendChild(this.topBar__allRoomsPeopleCount);
+        this.topBar.appendChild(this.topBar__allRoomsPeopleCount);
 
-        this.roomListOuterContainer = document.createElement("div");
-        this.roomListOuterContainer.classList.add("roomListOuterContainer", "displayNone");
-        document.body.appendChild(this.roomListOuterContainer);
-
-        this.roomListInnerContainer = document.createElement("div");
-        this.roomListInnerContainer.classList.add("roomListInnerContainer");
-        this.roomListOuterContainer.appendChild(this.roomListInnerContainer);
+        this.roomListOuterContainer = document.querySelector(".roomListOuterContainer");
+        this.roomListInnerContainer = document.querySelector(".roomListInnerContainer");
 
         if (appConfigController.configComplete) {
             this.initializeRooms();
@@ -351,6 +346,12 @@ export class RoomController {
 
     toggleRoomList() {
         this.roomListOuterContainer.classList.toggle("displayNone");
+
+        if (this.roomListOuterContainer.classList.contains("displayNone")) {
+            this.showRoomListButton.setAttribute("aria-label", "Show Rooms List");
+        } else {
+            this.showRoomListButton.setAttribute("aria-label", "Hide Rooms List");
+        }
     }
 
     getRoomFromPoint3DOnCircle(point3D: Point3D): SpatialStandupRoom {

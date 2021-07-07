@@ -1,4 +1,4 @@
-import { avDevicesController, connectionController, localSoundsController, roomController, signalsController, uiController, userDataController, userInputController, watchPartyController } from "..";
+import { avDevicesController, connectionController, localSoundsController, roomController, signalsController, twoDimensionalRenderer, uiController, userDataController, userInputController, watchPartyController } from "..";
 import { SoundParams } from "../sounds/LocalSoundsController";
 import { SignalParams } from "../ui/SignalsController";
 import { Utilities } from "../utilities/Utilities";
@@ -260,6 +260,11 @@ export class WebSocketConnectionController {
             localStorage.setItem('userUUID', userUUID);
 
             uiController.showFTUE();
+        } else {
+            document.querySelector(".bottomBar").classList.remove("displayNone");
+            document.querySelector(".topBar").classList.remove("displayNone");
+            document.querySelector(".bottomRightControlsContainer").classList.remove("displayNone");
+            twoDimensionalRenderer.updateCanvasDimensions();
         }
 
         this.socket.emit("addParticipant", {

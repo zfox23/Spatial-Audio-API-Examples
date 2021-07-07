@@ -1,4 +1,4 @@
-import { connectionController, physicsController, roomController, s3Controller, twoDimensionalRenderer, uiThemeController, userDataController, userInputController, webSocketConnectionController } from '..';
+import { accessibilityController, connectionController, physicsController, roomController, s3Controller, twoDimensionalRenderer, uiThemeController, userDataController, userInputController, webSocketConnectionController } from '..';
 import '../../css/controls.scss';
 import { AudionetInitResponse } from '../connection/ConnectionController';
 import { UserData } from '../userData/UserDataController';
@@ -77,15 +77,26 @@ export class UIController {
 
         playButton.addEventListener("click", (e) => {
             this.startConnectionProcess();
-            document.querySelector(".bottomBar").classList.remove("displayNone");
-            document.querySelector(".topBar").classList.remove("displayNone");
-            document.querySelector(".bottomRightControlsContainer").classList.remove("displayNone");
-            twoDimensionalRenderer.updateCanvasDimensions();
         });
     }
 
     initMainUI() {
+        let topBar = document.createElement("div");
+        topBar.setAttribute("role", "navigation");
+        topBar.classList.add("topBar", "displayNone");
+        document.body.appendChild(topBar);
+
+        let roomListOuterContainer = document.createElement("div");
+        roomListOuterContainer.setAttribute("role", "dialog");
+        roomListOuterContainer.classList.add("roomListOuterContainer", "displayNone");
+        document.body.appendChild(roomListOuterContainer);
+
+        let roomListInnerContainer = document.createElement("div");
+        roomListInnerContainer.classList.add("roomListInnerContainer");
+        roomListOuterContainer.appendChild(roomListInnerContainer);
+
         let bottomBar = document.createElement("div");
+        bottomBar.setAttribute("role", "navigation");
         bottomBar.classList.add("bottomBar", "displayNone");
         bottomBar.addEventListener("click", (e) => { userInputController.hideSettingsMenu(); });
         bottomBar.addEventListener("click", this.hideAvatarContextMenu.bind(this));
@@ -99,7 +110,8 @@ export class UIController {
 
         let myProfileImageContainer = document.createElement("div");
         myProfileImageContainer.classList.add("myProfileImageContainer");
-        let myProfileImage = document.createElement("div");
+        let myProfileImage = document.createElement("button");        
+        myProfileImage.setAttribute("aria-label", "My Profile");
         myProfileImage.classList.add("myProfileImage");
         myProfileImage.addEventListener("click", (e) => {
             this.showAvatarContextMenu(userDataController.myAvatar.myUserData);
@@ -124,18 +136,23 @@ export class UIController {
         bottomControlsContainer.appendChild(myProfileContainer);
 
         let toggleInputMuteButton = document.createElement("button");
+        toggleInputMuteButton.setAttribute("aria-label", "Mute your Input Audio Device");
+        toggleInputMuteButton.setAttribute("aria-keyshortcuts", "m");
         toggleInputMuteButton.classList.add("bottomControlButton", "toggleInputMuteButton", "toggleInputMuteButton--unmuted");
         bottomControlsContainer.appendChild(toggleInputMuteButton);
 
         let toggleOutputMuteButton = document.createElement("button");
+        toggleOutputMuteButton.setAttribute("aria-label", "Mute your Output Audio Device");
         toggleOutputMuteButton.classList.add("bottomControlButton", "toggleOutputMuteButton", "toggleOutputMuteButton--unmuted");
         bottomControlsContainer.appendChild(toggleOutputMuteButton);
 
         let toggleVideoButton = document.createElement("button");
+        toggleVideoButton.setAttribute("aria-label", "Enable your Camera");
         toggleVideoButton.classList.add("bottomControlButton", "toggleVideoButton");
         bottomControlsContainer.appendChild(toggleVideoButton);
 
         let toggleSettingsButton = document.createElement("button");
+        toggleSettingsButton.setAttribute("aria-label", "Open Device Settings");
         toggleSettingsButton.classList.add("bottomControlButton", "toggleSettingsButton");
         bottomControlsContainer.appendChild(toggleSettingsButton);
         
@@ -168,11 +185,19 @@ export class UIController {
         document.body.appendChild(this.modalBackground);
     }
 
+    showMainUI() {
+        document.querySelector(".bottomBar").classList.remove("displayNone");
+        document.querySelector(".topBar").classList.remove("displayNone");
+        document.querySelector(".bottomRightControlsContainer").classList.remove("displayNone");
+        twoDimensionalRenderer.updateCanvasDimensions();
+    }
+
     showFTUE() {
         let ftueOuterContainer = document.createElement("div");
         ftueOuterContainer.classList.add("ftueOuterContainer");
 
         let ftueInnerContainer = document.createElement("div");
+        ftueInnerContainer.setAttribute("role", "dialog");
         ftueInnerContainer.classList.add("ftueInnerContainer");
         ftueOuterContainer.appendChild(ftueInnerContainer);
 
@@ -188,6 +213,7 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
         ftueInnerContainer__okButton.classList.add("ftueInnerContainer__okButton");
         ftueInnerContainer__okButton.innerHTML = `OK, thanks!`;
         ftueInnerContainer__okButton.addEventListener("click", (e) => {
+            this.showMainUI();
             ftueOuterContainer.remove();
         });
         ftueInnerContainer.appendChild(ftueInnerContainer__okButton);
@@ -195,6 +221,7 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
         document.body.appendChild(ftueOuterContainer);
 
         document.querySelector(".ftueInnerContainer__profileLink").addEventListener("click", (e) => {
+            this.showMainUI();
             ftueOuterContainer.remove();
             this.showAvatarContextMenu(userDataController.myAvatar.myUserData);
         });
@@ -254,6 +281,7 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
 
     initBottomRightControls() {
         let bottomRightControlsContainer = document.createElement("div");
+        bottomRightControlsContainer.setAttribute("role", "navigation");
         bottomRightControlsContainer.classList.add("bottomRightControlsContainer", "displayNone");
         document.body.appendChild(bottomRightControlsContainer);
 
@@ -264,6 +292,7 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
         zoomInText.innerHTML = "Zoom In";
         zoomInContainer.appendChild(zoomInText);
         let zoomInButton = document.createElement("button");
+        zoomInButton.setAttribute("aria-label", "Zoom In Canvas View");
         zoomInButton.classList.add("zoomButton", "zoomInButton");
         zoomInButton.addEventListener("click", () => {
             physicsController.smoothZoomStartTimestamp = undefined;
@@ -279,6 +308,7 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
         zoomOutText.innerHTML = "Zoom Out";
         zoomOutContainer.appendChild(zoomOutText);
         let zoomOutButton = document.createElement("button");
+        zoomOutButton.setAttribute("aria-label", "Zoom Out Canvas View");
         zoomOutButton.classList.add("zoomButton", "zoomOutButton");
         zoomOutButton.addEventListener("click", () => {
             physicsController.smoothZoomStartTimestamp = undefined;
@@ -290,6 +320,7 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
 
     initContextMenu() {
         this.avatarContextMenu = document.createElement("div");
+        this.avatarContextMenu.setAttribute("role", "dialog");
         this.avatarContextMenu.classList.add("avatarContextMenu", "displayNone");
         this.avatarContextMenu.addEventListener("click", (e) => { e.stopPropagation(); });
         this.modalBackground.appendChild(this.avatarContextMenu);
@@ -308,6 +339,7 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
     }
 
     async startConnectionProcess() {
+        document.querySelector(".normalModeCanvas").classList.remove("displayNone");
         this.playOverlay.classList.add("displayNone");
         this.showConnectingOverlay();
 
@@ -323,6 +355,15 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
     }
 
     hideAvatarContextMenu() {
+        let topBar = document.querySelector(".topBar");
+        if (topBar) {
+            topBar.classList.remove("displayNone");
+        }
+        let bottomRightControlsContainer = document.querySelector(".bottomRightControlsContainer");
+        if (bottomRightControlsContainer) {
+            bottomRightControlsContainer.classList.remove("displayNone");
+        }
+
         this.modalBackground.classList.add("displayNone");
         this.modalBackground.classList.remove("modalBackground--mobileFullscreen");
         this.avatarContextMenu.classList.add("displayNone");
@@ -338,6 +379,7 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
     generateCloseButtonUI() {
         let closeButton = document.createElement("button");
         closeButton.classList.add("avatarContextMenu__closeButton");
+        closeButton.setAttribute("aria-label", "Close Profile Dialog");
         uiThemeController.refreshThemedElements();
         closeButton.addEventListener("click", (e) => {
             this.hideAvatarContextMenu();
@@ -369,8 +411,9 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
                 userDataController.myAvatar.onMyDisplayNameChanged((<HTMLInputElement>e.target).value);
             });
             
-            let avatarContextMenu__avatarCircle = document.createElement("div");
+            let avatarContextMenu__avatarCircle = document.createElement("button");
             avatarContextMenu__avatarCircle.classList.add("avatarContextMenu__avatarCircle", "avatarContextMenu__avatarCircle--mine");
+            avatarContextMenu__avatarCircle.setAttribute("aria-label", "Click to Set your Color");
             avatarContextMenu__avatarCircle.style.backgroundColor = userData.colorHex;
             avatarContextMenu__avatarCircle.style.borderColor = userData.colorHex;
             if (userData.profileImageEl && userData.profileImageEl.complete) {
@@ -410,6 +453,7 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
 
             if (userData.profileImageURL && userData.profileImageURL.length > 0) {
                 let removeLink = document.createElement("a");
+                removeLink.setAttribute("aria-label", "Remove Profile Photo");
                 removeLink.classList.add("avatarContextMenu__removeLink");
                 removeLink.innerHTML = `Remove`;
                 removeLink.addEventListener("click", (e) => {
@@ -741,8 +785,10 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
         this.avatarContextMenu.appendChild(avatarContextMenu__userGainForThisConnectionContainer);
 
         let avatarContextMenu__userGainForThisConnectionHeader = document.createElement("h3");
+        avatarContextMenu__userGainForThisConnectionHeader.id = "avatarContextMenu__userGainForThisConnectionHeader";
         avatarContextMenu__userGainForThisConnectionHeader.innerHTML = `Volume (Personal): ${Math.round(userData.userGainForThisConnection * 100)}%`;
         avatarContextMenu__userGainForThisConnectionHeader.classList.add("avatarContextMenu__userGainForThisConnectionHeader");
+        avatarContextMenu__userGainForThisConnectionHeader.setAttribute("aria-label", "Volume of This User for You");
         avatarContextMenu__userGainForThisConnectionContainer.appendChild(avatarContextMenu__userGainForThisConnectionHeader);
 
         let avatarContextMenu__userGainForThisConnectionSliderContainer = document.createElement("div");
@@ -755,6 +801,11 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
         avatarContextMenu__userGainForThisConnectionSlider.value = userData.userGainForThisConnection.toString();
         avatarContextMenu__userGainForThisConnectionSlider.step = "0.1";
         avatarContextMenu__userGainForThisConnectionSlider.classList.add("avatarContextMenu__userGainForThisConnectionSlider");
+        avatarContextMenu__userGainForThisConnectionSlider.setAttribute("aria-labelledby" ,"avatarContextMenu__userGainForThisConnectionHeader");
+        avatarContextMenu__userGainForThisConnectionSlider.setAttribute("aria-valuemin", "0.0");
+        avatarContextMenu__userGainForThisConnectionSlider.setAttribute("aria-valuemax", "4.0");
+        avatarContextMenu__userGainForThisConnectionSlider.setAttribute("aria-valuenow", avatarContextMenu__userGainForThisConnectionSlider.value);
+        avatarContextMenu__userGainForThisConnectionSlider.setAttribute("aria-valuetext", `${parseFloat(avatarContextMenu__userGainForThisConnectionSlider.value) * 100}x`);
 
         // The `change` event fires when the user lets go of the slider.
         // The `input` event fires as the user moves the slider.
@@ -790,7 +841,9 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
     onHiFiGainSliderValueChanged(slider: HTMLInputElement, userData: UserData) {
         let gainSliderValue = slider.value;
         if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash) {
-            userInputController.setHiFiGainFromSliderValue(gainSliderValue);
+            let newHiFiGain = userInputController.setHiFiGainFromSliderValue(gainSliderValue);
+            
+            document.querySelector(".avatarContextMenu__hiFiGainSlider").setAttribute("aria-valuetext", `${Math.round(newHiFiGain * 100)} percent`);
         } else {
             webSocketConnectionController.requestToChangeHiFiGainSliderValue(userData.visitIDHash, gainSliderValue);
         }
@@ -807,8 +860,10 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
         this.avatarContextMenu.appendChild(avatarContextMenu__hiFiGainContainer);
 
         let avatarContextMenu__hiFiGainHeader = document.createElement("h3");
-        avatarContextMenu__hiFiGainHeader.innerHTML = `Mic Volume: ${Math.round(userData.hiFiGain * 100)}%`;
+        avatarContextMenu__hiFiGainHeader.id = "avatarContextMenu__hiFiGainHeader";
+        avatarContextMenu__hiFiGainHeader.innerHTML = `Mic Volume: ${Math.round(userData.hiFiGain * 100)} percent`;
         avatarContextMenu__hiFiGainHeader.classList.add("avatarContextMenu__hiFiGainHeader");
+        avatarContextMenu__hiFiGainHeader.setAttribute("aria-label", "Microphone Volume");
         avatarContextMenu__hiFiGainContainer.appendChild(avatarContextMenu__hiFiGainHeader);
 
         let avatarContextMenu__hiFiGainSliderContainer = document.createElement("div");
@@ -821,6 +876,11 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
         avatarContextMenu__hiFiGainSlider.value = userData.hiFiGainSliderValue;
         avatarContextMenu__hiFiGainSlider.step = "1";
         avatarContextMenu__hiFiGainSlider.classList.add("avatarContextMenu__hiFiGainSlider");
+        avatarContextMenu__hiFiGainSlider.setAttribute("aria-labelledby", "avatarContextMenu__hiFiGainHeader");
+        avatarContextMenu__hiFiGainSlider.setAttribute("aria-valuemin", "0");
+        avatarContextMenu__hiFiGainSlider.setAttribute("aria-valuemax", "41");
+        avatarContextMenu__hiFiGainSlider.setAttribute("aria-valuenow", avatarContextMenu__hiFiGainSlider.value);
+        avatarContextMenu__hiFiGainSlider.setAttribute("aria-valuetext", `${Math.round(this.hiFiGainFromSliderValue(avatarContextMenu__hiFiGainSlider.value) * 100)} percent`);
 
         // The `input` event fires as the user is changing the value of the slider.
         avatarContextMenu__hiFiGainSlider.addEventListener("input", (e) => {
@@ -860,8 +920,10 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
         this.avatarContextMenu.appendChild(avatarContextMenu__volumeThresholdContainer);
 
         let avatarContextMenu__volumeThresholdHeader = document.createElement("h3");
+        avatarContextMenu__volumeThresholdHeader.id = "avatarContextMenu__volumeThresholdHeader";
         avatarContextMenu__volumeThresholdHeader.innerHTML = `Mic Threshold: ${userData.volumeThreshold} dB`;
         avatarContextMenu__volumeThresholdHeader.classList.add("avatarContextMenu__volumeThresholdHeader");
+        avatarContextMenu__volumeThresholdHeader.setAttribute("aria-label", "Microphone Threshold");
         avatarContextMenu__volumeThresholdContainer.appendChild(avatarContextMenu__volumeThresholdHeader);
 
         let avatarContextMenu__volumeThresholdSlider = document.createElement("input");
@@ -871,6 +933,11 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
         avatarContextMenu__volumeThresholdSlider.value = userData.volumeThreshold.toString();
         avatarContextMenu__volumeThresholdSlider.step = "1";
         avatarContextMenu__volumeThresholdSlider.classList.add("avatarContextMenu__volumeThresholdSlider");
+        avatarContextMenu__volumeThresholdSlider.setAttribute("aria-labelledby", "avatarContextMenu__volumeThresholdHeader");
+        avatarContextMenu__volumeThresholdSlider.setAttribute("aria-valuemin", "-96");
+        avatarContextMenu__volumeThresholdSlider.setAttribute("aria-valuemax", "0");
+        avatarContextMenu__volumeThresholdSlider.setAttribute("aria-valuenow", avatarContextMenu__volumeThresholdSlider.value);
+        avatarContextMenu__volumeThresholdSlider.setAttribute("aria-valuetext", `${avatarContextMenu__volumeThresholdSlider.value} decibels`);
 
         avatarContextMenu__volumeThresholdSlider.addEventListener("input", (e) => {
             let volumeThresholdSliderValue = parseInt((<HTMLInputElement>e.target).value);
@@ -879,6 +946,7 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
             } else {
                 webSocketConnectionController.requestToChangeVolumeThreshold(userData.visitIDHash, volumeThresholdSliderValue);
             }
+            avatarContextMenu__volumeThresholdSlider.setAttribute("aria-valuetext", `${avatarContextMenu__volumeThresholdSlider.value} decibels`);
         });
 
         avatarContextMenu__volumeThresholdContainer.appendChild(avatarContextMenu__volumeThresholdSlider);
@@ -914,9 +982,17 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
     showAvatarContextMenu(userData: UserData) {
         roomController.hideRoomList();
 
+        let topBar = document.querySelector(".topBar");
+        if (topBar) {
+            topBar.classList.add("displayNone");
+        }
+        let bottomRightControlsContainer = document.querySelector(".bottomRightControlsContainer");
+        if (bottomRightControlsContainer) {
+            bottomRightControlsContainer.classList.add("displayNone");
+        }
+
         this.avatarContextMenu.innerHTML = ``;
 
-        this.generateCloseButtonUI();
         this.generateHeader(userData);
         this.generateEchoCancellationUI(userData);
         this.generateAGCUI(userData);
@@ -926,6 +1002,7 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
         this.generateHiFiGainUI(userData);
         this.generateVolumeThresholdUI(userData);
         this.generateMuteForAllUI(userData);
+        this.generateCloseButtonUI();
 
         this.avatarContextMenu.setAttribute('visit-id-hash', userData.visitIDHash);
 

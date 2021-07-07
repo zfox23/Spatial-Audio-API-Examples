@@ -275,7 +275,6 @@ $bottom-controls-container-height: 72px;
     cursor: pointer;
     background-color: transparent;
     border: none;
-    outline: none;
     width: 32px;
     height: 32px;
     background-repeat: no-repeat;
@@ -284,11 +283,6 @@ $bottom-controls-container-height: 72px;
     padding: 0;
     margin: 0 8px;
     position: relative;
-
-    &:focus {
-        border: none;
-        outline: none;
-    }
 }
 
 .toggleInputMuteButton {
@@ -322,7 +316,7 @@ $bottom-controls-container-height: 72px;
                 transition: .1s ease-in-out;
             }
 
-            &:hover:before {
+            &:hover:before, &:focus:before {
                 filter: saturate(0.4) blur(5px);
                 opacity: 0.6;
                 transition: .1s ease-in-out;
@@ -363,7 +357,7 @@ $bottom-controls-container-height: 72px;
                 z-index: -1;
             }
 
-            &:hover:before {
+            &:hover:before, &:focus:before {
                 filter: saturate(0.4) blur(5px);
                 opacity: 0.6;
                 transition: .1s ease-in-out;
@@ -405,7 +399,7 @@ $bottom-controls-container-height: 72px;
                 transition: .1s ease-in-out;
             }
 
-            &:hover:before {
+            &:hover:before, &:focus:before {
                 filter: saturate(0.4) blur(5px);
                 opacity: 0.6;
                 transition: .1s ease-in-out;
@@ -446,7 +440,7 @@ $bottom-controls-container-height: 72px;
                 z-index: -1;
             }
 
-            &:hover:before {
+            &:hover:before, &:focus:before {
                 filter: saturate(0.4) blur(5px);
                 opacity: 0.6;
                 transition: .1s ease-in-out;
@@ -500,7 +494,7 @@ $bottom-controls-container-height: 72px;
                 transition: .1s ease-in-out;
             }
 
-            &:hover:before {
+            &:hover:before, &:focus:before {
                 filter: saturate(0.4) blur(5px);
                 opacity: 0.6;
                 transition: .1s ease-in-out;
@@ -541,7 +535,7 @@ $bottom-controls-container-height: 72px;
                 z-index: -1;
             }
 
-            &:hover:before {
+            &:hover:before, &:focus:before {
                 filter: saturate(0.4) blur(5px);
                 opacity: 0.6;
                 transition: .1s ease-in-out;
@@ -582,7 +576,7 @@ $bottom-controls-container-height: 72px;
             transition: .1s ease-in-out;
         }
 
-        &:hover:before {
+        &:hover:before, &:focus:before {
             filter: saturate(0.4) blur(5px);
             opacity: 0.6;
             transition: .1s ease-in-out;
@@ -613,7 +607,6 @@ $bottom-controls-container-height: 72px;
     border: none;
 
     &:focus {
-        outline: none;
         border: none;
     }
 
@@ -641,7 +634,6 @@ $bottom-controls-container-height: 72px;
     cursor: pointer;
     background-color: transparent;
     border: none;
-    outline: none;
     height: 35px;
     border-radius: 7px;
     color: #FFFFFF;
@@ -652,7 +644,6 @@ $bottom-controls-container-height: 72px;
 
     &:focus {
         border: none;
-        outline: none;
     }
 }
 
@@ -723,7 +714,6 @@ $bottom-controls-container-height: 72px;
         font-size: 18px;
         font-family: 'Graphik', 'Helvetica', 'Arial', sans-serif;
         border: none;
-        outline: none;
         background-color: transparent;
         padding: 0;
         cursor: pointer;
@@ -839,7 +829,6 @@ $bottom-controls-container-height: 72px;
     cursor: pointer;
     background-color: transparent;
     border: none;
-    outline: none;
 
     &--light-theme {
         background-image: url('../images/icons/light-theme/hamburger.svg');
@@ -1140,7 +1129,6 @@ $bottom-controls-container-height: 72px;
         font-size: 18px;
         font-family: 'Graphik', 'Helvetica', 'Arial', sans-serif;
         border: none;
-        outline: none;
         background-color: transparent;
         padding: 0;
         cursor: pointer;
@@ -1270,7 +1258,6 @@ $bottom-controls-container-height: 72px;
         align-items: center;
         cursor: pointer;
         border: none;
-        outline: none;
         padding: 0 12px;
         position: relative;
         top: 3px;
@@ -1515,10 +1502,9 @@ $bottom-controls-container-height: 72px;
     height: 26px;
 }
 
-.switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
+.switch input { 
+    width: 48px;
+    height: 26px;
 }
 
 .slider {
@@ -1605,21 +1591,15 @@ input:checked+.slider:before {
     cursor: pointer;
     background-color: transparent;
     border: none;
-    outline: none;
     padding: 0;
     margin: 0 0 0 8px;
-
-    &:focus {
-        border: none;
-        outline: none;
-    }
 }
 
 .zoomInButton {
     &--light-theme {
         background-image: url('../images/icons/light-theme/button-zoom-in-idle.svg');
 
-        &:not(:focus):hover {
+        &:hover {
             background-image: url('../images/icons/light-theme/button-zoom-in-hover.svg');
         }
     }
@@ -1627,7 +1607,7 @@ input:checked+.slider:before {
     &--dark-theme {
         background-image: url('../images/icons/dark-theme/button-zoom-in-idle.svg');
 
-        &:not(:focus):hover {
+        &:hover {
             background-image: url('../images/icons/dark-theme/button-zoom-in-hover.svg');
         }
     }
@@ -1637,7 +1617,7 @@ input:checked+.slider:before {
     &--light-theme {
         background-image: url('../images/icons/light-theme/button-zoom-out-idle.svg');
 
-        &:not(:focus):hover {
+        &:hover {
             background-image: url('../images/icons/light-theme/button-zoom-out-hover.svg');
         }
     }
@@ -1645,7 +1625,7 @@ input:checked+.slider:before {
     &--dark-theme {
         background-image: url('../images/icons/dark-theme/button-zoom-out-idle.svg');
 
-        &:not(:focus):hover {
+        &:hover {
             background-image: url('../images/icons/dark-theme/button-zoom-out-hover.svg');
         }
     }
@@ -1724,10 +1704,6 @@ input:checked+.slider:before {
 input[type=range] {
     -webkit-appearance: none;
     background: transparent;
-}
-
-input[type=range]:focus {
-    outline: none;
 }
 
 input[type=range]::-webkit-slider-runnable-track {
