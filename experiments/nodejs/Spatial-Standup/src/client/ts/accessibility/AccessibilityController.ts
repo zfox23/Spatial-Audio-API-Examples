@@ -4,7 +4,6 @@ export class AccessibilityController {
     constructor() {}
 
     speak(text: string, priority?: string) {
-        console.log("speaking text")
         let el = document.createElement("div");
         let id = "speak-" + Date.now();
         el.setAttribute("id", id);
@@ -12,6 +11,9 @@ export class AccessibilityController {
         el.classList.add("sr-only");
         document.body.appendChild(el);
   
+        // 100ms timeout so `aria-live` knows that the contents of the div
+        // changed and thus must be read.
+        // Lower timeouts work inconsistently.
         setTimeout(() => {
           document.getElementById(id).innerHTML = text;
         }, 100);

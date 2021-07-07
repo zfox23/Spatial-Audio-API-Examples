@@ -9,7 +9,8 @@ import { Landmark } from "./LandmarksController";
 export class UserInputController {
     normalModeCanvas: HTMLCanvasElement;
     pointerEventCache: Array<PointerEvent> = [];
-    keyboardEventCache: Array<KeyboardEvent> = [];
+    documentKeyboardEventCache: Array<KeyboardEvent> = [];
+    normalModeCanvasKeyboardEventCache: Array<KeyboardEvent> = [];
     wasMutedBeforePTT: boolean = false;
     toggleInputMuteButton: HTMLButtonElement;
     toggleOutputMuteButton: HTMLButtonElement;
@@ -17,10 +18,10 @@ export class UserInputController {
     toggleSettingsButton: HTMLButtonElement;
     leftClickStartPositionPX: any;
     lastDistanceBetweenLeftClickEvents: number;
-    hoveredUserData: UserData;
-    hoveredSeat: SpatialAudioSeat;
-    hoveredRoom: SpatialStandupRoom;
-    hoveredLandmark: Landmark;
+    highlightedUserData: UserData;
+    highlightedSeat: SpatialAudioSeat;
+    highlightedRoom: SpatialStandupRoom;
+    highlightedLandmark: Landmark;
 
     constructor() {
         this.toggleInputMuteButton = document.querySelector('.toggleInputMuteButton');
@@ -60,6 +61,9 @@ export class UserInputController {
 
         this.normalModeCanvas.addEventListener("wheel", this.onWheel.bind(this), false);
 
+        this.normalModeCanvas.addEventListener('keydown', this.onNormalModeCanvasKeyDown.bind(this), false);
+        this.normalModeCanvas.addEventListener('keyup', this.onNormalModeCanvasKeyUp.bind(this), false);
+        
         document.addEventListener('keydown', this.onDocumentKeyDown.bind(this), false);
         document.addEventListener('keyup', this.onDocumentKeyUp.bind(this), false);
     }
@@ -84,21 +88,21 @@ export class UserInputController {
 
     onDocumentKeyDown(event: KeyboardEvent) {
         let shouldAddKeyEvent = true;
-        for (let i = 0; i < this.keyboardEventCache.length; i++) {
-            if (this.keyboardEventCache[i].code === event.code) {
+        for (let i = 0; i < this.documentKeyboardEventCache.length; i++) {
+            if (this.documentKeyboardEventCache[i].code === event.code) {
                 shouldAddKeyEvent = false;
                 break;
             }
         }
         if (shouldAddKeyEvent) {
-            this.keyboardEventCache.unshift(event);
+            this.documentKeyboardEventCache.unshift(event);
         }
 
-        if (this.shouldIgnoreKeyDown() || this.keyboardEventCache.length === 0) {
+        if (this.shouldIgnoreKeyDown() || this.documentKeyboardEventCache.length === 0) {
             return;
         }
 
-        switch (this.keyboardEventCache[0].code) {
+        switch (this.documentKeyboardEventCache[0].code) {
             case CONTROLS.LEFT_ARROW_KEY_CODE:
             case CONTROLS.A_KEY_CODE:
                 userDataController.myAvatar.rotationalVelocityDegreesPerS = CONTROLS.ROTATIONAL_VELOCITY_DEGREES_PER_SEC;
@@ -108,8 +112,8 @@ export class UserInputController {
                 userDataController.myAvatar.rotationalVelocityDegreesPerS = -CONTROLS.ROTATIONAL_VELOCITY_DEGREES_PER_SEC;
                 break;
             case CONTROLS.E_KEY_CODE:
-                if (this.keyboardEventCache[0].ctrlKey) {
-                    this.keyboardEventCache[0].preventDefault();
+                if (this.documentKeyboardEventCache[0].ctrlKey) {
+                    this.documentKeyboardEventCache[0].preventDefault();
                     editorModeController.toggleEditorMode();
                 }
                 break;
@@ -141,6 +145,9 @@ export class UserInputController {
             case CONTROLS.ESC_KEY_CODE:
                 signalsController.setActiveSignal(undefined);
                 watchPartyController.leaveWatchParty();
+                uiController.hideAvatarContextMenu();
+                roomController.hideRoomList();
+                this.hideSettingsMenu();
                 break;
             case CONTROLS.U_KEY_CODE:
                 userDataController.myAvatarEars.toggleConnection();
@@ -149,9 +156,9 @@ export class UserInputController {
     }
 
     onDocumentKeyUp(event: KeyboardEvent) {
-        for (let i = this.keyboardEventCache.length - 1; i >= 0; i--) {
-            if (this.keyboardEventCache[i].code === event.code) {
-                this.keyboardEventCache.splice(i, 1);
+        for (let i = this.documentKeyboardEventCache.length - 1; i >= 0; i--) {
+            if (this.documentKeyboardEventCache[i].code === event.code) {
+                this.documentKeyboardEventCache.splice(i, 1);
             }
         }
 
@@ -172,8 +179,99 @@ export class UserInputController {
                 break;
         }
 
-        if (this.keyboardEventCache.length > 0) {
-            this.onDocumentKeyDown(this.keyboardEventCache[0]);
+        if (this.documentKeyboardEventCache.length > 0) {
+            this.onDocumentKeyDown(this.documentKeyboardEventCache[0]);
+        }
+    }
+
+    onNormalModeCanvasKeyDown(event: KeyboardEvent) {
+        let shouldAddKeyEvent = true;
+        for (let i = 0; i < this.normalModeCanvasKeyboardEventCache.length; i++) {
+            if (this.normalModeCanvasKeyboardEventCache[i].code === event.code) {
+                shouldAddKeyEvent = false;
+                break;
+            }
+        }
+        if (shouldAddKeyEvent) {
+            this.normalModeCanvasKeyboardEventCache.unshift(event);
+        }
+
+        if (this.shouldIgnoreKeyDown() || this.normalModeCanvasKeyboardEventCache.length === 0) {
+            return;
+        }
+
+        switch (this.normalModeCanvasKeyboardEventCache[0].code) {
+            case CONTROLS.J_KEY_CODE:
+            case CONTROLS.L_KEY_CODE:
+                if (userDataController.myAvatar.myUserData.currentRoom) {
+                    let currentHighlightedSeatIndex = 0;
+                    if (this.highlightedSeat) {
+                        for (let i = 0; i < userDataController.myAvatar.myUserData.currentRoom.seats.length; i++) {
+                            let seat = userDataController.myAvatar.myUserData.currentRoom.seats[i];
+                            if (seat === this.highlightedSeat) {
+                                currentHighlightedSeatIndex = i;
+                                break;
+                            }
+                        }
+                    } else if (userDataController.myAvatar.myUserData.currentSeat) {
+                        for (let i = 0; i < userDataController.myAvatar.myUserData.currentRoom.seats.length; i++) {
+                            let seat = userDataController.myAvatar.myUserData.currentRoom.seats[i];
+                            if (seat === userDataController.myAvatar.myUserData.currentSeat) {
+                                currentHighlightedSeatIndex = i;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (this.normalModeCanvasKeyboardEventCache[0].code === CONTROLS.J_KEY_CODE) {
+                        if (currentHighlightedSeatIndex === userDataController.myAvatar.myUserData.currentRoom.seats.length - 1) {
+                            currentHighlightedSeatIndex = 0;
+                        } else {
+                            currentHighlightedSeatIndex++;
+                        }
+                    } else if (this.normalModeCanvasKeyboardEventCache[0].code === CONTROLS.L_KEY_CODE) {
+                        if (currentHighlightedSeatIndex === 0) {
+                            currentHighlightedSeatIndex = userDataController.myAvatar.myUserData.currentRoom.seats.length - 1;
+                        } else {
+                            currentHighlightedSeatIndex--;
+                        }
+                    }
+
+                    let seat = userDataController.myAvatar.myUserData.currentRoom.seats[currentHighlightedSeatIndex];
+
+                    if (seat.occupiedUserData) {
+                        this.highlightedUserData = seat.occupiedUserData;
+                    } else {
+                        this.highlightedUserData = undefined;
+                    }
+
+                    this.highlightedSeat = seat;
+                }
+                break;
+            case CONTROLS.K_KEY_CODE:
+                if (this.highlightedUserData) {
+                    uiController.showAvatarContextMenu(this.highlightedUserData);
+                    this.highlightedUserData = undefined;
+                } else if (this.highlightedSeat) {
+                    userDataController.myAvatar.moveToNewSeat(this.highlightedSeat);
+                    this.highlightedSeat = undefined;
+                }
+                break;
+        }
+    }
+
+    onNormalModeCanvasKeyUp(event: KeyboardEvent) {
+        for (let i = this.normalModeCanvasKeyboardEventCache.length - 1; i >= 0; i--) {
+            if (this.normalModeCanvasKeyboardEventCache[i].code === event.code) {
+                this.normalModeCanvasKeyboardEventCache.splice(i, 1);
+            }
+        }
+
+        switch (event.code) {
+        }
+
+        if (this.normalModeCanvasKeyboardEventCache.length > 0) {
+            this.onNormalModeCanvasKeyDown(this.normalModeCanvasKeyboardEventCache[0]);
         }
     }
 
@@ -488,19 +586,19 @@ export class UserInputController {
             if (isCloseEnough) {
                 signalsController.addActiveSignal(clickM);
             }
-        } else if (this.hoveredUserData) {
-            uiController.showAvatarContextMenu(this.hoveredUserData);
-            this.hoveredUserData = undefined;
-        } else if (this.hoveredSeat && !this.hoveredSeat.occupiedUserData && !pathsController.currentPath) {
-            console.log(`User clicked on a new seat at ${JSON.stringify(this.hoveredSeat.position)}! Target seat yaw orientation: ${JSON.stringify(this.hoveredSeat.orientation)} degrees.`);
-            userDataController.myAvatar.moveToNewSeat(this.hoveredSeat);
-            this.hoveredSeat = undefined;
-        } else if (this.hoveredRoom && !pathsController.currentPath && this.hoveredRoom !== userDataController.myAvatar.myUserData.currentRoom) {
-            console.log(`User clicked on the room named ${this.hoveredRoom.name}!`);
-            userDataController.myAvatar.positionSelfInRoom(this.hoveredRoom.name);
-            this.hoveredRoom = undefined;
-        } else if (this.hoveredLandmark) {
-            landmarksController.landmarkClicked(this.hoveredLandmark);
+        } else if (this.highlightedUserData) {
+            uiController.showAvatarContextMenu(this.highlightedUserData);
+            this.highlightedUserData = undefined;
+        } else if (this.highlightedSeat && !this.highlightedSeat.occupiedUserData && !pathsController.currentPath) {
+            console.log(`User clicked on a new seat at ${JSON.stringify(this.highlightedSeat.position)}! Target seat yaw orientation: ${JSON.stringify(this.highlightedSeat.orientation)} degrees.`);
+            userDataController.myAvatar.moveToNewSeat(this.highlightedSeat);
+            this.highlightedSeat = undefined;
+        } else if (this.highlightedRoom && !pathsController.currentPath && this.highlightedRoom !== userDataController.myAvatar.myUserData.currentRoom) {
+            console.log(`User clicked on the room named ${this.highlightedRoom.name}!`);
+            userDataController.myAvatar.positionSelfInRoom(this.highlightedRoom.name);
+            this.highlightedRoom = undefined;
+        } else if (this.highlightedLandmark) {
+            landmarksController.landmarkClicked(this.highlightedLandmark);
         }
 
         document.body.classList.remove("cursorPointer");
@@ -605,60 +703,60 @@ export class UserInputController {
                 return;
             }
 
-            let wasHoveringOverUser = !!this.hoveredUserData;
+            let wasHoveringOverUser = !!this.highlightedUserData;
 
-            this.hoveredUserData = userDataController.allOtherUserData.find((userData) => {
+            this.highlightedUserData = userDataController.allOtherUserData.find((userData) => {
                 return userData.displayName && userData.positionCurrent && Utilities.getDistanceBetween2DPoints(userData.positionCurrent.x, userData.positionCurrent.z, hoverM.x, hoverM.z) < AVATAR.RADIUS_M;
             });
 
-            if (!this.hoveredUserData && Utilities.getDistanceBetween2DPoints(userDataController.myAvatar.myUserData.positionCurrent.x, userDataController.myAvatar.myUserData.positionCurrent.z, hoverM.x, hoverM.z) < AVATAR.RADIUS_M) {
-                this.hoveredUserData = userDataController.myAvatar.myUserData;
+            if (!this.highlightedUserData && Utilities.getDistanceBetween2DPoints(userDataController.myAvatar.myUserData.positionCurrent.x, userDataController.myAvatar.myUserData.positionCurrent.z, hoverM.x, hoverM.z) < AVATAR.RADIUS_M) {
+                this.highlightedUserData = userDataController.myAvatar.myUserData;
             }
 
-            if (!wasHoveringOverUser && this.hoveredUserData) {
-                accessibilityController.speak(`Hovering over ${this.hoveredUserData.displayName}.`);
+            if (!wasHoveringOverUser && this.highlightedUserData) {
+                accessibilityController.speak(`Hovering over ${this.highlightedUserData.displayName}.`);
             }
 
-            if (!this.hoveredUserData) {
+            if (!this.highlightedUserData) {
                 for (let i = 0; i < roomController.rooms.length; i++) {
                     let room = roomController.rooms[i];
 
-                    let wasHoveringOverSeat = !!this.hoveredSeat;
+                    let wasHoveringOverSeat = !!this.highlightedSeat;
 
-                    this.hoveredSeat = room.seats.find((seat) => {
+                    this.highlightedSeat = room.seats.find((seat) => {
                         return !seat.occupiedUserData && Utilities.getDistanceBetween2DPoints(seat.position.x, seat.position.z, hoverM.x, hoverM.z) < ROOM.SEAT_RADIUS_HOVER_M;
                     });
 
-                    if (!wasHoveringOverSeat && this.hoveredSeat) {
+                    if (!wasHoveringOverSeat && this.highlightedSeat) {
                         accessibilityController.speak(`Hovering over vacant seat in ${room.name}.`);
                     }
 
-                    if (this.hoveredSeat) {
+                    if (this.highlightedSeat) {
                         break;
                     }
                 }
             }
 
-            if (!(this.hoveredUserData && this.hoveredSeat && this.hoveredRoom)) {
-                let wasHoveringOverLandmark = !!this.hoveredLandmark;
+            if (!(this.highlightedUserData && this.highlightedSeat && this.highlightedRoom)) {
+                let wasHoveringOverLandmark = !!this.highlightedLandmark;
                 let found = false;
 
                 for (let i = 0; i < landmarksController.landmarks.length; i++) {
                     let landmark = landmarksController.landmarks[i];
 
                     if (Utilities.getDistanceBetween2DPoints(landmark.positionM.x, landmark.positionM.z, hoverM.x, hoverM.z) < landmark.radiusM) {
-                        this.hoveredLandmark = landmark;
+                        this.highlightedLandmark = landmark;
                         found = true;
                         break;
                     }
                 }
 
                 if (!found) {
-                    this.hoveredLandmark = undefined;
+                    this.highlightedLandmark = undefined;
                 }
 
-                if (!wasHoveringOverLandmark && this.hoveredLandmark) {
-                    accessibilityController.speak(`Hovering over ${this.hoveredLandmark.name}.`);
+                if (!wasHoveringOverLandmark && this.highlightedLandmark) {
+                    accessibilityController.speak(`Hovering over ${this.highlightedLandmark.name}.`);
                 }
             }
         } else if (this.pointerEventCache.length === 2) {
@@ -700,10 +798,10 @@ export class UserInputController {
             physicsController.pxPerMCurrent = targetPXPerSU;
         }
 
-        if (this.hoveredUserData ||
-            this.hoveredSeat ||
-            this.hoveredRoom ||
-            this.hoveredLandmark) {
+        if (this.highlightedUserData ||
+            this.highlightedSeat ||
+            this.highlightedRoom ||
+            this.highlightedLandmark) {
             document.body.classList.add("cursorPointer");
         } else {
             document.body.classList.remove("cursorPointer");
