@@ -256,7 +256,7 @@ export class UserInputController {
                 if (this.highlightedUserData) {
                     uiController.showAvatarContextMenu(this.highlightedUserData);
                     this.highlightedUserData = undefined;
-                } else if (this.highlightedSeat) {
+                } else if (this.highlightedSeat && !this.highlightedUserData) {
                     userDataController.myAvatar.moveToNewSeat(this.highlightedSeat);
                     this.highlightedSeat = undefined;
                 }
