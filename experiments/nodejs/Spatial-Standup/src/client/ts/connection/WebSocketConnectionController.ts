@@ -60,6 +60,8 @@ export class WebSocketConnectionController {
 
                 let localUserData = userDataController.allOtherUserData.find((userData) => { return userData.visitIDHash === visitIDHash; });
                 if (localUserData) {
+                    let playChairSound = false;
+
                     if (typeof (displayName) === "string") {
                         localUserData.displayName = displayName;
                     }
@@ -78,6 +80,7 @@ export class WebSocketConnectionController {
                     }
                     if (typeof (isAudioInputMuted) === "boolean") {
                         localUserData.isAudioInputMuted = isAudioInputMuted;
+                        playChairSound = true;
                     }
                     if (typeof (echoCancellationEnabled) === "boolean") {
                         localUserData.echoCancellationEnabled = echoCancellationEnabled;
@@ -98,8 +101,7 @@ export class WebSocketConnectionController {
                     if (typeof (currentSeatID) === "string") {
                         if (localUserData.currentSeat) {
                             localUserData.currentSeat.occupiedUserData = undefined;
-
-                            howlerController.playSound({ src: chairSounds[Math.floor(Math.random() * chairSounds.length)], randomSoundRate: true, positionM: localUserData.positionCurrent, volume: 0.3 });
+                            playChairSound = true;
                         }
                         localUserData.currentSeat = roomController.getSeatFromSeatID(currentSeatID);
                         if (localUserData.currentSeat) {
@@ -115,6 +117,10 @@ export class WebSocketConnectionController {
                         if (userDataController.myAvatar.myUserData.currentRoom && localUserData.currentWatchPartyRoomName === userDataController.myAvatar.myUserData.currentRoom.name) {
                             watchPartyController.joinWatchParty(userDataController.myAvatar.myUserData.currentRoom.name);
                         }
+                    }
+
+                    if (playChairSound) {
+                        howlerController.playSound({ src: chairSounds[Math.floor(Math.random() * chairSounds.length)], randomSoundRate: true, positionM: localUserData.positionCurrent, volume: 0.3 });
                     }
                     
                     console.log(`Updated participant:\nVisit ID Hash \`${localUserData.visitIDHash}\`:\nDisplay Name: \`${displayName}\`\nColor: ${colorHex}\nprofileImageURL: ${profileImageURL}\nisAudioInputMuted: ${isAudioInputMuted}\nCurrent Seat ID: ${localUserData.currentSeat ? localUserData.currentSeat.seatID : "undefined"}\nCurrent Room Name: ${localUserData.currentRoom ? localUserData.currentRoom.name : "undefined"}\nechoCancellationEnabled: ${echoCancellationEnabled}\nagcEnabled: ${agcEnabled}\nnsEnabled: ${noiseSuppressionEnabled}\nhiFiGainSliderValue: ${hiFiGainSliderValue}\nvolumeThreshold:${volumeThreshold}\ncurrentWatchPartyRoomName:${currentWatchPartyRoomName}\n`);
