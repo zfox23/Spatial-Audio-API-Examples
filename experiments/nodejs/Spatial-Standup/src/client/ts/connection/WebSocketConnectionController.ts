@@ -80,7 +80,9 @@ export class WebSocketConnectionController {
                     }
                     if (typeof (isAudioInputMuted) === "boolean") {
                         localUserData.isAudioInputMuted = isAudioInputMuted;
-                        playChairSound = true;
+                        if (!localUserData.isAudioInputMuted) {
+                            playChairSound = true;
+                        }
                     }
                     if (typeof (echoCancellationEnabled) === "boolean") {
                         localUserData.echoCancellationEnabled = echoCancellationEnabled;
