@@ -272,7 +272,6 @@ export class WebSocketConnectionController {
             uiController.showFTUE();
         } else {
             uiController.showMainUI();
-            accessibilityController.speak(`You are in the room named "${myUserData.currentRoom.name}".`);
         }
 
         this.socket.emit("addParticipant", {
