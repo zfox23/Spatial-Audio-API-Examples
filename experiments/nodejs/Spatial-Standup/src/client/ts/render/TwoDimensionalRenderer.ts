@@ -34,7 +34,7 @@ export class TwoDimensionalRenderer {
         this.normalModeCanvas.setAttribute("role", "application");
         this.normalModeCanvas.setAttribute("aria-keyshortcuts", "a d ArrowLeft ArrowRight j k l");
         this.normalModeCanvas.classList.add("normalModeCanvas", "displayNone");
-        this.normalModeCanvas.tabIndex = 0;
+        this.normalModeCanvas.tabIndex = -1;
         document.body.appendChild(this.normalModeCanvas);
         this.normalModeCTX = this.normalModeCanvas.getContext("2d");
 

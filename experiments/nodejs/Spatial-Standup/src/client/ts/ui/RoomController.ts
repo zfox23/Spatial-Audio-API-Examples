@@ -275,7 +275,7 @@ export class RoomController {
 
         this.showRoomListButton = document.createElement("button");
         this.showRoomListButton.classList.add("showRoomListButton");
-        this.showRoomListButton.setAttribute("aria-label", "Show Rooms List");
+        this.showRoomListButton.setAttribute("aria-label", "Click to Show Rooms and People List");
         this.topBar.appendChild(this.showRoomListButton);
         this.showRoomListButton.addEventListener("click", (e) => {
             this.toggleRoomList();
@@ -283,7 +283,9 @@ export class RoomController {
         });
 
         let topBar__roomsHeader = document.createElement("h1");
+        topBar__roomsHeader.id = "topBar__roomsHeader";
         topBar__roomsHeader.classList.add("topBar__roomsHeader");
+        topBar__roomsHeader.setAttribute("aria-label", "Rooms and People List");
         topBar__roomsHeader.innerHTML = "Rooms";
         topBar__roomsHeader.addEventListener("click", (e) => {
             this.toggleRoomList();
@@ -352,9 +354,9 @@ export class RoomController {
         this.roomListOuterContainer.classList.toggle("displayNone");
 
         if (this.roomListOuterContainer.classList.contains("displayNone")) {
-            this.showRoomListButton.setAttribute("aria-label", "Show Rooms List");
+            this.showRoomListButton.setAttribute("aria-label", "Click to show Rooms and People List");
         } else {
-            this.showRoomListButton.setAttribute("aria-label", "Hide Rooms List");
+            this.showRoomListButton.setAttribute("aria-label", "Click to hide Rooms and People List");
         }
     }
 
@@ -435,10 +437,11 @@ export class RoomController {
             }
             this.roomListInnerContainer.appendChild(roomInfoContainer);
 
-            let roomInfoContainer__header = document.createElement("h2");
+            let roomInfoContainer__header = document.createElement("button");
             roomInfoContainer__header.classList.add("roomInfoContainer__header");
             let occupiedSeats = room.seats.filter((seat) => { return !!seat.occupiedUserData; });
             roomInfoContainer__header.innerHTML = `${room.name} <span class="roomInfoContainer__peopleIcon"></span> ${occupiedSeats.length}/${room.numSeatsInRoom}`;
+            roomInfoContainer__header.setAttribute("aria-label", `${room.name}. ${occupiedSeats.length} seat${occupiedSeats.length === 1 ? "" : "s"} occupied out of ${room.numSeatsInRoom} seats total.${occupiedSeats.length < room.numSeatsInRoom ? " Click to go here." : ""}`);
             totalNumOccupiedSeats += occupiedSeats.length;
             roomInfoContainer__header.addEventListener("click", (e) => {
                 if (userDataController.myAvatar.myUserData.currentRoom === room) {
@@ -464,17 +467,19 @@ export class RoomController {
 
         let allUserData = userDataController.allOtherUserData.concat(userDataController.myAvatar.myUserData);
         allUserData.forEach((userData) => {
-            let roomInfoContainer__occupant = document.createElement("p");
+            let roomInfoContainer__occupant = document.createElement("button");
             roomInfoContainer__occupant.classList.add("roomInfoContainer__occupant");
             roomInfoContainer__occupant.setAttribute('data-visit-id-hash', userData.visitIDHash);
             let occupantInnerHTML;
             if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash) {
+                roomInfoContainer__occupant.setAttribute('aria-label', `${userDataController.myAvatar.myUserData.displayName} in ${userDataController.myAvatar.myUserData.currentRoom.name}. This is you. Click to view profile.`);
                 occupantInnerHTML = `<span class="roomInfoContainer__occupantAvatar" style="background-color:${userDataController.myAvatar.myUserData.colorHex};border-color:${userDataController.myAvatar.myUserData.colorHex};background-image:url(${userDataController.myAvatar.myUserData.profileImageURL ? userDataController.myAvatar.myUserData.profileImageURL : "none"});"></span>`;
                 occupantInnerHTML += `<div class="roomInfoContainer__occupantTextContainer"><p class="roomInfoContainer__occupantTextTop">${userData.displayName}</p><p class="roomInfoContainer__occupantTextBottom">(YOU)</p></div>`;
                 if (userData.currentRoom) {
                     document.querySelector(`[data-room-name="${userData.currentRoom.name}"]`).prepend(roomInfoContainer__occupant);
                 }
             } else {
+                roomInfoContainer__occupant.setAttribute('aria-label', `${userDataController.myAvatar.myUserData.displayName} in ${userDataController.myAvatar.myUserData.currentRoom.name}. Click to view profile.`);
                 occupantInnerHTML = ``;
                 if (userData.colorHex) {
                     occupantInnerHTML += `<span class="roomInfoContainer__occupantAvatar" style="background-color:${userData.colorHex};border-color:${userData.colorHex};background-image:url(${userData.profileImageURL ? userData.profileImageURL : "none"});"></span>`;

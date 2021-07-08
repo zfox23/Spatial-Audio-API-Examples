@@ -68,7 +68,11 @@ export class UserInputController {
         document.addEventListener('keyup', this.onDocumentKeyUp.bind(this), false);
     }
 
-    shouldIgnoreKeyDown() {
+    shouldIgnoreKeyDown(event: KeyboardEvent) {
+        if (event.code === CONTROLS.ESC_KEY_CODE) {
+            return false;
+        }
+
         let allInputElements = document.querySelectorAll("input");
         for (let i = 0; i < allInputElements.length; i++) {
             if (allInputElements[i] === document.activeElement) {
@@ -98,7 +102,7 @@ export class UserInputController {
             this.documentKeyboardEventCache.unshift(event);
         }
 
-        if (this.shouldIgnoreKeyDown() || this.documentKeyboardEventCache.length === 0) {
+        if (this.shouldIgnoreKeyDown(event) || this.documentKeyboardEventCache.length === 0) {
             return;
         }
 
@@ -196,7 +200,7 @@ export class UserInputController {
             this.normalModeCanvasKeyboardEventCache.unshift(event);
         }
 
-        if (this.shouldIgnoreKeyDown() || this.normalModeCanvasKeyboardEventCache.length === 0) {
+        if (this.shouldIgnoreKeyDown(event) || this.normalModeCanvasKeyboardEventCache.length === 0) {
             return;
         }
 
@@ -258,6 +262,7 @@ export class UserInputController {
                     this.highlightedUserData = undefined;
                 } else if (this.highlightedSeat && !this.highlightedUserData) {
                     userDataController.myAvatar.moveToNewSeat(this.highlightedSeat);
+                    accessibilityController.speak(`Moving to new seat.`, "polite", 250);
                     this.highlightedSeat = undefined;
                 }
                 break;
@@ -300,6 +305,7 @@ export class UserInputController {
                 .then((devices) => {
                     settingsMenu = document.createElement("div");
                     settingsMenu.classList.add("settingsMenu");
+                    settingsMenu.setAttribute("role", "dialog");
 
                     let settingsMenu__header = document.createElement("h1");
                     settingsMenu__header.id = "settingsMenu__header";
@@ -315,6 +321,7 @@ export class UserInputController {
                     changeAudioInputDeviceMenu__header.innerHTML = `AUDIO INPUT DEVICE`;
 
                     let changeAudioInputDeviceMenu__select = document.createElement("select");
+                    changeAudioInputDeviceMenu__select.id = "changeAudioInputDeviceMenu__select";
                     changeAudioInputDeviceMenu__select.setAttribute("aria-labelledby", "settingsMenu__header changeAudioInputDeviceMenu__header");
                     changeAudioInputDeviceMenu__select.classList.add("settingsMenu__select");
 
@@ -438,6 +445,7 @@ export class UserInputController {
                     settingsMenu.appendChild(closeButton);
 
                     document.body.appendChild(settingsMenu);
+                    changeAudioInputDeviceMenu__select.focus();
                     uiThemeController.refreshThemedElements();
                 })
                 .catch((err) => {
@@ -450,9 +458,9 @@ export class UserInputController {
         await this.setInputMute(!userDataController.myAvatar.myUserData.isAudioInputMuted);
 
         if (userDataController.myAvatar.myUserData.isAudioInputMuted) {
-            this.toggleInputMuteButton.setAttribute("aria-label", "Un-mute your Input Audio Device");
+            this.toggleInputMuteButton.setAttribute("aria-label", "Microphone is muted. Click to un-mute your microphone-");
         } else {
-            this.toggleInputMuteButton.setAttribute("aria-label", "Mute your Input Audio Device");
+            this.toggleInputMuteButton.setAttribute("aria-label", "Microphone is unmuted. Click to mute your microphone.");
         }
     }
 
@@ -488,9 +496,9 @@ export class UserInputController {
         this.setOutputMute(!avDevicesController.outputAudioElement.muted);
 
         if (avDevicesController.outputAudioElement.muted) {
-            this.toggleOutputMuteButton.setAttribute("aria-label", "Un-mute your Output Audio Device");
+            this.toggleOutputMuteButton.setAttribute("aria-label", "Headphones are muted. Click to un-mute your headphones.");
         } else {
-            this.toggleOutputMuteButton.setAttribute("aria-label", "Mute your Output Audio Device");
+            this.toggleOutputMuteButton.setAttribute("aria-label", "Headphones are un-muted. Click to mute your headphones.");
         }
     }
 

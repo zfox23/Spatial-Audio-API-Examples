@@ -93,7 +93,7 @@ export class UIThemeController {
         this.addThemedElementFromClassName("watchPartyInstructions");
         this.addThemedElementFromClassName("showRoomListButton");
         this.addThemedElementFromClassName("avatarContextMenu__displayName--mine");
-        this.addThemedElementFromClassName("editMyProfileLink");
+        this.addThemedElementFromClassName("editMyProfileButton");
         this.addThemedElementFromClassName("zoomInButton");
         this.addThemedElementFromClassName("zoomOutButton");
         this.addThemedElementFromClassName("bottomRightControlsContainer");

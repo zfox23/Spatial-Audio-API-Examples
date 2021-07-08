@@ -356,6 +356,11 @@ export class ConnectionController {
         for (const disconnectedUserData of allDisconnectedUserData) {
             console.log(`HiFi User left: ${JSON.stringify(disconnectedUserData)}`);
 
+            let roomListElement = document.querySelector(`[data-visit-id-hash="${disconnectedUserData.hashedVisitID}"]`);
+            if (roomListElement) {
+                roomListElement.remove();
+            }
+
             let localUser = userDataController.allOtherUserData.find((localUserData) => {
                 return localUserData.visitIDHash === disconnectedUserData.hashedVisitID;
             });
@@ -372,7 +377,5 @@ export class ConnectionController {
                 return localUserData.visitIDHash !== disconnectedUserData.hashedVisitID;
             });
         }
-
-        roomController.updateRoomList();
     }
 }

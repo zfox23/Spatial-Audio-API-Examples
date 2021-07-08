@@ -264,17 +264,14 @@ export class WebSocketConnectionController {
         }
 
         const myUserData = userDataController.myAvatar.myUserData;
-        let userUUID = localStorage.getItem('userUUID');
+        let userUUID = localStorage.getItem('userUUIDs');
         if (!userUUID) {
             userUUID = Utilities.generateUUID(true);
             localStorage.setItem('userUUID', userUUID);
 
             uiController.showFTUE();
         } else {
-            document.querySelector(".bottomBar").classList.remove("displayNone");
-            document.querySelector(".topBar").classList.remove("displayNone");
-            document.querySelector(".bottomRightControlsContainer").classList.remove("displayNone");
-            twoDimensionalRenderer.updateCanvasDimensions();
+            uiController.showMainUI();
         }
 
         this.socket.emit("addParticipant", {

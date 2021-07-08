@@ -42,7 +42,7 @@ export class UIController {
         playOverlay__headerTextTop.classList.add("playOverlay__headerTextTop");
         playOverlay__headerTextTop.innerHTML = `Spatial Standup`;
         playOverlay__headerTextContainer.appendChild(playOverlay__headerTextTop);
-        let playOverlay__headerTextBottom = document.createElement("h2");
+        let playOverlay__headerTextBottom = document.createElement("p");
         playOverlay__headerTextBottom.classList.add("playOverlay__headerTextBottom");
         playOverlay__headerTextBottom.innerHTML = `Powered by High Fidelity`;
         playOverlay__headerTextContainer.appendChild(playOverlay__headerTextBottom);
@@ -75,6 +75,7 @@ export class UIController {
 
         this.playOverlay.appendChild(playOverlay__footer);
 
+        playButton.focus();
         playButton.addEventListener("click", (e) => {
             this.startConnectionProcess();
         });
@@ -87,11 +88,11 @@ export class UIController {
         document.body.appendChild(topBar);
 
         let roomListOuterContainer = document.createElement("div");
-        roomListOuterContainer.setAttribute("role", "dialog");
         roomListOuterContainer.classList.add("roomListOuterContainer", "displayNone");
         document.body.appendChild(roomListOuterContainer);
 
         let roomListInnerContainer = document.createElement("div");
+        roomListInnerContainer.setAttribute("role", "navigation");
         roomListInnerContainer.classList.add("roomListInnerContainer");
         roomListOuterContainer.appendChild(roomListInnerContainer);
 
@@ -110,8 +111,7 @@ export class UIController {
 
         let myProfileImageContainer = document.createElement("div");
         myProfileImageContainer.classList.add("myProfileImageContainer");
-        let myProfileImage = document.createElement("button");        
-        myProfileImage.setAttribute("aria-label", "My Profile");
+        let myProfileImage = document.createElement("button");
         myProfileImage.classList.add("myProfileImage");
         myProfileImage.addEventListener("click", (e) => {
             this.showAvatarContextMenu(userDataController.myAvatar.myUserData);
@@ -124,30 +124,30 @@ export class UIController {
         myDisplayName.classList.add("myDisplayName");
         myProfileContainer.appendChild(myDisplayName);
 
-        let editMyProfileLink = document.createElement("a");
-        editMyProfileLink.innerHTML = "Edit My Profile";
-        editMyProfileLink.classList.add("editMyProfileLink");
-        editMyProfileLink.addEventListener("click", (e) => {
+        let editMyProfileButton = document.createElement("button");
+        editMyProfileButton.innerHTML = "Edit My Profile";
+        editMyProfileButton.classList.add("editMyProfileButton");
+        editMyProfileButton.addEventListener("click", (e) => {
             this.showAvatarContextMenu(userDataController.myAvatar.myUserData);
             e.stopPropagation();
         });
-        myProfileContainer.appendChild(editMyProfileLink);
+        myProfileContainer.appendChild(editMyProfileButton);
 
         bottomControlsContainer.appendChild(myProfileContainer);
 
         let toggleInputMuteButton = document.createElement("button");
-        toggleInputMuteButton.setAttribute("aria-label", "Mute your Input Audio Device");
+        toggleInputMuteButton.setAttribute("aria-label", "Microphone is unmuted. Click to mute your microphone.");
         toggleInputMuteButton.setAttribute("aria-keyshortcuts", "m");
         toggleInputMuteButton.classList.add("bottomControlButton", "toggleInputMuteButton", "toggleInputMuteButton--unmuted");
         bottomControlsContainer.appendChild(toggleInputMuteButton);
 
         let toggleOutputMuteButton = document.createElement("button");
-        toggleOutputMuteButton.setAttribute("aria-label", "Mute your Output Audio Device");
+        toggleOutputMuteButton.setAttribute("aria-label", "Headphones are unmuted. Click to mute your headphones.");
         toggleOutputMuteButton.classList.add("bottomControlButton", "toggleOutputMuteButton", "toggleOutputMuteButton--unmuted");
         bottomControlsContainer.appendChild(toggleOutputMuteButton);
 
         let toggleVideoButton = document.createElement("button");
-        toggleVideoButton.setAttribute("aria-label", "Enable your Camera");
+        toggleVideoButton.setAttribute("aria-label", "Camera is disabled. Click to enable your camera.");
         toggleVideoButton.classList.add("bottomControlButton", "toggleVideoButton");
         bottomControlsContainer.appendChild(toggleVideoButton);
 
@@ -189,10 +189,14 @@ export class UIController {
         document.querySelector(".bottomBar").classList.remove("displayNone");
         document.querySelector(".topBar").classList.remove("displayNone");
         document.querySelector(".bottomRightControlsContainer").classList.remove("displayNone");
+        document.querySelector(".normalModeCanvas").setAttribute("tabIndex", "0");
+        (<HTMLCanvasElement>document.querySelector(".normalModeCanvas")).focus();
         twoDimensionalRenderer.updateCanvasDimensions();
     }
 
     showFTUE() {
+        document.querySelector(".normalModeCanvas").setAttribute("tabIndex", "-1");
+
         let ftueOuterContainer = document.createElement("div");
         ftueOuterContainer.classList.add("ftueOuterContainer");
 
@@ -203,6 +207,7 @@ export class UIController {
 
         let ftueInnerContainer__text = document.createElement("div");
         ftueInnerContainer__text.classList.add("ftueInnerContainer__text");
+        ftueInnerContainer__text.id = "ftueInnerContainer__text";
         ftueInnerContainer__text.innerHTML = `<div class="ftueInnerContainer__emoji">🥳</div>
 <h1>You made it!</h1>
 <p>This is a live space where you can see and talk with other people.</p>
@@ -211,6 +216,8 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
 
         let ftueInnerContainer__okButton = document.createElement("button");
         ftueInnerContainer__okButton.classList.add("ftueInnerContainer__okButton");
+        ftueInnerContainer__okButton.setAttribute("aria-label", "OK"); 
+        ftueInnerContainer__okButton.setAttribute("aria-labelledby", "ftueInnerContainer__text"); 
         ftueInnerContainer__okButton.innerHTML = `OK, thanks!`;
         ftueInnerContainer__okButton.addEventListener("click", (e) => {
             this.showMainUI();
@@ -219,6 +226,7 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
         ftueInnerContainer.appendChild(ftueInnerContainer__okButton);
 
         document.body.appendChild(ftueOuterContainer);
+        ftueInnerContainer__okButton.focus();
 
         document.querySelector(".ftueInnerContainer__profileLink").addEventListener("click", (e) => {
             this.showMainUI();
@@ -228,7 +236,7 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
     }
 
     updateMyProfileImage() {
-        let avatarContextMenu__removeLink = document.querySelector(".avatarContextMenu__removeLink");
+        let avatarContextMenu__removeProfileImageButton = document.querySelector(".avatarContextMenu__removeProfileImageButton");
         let myProfileImage = <HTMLElement>document.querySelector(".myProfileImage");
 
         if (!userDataController.myAvatar.myUserData.profileImageURL || userDataController.myAvatar.myUserData.profileImageURL.length === 0) {
@@ -236,8 +244,8 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
             if (avatarContextMenu__imageFile) {
                 avatarContextMenu__imageFile.value = null;
             }
-            if (avatarContextMenu__removeLink) {
-                avatarContextMenu__removeLink.classList.add("displayNone");
+            if (avatarContextMenu__removeProfileImageButton) {
+                avatarContextMenu__removeProfileImageButton.classList.add("displayNone");
             }
             if (myProfileImage) {
                 myProfileImage.style.backgroundColor = userDataController.myAvatar.myUserData.colorHex;
@@ -246,8 +254,8 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
 
             userDataController.myAvatar.myUserData.profileImageEl = undefined;
         } else {
-            if (avatarContextMenu__removeLink) {
-                avatarContextMenu__removeLink.classList.remove("displayNone");
+            if (avatarContextMenu__removeProfileImageButton) {
+                avatarContextMenu__removeProfileImageButton.classList.remove("displayNone");
             }
             if (myProfileImage) {
                 myProfileImage.style.backgroundImage = `url(${userDataController.myAvatar.myUserData.profileImageURL})`;
@@ -264,6 +272,9 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
         if (myProfileImage) {
             myProfileImage.style.borderColor = userDataController.myAvatar.myUserData.colorHex;
         }
+        
+        let hasProfilePicture = userDataController.myAvatar.myUserData.profileImageURL && userDataController.myAvatar.myUserData.profileImageURL.length > 0;
+        myProfileImage.setAttribute("aria-label", `A button which looks like your avatar.${hasProfilePicture ? " It contains a picture of you." : ""} "Click to edit your profile."`);
 
         this.maybeUpdateAvatarContextMenu(userDataController.myAvatar.myUserData);
         webSocketConnectionController.updateMyUserDataOnWebSocketServer();
@@ -292,7 +303,7 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
         zoomInText.innerHTML = "Zoom In";
         zoomInContainer.appendChild(zoomInText);
         let zoomInButton = document.createElement("button");
-        zoomInButton.setAttribute("aria-label", "Zoom In Canvas View");
+        zoomInButton.setAttribute("aria-label", "Zoom In");
         zoomInButton.classList.add("zoomButton", "zoomInButton");
         zoomInButton.addEventListener("click", () => {
             physicsController.smoothZoomStartTimestamp = undefined;
@@ -308,7 +319,7 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
         zoomOutText.innerHTML = "Zoom Out";
         zoomOutContainer.appendChild(zoomOutText);
         let zoomOutButton = document.createElement("button");
-        zoomOutButton.setAttribute("aria-label", "Zoom Out Canvas View");
+        zoomOutButton.setAttribute("aria-label", "Zoom Out");
         zoomOutButton.classList.add("zoomButton", "zoomOutButton");
         zoomOutButton.addEventListener("click", () => {
             physicsController.smoothZoomStartTimestamp = undefined;
@@ -374,6 +385,9 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
         if (bottomControlsContainer) {
             bottomControlsContainer.classList.remove("displayNone");
         }
+
+        document.querySelector(".normalModeCanvas").setAttribute("tabIndex", "0");
+        (<HTMLCanvasElement>document.querySelector(".normalModeCanvas")).focus();
     }
     
     generateCloseButtonUI() {
@@ -397,6 +411,7 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
         avatarContextMenu__avatarRepresentation.classList.add("avatarContextMenu__avatarRepresentation");
 
         let avatarContextMenu__h1 = document.createElement("h1");
+        avatarContextMenu__h1.id = "avatarContextMenu__h1";
         avatarContextMenu__h1.classList.add("avatarContextMenu__h1");
         avatarContextMenu__h1.innerHTML = "Profile";
         this.avatarContextMenu.appendChild(avatarContextMenu__h1);
@@ -452,14 +467,14 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
             });
 
             if (userData.profileImageURL && userData.profileImageURL.length > 0) {
-                let removeLink = document.createElement("a");
-                removeLink.setAttribute("aria-label", "Remove Profile Photo");
-                removeLink.classList.add("avatarContextMenu__removeLink");
-                removeLink.innerHTML = `Remove`;
-                removeLink.addEventListener("click", (e) => {
+                let removeProfileImageButton = document.createElement("button");
+                removeProfileImageButton.setAttribute("aria-label", "Remove Profile Photo");
+                removeProfileImageButton.classList.add("avatarContextMenu__removeProfileImageButton");
+                removeProfileImageButton.innerHTML = `Remove`;
+                removeProfileImageButton.addEventListener("click", (e) => {
                     userDataController.myAvatar.onMyProfileImageURLChanged("");
                 });
-                avatarContextMenu__avatarRepresentation.appendChild(removeLink);
+                avatarContextMenu__avatarRepresentation.appendChild(removeProfileImageButton);
             }
 
             avatarContextMenu__customizeContainer.appendChild(avatarContextMenu__avatarRepresentation);
@@ -590,6 +605,7 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
                         return;
                     }
         
+                    accessibilityController.speak("You successfully changed your profile photo!", "polite", 250);
                     console.log(`Successfully uploaded photo! URL:\n${data.Location}`);
     
                     userDataController.myAvatar.onMyProfileImageURLChanged(data.Location);
@@ -1021,6 +1037,10 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
         } else {
             this.modalBackground.classList.add("modalBackground--mobileFullscreen");
         }
+
+        accessibilityController.speak(`Showing Profile dialog for ${userData.displayName}.`, "polite", 250);
+        this.avatarContextMenu.focus();
+        document.querySelector(".normalModeCanvas").setAttribute("tabIndex", "-1");
     }
 
     maybeUpdateAvatarContextMenu(userData: UserData) {
@@ -1039,16 +1059,17 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
                 avatarContextMenu__avatarCircle.style.backgroundImage = `url(${userData.profileImageURL})`;
                 avatarContextMenu__avatarCircle.style.borderColor = userData.colorHex;
 
-                let avatarContextMenu__removeLink = document.querySelector(".avatarContextMenu__removeLink");
+                let avatarContextMenu__removeProfileImageButton = document.querySelector(".avatarContextMenu__removeProfileImageButton");
                 let avatarContextMenu__avatarRepresentation = document.querySelector(".avatarContextMenu__avatarRepresentation");
-                if (!avatarContextMenu__removeLink && avatarContextMenu__avatarRepresentation) {
-                    let removeLink = document.createElement("a");
-                    removeLink.classList.add("avatarContextMenu__removeLink");
-                    removeLink.innerHTML = `Remove`;
-                    removeLink.addEventListener("click", (e) => {
+                if (!avatarContextMenu__removeProfileImageButton && avatarContextMenu__avatarRepresentation) {
+                    let removeProfileImageButton = document.createElement("button");
+                    removeProfileImageButton.classList.add("avatarContextMenu__removeProfileImageButton");
+                    removeProfileImageButton.setAttribute("aria-label", "Remove Profile Photo");
+                    removeProfileImageButton.innerHTML = `Remove`;
+                    removeProfileImageButton.addEventListener("click", (e) => {
                         userDataController.myAvatar.onMyProfileImageURLChanged("");
                     });
-                    avatarContextMenu__avatarRepresentation.appendChild(removeLink);
+                    avatarContextMenu__avatarRepresentation.appendChild(removeProfileImageButton);
                 }
             } else {
                 avatarContextMenu__avatarCircle.style.backgroundImage = "none";
