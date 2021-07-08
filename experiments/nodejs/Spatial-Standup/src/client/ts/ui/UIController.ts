@@ -149,7 +149,7 @@ export class UIController {
 
         let toggleVideoButton = document.createElement("button");
         toggleVideoButton.setAttribute("aria-label", "Camera is disabled. Click to enable your camera.");
-        toggleVideoButton.classList.add("bottomControlButton", "toggleVideoButton");
+        toggleVideoButton.classList.add("bottomControlButton", "toggleVideoButton", "toggleVideoButton--muted");
         bottomControlsContainer.appendChild(toggleVideoButton);
 
         let toggleSettingsButton = document.createElement("button");

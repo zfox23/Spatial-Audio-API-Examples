@@ -46,6 +46,7 @@ export interface UserData {
     stereoInput?: boolean;
     currentWatchPartyRoomName?: string;
     tempData?: TempUserData;
+    isStreamingVideo?: boolean;
 }
 
 export enum MyAvatarModes {
@@ -95,6 +96,7 @@ class MyAvatar {
             noiseSuppressionEnabled: false,
             stereoInput: false,
             currentWatchPartyRoomName: undefined,
+            isStreamingVideo: false,
             tempData: {},
         };
 

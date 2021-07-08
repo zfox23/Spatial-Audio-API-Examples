@@ -195,8 +195,6 @@ export class ConnectionController {
             return;
         }
 
-        videoController.connectToTwilio();
-
         return audionetInitResponse;
     }
 

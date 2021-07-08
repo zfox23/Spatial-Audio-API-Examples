@@ -424,6 +424,7 @@ class Participant {
     hiFiGainSliderValue: string;
     volumeThreshold: number;
     currentWatchPartyRoomName: string;
+    isStreamingVideo: boolean;
 
     constructor({
         userUUID,
@@ -442,6 +443,7 @@ class Participant {
         hiFiGainSliderValue,
         volumeThreshold,
         currentWatchPartyRoomName,
+        isStreamingVideo,
     }: {
         userUUID: string,
         sessionStartTimestamp: number,
@@ -459,6 +461,7 @@ class Participant {
         hiFiGainSliderValue: string,
         volumeThreshold: number,
         currentWatchPartyRoomName: string,
+        isStreamingVideo: boolean,
     }) {
         this.userUUID = userUUID;
         this.sessionStartTimestamp = sessionStartTimestamp;
@@ -476,6 +479,7 @@ class Participant {
         this.hiFiGainSliderValue = hiFiGainSliderValue;
         this.volumeThreshold = volumeThreshold;
         this.currentWatchPartyRoomName = currentWatchPartyRoomName;
+        this.isStreamingVideo = isStreamingVideo;
     }
 }
 
@@ -550,6 +554,7 @@ socketIOServer.on("connection", (socket: any) => {
         hiFiGainSliderValue,
         volumeThreshold,
         currentWatchPartyRoomName,
+        isStreamingVideo,
     }: {
         userUUID: string,
         sessionStartTimestamp: number,
@@ -566,6 +571,7 @@ socketIOServer.on("connection", (socket: any) => {
         hiFiGainSliderValue: string,
         volumeThreshold: number,
         currentWatchPartyRoomName: string,
+        isStreamingVideo: boolean,
     }) => {
         if (!spaceInformation[spaceName]) {
             spaceInformation[spaceName] = new ServerSpaceInfo({ spaceName });
@@ -593,6 +599,7 @@ socketIOServer.on("connection", (socket: any) => {
             hiFiGainSliderValue,
             volumeThreshold,
             currentWatchPartyRoomName,
+            isStreamingVideo,
         });
 
         spaceInformation[spaceName].participants.push(me);
@@ -619,6 +626,7 @@ socketIOServer.on("connection", (socket: any) => {
         hiFiGainSliderValue,
         volumeThreshold,
         currentWatchPartyRoomName,
+        isStreamingVideo,
     }: {
         spaceName: string,
         visitIDHash: string,
@@ -633,6 +641,7 @@ socketIOServer.on("connection", (socket: any) => {
         hiFiGainSliderValue: string,
         volumeThreshold: number,
         currentWatchPartyRoomName: string,
+        isStreamingVideo: boolean,
     }) => {
         let participantToEdit = spaceInformation[spaceName].participants.find((participant: Participant) => {
             return participant.visitIDHash === visitIDHash;
@@ -671,6 +680,9 @@ socketIOServer.on("connection", (socket: any) => {
             }
             if (typeof (currentWatchPartyRoomName) === "string") {
                 participantToEdit.currentWatchPartyRoomName = currentWatchPartyRoomName;
+            }
+            if (typeof (isStreamingVideo) === "boolean") {
+                participantToEdit.isStreamingVideo = isStreamingVideo;
             }
             socket.to(spaceName).emit("onParticipantsAddedOrEdited", [participantToEdit]);
         } else {

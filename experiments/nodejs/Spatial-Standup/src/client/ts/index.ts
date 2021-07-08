@@ -46,7 +46,6 @@ export const editorModeController = new EditorModeController();
 export const uiThemeController = new UIThemeController();
 
 userDataController.init();
-videoController.init();
 roomController.initializeRooms();
 
 twoDimensionalRenderer.updateCanvasDimensions();

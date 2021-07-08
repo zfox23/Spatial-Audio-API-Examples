@@ -48,6 +48,7 @@ export class MyAvatarEars {
             agcEnabled: false,
             noiseSuppressionEnabled: false,
             currentWatchPartyRoomName: undefined,
+            isStreamingVideo: false,
             userGainForThisConnection: 1.0,
             tempData: {},
         };

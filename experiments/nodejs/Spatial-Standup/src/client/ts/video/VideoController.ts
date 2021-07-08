@@ -1,10 +1,11 @@
 import * as Video from 'twilio-video';
-import { avDevicesController, uiThemeController, userDataController } from '..';
+import { avDevicesController, uiThemeController, userDataController, webSocketConnectionController } from '..';
 
 declare var HIFI_SPACE_NAME: string;
 declare var TWILIO_JWT: string;
 
 export class VideoController {
+    connectingToTwilio: boolean = false;
     toggleVideoButton: HTMLButtonElement;
     videoIsMuted: boolean;
     twilioRoom: Video.Room;
@@ -27,21 +28,21 @@ export class VideoController {
         this.providedUserIDToVideoElementMap = new Map();
     }
 
-    init() {
-        this.disableVideoButton();
-    }
-
     connectToTwilio() {
         if (!TWILIO_JWT || TWILIO_JWT.length === 0) {
             console.error(`Couldn't connect to Twilio: \`TWILIO_JWT\` is unspecified. The owner of this application has not provided Twilio authentication credentials.\nVideo conferencing in Spatial Standup will not function.`);
             return;
         }
 
+        this.connectingToTwilio = true;
+        console.log("Connecting to Twilio...");
+
         Video.connect(TWILIO_JWT, {
             name: HIFI_SPACE_NAME,
             video: false,
             audio: false
         }).then((twilioRoom: Video.Room) => {
+            this.connectingToTwilio = false;
             this.twilioRoom = twilioRoom;
             console.log(`Connected to Twilio Room \`${this.twilioRoom.name}\`!`);
 
@@ -53,9 +54,9 @@ export class VideoController {
             this.twilioRoom.once('disconnected', error => this.twilioRoom.participants.forEach(this.participantDisconnected.bind(this)));
 
             this.enableVideoButton();
-            this.toggleVideoButton.classList.add("toggleVideoButton--muted");
             uiThemeController.refreshThemedElements();
         }, error => {
+            this.connectingToTwilio = false;
             console.error(`Unable to connect to Room: ${error.message}`);
         });
     }
@@ -69,8 +70,6 @@ export class VideoController {
                 mediaElement.remove();
             });
         }
-        
-        this.disableVideoButton();
 
         if (!this.twilioRoom) {
             return;
@@ -115,10 +114,23 @@ export class VideoController {
         this.toggleVideoButton.setAttribute("aria-label", "Enable your Camera");
         uiThemeController.clearThemesFromElement(<HTMLElement>this.toggleVideoButton, 'toggleVideoButton--unmuted', false);
         uiThemeController.refreshThemedElements();
+
+        userDataController.myAvatar.myUserData.isStreamingVideo = false;
+        webSocketConnectionController.updateMyUserDataOnWebSocketServer();
+
+        let anyoneIsStreaming = !!userDataController.allOtherUserData.find((userData) => { return userData.isStreamingVideo === true; });
+        if (!anyoneIsStreaming) {
+            console.log("Nobody in this Room is streaming video. Disconnecting from Twilio...");
+            this.disconnectFromTwilio();
+        }
     }
 
     async enableVideo() {
         console.log("Enabling local video...");
+
+        if (!this.twilioRoom) {
+            await this.connectToTwilio();
+        }
 
         let localTracks = await Video.createLocalTracks({
             audio: false,
@@ -148,10 +160,13 @@ export class VideoController {
         this.toggleVideoButton.classList.add("toggleVideoButton--unmuted");
         uiThemeController.refreshThemedElements();
         this.toggleVideoButton.setAttribute("aria-label", "Disable your Camera");
+
+        userDataController.myAvatar.myUserData.isStreamingVideo = true;
+        webSocketConnectionController.updateMyUserDataOnWebSocketServer();
     }
 
     async toggleVideo() {
-        if (!(this.twilioRoom && userDataController.myAvatar.myUserData.providedUserID)) {
+        if (!userDataController.myAvatar.myUserData.providedUserID) {
             return;
         }
 
