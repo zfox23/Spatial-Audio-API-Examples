@@ -441,7 +441,7 @@ export class RoomController {
             roomInfoContainer__header.classList.add("roomInfoContainer__header");
             let occupiedSeats = room.seats.filter((seat) => { return !!seat.occupiedUserData; });
             roomInfoContainer__header.innerHTML = `${room.name} <span class="roomInfoContainer__peopleIcon"></span> ${occupiedSeats.length}/${room.numSeatsInRoom}`;
-            roomInfoContainer__header.setAttribute("aria-label", `${room.name}. ${occupiedSeats.length} seat${occupiedSeats.length === 1 ? "" : "s"} occupied out of ${room.numSeatsInRoom} seats total.${occupiedSeats.length < room.numSeatsInRoom ? " Click to go here." : ""}`);
+            roomInfoContainer__header.setAttribute("aria-label", `${room.name}. ${occupiedSeats.length} seat${occupiedSeats.length === 1 ? "" : "s"} occupied out of ${room.numSeatsInRoom} seats total.${occupiedSeats.length < room.numSeatsInRoom ? (userDataController.myAvatar.myUserData.currentRoom === room ? " You are in this room." : " Click to go to this room.") : ""}`);
             totalNumOccupiedSeats += occupiedSeats.length;
             roomInfoContainer__header.addEventListener("click", (e) => {
                 if (userDataController.myAvatar.myUserData.currentRoom === room) {
