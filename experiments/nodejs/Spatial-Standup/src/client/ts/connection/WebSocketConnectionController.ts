@@ -1,4 +1,4 @@
-import { avDevicesController, connectionController, howlerController, roomController, signalsController, twoDimensionalRenderer, uiController, userDataController, userInputController, watchPartyController } from "..";
+import { accessibilityController, avDevicesController, connectionController, howlerController, roomController, signalsController, twoDimensionalRenderer, uiController, userDataController, userInputController, watchPartyController } from "..";
 import { SoundParams, HowlerController, chairSounds } from "../sounds/LocalSoundsController";
 import { SignalParams } from "../ui/SignalsController";
 import { Utilities } from "../utilities/Utilities";
@@ -272,6 +272,7 @@ export class WebSocketConnectionController {
             uiController.showFTUE();
         } else {
             uiController.showMainUI();
+            accessibilityController.speak(`You are in the room named "${myUserData.currentRoom.name}".`);
         }
 
         this.socket.emit("addParticipant", {
