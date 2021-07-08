@@ -103,7 +103,7 @@ export class WebSocketConnectionController {
                         localUserData.volumeThreshold = volumeThreshold;
                     }
                     if (typeof (currentSeatID) === "string") {
-                        if (localUserData.currentSeat.seatID !== currentSeatID) {
+                        if (!localUserData.currentSeat || (localUserData.currentSeat && localUserData.currentSeat.seatID !== currentSeatID)) {
                             playChairSound = true;
                         }
 
