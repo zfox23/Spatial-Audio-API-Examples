@@ -223,7 +223,6 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
         ftueInnerContainer__okButton.addEventListener("click", (e) => {
             this.showMainUI();
             ftueOuterContainer.remove();
-            accessibilityController.speak(`You are in the room named "${userDataController.myAvatar.myUserData.currentRoom.name}".`);
         });
         ftueInnerContainer.appendChild(ftueInnerContainer__okButton);
 

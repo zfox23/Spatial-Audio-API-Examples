@@ -1,5 +1,5 @@
 import { OrientationEuler3D, Point3D } from "hifi-spatial-audio";
-import { userDataController, connectionController, roomController, physicsController, pathsController, uiController, twoDimensionalRenderer, webSocketConnectionController, watchPartyController, howlerController, uiThemeController } from "..";
+import { userDataController, connectionController, roomController, physicsController, pathsController, uiController, twoDimensionalRenderer, webSocketConnectionController, watchPartyController, howlerController, uiThemeController, accessibilityController } from "..";
 import { Path, Waypoint } from "../ai/PathsController";
 import { AVATAR, PHYSICS, UI } from "../constants/constants";
 import { chairSounds } from "../sounds/LocalSoundsController";
@@ -213,6 +213,7 @@ class MyAvatar {
                 console.warn(`\`moveToNewSeat()\`: Couldn't transmit user data!`);
             }
             physicsController.autoComputePXPerMFromRoom(targetSeat.room);
+            accessibilityController.speak(`You are in the room named "${targetSeat.room.name}".`);
         } else {
             howlerController.playSound({ src: chairSounds[Math.floor(Math.random() * chairSounds.length)], randomSoundRate: true, positionM: myUserData.positionCurrent});
         }
