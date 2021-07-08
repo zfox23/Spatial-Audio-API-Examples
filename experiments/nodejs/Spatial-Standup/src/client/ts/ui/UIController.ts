@@ -82,11 +82,6 @@ export class UIController {
     }
 
     initMainUI() {
-        let topBar = document.createElement("div");
-        topBar.setAttribute("role", "navigation");
-        topBar.classList.add("topBar", "displayNone");
-        document.body.appendChild(topBar);
-
         let roomListOuterContainer = document.createElement("div");
         roomListOuterContainer.classList.add("roomListOuterContainer", "displayNone");
         document.body.appendChild(roomListOuterContainer);
@@ -102,6 +97,11 @@ export class UIController {
         bottomBar.addEventListener("click", (e) => { userInputController.hideSettingsMenu(); });
         bottomBar.addEventListener("click", this.hideAvatarContextMenu.bind(this));
         document.body.appendChild(bottomBar);
+
+        let topBar = document.createElement("div");
+        topBar.setAttribute("role", "navigation");
+        topBar.classList.add("topBar", "displayNone");
+        document.body.appendChild(topBar);        
 
         let bottomControlsContainer = document.createElement("div");
         bottomControlsContainer.classList.add("bottomControlsContainer");

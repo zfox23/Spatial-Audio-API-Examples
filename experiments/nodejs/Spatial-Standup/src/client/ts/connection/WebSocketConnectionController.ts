@@ -264,7 +264,7 @@ export class WebSocketConnectionController {
         }
 
         const myUserData = userDataController.myAvatar.myUserData;
-        let userUUID = localStorage.getItem('userUUIDs');
+        let userUUID = localStorage.getItem('userUUID');
         if (!userUUID) {
             userUUID = Utilities.generateUUID(true);
             localStorage.setItem('userUUID', userUUID);
