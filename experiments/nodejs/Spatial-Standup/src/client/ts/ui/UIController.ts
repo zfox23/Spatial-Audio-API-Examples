@@ -39,6 +39,7 @@ export class UIController {
         let playOverlay__headerTextContainer = document.createElement("div");
         playOverlay__headerTextContainer.classList.add("playOverlay__headerTextContainer");
         let playOverlay__headerTextTop = document.createElement("h1");
+        playOverlay__headerTextTop.setAttribute("aria-label", "Spatial Standup: Powered by High Fidelity");
         playOverlay__headerTextTop.classList.add("playOverlay__headerTextTop");
         playOverlay__headerTextTop.innerHTML = `Spatial Standup`;
         playOverlay__headerTextContainer.appendChild(playOverlay__headerTextTop);
