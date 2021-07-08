@@ -472,14 +472,22 @@ export class RoomController {
             roomInfoContainer__occupant.setAttribute('data-visit-id-hash', userData.visitIDHash);
             let occupantInnerHTML;
             if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash) {
-                roomInfoContainer__occupant.setAttribute('aria-label', `${userDataController.myAvatar.myUserData.displayName} in ${userDataController.myAvatar.myUserData.currentRoom.name}. This is you. Click to view profile.`);
+                if (userDataController.myAvatar.myUserData.currentRoom) {
+                    roomInfoContainer__occupant.setAttribute('aria-label', `${userDataController.myAvatar.myUserData.displayName} in ${userDataController.myAvatar.myUserData.currentRoom.name}. This is you. Click to view profile.`);
+                } else {
+                    roomInfoContainer__occupant.setAttribute('aria-label', `${userDataController.myAvatar.myUserData.displayName}. This is you. Click to view profile.`);
+                }
                 occupantInnerHTML = `<span class="roomInfoContainer__occupantAvatar" style="background-color:${userDataController.myAvatar.myUserData.colorHex};border-color:${userDataController.myAvatar.myUserData.colorHex};background-image:url(${userDataController.myAvatar.myUserData.profileImageURL ? userDataController.myAvatar.myUserData.profileImageURL : "none"});"></span>`;
                 occupantInnerHTML += `<div class="roomInfoContainer__occupantTextContainer"><p class="roomInfoContainer__occupantTextTop">${userData.displayName}</p><p class="roomInfoContainer__occupantTextBottom">(YOU)</p></div>`;
                 if (userData.currentRoom) {
                     document.querySelector(`[data-room-name="${userData.currentRoom.name}"]`).prepend(roomInfoContainer__occupant);
                 }
             } else {
-                roomInfoContainer__occupant.setAttribute('aria-label', `${userDataController.myAvatar.myUserData.displayName} in ${userDataController.myAvatar.myUserData.currentRoom.name}. Click to view profile.`);
+                if (userDataController.myAvatar.myUserData.currentRoom) {
+                    roomInfoContainer__occupant.setAttribute('aria-label', `${userDataController.myAvatar.myUserData.displayName} in ${userDataController.myAvatar.myUserData.currentRoom.name}. Click to view profile.`);
+                } else {
+                    roomInfoContainer__occupant.setAttribute('aria-label', `${userDataController.myAvatar.myUserData.displayName}. Click to view profile.`);
+                }
                 occupantInnerHTML = ``;
                 if (userData.colorHex) {
                     occupantInnerHTML += `<span class="roomInfoContainer__occupantAvatar" style="background-color:${userData.colorHex};border-color:${userData.colorHex};background-image:url(${userData.profileImageURL ? userData.profileImageURL : "none"});"></span>`;
