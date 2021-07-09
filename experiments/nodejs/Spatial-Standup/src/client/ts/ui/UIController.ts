@@ -83,15 +83,6 @@ export class UIController {
     }
 
     initMainUI() {
-        let roomListOuterContainer = document.createElement("div");
-        roomListOuterContainer.classList.add("roomListOuterContainer", "displayNone");
-        document.body.appendChild(roomListOuterContainer);
-
-        let roomListInnerContainer = document.createElement("div");
-        roomListInnerContainer.setAttribute("role", "navigation");
-        roomListInnerContainer.classList.add("roomListInnerContainer");
-        roomListOuterContainer.appendChild(roomListInnerContainer);
-
         let bottomBar = document.createElement("div");
         bottomBar.setAttribute("role", "navigation");
         bottomBar.classList.add("bottomBar", "displayNone");
@@ -102,7 +93,16 @@ export class UIController {
         let topBar = document.createElement("div");
         topBar.setAttribute("role", "navigation");
         topBar.classList.add("topBar", "displayNone");
-        document.body.appendChild(topBar);        
+        document.body.appendChild(topBar);
+        
+        let roomListOuterContainer = document.createElement("div");
+        roomListOuterContainer.classList.add("roomListOuterContainer", "displayNone");
+        document.body.appendChild(roomListOuterContainer);
+
+        let roomListInnerContainer = document.createElement("div");
+        roomListInnerContainer.setAttribute("role", "navigation");
+        roomListInnerContainer.classList.add("roomListInnerContainer");
+        roomListOuterContainer.appendChild(roomListInnerContainer);
 
         let bottomControlsContainer = document.createElement("div");
         bottomControlsContainer.classList.add("bottomControlsContainer");
@@ -275,7 +275,7 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
         }
         
         let hasProfilePicture = userDataController.myAvatar.myUserData.profileImageURL && userDataController.myAvatar.myUserData.profileImageURL.length > 0;
-        myProfileImage.setAttribute("aria-label", `A button which looks like your avatar.${hasProfilePicture ? " It contains a picture of you." : ""} "Click to edit your profile."`);
+        myProfileImage.setAttribute("aria-label", `A button which looks like your avatar.${hasProfilePicture ? " It contains your profile picture." : ""} "Click to edit your profile."`);
 
         this.maybeUpdateAvatarContextMenu(userDataController.myAvatar.myUserData);
         webSocketConnectionController.updateMyUserDataOnWebSocketServer();

@@ -215,7 +215,6 @@ class MyAvatar {
                 console.warn(`\`moveToNewSeat()\`: Couldn't transmit user data!`);
             }
             physicsController.autoComputePXPerMFromRoom(targetSeat.room);
-            accessibilityController.speak(`You are in the room named "${targetSeat.room.name}".`);
         } else {
             howlerController.playSound({ src: chairSounds[Math.floor(Math.random() * chairSounds.length)], randomSoundRate: true, positionM: myUserData.positionCurrent});
         }
@@ -356,6 +355,8 @@ class MyAvatar {
         if (normalModeCanvas) {
             normalModeCanvas.setAttribute("aria-label", myUserData.currentRoom.altText);
         }
+
+        accessibilityController.speak(`You are in the room named "${targetSeat.room.name}".`);
 
         roomController.updateRoomList();
 
