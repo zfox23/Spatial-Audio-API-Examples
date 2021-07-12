@@ -237,6 +237,19 @@ async function connectToSpace(req: any, res: any, next: any) {
     });
 }
 
+function showSlackError(errorString: string, res: any) {
+    console.error(`There was some error during the Slack bot installation process:\n${errorString}`);
+    const slackErrorHTMLFile = path.join(__dirname, "internal", "slackError.html");
+    readFile(slackErrorHTMLFile, { encoding: "utf-8" })
+        .then((contents: string) => {
+            res.status(200).send(contents);
+        })
+        .catch((e) => {
+            console.error(`There was an error reading \`slackError.html\` from ${slackErrorHTMLFile}! Error:\n${e}`);
+            res.status(500).send();
+        });
+}
+
 function showSlackSuccess(teamName: string, res: any) {
     const slackSuccessHTMLFile = path.join(__dirname, "internal", "slackSuccess.html");
     readFile(slackSuccessHTMLFile, { encoding: "utf-8" })
@@ -245,15 +258,9 @@ function showSlackSuccess(teamName: string, res: any) {
             res.status(200).send(contents);
         })
         .catch((e) => {
-            let errorString = `<p>Uh oh!</p>`;
-            console.error(`There was an error reading \`slackSuccess.html\` from ${slackSuccessHTMLFile}! Error:\n${e}`);
-            res.status(500).send(errorString);
+            showSlackError(`Couldn't read ${slackSuccessHTMLFile}!`, res);
         });
 }
-
-app.get('/slack/success', (req: any, res: any, next: any) => {
-    showSlackSuccess("hey how did you guess this URL?", res);
-});
 
 app.get('/slack', (req: any, res: any, next: any) => {
     let code = req.query.code;
@@ -334,9 +341,7 @@ app.get('/slack', (req: any, res: any, next: any) => {
             }
         })
         .catch((e: any) => {
-            let errorString = `There was an error when contacting Slack. More information:\n${JSON.stringify(e)}`;
-            console.error(errorString);
-            res.send(errorString);
+            showSlackError(JSON.stringify(e), res);
         });
 });
 
