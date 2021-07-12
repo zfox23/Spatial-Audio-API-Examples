@@ -1,5 +1,5 @@
-import { avDevicesController, connectionController, localSoundsController, roomController, signalsController, uiController, userDataController, userInputController, watchPartyController } from "..";
-import { SoundParams } from "../sounds/LocalSoundsController";
+import { accessibilityController, avDevicesController, connectionController, howlerController, roomController, signalsController, twoDimensionalRenderer, uiController, userDataController, userInputController, videoController, watchPartyController } from "..";
+import { SoundParams, HowlerController, chairSounds } from "../sounds/LocalSoundsController";
 import { SignalParams } from "../ui/SignalsController";
 import { Utilities } from "../utilities/Utilities";
 declare var HIFI_SPACE_NAME: string;
@@ -20,6 +20,7 @@ interface WebSocketParticipantData {
     hiFiGainSliderValue: string;
     volumeThreshold: number;
     currentWatchPartyRoomName: string;
+    isStreamingVideo: boolean;
 }
 
 export class WebSocketConnectionController {
@@ -56,10 +57,13 @@ export class WebSocketConnectionController {
                     hiFiGainSliderValue,
                     volumeThreshold,
                     currentWatchPartyRoomName,
+                    isStreamingVideo,
                 } = participant;
 
                 let localUserData = userDataController.allOtherUserData.find((userData) => { return userData.visitIDHash === visitIDHash; });
                 if (localUserData) {
+                    let playChairSound = false;
+
                     if (typeof (displayName) === "string") {
                         localUserData.displayName = displayName;
                     }
@@ -77,6 +81,9 @@ export class WebSocketConnectionController {
                         }
                     }
                     if (typeof (isAudioInputMuted) === "boolean") {
+                        if (localUserData.isAudioInputMuted && !isAudioInputMuted) {
+                            playChairSound = true;
+                        }
                         localUserData.isAudioInputMuted = isAudioInputMuted;
                     }
                     if (typeof (echoCancellationEnabled) === "boolean") {
@@ -96,6 +103,10 @@ export class WebSocketConnectionController {
                         localUserData.volumeThreshold = volumeThreshold;
                     }
                     if (typeof (currentSeatID) === "string") {
+                        if (!localUserData.currentSeat || (localUserData.currentSeat && localUserData.currentSeat.seatID !== currentSeatID)) {
+                            playChairSound = true;
+                        }
+
                         if (localUserData.currentSeat) {
                             localUserData.currentSeat.occupiedUserData = undefined;
                         }
@@ -114,8 +125,27 @@ export class WebSocketConnectionController {
                             watchPartyController.joinWatchParty(userDataController.myAvatar.myUserData.currentRoom.name);
                         }
                     }
+                    if (typeof (isStreamingVideo) === "boolean") {
+                        localUserData.isStreamingVideo = isStreamingVideo;
+
+                        if (localUserData.isStreamingVideo && !videoController.twilioRoom && !videoController.connectingToTwilio) {
+                            console.log("At least one user in this Room is streaming video. Connecting to Twilio...");
+                            videoController.connectToTwilio();
+                        } else if (videoController.twilioRoom) {
+                            let anyoneIsStreaming = !!userDataController.allOtherUserData.find((userData) => { return userData.isStreamingVideo === true; });
+                            anyoneIsStreaming = anyoneIsStreaming || userDataController.myAvatar.myUserData.isStreamingVideo;
+                            if (!anyoneIsStreaming) {
+                                console.log("Nobody in this Room is streaming video. Disconnecting from Twilio...");
+                                videoController.disconnectFromTwilio();
+                            }
+                        }
+                    }
+
+                    if (playChairSound) {
+                        howlerController.playSound({ src: chairSounds[Math.floor(Math.random() * chairSounds.length)], randomSoundRate: true, positionM: localUserData.positionCurrent, volume: 0.3 });
+                    }
                     
-                    console.log(`Updated participant:\nVisit ID Hash \`${localUserData.visitIDHash}\`:\nDisplay Name: \`${displayName}\`\nColor: ${colorHex}\nprofileImageURL: ${profileImageURL}\nisAudioInputMuted: ${isAudioInputMuted}\nCurrent Seat ID: ${localUserData.currentSeat ? localUserData.currentSeat.seatID : "undefined"}\nCurrent Room Name: ${localUserData.currentRoom ? localUserData.currentRoom.name : "undefined"}\nechoCancellationEnabled: ${echoCancellationEnabled}\nagcEnabled: ${agcEnabled}\nnsEnabled: ${noiseSuppressionEnabled}\nhiFiGainSliderValue: ${hiFiGainSliderValue}\nvolumeThreshold:${volumeThreshold}\ncurrentWatchPartyRoomName:${currentWatchPartyRoomName}\n`);
+                    console.log(`Updated participant:\nVisit ID Hash \`${localUserData.visitIDHash}\`:\nDisplay Name: \`${displayName}\`\nColor: ${colorHex}\nprofileImageURL: ${profileImageURL}\nisAudioInputMuted: ${isAudioInputMuted}\nCurrent Seat ID: ${localUserData.currentSeat ? localUserData.currentSeat.seatID : "undefined"}\nCurrent Room Name: ${localUserData.currentRoom ? localUserData.currentRoom.name : "undefined"}\nechoCancellationEnabled: ${echoCancellationEnabled}\nagcEnabled: ${agcEnabled}\nnsEnabled: ${noiseSuppressionEnabled}\nhiFiGainSliderValue: ${hiFiGainSliderValue}\nvolumeThreshold:${volumeThreshold}\ncurrentWatchPartyRoomName:${currentWatchPartyRoomName}\nisStreamingVideo:${isStreamingVideo}\n`);
                 } else if (visitIDHash && displayName) {
                     localUserData = {
                         visitIDHash,
@@ -129,7 +159,8 @@ export class WebSocketConnectionController {
                         hiFiGainSliderValue,
                         volumeThreshold,
                         currentWatchPartyRoomName,
-                        tempData: {}
+                        tempData: {},
+                        isStreamingVideo,
                     };
                     localUserData.hiFiGain = uiController.hiFiGainFromSliderValue(localUserData.hiFiGainSliderValue);
 
@@ -244,7 +275,7 @@ export class WebSocketConnectionController {
             let parsedSoundParams: SoundParams = JSON.parse(soundParams);
 
             console.log(`"${visitIDHash}" requested to play a sound!`);
-            localSoundsController.playSound(parsedSoundParams);
+            howlerController.playSound(parsedSoundParams);
         });
     }
 
@@ -260,6 +291,8 @@ export class WebSocketConnectionController {
             localStorage.setItem('userUUID', userUUID);
 
             uiController.showFTUE();
+        } else {
+            uiController.showMainUI();
         }
 
         this.socket.emit("addParticipant", {
@@ -278,6 +311,7 @@ export class WebSocketConnectionController {
             hiFiGainSliderValue: myUserData.hiFiGainSliderValue,
             volumeThreshold: myUserData.volumeThreshold,
             currentWatchPartyRoomName: myUserData.currentWatchPartyRoomName,
+            isStreamingVideo: myUserData.isStreamingVideo,
         });
     }
 
@@ -302,6 +336,7 @@ export class WebSocketConnectionController {
             hiFiGainSliderValue: myUserData.hiFiGainSliderValue,
             volumeThreshold: myUserData.volumeThreshold,
             currentWatchPartyRoomName: myUserData.currentWatchPartyRoomName,
+            isStreamingVideo: myUserData.isStreamingVideo,
         };
 
         console.log(`Updating data about me on server:\n${JSON.stringify(dataToUpdate)}`);

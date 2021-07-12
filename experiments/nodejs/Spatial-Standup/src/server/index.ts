@@ -5,6 +5,7 @@ console.warn(`*****\nServer mode: ${serverMode}\n*****\n`);
 console.warn(`*****\nServer HTTPS mode status: ${isInHTTPSMode}\n*****\n`);
 
 const fs = require('fs');
+import { readFile } from 'fs/promises';
 const webpack = require('webpack');
 const path = require('path');
 const express = require('express');
@@ -111,7 +112,7 @@ async function connectToSpace(req: any, res: any, next: any) {
             console.log(`Creating a new Space with name \`${spaceName}\`...`);
             let createSpaceJSON;
             try {
-                let createSpace = await fetch(`https://${auth.HIFI_ENDPOINT_URL}/api/v1/spaces/create?name=${spaceName}&token=${adminHiFiJWT}`);
+                let createSpace = await fetch(`https://${auth.HIFI_ENDPOINT_URL}/api/v1/spaces/create-by-name?name=${spaceName}&token=${adminHiFiJWT}`);
                 createSpaceJSON = await createSpace.json();
             } catch (e) {
                 console.error(`There was an error when creating a new space with name \`${spaceName}\`. Error:\n${JSON.stringify(e)}`);
@@ -236,6 +237,24 @@ async function connectToSpace(req: any, res: any, next: any) {
     });
 }
 
+function showSlackSuccess(teamName: string, res: any) {
+    const slackSuccessHTMLFile = path.join(__dirname, "internal", "slackSuccess.html");
+    readFile(slackSuccessHTMLFile, { encoding: "utf-8" })
+        .then((contents: string) => {
+            contents = contents.replace("${SLACK_WORKSPACE_NAME}", teamName);
+            res.status(200).send(contents);
+        })
+        .catch((e) => {
+            let errorString = `<p>Uh oh!</p>`;
+            console.error(`There was an error reading \`slackSuccess.html\` from ${slackSuccessHTMLFile}! Error:\n${e}`);
+            res.status(500).send(errorString);
+        });
+}
+
+app.get('/slack/success', (req: any, res: any, next: any) => {
+    showSlackSuccess("hey how did you guess this URL?", res);
+});
+
 app.get('/slack', (req: any, res: any, next: any) => {
     let code = req.query.code;
     if (!code) {
@@ -253,8 +272,7 @@ app.get('/slack', (req: any, res: any, next: any) => {
         .then((json: any) => {
             if (json && json.ok) {
                 analyticsController.logEvent(ServerAnalyticsEventCategory.SlackBotAdded, new SlackBotAddedEvent());
-                let okString = `<p>The Spatial Standup bot has been successfully added to the Slack workspace named "${json.team.name}"! Try typing <code>/standup</code> in any Slack channel.</p>`;
-                res.status(200).send(okString)
+                showSlackSuccess(json.team.name, res);
 
                 const usersInfoParams = new URLSearchParams();
                 usersInfoParams.append("token", json.access_token);
@@ -343,7 +361,7 @@ app.post('/create', (req: any, res: any, next: any) => {
         if (slackTeamID && slackTeamID === "T025Q3X6R") {
             isHiFiEmployee = true;
         }
-        
+
         let stringToHash = slackChannelID;
         let hash = crypto.createHash('md5').update(stringToHash).digest('hex');
         let spaceURL;
@@ -424,6 +442,7 @@ class Participant {
     hiFiGainSliderValue: string;
     volumeThreshold: number;
     currentWatchPartyRoomName: string;
+    isStreamingVideo: boolean;
 
     constructor({
         userUUID,
@@ -442,6 +461,7 @@ class Participant {
         hiFiGainSliderValue,
         volumeThreshold,
         currentWatchPartyRoomName,
+        isStreamingVideo,
     }: {
         userUUID: string,
         sessionStartTimestamp: number,
@@ -459,6 +479,7 @@ class Participant {
         hiFiGainSliderValue: string,
         volumeThreshold: number,
         currentWatchPartyRoomName: string,
+        isStreamingVideo: boolean,
     }) {
         this.userUUID = userUUID;
         this.sessionStartTimestamp = sessionStartTimestamp;
@@ -476,6 +497,7 @@ class Participant {
         this.hiFiGainSliderValue = hiFiGainSliderValue;
         this.volumeThreshold = volumeThreshold;
         this.currentWatchPartyRoomName = currentWatchPartyRoomName;
+        this.isStreamingVideo = isStreamingVideo;
     }
 }
 
@@ -550,6 +572,7 @@ socketIOServer.on("connection", (socket: any) => {
         hiFiGainSliderValue,
         volumeThreshold,
         currentWatchPartyRoomName,
+        isStreamingVideo,
     }: {
         userUUID: string,
         sessionStartTimestamp: number,
@@ -566,6 +589,7 @@ socketIOServer.on("connection", (socket: any) => {
         hiFiGainSliderValue: string,
         volumeThreshold: number,
         currentWatchPartyRoomName: string,
+        isStreamingVideo: boolean,
     }) => {
         if (!spaceInformation[spaceName]) {
             spaceInformation[spaceName] = new ServerSpaceInfo({ spaceName });
@@ -593,6 +617,7 @@ socketIOServer.on("connection", (socket: any) => {
             hiFiGainSliderValue,
             volumeThreshold,
             currentWatchPartyRoomName,
+            isStreamingVideo,
         });
 
         spaceInformation[spaceName].participants.push(me);
@@ -619,6 +644,7 @@ socketIOServer.on("connection", (socket: any) => {
         hiFiGainSliderValue,
         volumeThreshold,
         currentWatchPartyRoomName,
+        isStreamingVideo,
     }: {
         spaceName: string,
         visitIDHash: string,
@@ -633,6 +659,7 @@ socketIOServer.on("connection", (socket: any) => {
         hiFiGainSliderValue: string,
         volumeThreshold: number,
         currentWatchPartyRoomName: string,
+        isStreamingVideo: boolean,
     }) => {
         let participantToEdit = spaceInformation[spaceName].participants.find((participant: Participant) => {
             return participant.visitIDHash === visitIDHash;
@@ -671,6 +698,9 @@ socketIOServer.on("connection", (socket: any) => {
             }
             if (typeof (currentWatchPartyRoomName) === "string") {
                 participantToEdit.currentWatchPartyRoomName = currentWatchPartyRoomName;
+            }
+            if (typeof (isStreamingVideo) === "boolean") {
+                participantToEdit.isStreamingVideo = isStreamingVideo;
             }
             socket.to(spaceName).emit("onParticipantsAddedOrEdited", [participantToEdit]);
         } else {

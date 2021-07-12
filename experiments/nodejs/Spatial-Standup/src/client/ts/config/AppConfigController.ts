@@ -13,6 +13,9 @@ const CONFIG_JSON_VERSIONS = {
     "v1.0.0": {
         "dateAdded": "2021-04-26_09-19-00",
     },
+    "v1.1.0": {
+        "dateAdded": "2021-07-07_10-49-00",
+    },
 };
 enum CONFIG_ERRORS {
     "INCOMPATIBLE_VERSION" = "Incompatible version.",
@@ -20,6 +23,7 @@ enum CONFIG_ERRORS {
     "NO_ROOMS" = "No rooms specified in Config JSON.",
     "ROOM_NO_NAME" = "A room inside the config JSON doesn't have a `name`.",
     "ROOM_NO_SEATING_CENTER" = "A room inside the config JSON doesn't have a `seatingCenter`.",
+    "ROOM_NO_ALT_TEXT" = "A room inside the config JSON doesn't have `altText`.",
     "THEME_INVALID" = "Invalid theme name.",
 };
 enum CONFIG_SUCCESSES {
@@ -87,6 +91,7 @@ export class AppConfigController {
     initializeDefaultRooms() {
         this.rooms.push(new SpatialStandupRoom({
             "name": "Small Room",
+            "altText": "A top-down view of a small meeting room.",
             "roomCenter": { "x": -4.3, "y": 0, "z": -1.055 },
             "seatingCenter": {"x": -4.397745090149535, "y": 0, "z": -1.0481428664107273},
             "dimensions": {"x": 6.59, "y": 0, "z": 7.19 },
@@ -96,6 +101,7 @@ export class AppConfigController {
         }));
         this.rooms.push(new SpatialStandupRoom({
             "name": "Large Room",
+            "altText": "A top-down view of a large meeting room.",
             "roomCenter": { "x": 3.30, "y": 0, "z": 0 },
             "seatingCenter": {"x": 3.51459649122807, "y": 0, "z": 0.10519298245614023},
             "dimensions": {"x": 8.64, "y": 0, "z": 9.304 },
@@ -141,6 +147,12 @@ export class AppConfigController {
         };
 
         switch (configJSON.configJSONVersion) {
+            case ("v1.1.0"):
+                for (const room of configJSON.rooms) {
+                    if (!room["altText"]) {
+                        retval.errors.push(CONFIG_ERRORS.ROOM_NO_NAME);
+                    }
+                }
             case ("v1.0.0"):
                 if (configJSON.theme && !(configJSON.theme === "light" || configJSON.theme === "dark")) {
                     retval.errors.push(CONFIG_ERRORS.THEME_INVALID);

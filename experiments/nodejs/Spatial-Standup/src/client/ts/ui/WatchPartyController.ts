@@ -1,5 +1,5 @@
 import '../../css/watchParty.scss';
-import { connectionController, localSoundsController, roomController, uiController, userDataController, userInputController, videoController, webSocketConnectionController } from "..";
+import { connectionController, howlerController, roomController, uiController, userDataController, userInputController, videoController, webSocketConnectionController } from "..";
 import { SpatialStandupRoom } from "./RoomController";
 import { MyAvatarModes, UserData } from "../userData/UserDataController";
 import { Utilities } from '../utilities/Utilities';
@@ -23,7 +23,7 @@ export class WatchPartyController {
     leaveWatchPartyButton: HTMLButtonElement;
     watchTogetherURLInput: HTMLInputElement;
     currentYouTubeVideoID: string;
-    hoveredUserData: UserData;
+    highlightedUserData: UserData;
 
     constructor() {
         this.normalModeCanvas = document.querySelector(".normalModeCanvas");
@@ -162,9 +162,9 @@ export class WatchPartyController {
     }    
 
     handleCanvasClick(event: TouchEvent | MouseEvent | PointerEvent) {
-        if (this.hoveredUserData) {
-            uiController.showAvatarContextMenu(this.hoveredUserData);
-            this.hoveredUserData = undefined;
+        if (this.highlightedUserData) {
+            uiController.showAvatarContextMenu(this.highlightedUserData);
+            this.highlightedUserData = undefined;
         }
 
         document.body.classList.remove("cursorPointer");
@@ -202,15 +202,15 @@ export class WatchPartyController {
         //     return;
         // }
 
-        // this.hoveredUserData = userDataController.allOtherUserData.find((userData) => {
+        // this.highlightedUserData = userDataController.allOtherUserData.find((userData) => {
         //     return userData.positionCurrent && Utilities.getDistanceBetween2DPoints(userData.positionCurrent.x, userData.positionCurrent.z, hoverM.x, hoverM.z) < AVATAR.RADIUS_M;
         // });
 
-        // if (!this.hoveredUserData && Utilities.getDistanceBetween2DPoints(userDataController.myAvatar.myUserData.positionCurrent.x, userDataController.myAvatar.myUserData.positionCurrent.z, hoverM.x, hoverM.z) < AVATAR.RADIUS_M) {
-        //     this.hoveredUserData = userDataController.myAvatar.myUserData;
+        // if (!this.highlightedUserData && Utilities.getDistanceBetween2DPoints(userDataController.myAvatar.myUserData.positionCurrent.x, userDataController.myAvatar.myUserData.positionCurrent.z, hoverM.x, hoverM.z) < AVATAR.RADIUS_M) {
+        //     this.highlightedUserData = userDataController.myAvatar.myUserData;
         // }
 
-        // if (this.hoveredUserData) {
+        // if (this.highlightedUserData) {
         //     document.body.classList.add("cursorPointer");
         // } else {
         //     document.body.classList.remove("cursorPointer");
@@ -267,7 +267,7 @@ export class WatchPartyController {
         if (hifiCommunicator) {
             hifiCommunicator.updateUserDataAndTransmit({ orientationEuler: new OrientationEuler3D({ yawDegrees: lockedYawDegrees }) });
         }
-        localSoundsController.updateHowlerOrientation(userDataController.myAvatar.myUserData.orientationEulerCurrent);
+        howlerController.updateHowlerOrientation(userDataController.myAvatar.myUserData.orientationEulerCurrent);
     }
 
     joinWatchParty(watchPartyRoomName: string) {
@@ -459,7 +459,7 @@ export class WatchPartyController {
         let avatarRadiusM = AVATAR.RADIUS_M;
         let avatarRadiusPX = avatarRadiusM * pxPerM;
 
-        if (roomController.currentlyHoveringOverVisitIDHash === userData.visitIDHash || (userInputController.hoveredUserData && userInputController.hoveredUserData.visitIDHash === userData.visitIDHash)) {
+        if (roomController.currentlyHoveringOverVisitIDHash === userData.visitIDHash || (userInputController.highlightedUserData && userInputController.highlightedUserData.visitIDHash === userData.visitIDHash)) {
             watchPartyModeCTX.beginPath();
             watchPartyModeCTX.arc(0, 0, (avatarRadiusM + UI.HOVER_HIGHLIGHT_RADIUS_ADDITION_M) * pxPerM, 0, 2 * Math.PI);
             let grad = watchPartyModeCTX.createRadialGradient(0, 0, 0, 0, 0, (avatarRadiusM + UI.HOVER_HIGHLIGHT_RADIUS_ADDITION_M) * pxPerM);

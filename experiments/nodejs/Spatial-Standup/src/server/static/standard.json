@@ -1,10 +1,11 @@
 {
     "name": "Standard Room Config",
-    "configJSONVersion": "v1.0.0",
+    "configJSONVersion": "v1.1.0",
     "theme": "light",
     "rooms": [
         {
             "name": "Small Room",
+            "altText": "A top-down view of a small meeting room.",
             "roomCenter": {
                 "x": -4.3,
                 "y": 0,
@@ -26,6 +27,7 @@
         },
         {
             "name": "Large Room",
+            "altText": "A top-down view of a large meeting room.",
             "roomCenter": {
                 "x": 3.3,
                 "y": 0,

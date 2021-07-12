@@ -2,6 +2,11 @@ import { OrientationEuler3D, Point3D } from 'hifi-spatial-audio';
 import { Howl, Howler } from 'howler';
 import { userDataController, webSocketConnectionController } from '..';
 import { Utilities } from '../utilities/Utilities';
+import chair01 from '../../audio/chair01.wav';
+import chair02 from '../../audio/chair02.wav';
+import chair03 from '../../audio/chair03.wav';
+import chair04 from '../../audio/chair04.wav';
+export const chairSounds = [chair01, chair02, chair03, chair04];
 declare var HIFI_SPACE_NAME: string;
 
 export interface SoundParams {
@@ -11,6 +16,44 @@ export interface SoundParams {
 }
 
 export class LocalSoundsController {
+    localAudio1: HTMLAudioElement;
+    localAudio2: HTMLAudioElement;
+    localAudioElToUse: HTMLAudioElement;
+
+    constructor() {
+        this.localAudio1 = document.createElement("audio");
+        this.localAudio1.classList.add("miscLocalAudio1");
+        document.body.appendChild(this.localAudio1);
+
+        this.localAudio2 = document.createElement("audio");
+        this.localAudio2.classList.add("miscLocalAudio2");
+        document.body.appendChild(this.localAudio2);
+
+        this.localAudioElToUse = this.localAudio2;
+    }
+
+    playSound({src, volume = 1.0, interrupt = true}: {src: string, volume?: number, interrupt?: boolean}) {
+        if (!this.localAudio1 || !this.localAudio2) {
+            return;
+        }
+
+        if (!interrupt && !this.localAudioElToUse.paused) {
+            return;
+        }
+
+        if (this.localAudioElToUse === this.localAudio1) {
+            this.localAudioElToUse = this.localAudio2;
+        } else {
+            this.localAudioElToUse = this.localAudio1;
+        }
+        
+        this.localAudioElToUse.src = src;
+        this.localAudioElToUse.volume = volume;
+        this.localAudioElToUse.play();
+    }
+}
+
+export class HowlerController {
     latestHowl: Howl;
 
     constructor() {
@@ -47,7 +90,11 @@ export class LocalSoundsController {
         Howler.orientation(Math.cos(rads), Math.sin(rads), 0, 0, 0, 1);
     }
 
-    playSound({src, positionM, randomSoundRate = false, localOnly = true}: { src: string, positionM: Point3D, randomSoundRate?: boolean, localOnly?: boolean}) {
+    playSound({src, volume = 1.0, positionM, randomSoundRate = false, localOnly = true}: { src: string, volume?: number, positionM: Point3D, randomSoundRate?: boolean, localOnly?: boolean}) {
+        if (!(userDataController.myAvatar.myUserData.positionCurrent && positionM)) {
+            return;
+        }
+
         let sound = new Howl({
             src,
         });
@@ -70,6 +117,7 @@ export class LocalSoundsController {
         if (randomSoundRate) {
             sound.rate(Utilities.randomFloatBetween(0.8, 1.5));
         }
+        sound.volume(volume);
 
         sound.play();
         

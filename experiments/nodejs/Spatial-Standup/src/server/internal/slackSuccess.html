@@ -1,0 +1,193 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Spatial Standup - Slack Bot Added Successfully</title>
+
+    <style>
+        @font-face {
+            font-family: Graphik;
+            src: url('/fonts/Graphik-Regular.ttf')
+        }
+
+        @font-face {
+            font-family: Graphik-Semibold;
+            src: url('/fonts/Graphik-Semibold.ttf')
+        }
+
+        body {
+            background-color: #FFFFFF;
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+        }
+
+        .mainContainer {
+            display: flex;
+            flex-direction: column;
+            max-width: 520px;
+            margin: 12px auto;
+            padding: 12px;
+            z-index: 0;
+            background-color: #FFFFFF;
+            border-radius: 8px;
+        }
+
+        .headerContainer {
+            display: flex;
+            align-self: center;
+        }
+
+        .ssuLogo {
+            width: 72px;
+            height: 72px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-image: url('/images/ssu-logo.png');
+            margin: 0 8px 0 0;
+        }
+
+        .successContainer {
+            margin: 8px 0 0 0;
+            font-size: 18px;
+            font-family: 'Graphik', 'Helvetica', 'Arial', sans-serif;
+            color: #000000;
+        }
+
+        .successContainer>p>span {
+            display: inline-block;
+            width: 24px;
+        }
+
+        .footerImage {
+            background-image: url('/images/ssu-slack-success-footer.svg');
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 230px;
+            background-position: center bottom;
+            background-size: contain;
+            background-repeat: no-repeat;
+            z-index: -1;
+        }
+
+        h1 {
+            color: #000000;
+            padding: 0;
+            font-family: 'Graphik-Semibold', 'Helvetica', 'Arial', sans-serif;
+            font-size: 24px;
+            margin: 8px 0 0 0;
+        }
+
+        h2 {
+            color: #000000;
+            margin: 0;
+            padding: 0;
+            font-family: 'Graphik', 'Helvetica', 'Arial', sans-serif;
+            font-size: 14px;
+        }
+
+        .success,
+        .tryTyping {
+            margin: 16px 0 0 0;
+        }
+
+        .anyQuestions {
+            margin: 48px 0 0 0; 
+        }
+
+        .formContainer {
+            font-family: 'Graphik', 'Helvetica', 'Arial', sans-serif;
+            margin: 16px 0 0 0;
+            font-size: 14px;
+        }
+
+        .hs-form-field {
+            margin: 0 0 16px 0;
+        }
+
+        .hs-form-field > label {
+            margin: 0 0 4px 0;
+            display: inline-block;
+        }
+
+        .hs-input {
+            font-family: 'Graphik', 'Helvetica', 'Arial', sans-serif;
+            padding: 8px;
+            width: calc(100% - 16px);
+        }
+
+        textarea {
+            min-height: 90px;
+        }
+
+        .hs-error-msg,
+        .hs-error-msgs {
+            color: rgb(220, 53, 69);
+        }
+
+        .hs-error-msgs {
+            list-style: none;
+            margin: 4px 0 0 0;
+            padding: 0;
+        }
+
+        .legal-consent-container {
+            font-size: 11px;
+            line-height: 12px;
+        }
+
+        .hs-button {
+            padding: 8px 32px 10px 32px;
+            border-radius: 40px;
+            background-color: rgb(4, 41, 225);
+            font-family: 'Graphik-Semibold', 'Helvetica', 'Arial', sans-serif;
+            color: #FFFFFF;
+            cursor: pointer;
+            border: none;
+            font-weight: bold;
+        }
+
+        .hs-button:hover {
+            background-color: rgb(0, 122, 255);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="mainContainer">
+        <div class="headerContainer">
+            <div class="ssuLogo"></div>
+            <div>
+                <h1>Spatial Standup</h1>
+                <h2>Powered by High Fidelity</h2>
+            </div>
+        </div>
+        <div class="successContainer">
+            <p class="success"><span>🎉</span> <strong>Success!</strong> The Spatial Standup bot has been added to the workspace named "${SLACK_WORKSPACE_NAME}".</p>
+            <p class="tryTyping"><span>⌨</span> Try typing <code>/standup</code> in any Slack channel.</p>
+            <p class="anyQuestions"><span>ℹ</span> If you have any questions, please submit the form below.</p>
+        </div>
+        <div class="formContainer"></div>
+    </div>
+    <div class="footerImage"></div>
+    <!--[if lte IE 8]>
+    <script charset="utf-8" type="text/javascript" src="//js.hsforms.net/forms/v2-legacy.js"></script>
+    <![endif]-->
+    <script charset="utf-8" type="text/javascript" src="https://js.hsforms.net/forms/v2.js"></script>
+    <script>
+        hbspt.forms.create({
+            region: "na1",
+            portalId: "5066246",
+            formId: "800ab377-e1c3-4a33-8a5f-15cb253bd185",
+            target: ".formContainer"
+        });
+    </script>
+</body>
+
+</html>

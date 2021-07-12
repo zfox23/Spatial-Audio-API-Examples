@@ -1,5 +1,5 @@
 import { OrientationEuler3D, Point3D } from "hifi-spatial-audio";
-import { connectionController, localSoundsController, particleController, pathsController, roomController, uiController, userDataController, userInputController } from "..";
+import { connectionController, howlerController, particleController, pathsController, roomController, uiController, userDataController, userInputController } from "..";
 import { PHYSICS, UI, ROOM, CONTROLS, TIME } from "../constants/constants";
 import { SpatialStandupRoom } from "../ui/RoomController";
 import { Utilities, DataToTransmitToHiFi, EasingFunctions } from "../utilities/Utilities";
@@ -235,11 +235,11 @@ export class PhysicsController {
                 hifiCommunicator.updateUserDataAndTransmit(dataToTransmit);
 
                 if (dataToTransmit.orientationEuler) {
-                    localSoundsController.updateHowlerOrientation(userData.orientationEulerCurrent);
+                    howlerController.updateHowlerOrientation(userData.orientationEulerCurrent);
                 }
 
                 if (dataToTransmit.position) {
-                    localSoundsController.onMyGlobalPositionChanged(userData.positionCurrent);
+                    howlerController.onMyGlobalPositionChanged(userData.positionCurrent);
                 }
             }
         });

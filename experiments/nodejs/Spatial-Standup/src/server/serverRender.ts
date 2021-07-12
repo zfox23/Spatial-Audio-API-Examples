@@ -13,7 +13,7 @@ export async function renderApp(isInDevMode: boolean, appConfigURL: string, spac
 <html lang="en">
 
 <head>
-    <title>Spatial Standup - High Fidelity Spatial Audio API</title>
+    <title>Spatial Standup</title>
     <meta name='viewport' content='minimal-ui, width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />
     <meta name="theme-color" content="#333333">
     <meta name="msapplication-navbutton-color" content="#333333">

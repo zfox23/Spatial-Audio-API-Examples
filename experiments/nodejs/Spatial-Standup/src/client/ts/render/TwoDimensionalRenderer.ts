@@ -31,8 +31,10 @@ export class TwoDimensionalRenderer {
 
     constructor() {
         this.normalModeCanvas = document.createElement("canvas");
-        this.normalModeCanvas.classList.add("normalModeCanvas");
-        this.normalModeCanvas.tabIndex = 0;
+        this.normalModeCanvas.setAttribute("role", "application");
+        this.normalModeCanvas.setAttribute("aria-keyshortcuts", "a d ArrowLeft ArrowRight j k l");
+        this.normalModeCanvas.classList.add("normalModeCanvas", "displayNone");
+        this.normalModeCanvas.tabIndex = -1;
         document.body.appendChild(this.normalModeCanvas);
         this.normalModeCTX = this.normalModeCanvas.getContext("2d");
 
@@ -102,7 +104,7 @@ export class TwoDimensionalRenderer {
         let amtToRotateAvatar = -yawDegrees * Math.PI / 180;
         normalModeCTX.rotate(amtToRotateAvatar);
 
-        if (roomController.currentlyHoveringOverVisitIDHash === userData.visitIDHash || (userInputController.hoveredUserData && userInputController.hoveredUserData.visitIDHash === userData.visitIDHash)) {
+        if (roomController.currentlyHoveringOverVisitIDHash === userData.visitIDHash || (userInputController.highlightedUserData && userInputController.highlightedUserData.visitIDHash === userData.visitIDHash)) {
             normalModeCTX.beginPath();
             normalModeCTX.arc(0, 0, (avatarRadiusM + UI.HOVER_HIGHLIGHT_RADIUS_ADDITION_M) * pxPerM, 0, 2 * Math.PI);
             let grad = normalModeCTX.createRadialGradient(0, 0, 0, 0, 0, (avatarRadiusM + UI.HOVER_HIGHLIGHT_RADIUS_ADDITION_M) * pxPerM);
@@ -355,7 +357,7 @@ export class TwoDimensionalRenderer {
         let amountToRotateSeatImage = this.canvasRotationDegrees * Math.PI / 180;
         normalModeCTX.rotate(amountToRotateSeatImage);
 
-        if (userInputController.hoveredSeat && userInputController.hoveredSeat.seatID === seat.seatID) {
+        if (userInputController.highlightedSeat && userInputController.highlightedSeat.seatID === seat.seatID) {
             const seatRadiusPX = ROOM.SEAT_RADIUS_HOVER_M * pxPerM;
             normalModeCTX.drawImage(seatIconHover, -seatRadiusPX, -seatRadiusPX, seatRadiusPX * 2, seatRadiusPX * 2);
         } else {

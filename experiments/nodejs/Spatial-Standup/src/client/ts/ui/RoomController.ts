@@ -34,6 +34,7 @@ export enum SpatialStandupRoomType {
 
 export class SpatialStandupRoom {
     name: string;
+    altText: string;
     seatingCenter: Point3D;
     dimensions: Point3D;
     seatingRadiusM: number;
@@ -47,6 +48,7 @@ export class SpatialStandupRoom {
 
     constructor({
         name,
+        altText,
         seatingCenter,
         seatingRadiusM,
         roomCenter,
@@ -57,6 +59,7 @@ export class SpatialStandupRoom {
         roomType = SpatialStandupRoomType.Normal,
     }: {
         name: string,
+        altText: string,
         seatingCenter: Point3D,
         seatingRadiusM?: number,
         roomCenter?: Point3D,
@@ -67,6 +70,7 @@ export class SpatialStandupRoom {
         roomType?: SpatialStandupRoomType
     }) {
         this.name = name;
+        this.altText = altText;
         this.seatingCenter = seatingCenter;
         this.roomCenter = roomCenter || this.seatingCenter;
         this.roomYawOrientationDegrees = roomYawOrientationDegrees;
@@ -254,6 +258,7 @@ export class SpatialStandupRoom {
 }
 
 export class RoomController {
+    topBar: HTMLDivElement;
     roomsInitialized: boolean = false;
     rooms: Array<SpatialStandupRoom>;
     showRoomListButton: HTMLButtonElement;
@@ -265,27 +270,28 @@ export class RoomController {
     constructor() {
         this.rooms = [];
 
-        let topBar = document.createElement("div");
-        topBar.classList.add("topBar");
-        topBar.addEventListener("click", this.hideRoomList.bind(this));
-        document.body.appendChild(topBar);
+        this.topBar = document.querySelector(".topBar");
+        this.topBar.addEventListener("click", this.hideRoomList.bind(this));
 
         this.showRoomListButton = document.createElement("button");
         this.showRoomListButton.classList.add("showRoomListButton");
-        topBar.appendChild(this.showRoomListButton);
+        this.showRoomListButton.setAttribute("aria-label", "Click to Show Rooms and People List");
+        this.topBar.appendChild(this.showRoomListButton);
         this.showRoomListButton.addEventListener("click", (e) => {
             this.toggleRoomList();
             e.stopPropagation();
         });
 
         let topBar__roomsHeader = document.createElement("h1");
+        topBar__roomsHeader.id = "topBar__roomsHeader";
         topBar__roomsHeader.classList.add("topBar__roomsHeader");
+        topBar__roomsHeader.setAttribute("aria-label", "Rooms and People List");
         topBar__roomsHeader.innerHTML = "Rooms";
         topBar__roomsHeader.addEventListener("click", (e) => {
             this.toggleRoomList();
             e.stopPropagation();
         });
-        topBar.appendChild(topBar__roomsHeader);
+        this.topBar.appendChild(topBar__roomsHeader);
 
         let topBar__peopleIcon = document.createElement("div");
         topBar__peopleIcon.classList.add("topBar__peopleIcon");
@@ -293,7 +299,7 @@ export class RoomController {
             this.toggleRoomList();
             e.stopPropagation();
         });
-        topBar.appendChild(topBar__peopleIcon);
+        this.topBar.appendChild(topBar__peopleIcon);
 
         this.topBar__allRoomsPeopleCount = document.createElement("p");
         this.topBar__allRoomsPeopleCount.classList.add("topBar__allRoomsPeopleCount");
@@ -302,15 +308,10 @@ export class RoomController {
             this.toggleRoomList();
             e.stopPropagation();
         });
-        topBar.appendChild(this.topBar__allRoomsPeopleCount);
+        this.topBar.appendChild(this.topBar__allRoomsPeopleCount);
 
-        this.roomListOuterContainer = document.createElement("div");
-        this.roomListOuterContainer.classList.add("roomListOuterContainer", "displayNone");
-        document.body.appendChild(this.roomListOuterContainer);
-
-        this.roomListInnerContainer = document.createElement("div");
-        this.roomListInnerContainer.classList.add("roomListInnerContainer");
-        this.roomListOuterContainer.appendChild(this.roomListInnerContainer);
+        this.roomListOuterContainer = document.querySelector(".roomListOuterContainer");
+        this.roomListInnerContainer = document.querySelector(".roomListInnerContainer");
 
         if (appConfigController.configComplete) {
             this.initializeRooms();
@@ -351,6 +352,12 @@ export class RoomController {
 
     toggleRoomList() {
         this.roomListOuterContainer.classList.toggle("displayNone");
+
+        if (this.roomListOuterContainer.classList.contains("displayNone")) {
+            this.showRoomListButton.setAttribute("aria-label", "Click to show Rooms and People List");
+        } else {
+            this.showRoomListButton.setAttribute("aria-label", "Click to hide Rooms and People List");
+        }
     }
 
     getRoomFromPoint3DOnCircle(point3D: Point3D): SpatialStandupRoom {
@@ -430,10 +437,11 @@ export class RoomController {
             }
             this.roomListInnerContainer.appendChild(roomInfoContainer);
 
-            let roomInfoContainer__header = document.createElement("h2");
+            let roomInfoContainer__header = document.createElement("button");
             roomInfoContainer__header.classList.add("roomInfoContainer__header");
             let occupiedSeats = room.seats.filter((seat) => { return !!seat.occupiedUserData; });
             roomInfoContainer__header.innerHTML = `${room.name} <span class="roomInfoContainer__peopleIcon"></span> ${occupiedSeats.length}/${room.numSeatsInRoom}`;
+            roomInfoContainer__header.setAttribute("aria-label", `${room.name}. ${occupiedSeats.length} seat${occupiedSeats.length === 1 ? "" : "s"} occupied out of ${room.numSeatsInRoom} seats total.${occupiedSeats.length < room.numSeatsInRoom ? (userDataController.myAvatar.myUserData.currentRoom === room ? " You are in this room." : " Click to go to this room.") : ""}`);
             totalNumOccupiedSeats += occupiedSeats.length;
             roomInfoContainer__header.addEventListener("click", (e) => {
                 if (userDataController.myAvatar.myUserData.currentRoom === room) {
@@ -459,17 +467,27 @@ export class RoomController {
 
         let allUserData = userDataController.allOtherUserData.concat(userDataController.myAvatar.myUserData);
         allUserData.forEach((userData) => {
-            let roomInfoContainer__occupant = document.createElement("p");
+            let roomInfoContainer__occupant = document.createElement("button");
             roomInfoContainer__occupant.classList.add("roomInfoContainer__occupant");
             roomInfoContainer__occupant.setAttribute('data-visit-id-hash', userData.visitIDHash);
             let occupantInnerHTML;
             if (userData.visitIDHash === userDataController.myAvatar.myUserData.visitIDHash) {
+                if (userDataController.myAvatar.myUserData.currentRoom) {
+                    roomInfoContainer__occupant.setAttribute('aria-label', `${userDataController.myAvatar.myUserData.displayName} in ${userDataController.myAvatar.myUserData.currentRoom.name}. This is you. Click to view profile.`);
+                } else {
+                    roomInfoContainer__occupant.setAttribute('aria-label', `${userDataController.myAvatar.myUserData.displayName}. This is you. Click to view profile.`);
+                }
                 occupantInnerHTML = `<span class="roomInfoContainer__occupantAvatar" style="background-color:${userDataController.myAvatar.myUserData.colorHex};border-color:${userDataController.myAvatar.myUserData.colorHex};background-image:url(${userDataController.myAvatar.myUserData.profileImageURL ? userDataController.myAvatar.myUserData.profileImageURL : "none"});"></span>`;
                 occupantInnerHTML += `<div class="roomInfoContainer__occupantTextContainer"><p class="roomInfoContainer__occupantTextTop">${userData.displayName}</p><p class="roomInfoContainer__occupantTextBottom">(YOU)</p></div>`;
                 if (userData.currentRoom) {
                     document.querySelector(`[data-room-name="${userData.currentRoom.name}"]`).prepend(roomInfoContainer__occupant);
                 }
             } else {
+                if (userDataController.myAvatar.myUserData.currentRoom) {
+                    roomInfoContainer__occupant.setAttribute('aria-label', `${userDataController.myAvatar.myUserData.displayName} in ${userDataController.myAvatar.myUserData.currentRoom.name}. Click to view profile.`);
+                } else {
+                    roomInfoContainer__occupant.setAttribute('aria-label', `${userDataController.myAvatar.myUserData.displayName}. Click to view profile.`);
+                }
                 occupantInnerHTML = ``;
                 if (userData.colorHex) {
                     occupantInnerHTML += `<span class="roomInfoContainer__occupantAvatar" style="background-color:${userData.colorHex};border-color:${userData.colorHex};background-image:url(${userData.profileImageURL ? userData.profileImageURL : "none"});"></span>`;
