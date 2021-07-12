@@ -246,6 +246,7 @@ function showSlackSuccess(teamName: string, res: any) {
         })
         .catch((e) => {
             let errorString = `<p>Uh oh!</p>`;
+            console.error(`There was an error reading \`slackSuccess.html\` from ${slackSuccessHTMLFile}! Error:\n${e}`);
             res.status(500).send(errorString);
         });
 }
