@@ -1,0 +1,119 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Spatial Standup - Slack Bot Added Successfully</title>
+
+    <style>
+        @font-face {
+            font-family: Graphik;
+            src: url('/fonts/Graphik-Regular.ttf')
+        }
+
+        @font-face {
+            font-family: Graphik-Semibold;
+            src: url('/fonts/Graphik-Semibold.ttf')
+        }
+
+        body {
+            background-color: #FFFFFF;
+        }
+
+        .mainContainer {
+            display: flex;
+            flex-direction: column;
+            max-width: 520px;
+            margin: 0 auto;
+            padding: 12px;
+            z-index: 0;
+            background-color: #FFFFFF;
+            border-radius: 8px;
+        }
+
+        .headerContainer {
+            display: flex;
+            align-self: center;
+        }
+
+        .ssuLogo {
+            width: 72px;
+            height: 72px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-image: url('/images/ssu-logo.png');
+            margin: 0 8px 0 0;
+        }
+
+        .successContainer {
+            margin: 8px 0 0 0;
+        }
+
+        .successContainer > p {
+            margin: 16px 0 0 0;
+        }
+
+        .successContainer > p > span {
+            display: inline-block;
+            width: 24px;
+        }
+
+        .footerImage {
+            background-image: url('/images/ssu-slack-success-footer.svg');
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 230px;
+            background-position: center bottom;
+            background-size: contain;
+            background-repeat: no-repeat;
+            z-index: -1;
+        }
+
+        h1 {
+            color: #000000;
+            padding: 0;
+            font-family: 'Graphik-Semibold', 'Helvetica', 'Arial', sans-serif;
+            font-size: 24px;
+            margin: 8px 0 0 0;
+        }
+
+        h2 {
+            color: #000000;
+            margin: 0;
+            padding: 0;
+            font-family: 'Graphik', 'Helvetica', 'Arial', sans-serif;
+            font-size: 14px;
+        }
+
+        p {
+            font-size: 18px;
+            font-family: 'Graphik', 'Helvetica', 'Arial', sans-serif;
+            color: #000000;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="mainContainer">
+        <div class="headerContainer">
+            <div class="ssuLogo"></div>
+            <div>
+                <h1>Spatial Standup</h1>
+                <h2>Powered by High Fidelity</h2>
+            </div>
+        </div>
+        <div class="successContainer">
+            <p><span>🎉</span> Success! The Spatial Standup bot has been added to the workspace named "${SLACK_WORKSPACE_NAME}".</p>
+            <p><span>⌨</span> Try typing <code>/standup</code> in any Slack channel.</p>
+            <p><span>ℹ</span> If you have any questions, contact us at <a href="mailto:support@highfidelity.com" target="_blank">support@highfidelity.com</a>.</p>
+        </div>
+    </div>
+    <div class="footerImage"></div>
+</body>
+
+</html>

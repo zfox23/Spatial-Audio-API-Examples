@@ -8,7 +8,7 @@
     "client": "webpack --env dev",
     "client:dev": "webpack --env dev",
     "client:prod": "webpack --env prod",
-    "server:build": "tsc --p ./src/server && cp -r ./src/server/static ./src/server/dist",
+    "server:build": "tsc --p ./src/server && cp -r ./src/server/static ./src/server/dist && cp -r ./src/server/internal ./src/server/dist",
     "server": "npm run server:build && node -r esm ./src/server/dist/index.js dev false",
     "server:dev": "npm run server:build && node -r esm ./src/server/dist/index.js dev false",
     "server:dev:https": "npm run server:build && node -r esm ./src/server/dist/index.js dev true",

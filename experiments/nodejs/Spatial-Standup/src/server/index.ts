@@ -5,6 +5,7 @@ console.warn(`*****\nServer mode: ${serverMode}\n*****\n`);
 console.warn(`*****\nServer HTTPS mode status: ${isInHTTPSMode}\n*****\n`);
 
 const fs = require('fs');
+import { readFile } from 'fs/promises';
 const webpack = require('webpack');
 const path = require('path');
 const express = require('express');
@@ -105,7 +106,7 @@ async function connectToSpace(req: any, res: any, next: any) {
             console.error(`There was an error when listing spaces. Error:\n${JSON.stringify(e)}`);
             return;
         }
-        
+
         let spaceID = listSpacesJSON.find((space: any) => { return space["name"] === spaceName; });
         if (!spaceID) {
             console.log(`Creating a new Space with name \`${spaceName}\`...`);
@@ -126,7 +127,7 @@ async function connectToSpace(req: any, res: any, next: any) {
             console.error(`There was an error when getting the space ID for the space named ${spaceName}.`);
             return;
         }
-        
+
         let listZonesJSON: Array<any>;
         let listZonesFetchURL = `https://${auth.HIFI_ENDPOINT_URL}/api/v1/spaces/${spaceID}/settings/zones?token=${adminHiFiJWT}`;
         try {
@@ -172,7 +173,7 @@ async function connectToSpace(req: any, res: any, next: any) {
         let deleteZonesJSON;
         try {
             console.log(`${spaceName}: Deleting all existing zones...`);
-            let deleteZones = await fetch(`https://${auth.HIFI_ENDPOINT_URL}/api/v1/spaces/${spaceID}/settings/zones?token=${adminHiFiJWT}`, {method: "DELETE"});
+            let deleteZones = await fetch(`https://${auth.HIFI_ENDPOINT_URL}/api/v1/spaces/${spaceID}/settings/zones?token=${adminHiFiJWT}`, { method: "DELETE" });
             deleteZonesJSON = await deleteZones.json();
         } catch (e) {
             console.error(`There was an error when deleting all zones. Error:\n${JSON.stringify(e)}`);
@@ -195,7 +196,7 @@ async function connectToSpace(req: any, res: any, next: any) {
                     "z-max": room.roomCenter.z + room.dimensions.z / 2,
                 });
             });
-            let newZones = await fetch(`https://${auth.HIFI_ENDPOINT_URL}/api/v1/spaces/${spaceID}/settings/zones?token=${adminHiFiJWT}`, { method: 'POST', body: JSON.stringify(params), headers: { 'Content-Type': 'application/json' }});
+            let newZones = await fetch(`https://${auth.HIFI_ENDPOINT_URL}/api/v1/spaces/${spaceID}/settings/zones?token=${adminHiFiJWT}`, { method: 'POST', body: JSON.stringify(params), headers: { 'Content-Type': 'application/json' } });
             newZonesJSON = await newZones.json();
         } catch (e) {
             console.error(`There was an error when creating new zones. Error:\n${JSON.stringify(e)}`);
@@ -226,7 +227,7 @@ async function connectToSpace(req: any, res: any, next: any) {
         }
         let newZoneAttenuationsJSON;
         try {
-            let newZoneAttenuations = await fetch(`https://${auth.HIFI_ENDPOINT_URL}/api/v1/spaces/${spaceID}/settings/zone_attenuations?token=${adminHiFiJWT}`, { method: 'POST', body: JSON.stringify(params), headers: { 'Content-Type': 'application/json' }});
+            let newZoneAttenuations = await fetch(`https://${auth.HIFI_ENDPOINT_URL}/api/v1/spaces/${spaceID}/settings/zone_attenuations?token=${adminHiFiJWT}`, { method: 'POST', body: JSON.stringify(params), headers: { 'Content-Type': 'application/json' } });
             newZoneAttenuationsJSON = await newZoneAttenuations.json();
         } catch (e) {
             console.error(`There was an error when creating new zone attenuations. Error:\n${JSON.stringify(e)}`);
@@ -235,6 +236,23 @@ async function connectToSpace(req: any, res: any, next: any) {
         console.log(`${spaceName}: Created new zone attenuation relationships!`);
     });
 }
+
+function showSlackSuccess(teamName: string, res: any) {
+    const slackSuccessHTMLFile = path.join(__dirname, "internal", "slackSuccess.html");
+    readFile(slackSuccessHTMLFile, { encoding: "utf-8" })
+        .then((contents: string) => {
+            contents = contents.replace("${SLACK_WORKSPACE_NAME}", teamName);
+            res.status(200).send(contents);
+        })
+        .catch((e) => {
+            let errorString = `<p>Uh oh!</p>`;
+            res.status(500).send(errorString);
+        });
+}
+
+app.get('/slack/success', (req: any, res: any, next: any) => {
+    showSlackSuccess("hey how did you guess this URL?", res);
+});
 
 app.get('/slack', (req: any, res: any, next: any) => {
     let code = req.query.code;
@@ -253,8 +271,7 @@ app.get('/slack', (req: any, res: any, next: any) => {
         .then((json: any) => {
             if (json && json.ok) {
                 analyticsController.logEvent(ServerAnalyticsEventCategory.SlackBotAdded, new SlackBotAddedEvent());
-                let okString = `<p>The Spatial Standup bot has been successfully added to the Slack workspace named "${json.team.name}"! Try typing <code>/standup</code> in any Slack channel.</p>`;
-                res.status(200).send(okString)
+                showSlackSuccess(json.team.name, res);
 
                 const usersInfoParams = new URLSearchParams();
                 usersInfoParams.append("token", json.access_token);
@@ -343,7 +360,7 @@ app.post('/create', (req: any, res: any, next: any) => {
         if (slackTeamID && slackTeamID === "T025Q3X6R") {
             isHiFiEmployee = true;
         }
-        
+
         let stringToHash = slackChannelID;
         let hash = crypto.createHash('md5').update(stringToHash).digest('hex');
         let spaceURL;
