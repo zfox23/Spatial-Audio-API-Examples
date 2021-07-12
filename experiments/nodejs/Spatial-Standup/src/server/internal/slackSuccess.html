@@ -21,13 +21,16 @@
 
         body {
             background-color: #FFFFFF;
+            margin: 0;
+            padding: 0;
+            width: 100vw;
         }
 
         .mainContainer {
             display: flex;
             flex-direction: column;
             max-width: 520px;
-            margin: 0 auto;
+            margin: 12px auto;
             padding: 12px;
             z-index: 0;
             background-color: #FFFFFF;
@@ -50,13 +53,12 @@
 
         .successContainer {
             margin: 8px 0 0 0;
+            font-size: 18px;
+            font-family: 'Graphik', 'Helvetica', 'Arial', sans-serif;
+            color: #000000;
         }
 
-        .successContainer > p {
-            margin: 16px 0 0 0;
-        }
-
-        .successContainer > p > span {
+        .successContainer>p>span {
             display: inline-block;
             width: 24px;
         }
@@ -90,10 +92,69 @@
             font-size: 14px;
         }
 
-        p {
-            font-size: 18px;
+        .success,
+        .tryTyping {
+            margin: 16px 0 0 0;
+        }
+
+        .anyQuestions {
+            margin: 48px 0 0 0; 
+        }
+
+        .formContainer {
             font-family: 'Graphik', 'Helvetica', 'Arial', sans-serif;
-            color: #000000;
+            margin: 16px 0 0 0;
+            font-size: 14px;
+        }
+
+        .hs-form-field {
+            margin: 0 0 16px 0;
+        }
+
+        .hs-form-field > label {
+            margin: 0 0 4px 0;
+            display: inline-block;
+        }
+
+        .hs-input {
+            font-family: 'Graphik', 'Helvetica', 'Arial', sans-serif;
+            padding: 8px;
+            width: calc(100% - 16px);
+        }
+
+        textarea {
+            min-height: 90px;
+        }
+
+        .hs-error-msg,
+        .hs-error-msgs {
+            color: rgb(220, 53, 69);
+        }
+
+        .hs-error-msgs {
+            list-style: none;
+            margin: 4px 0 0 0;
+            padding: 0;
+        }
+
+        .legal-consent-container {
+            font-size: 11px;
+            line-height: 12px;
+        }
+
+        .hs-button {
+            padding: 8px 32px 10px 32px;
+            border-radius: 40px;
+            background-color: rgb(4, 41, 225);
+            font-family: 'Graphik-Semibold', 'Helvetica', 'Arial', sans-serif;
+            color: #FFFFFF;
+            cursor: pointer;
+            border: none;
+            font-weight: bold;
+        }
+
+        .hs-button:hover {
+            background-color: rgb(0, 122, 255);
         }
     </style>
 </head>
@@ -108,12 +169,25 @@
             </div>
         </div>
         <div class="successContainer">
-            <p><span>🎉</span> Success! The Spatial Standup bot has been added to the workspace named "${SLACK_WORKSPACE_NAME}".</p>
-            <p><span>⌨</span> Try typing <code>/standup</code> in any Slack channel.</p>
-            <p><span>ℹ</span> If you have any questions, contact us at <a href="mailto:support@highfidelity.com" target="_blank">support@highfidelity.com</a>.</p>
+            <p class="success"><span>🎉</span> Success! The Spatial Standup bot has been added to the workspace named "${SLACK_WORKSPACE_NAME}".</p>
+            <p class="tryTyping"><span>⌨</span> Try typing <code>/standup</code> in any Slack channel.</p>
+            <p class="anyQuestions"><span>ℹ</span> If you have any questions, please submit the form below.</p>
         </div>
+        <div class="formContainer"></div>
     </div>
     <div class="footerImage"></div>
+    <!--[if lte IE 8]>
+    <script charset="utf-8" type="text/javascript" src="//js.hsforms.net/forms/v2-legacy.js"></script>
+    <![endif]-->
+    <script charset="utf-8" type="text/javascript" src="https://js.hsforms.net/forms/v2.js"></script>
+    <script>
+        hbspt.forms.create({
+            region: "na1",
+            portalId: "5066246",
+            formId: "800ab377-e1c3-4a33-8a5f-15cb253bd185",
+            target: ".formContainer"
+        });
+    </script>
 </body>
 
 </html>
