@@ -1,5 +1,6 @@
 import * as Video from 'twilio-video';
 import { avDevicesController, uiThemeController, userDataController, webSocketConnectionController } from '..';
+import { VideoStreamingStates } from "../../../shared/shared";
 
 declare var HIFI_SPACE_NAME: string;
 declare var TWILIO_JWT: string;
@@ -8,6 +9,8 @@ export class VideoController {
     connectingToTwilio: boolean = false;
     toggleVideoButton: HTMLButtonElement;
     videoIsMuted: boolean;
+    toggleScreenShareButton: HTMLButtonElement;
+    screenShareIsMuted: boolean;
     twilioRoom: Video.Room;
     localVideoTrack: Video.LocalVideoTrack;
     providedUserIDToVideoElementMap: Map<string, HTMLVideoElement>;
@@ -23,6 +26,13 @@ export class VideoController {
         this.toggleVideoButton = document.querySelector('.toggleVideoButton');
         this.toggleVideoButton.addEventListener("click", async (e) => {
             await this.toggleVideo();
+        });
+
+        this.screenShareIsMuted = true;
+
+        this.toggleScreenShareButton = document.querySelector('.toggleScreenShareButton');
+        this.toggleScreenShareButton.addEventListener("click", async (e) => {
+            await this.toggleScreenShare();
         });
 
         this.providedUserIDToVideoElementMap = new Map();
@@ -54,6 +64,7 @@ export class VideoController {
             this.twilioRoom.once('disconnected', error => this.twilioRoom.participants.forEach(this.participantDisconnected.bind(this)));
 
             this.enableVideoButton();
+            this.enableScreenShareButton();
             uiThemeController.refreshThemedElements();
         }, error => {
             this.connectingToTwilio = false;
@@ -91,10 +102,42 @@ export class VideoController {
     enableVideoButton() {
         this.toggleVideoButton.classList.remove("toggleVideoButton--disabled");
         uiThemeController.clearThemesFromElement(<HTMLElement>this.toggleVideoButton, 'toggleVideoButton--disabled', false);
+        if (this.videoIsMuted) {
+            this.toggleVideoButton.classList.add("toggleVideoButton--muted");
+        } else {
+            this.toggleVideoButton.classList.add("toggleVideoButton--unmuted");
+        }
         uiThemeController.refreshThemedElements();
     }
 
-    disableVideo() {
+    disableScreenShareButton() {
+        this.toggleScreenShareButton.classList.remove("toggleScreenShareButton--muted");
+        uiThemeController.clearThemesFromElement(<HTMLElement>this.toggleScreenShareButton, 'toggleScreenShareButton--unmuted', false);
+        uiThemeController.clearThemesFromElement(<HTMLElement>this.toggleScreenShareButton, 'toggleScreenShareButton--muted', false);
+        this.toggleScreenShareButton.classList.add("toggleScreenShareButton--disabled");
+        uiThemeController.refreshThemedElements();
+    }
+
+    enableScreenShareButton() {
+        this.toggleScreenShareButton.classList.remove("toggleScreenShareButton--disabled");
+        uiThemeController.clearThemesFromElement(<HTMLElement>this.toggleScreenShareButton, 'toggleScreenShareButton--disabled', false);
+        if (this.screenShareIsMuted) {
+            this.toggleScreenShareButton.classList.add("toggleScreenShareButton--muted");
+        } else {
+            this.toggleScreenShareButton.classList.add("toggleScreenShareButton--unmuted");
+        }
+        uiThemeController.refreshThemedElements();
+    }
+
+    maybeDisconnectFromTwilio() {
+        let anyoneElseIsStreaming = !!userDataController.allOtherUserData.find((userData) => { return userData.isStreamingVideo !== VideoStreamingStates.NONE; });
+        if (!anyoneElseIsStreaming && userDataController.myAvatar.myUserData.isStreamingVideo === VideoStreamingStates.NONE) {
+            console.log("Nobody in this Room is streaming video. Disconnecting from Twilio...");
+            this.disconnectFromTwilio();
+        }
+    }
+
+    disableVideoOrScreenSharing() {
         console.log("Disabling local video...");
 
         this.twilioRoom.localParticipant.unpublishTrack(this.localVideoTrack);
@@ -109,20 +152,40 @@ export class VideoController {
         
         this.localVideoTrack = undefined;
 
-        this.toggleVideoButton.classList.add("toggleVideoButton--muted");
-        this.toggleVideoButton.classList.remove("toggleVideoButton--unmuted");
-        this.toggleVideoButton.setAttribute("aria-label", "Enable your Camera");
-        uiThemeController.clearThemesFromElement(<HTMLElement>this.toggleVideoButton, 'toggleVideoButton--unmuted', false);
+        if (!this.videoIsMuted) {
+            this.toggleVideoButton.classList.add("toggleVideoButton--muted");
+            this.toggleVideoButton.classList.remove("toggleVideoButton--unmuted");
+            this.toggleVideoButton.setAttribute("aria-label", "Enable your Camera");
+            uiThemeController.clearThemesFromElement(<HTMLElement>this.toggleVideoButton, 'toggleVideoButton--unmuted', false);
+            this.videoIsMuted = true;
+        }
+
+        if (!this.screenShareIsMuted) {
+            this.toggleScreenShareButton.classList.add("toggleScreenShareButton--muted");
+            this.toggleScreenShareButton.classList.remove("toggleScreenShareButton--unmuted");
+            this.toggleScreenShareButton.setAttribute("aria-label", "Start Sharing your Screen");
+            uiThemeController.clearThemesFromElement(<HTMLElement>this.toggleScreenShareButton, 'toggleScreenShareButton--unmuted', false);
+            this.screenShareIsMuted = true;
+        }
+
         uiThemeController.refreshThemedElements();
 
-        userDataController.myAvatar.myUserData.isStreamingVideo = false;
+        userDataController.myAvatar.myUserData.isStreamingVideo = VideoStreamingStates.NONE;
         webSocketConnectionController.updateMyUserDataOnWebSocketServer();
 
-        let anyoneIsStreaming = !!userDataController.allOtherUserData.find((userData) => { return userData.isStreamingVideo === true; });
-        if (!anyoneIsStreaming) {
-            console.log("Nobody in this Room is streaming video. Disconnecting from Twilio...");
-            this.disconnectFromTwilio();
-        }
+        this.maybeDisconnectFromTwilio();
+    }
+
+    finishVideoSetup() {
+        let videoEl = this.localVideoTrack.attach();
+        videoEl.id = userDataController.myAvatar.myUserData.providedUserID;
+        this.videoContainer.appendChild(videoEl);
+        videoEl.play();
+        this.providedUserIDToVideoElementMap.set(userDataController.myAvatar.myUserData.providedUserID, videoEl);
+
+        this.twilioRoom.localParticipant.publishTrack(this.localVideoTrack);
+
+        webSocketConnectionController.updateMyUserDataOnWebSocketServer();
     }
 
     async enableVideo() {
@@ -147,13 +210,8 @@ export class VideoController {
             return;
         }
 
-        let videoEl = this.localVideoTrack.attach();
-        videoEl.id = userDataController.myAvatar.myUserData.providedUserID;
-        this.videoContainer.appendChild(videoEl);
-        videoEl.play();
-        this.providedUserIDToVideoElementMap.set(userDataController.myAvatar.myUserData.providedUserID, videoEl);
-
-        this.twilioRoom.localParticipant.publishTrack(this.localVideoTrack);
+        userDataController.myAvatar.myUserData.isStreamingVideo = VideoStreamingStates.CAMERA;
+        this.finishVideoSetup();
         
         this.toggleVideoButton.classList.remove("toggleVideoButton--muted");
         uiThemeController.clearThemesFromElement(<HTMLElement>this.toggleVideoButton, 'toggleVideoButton--muted', false);
@@ -161,8 +219,43 @@ export class VideoController {
         uiThemeController.refreshThemedElements();
         this.toggleVideoButton.setAttribute("aria-label", "Disable your Camera");
 
-        userDataController.myAvatar.myUserData.isStreamingVideo = true;
-        webSocketConnectionController.updateMyUserDataOnWebSocketServer();
+        this.videoIsMuted = false;
+    }
+
+    async enableScreenShare() {
+        console.log("Enabling local screen sharing...");
+
+        if (!this.twilioRoom) {
+            await this.connectToTwilio();
+        }
+
+        let screenShareStream;
+        try {
+            // @ts-ignore
+            screenShareStream = await navigator.mediaDevices.getDisplayMedia();
+        } catch (e) {
+            console.warn(`Couldn't get screen for sharing! Error:\n${e}`);
+            this.maybeDisconnectFromTwilio();
+            return;
+        }
+
+        this.localVideoTrack = new Video.LocalVideoTrack(screenShareStream.getTracks()[0]);
+
+        if (!this.localVideoTrack) {
+            console.error("Couldn't get local video track!");
+            return;
+        }
+
+        userDataController.myAvatar.myUserData.isStreamingVideo = VideoStreamingStates.SCREENSHARE;
+        this.finishVideoSetup();
+        
+        this.toggleScreenShareButton.classList.remove("toggleScreenShareButton--muted");
+        uiThemeController.clearThemesFromElement(<HTMLElement>this.toggleScreenShareButton, 'toggleScreenShareButton--muted', false);
+        this.toggleScreenShareButton.classList.add("toggleScreenShareButton--unmuted");
+        uiThemeController.refreshThemedElements();
+        this.toggleScreenShareButton.setAttribute("aria-label", "Stop Sharing your Screen");
+
+        this.screenShareIsMuted = false;
     }
 
     async toggleVideo() {
@@ -170,16 +263,43 @@ export class VideoController {
             return;
         }
 
-        this.disableVideoButton();
-        
-        this.videoIsMuted = !this.videoIsMuted;
-
-        if (this.videoIsMuted) {
-            this.disableVideo();
-        } else {
-            await this.enableVideo();
+        if (!this.screenShareIsMuted) {
+            await this.toggleScreenShare();
         }
 
+
+        this.disableScreenShareButton();
+        this.disableVideoButton();
+
+        if (this.videoIsMuted) {
+            await this.enableVideo();
+        } else {
+            this.disableVideoOrScreenSharing();
+        }
+
+        this.enableScreenShareButton();
+        this.enableVideoButton();
+    }
+
+    async toggleScreenShare() {
+        if (!userDataController.myAvatar.myUserData.providedUserID) {
+            return;
+        }
+
+        if (!this.videoIsMuted) {
+            await this.toggleVideo();
+        }
+
+        this.disableScreenShareButton();
+        this.disableVideoButton();
+
+        if (this.screenShareIsMuted) {
+            await this.enableScreenShare();
+        } else {
+            this.disableVideoOrScreenSharing();
+        }
+
+        this.enableScreenShareButton();
         this.enableVideoButton();
     }
 

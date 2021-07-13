@@ -2,6 +2,7 @@ import { HiFiCommunicator, HiFiUserDataStreamingScopes, OrientationEuler3D, Poin
 import { AudionetInitResponse } from "../connection/ConnectionController";
 import { SpatialAudioSeat } from "../ui/RoomController";
 import { UserData } from "./UserDataController";
+import { VideoStreamingStates } from "../../../shared/shared";
 import { DataToTransmitToHiFi } from "../utilities/Utilities";
 import { avDevicesController, connectionController, howlerController, localSoundsController, userDataController } from "..";
 declare var HIFI_JWT: string;
@@ -48,7 +49,7 @@ export class MyAvatarEars {
             agcEnabled: false,
             noiseSuppressionEnabled: false,
             currentWatchPartyRoomName: undefined,
-            isStreamingVideo: false,
+            isStreamingVideo: VideoStreamingStates.NONE,
             userGainForThisConnection: 1.0,
             tempData: {},
         };

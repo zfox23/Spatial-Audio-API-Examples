@@ -1,3 +1,5 @@
+import { VideoStreamingStates } from "../shared/shared";
+
 let serverMode = process.argv.slice(2)[0]; // Should be "dev", "staging", or "prod".
 const isInHTTPSMode = process.argv.slice(2)[1] === "true";
 
@@ -447,7 +449,7 @@ class Participant {
     hiFiGainSliderValue: string;
     volumeThreshold: number;
     currentWatchPartyRoomName: string;
-    isStreamingVideo: boolean;
+    isStreamingVideo: VideoStreamingStates;
 
     constructor({
         userUUID,
@@ -484,7 +486,7 @@ class Participant {
         hiFiGainSliderValue: string,
         volumeThreshold: number,
         currentWatchPartyRoomName: string,
-        isStreamingVideo: boolean,
+        isStreamingVideo: VideoStreamingStates,
     }) {
         this.userUUID = userUUID;
         this.sessionStartTimestamp = sessionStartTimestamp;
@@ -594,7 +596,7 @@ socketIOServer.on("connection", (socket: any) => {
         hiFiGainSliderValue: string,
         volumeThreshold: number,
         currentWatchPartyRoomName: string,
-        isStreamingVideo: boolean,
+        isStreamingVideo: VideoStreamingStates,
     }) => {
         if (!spaceInformation[spaceName]) {
             spaceInformation[spaceName] = new ServerSpaceInfo({ spaceName });
@@ -664,7 +666,7 @@ socketIOServer.on("connection", (socket: any) => {
         hiFiGainSliderValue: string,
         volumeThreshold: number,
         currentWatchPartyRoomName: string,
-        isStreamingVideo: boolean,
+        isStreamingVideo: VideoStreamingStates,
     }) => {
         let participantToEdit = spaceInformation[spaceName].participants.find((participant: Participant) => {
             return participant.visitIDHash === visitIDHash;
@@ -704,7 +706,7 @@ socketIOServer.on("connection", (socket: any) => {
             if (typeof (currentWatchPartyRoomName) === "string") {
                 participantToEdit.currentWatchPartyRoomName = currentWatchPartyRoomName;
             }
-            if (typeof (isStreamingVideo) === "boolean") {
+            if (isStreamingVideo !== undefined) {
                 participantToEdit.isStreamingVideo = isStreamingVideo;
             }
             socket.to(spaceName).emit("onParticipantsAddedOrEdited", [participantToEdit]);

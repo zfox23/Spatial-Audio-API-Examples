@@ -152,6 +152,11 @@ export class UIController {
         toggleVideoButton.classList.add("bottomControlButton", "toggleVideoButton", "toggleVideoButton--muted");
         bottomControlsContainer.appendChild(toggleVideoButton);
 
+        let toggleScreenShareButton = document.createElement("button");
+        toggleScreenShareButton.setAttribute("aria-label", "Screen share is disabled. Click to share your screen.");
+        toggleScreenShareButton.classList.add("bottomControlButton", "toggleScreenShareButton", "toggleScreenShareButton--muted");
+        bottomControlsContainer.appendChild(toggleScreenShareButton);
+
         let toggleSettingsButton = document.createElement("button");
         toggleSettingsButton.setAttribute("aria-label", "Open Device Settings");
         toggleSettingsButton.classList.add("bottomControlButton", "toggleSettingsButton");

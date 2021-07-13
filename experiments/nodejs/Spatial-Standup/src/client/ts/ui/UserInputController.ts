@@ -15,6 +15,7 @@ export class UserInputController {
     toggleInputMuteButton: HTMLButtonElement;
     toggleOutputMuteButton: HTMLButtonElement;
     toggleVideoButton: HTMLButtonElement;
+    toggleScreenShareButton: HTMLButtonElement;
     toggleSettingsButton: HTMLButtonElement;
     leftClickStartPositionPX: any;
     lastDistanceBetweenLeftClickEvents: number;
@@ -34,6 +35,9 @@ export class UserInputController {
 
         this.toggleVideoButton = document.querySelector('.toggleVideoButton');
         this.toggleVideoButton.addEventListener("contextmenu", (e) => { this.toggleShowSettingsMenu(); e.preventDefault(); }, false);
+
+        this.toggleScreenShareButton = document.querySelector('.toggleScreenShareButton');
+        this.toggleScreenShareButton.addEventListener("contextmenu", (e) => { this.toggleShowSettingsMenu(); e.preventDefault(); }, false);
 
         this.toggleSettingsButton = document.querySelector('.toggleSettingsButton');
         this.toggleSettingsButton.addEventListener("click", (e) => { this.toggleShowSettingsMenu(); });
