@@ -9,7 +9,7 @@ import SeatIconIdle from '../../images/seat-idle.png';
 import SeatIconHover from '../../images/seat-hover.png';
 import TableImage from '../../images/table.png';
 import AvatarMuted from '../../images/avatar-muted.png';
-import AvatarScreenSharingImage from '../../images/avatar-muted.png';
+import AvatarScreenSharingImage from '../../images/avatar-screen-sharing.png';
 import { Point3D } from "hifi-spatial-audio";
 import { VideoStreamingStates } from "../../../shared/shared";
 
@@ -21,6 +21,8 @@ const tableImage = new Image();
 tableImage.src = TableImage;
 const avatarMutedImage = new Image();
 avatarMutedImage.src = AvatarMuted;
+const avatarScreenSharingImage = new Image();
+avatarScreenSharingImage.src = AvatarScreenSharingImage;
 
 export class TwoDimensionalRenderer {
     normalModeCanvas: HTMLCanvasElement;
@@ -165,7 +167,7 @@ export class TwoDimensionalRenderer {
     }
 
     drawAvatarIsScreenSharing({ userData }: { userData: UserData }) {
-        if (userData.isStreamingVideo !== VideoStreamingStates.SCREENSHARE) {
+        if (userData.isStreamingVideo !== VideoStreamingStates.SCREENSHARE || !avatarScreenSharingImage.complete) {
             return;
         }
 
@@ -177,8 +179,8 @@ export class TwoDimensionalRenderer {
 
         let avatarRadiusM = AVATAR.RADIUS_M;
         let avatarRadiusPX = avatarRadiusM * pxPerM;
-        let screenSharingIconRadius = avatarRadiusPX / 2;
-        normalModeCTX.drawImage(AvatarScreenSharingImage, -avatarRadiusPX + screenSharingIconRadius * 1.5, avatarRadiusPX - screenSharingIconRadius * 1.5, screenSharingIconRadius * 2, screenSharingIconRadius * 2);
+        let screenSharingIconRadiusPX = UI.SCREEN_SHARE_ICON_RADIUS_M * pxPerM;
+        normalModeCTX.drawImage(avatarScreenSharingImage, -avatarRadiusPX + screenSharingIconRadiusPX, avatarRadiusPX - screenSharingIconRadiusPX, screenSharingIconRadiusPX * 2, screenSharingIconRadiusPX * 2);
 
         normalModeCTX.rotate(-amtToRotateAvatarLabel);
     }
@@ -256,7 +258,7 @@ export class TwoDimensionalRenderer {
     }
 
     drawAvatarMuted({ userData }: { userData: UserData }) {
-        if (!userData.isAudioInputMuted) {
+        if (!(userData.isAudioInputMuted && avatarMutedImage.complete)) {
             return;
         }
 

@@ -1,3 +1,4 @@
+import '../../css/screenShare.scss';
 import * as Video from 'twilio-video';
 import { avDevicesController, uiThemeController, userDataController, webSocketConnectionController } from '..';
 import { VideoStreamingStates } from "../../../shared/shared";
@@ -145,10 +146,12 @@ export class VideoController {
         
         this.providedUserIDToVideoElementMap.delete(userDataController.myAvatar.myUserData.providedUserID);
 
-        const mediaElements = this.localVideoTrack.detach();
-        mediaElements.forEach(mediaElement => {
-            mediaElement.remove();
-        });
+        if (this.localVideoTrack) {
+            const mediaElements = this.localVideoTrack.detach();
+            mediaElements.forEach(mediaElement => {
+                mediaElement.remove();
+            });
+        }
         
         this.localVideoTrack = undefined;
 
@@ -240,6 +243,10 @@ export class VideoController {
         }
 
         this.localVideoTrack = new Video.LocalVideoTrack(screenShareStream.getTracks()[0]);
+        this.localVideoTrack.on('stopped', () => {
+            console.log("User stopped screen sharing.");
+            this.disableVideoOrScreenSharing();
+        });
 
         if (!this.localVideoTrack) {
             console.error("Couldn't get local video track!");

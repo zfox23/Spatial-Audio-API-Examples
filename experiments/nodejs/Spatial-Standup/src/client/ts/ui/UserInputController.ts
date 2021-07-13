@@ -1,10 +1,11 @@
 import { accessibilityController, appConfigController, avDevicesController, connectionController, editorModeController, landmarksController, howlerController, pathsController, physicsController, roomController, signalsController, twoDimensionalRenderer, uiController, uiThemeController, userDataController, watchPartyController, webSocketConnectionController } from "..";
-import { AVATAR, ROOM, CONTROLS, PHYSICS, PARTICLES } from "../constants/constants";
+import { AVATAR, ROOM, CONTROLS, PHYSICS, PARTICLES, UI } from "../constants/constants";
 import { UserData } from "../userData/UserDataController";
 import { Utilities } from "../utilities/Utilities";
 import { SpatialStandupRoom, SpatialStandupRoomType, SpatialAudioSeat } from "../ui/RoomController";
 import { OrientationEuler3D, Point3D } from "hifi-spatial-audio";
 import { Landmark } from "./LandmarksController";
+import { VideoStreamingStates } from "../../../shared/shared";
 
 export class UserInputController {
     normalModeCanvas: HTMLCanvasElement;
@@ -20,6 +21,7 @@ export class UserInputController {
     leftClickStartPositionPX: any;
     lastDistanceBetweenLeftClickEvents: number;
     highlightedUserData: UserData;
+    highlightedScreenShareIconUserData: UserData;
     highlightedSeat: SpatialAudioSeat;
     highlightedRoom: SpatialStandupRoom;
     highlightedLandmark: Landmark;
@@ -154,6 +156,7 @@ export class UserInputController {
                 signalsController.setActiveSignal(undefined);
                 watchPartyController.leaveWatchParty();
                 uiController.hideAvatarContextMenu();
+                uiController.hideScreenShareUI();
                 roomController.hideRoomList();
                 this.hideSettingsMenu();
                 break;
@@ -605,6 +608,9 @@ export class UserInputController {
         } else if (this.highlightedUserData) {
             uiController.showAvatarContextMenu(this.highlightedUserData);
             this.highlightedUserData = undefined;
+        } else if (this.highlightedScreenShareIconUserData) {
+            uiController.createAndShowScreenShareUI(this.highlightedScreenShareIconUserData);
+            this.highlightedScreenShareIconUserData = undefined;
         } else if (this.highlightedSeat && !this.highlightedSeat.occupiedUserData && !pathsController.currentPath) {
             console.log(`User clicked on a new seat at ${JSON.stringify(this.highlightedSeat.position)}! Target seat yaw orientation: ${JSON.stringify(this.highlightedSeat.orientation)} degrees.`);
             userDataController.myAvatar.moveToNewSeat(this.highlightedSeat);
@@ -719,21 +725,28 @@ export class UserInputController {
                 return;
             }
 
-            let wasHoveringOverUser = !!this.highlightedUserData;
-
-            this.highlightedUserData = userDataController.allOtherUserData.find((userData) => {
-                return userData.displayName && userData.positionCurrent && Utilities.getDistanceBetween2DPoints(userData.positionCurrent.x, userData.positionCurrent.z, hoverM.x, hoverM.z) < AVATAR.RADIUS_M;
+            this.highlightedScreenShareIconUserData = userDataController.allOtherUserData.find((userData) => {
+                return userData.displayName && userData.positionCurrent && userData.isStreamingVideo === VideoStreamingStates.SCREENSHARE && Utilities.getDistanceBetween2DPoints(userData.positionCurrent.x, userData.positionCurrent.z, hoverM.x, hoverM.z) < UI.SCREEN_SHARE_ICON_RADIUS_M;
             });
-
-            if (!this.highlightedUserData && Utilities.getDistanceBetween2DPoints(userDataController.myAvatar.myUserData.positionCurrent.x, userDataController.myAvatar.myUserData.positionCurrent.z, hoverM.x, hoverM.z) < AVATAR.RADIUS_M) {
-                this.highlightedUserData = userDataController.myAvatar.myUserData;
+            if (!this.highlightedScreenShareIconUserData && userDataController.myAvatar.myUserData.isStreamingVideo === VideoStreamingStates.SCREENSHARE && Utilities.getDistanceBetween2DPoints(userDataController.myAvatar.myUserData.positionCurrent.x, userDataController.myAvatar.myUserData.positionCurrent.z, hoverM.x, hoverM.z) < UI.SCREEN_SHARE_ICON_RADIUS_M) {
+                this.highlightedScreenShareIconUserData = userDataController.myAvatar.myUserData;
             }
 
-            if (!wasHoveringOverUser && this.highlightedUserData) {
-                accessibilityController.speak(`Hovering over ${this.highlightedUserData.displayName}.`);
+            let wasHoveringOverUser = !!this.highlightedUserData;
+            if (!(this.highlightedScreenShareIconUserData)) {
+                this.highlightedUserData = userDataController.allOtherUserData.find((userData) => {
+                    return userData.displayName && userData.positionCurrent && Utilities.getDistanceBetween2DPoints(userData.positionCurrent.x, userData.positionCurrent.z, hoverM.x, hoverM.z) < AVATAR.RADIUS_M;
+                });
+                if (!this.highlightedUserData && Utilities.getDistanceBetween2DPoints(userDataController.myAvatar.myUserData.positionCurrent.x, userDataController.myAvatar.myUserData.positionCurrent.z, hoverM.x, hoverM.z) < AVATAR.RADIUS_M) {
+                    this.highlightedUserData = userDataController.myAvatar.myUserData;
+                }
+    
+                if (!wasHoveringOverUser && this.highlightedUserData) {
+                    accessibilityController.speak(`Hovering over ${this.highlightedUserData.displayName}.`);
+                }
             }
 
-            if (!this.highlightedUserData) {
+            if (!(this.highlightedUserData)) {
                 for (let i = 0; i < roomController.rooms.length; i++) {
                     let room = roomController.rooms[i];
 
@@ -815,6 +828,7 @@ export class UserInputController {
         }
 
         if (this.highlightedUserData ||
+            this.highlightedScreenShareIconUserData ||
             this.highlightedSeat ||
             this.highlightedRoom ||
             this.highlightedLandmark) {
