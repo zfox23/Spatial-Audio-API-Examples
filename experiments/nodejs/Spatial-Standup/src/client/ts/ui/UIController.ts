@@ -1099,7 +1099,7 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
                 screenShareHeader.classList.remove("screenShareHeader--out");
                 screenShareHeader.classList.add("displayNone");
             }, 250);
-        }, 5000);
+        }, UI.SCREEN_SHARE_HEADER_TIMEOUT_MS);
     }
 
     hideScreenShareUI() {

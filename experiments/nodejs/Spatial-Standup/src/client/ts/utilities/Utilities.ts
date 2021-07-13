@@ -272,6 +272,16 @@ export class Utilities {
         return [nx, ny];
     }
 
+    static inFrontOf(startPoint: Point3D, distance: number, angleRadians: number) {
+        angleRadians -= Math.PI / 2;
+
+        return new Point3D({
+            "x": startPoint.x + distance * Math.cos(angleRadians),
+            "y": startPoint.y,
+            "z": startPoint.z + distance * Math.sin(angleRadians)
+        });
+    }
+
     static normalModeCanvasPXToM(canvasPX: CanvasPX) {
         let pxPerM = physicsController.pxPerMCurrent;
         let canvasOffsetPX = twoDimensionalRenderer.canvasOffsetPX;

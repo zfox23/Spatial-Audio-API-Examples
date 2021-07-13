@@ -180,7 +180,26 @@ export class TwoDimensionalRenderer {
         let avatarRadiusM = AVATAR.RADIUS_M;
         let avatarRadiusPX = avatarRadiusM * pxPerM;
         let screenSharingIconRadiusPX = UI.SCREEN_SHARE_ICON_RADIUS_M * pxPerM;
-        normalModeCTX.drawImage(avatarScreenSharingImage, -avatarRadiusPX + screenSharingIconRadiusPX, avatarRadiusPX - screenSharingIconRadiusPX, screenSharingIconRadiusPX * 2, screenSharingIconRadiusPX * 2);
+
+        normalModeCTX.translate(-avatarRadiusPX + screenSharingIconRadiusPX, avatarRadiusPX - screenSharingIconRadiusPX);
+        
+        if (userInputController.highlightedScreenShareIconUserData && userInputController.highlightedScreenShareIconUserData.visitIDHash === userData.visitIDHash) {
+            let radius = (UI.SCREEN_SHARE_ICON_RADIUS_M + UI.HOVER_HIGHLIGHT_RADIUS_ADDITION_M) * pxPerM
+            normalModeCTX.translate(radius / 2, radius / 2);
+            normalModeCTX.beginPath();
+            normalModeCTX.arc(0, 0, radius, 0, 2 * Math.PI);
+            let grad = normalModeCTX.createRadialGradient(0, 0, 0, 0, 0, (UI.SCREEN_SHARE_ICON_RADIUS_M + UI.HOVER_HIGHLIGHT_RADIUS_ADDITION_M) * pxPerM);
+            grad.addColorStop(0.0, UI.HOVER_GLOW_HEX);
+            grad.addColorStop(1.0, UI.HOVER_GLOW_HEX + "00");
+            normalModeCTX.fillStyle = grad;
+            normalModeCTX.fill();
+            normalModeCTX.closePath();
+            normalModeCTX.translate(-radius / 2, -radius / 2);
+        }
+        normalModeCTX.drawImage(avatarScreenSharingImage, 0, 0, screenSharingIconRadiusPX * 2, screenSharingIconRadiusPX * 2);
+        
+
+        normalModeCTX.translate(-1 * (-avatarRadiusPX + screenSharingIconRadiusPX), -1 * (avatarRadiusPX - screenSharingIconRadiusPX));
 
         normalModeCTX.rotate(-amtToRotateAvatarLabel);
     }
@@ -220,7 +239,7 @@ export class TwoDimensionalRenderer {
                     offsetY,
                     width,
                     height
-                } = Utilities.fit(true, newWidth, avatarRadiusPX * 2, videoEl.videoWidth, videoEl.videoHeight);
+                } = Utilities.fit(false, newWidth, avatarRadiusPX * 2, videoEl.videoWidth, videoEl.videoHeight);
                 normalModeCTX.drawImage(videoEl, -newWidth / 2 + offsetX, -avatarRadiusPX + offsetY, width, height);
                 normalModeCTX.restore();
             }

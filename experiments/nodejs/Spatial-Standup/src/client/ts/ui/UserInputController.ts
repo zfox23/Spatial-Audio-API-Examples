@@ -726,10 +726,17 @@ export class UserInputController {
             }
 
             this.highlightedScreenShareIconUserData = userDataController.allOtherUserData.find((userData) => {
-                return userData.displayName && userData.positionCurrent && userData.isStreamingVideo === VideoStreamingStates.SCREENSHARE && Utilities.getDistanceBetween2DPoints(userData.positionCurrent.x, userData.positionCurrent.z, hoverM.x, hoverM.z) < UI.SCREEN_SHARE_ICON_RADIUS_M;
+                if (!(userData.positionCurrent && userData.orientationEulerCurrent)) {
+                    return false;
+                }
+                let screenShareIconPosition = Utilities.inFrontOf(userData.positionCurrent, -1 * AVATAR.RADIUS_M, twoDimensionalRenderer.canvasRotationDegrees * Math.PI / 180);
+                return userData.displayName && userData.isStreamingVideo === VideoStreamingStates.SCREENSHARE && Utilities.getDistanceBetween2DPoints(screenShareIconPosition.x, screenShareIconPosition.z, hoverM.x, hoverM.z) < UI.SCREEN_SHARE_ICON_RADIUS_M;
             });
-            if (!this.highlightedScreenShareIconUserData && userDataController.myAvatar.myUserData.isStreamingVideo === VideoStreamingStates.SCREENSHARE && Utilities.getDistanceBetween2DPoints(userDataController.myAvatar.myUserData.positionCurrent.x, userDataController.myAvatar.myUserData.positionCurrent.z, hoverM.x, hoverM.z) < UI.SCREEN_SHARE_ICON_RADIUS_M) {
-                this.highlightedScreenShareIconUserData = userDataController.myAvatar.myUserData;
+            if (!this.highlightedScreenShareIconUserData && userDataController.myAvatar.myUserData.isStreamingVideo === VideoStreamingStates.SCREENSHARE) {
+                let screenShareIconPosition = Utilities.inFrontOf(userDataController.myAvatar.myUserData.positionCurrent, -1 * AVATAR.RADIUS_M, -userDataController.myAvatar.myUserData.orientationEulerCurrent.yawDegrees * Math.PI / 180);
+                if (Utilities.getDistanceBetween2DPoints(screenShareIconPosition.x, screenShareIconPosition.z, hoverM.x, hoverM.z) < UI.SCREEN_SHARE_ICON_RADIUS_M) {
+                    this.highlightedScreenShareIconUserData = userDataController.myAvatar.myUserData;
+                }
             }
 
             let wasHoveringOverUser = !!this.highlightedUserData;
@@ -744,6 +751,8 @@ export class UserInputController {
                 if (!wasHoveringOverUser && this.highlightedUserData) {
                     accessibilityController.speak(`Hovering over ${this.highlightedUserData.displayName}.`);
                 }
+            } else {
+                this.highlightedUserData = undefined;
             }
 
             if (!(this.highlightedUserData)) {
