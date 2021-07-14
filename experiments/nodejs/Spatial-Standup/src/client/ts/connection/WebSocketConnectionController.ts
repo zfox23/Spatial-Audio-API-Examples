@@ -43,7 +43,7 @@ export class WebSocketConnectionController {
         });
 
         this.socket.on("onParticipantsAddedOrEdited", (participantArray: Array<WebSocketParticipantData>) => {
-            console.log(`Retrieved information about ${participantArray.length} participant(s) from the server. Processing...`);
+            console.log(`Retrieved information about ${participantArray.length} participant(s) from the server. Processing:\n${JSON.stringify(participantArray)}`);
             participantArray.forEach((participant) => {
                 let {
                     visitIDHash,
