@@ -8,7 +8,6 @@ A very complex demo application for High Fidelity's Spatial Audio API written in
 - The repository includes code for generating a native Electron app from the Spatial Standup code (try `npm run electron`).
 - Code for injecting Audio Bots (with tree sounds!) into a Spatial Standup Room (try `npm run audiobots`).
 - A particle system, currently used for "Signals" (click the star and minus icon in the top right, then click on the canvas).
-- The ability for users to put their "ears" in the center of a table, to hear what that sounds like (press "U" on your keyboard when sitting in a seat).
 - A bare-bones "map editor" mode (press CTRL+E on your keyboard).
 
 For help with Spatial Standup, or for general help with the Spatial Audio API, [click here to join our Discord server](https://discord.gg/WwjNQx9K).

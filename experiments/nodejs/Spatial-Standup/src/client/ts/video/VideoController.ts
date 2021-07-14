@@ -311,7 +311,7 @@ export class VideoController {
     }
 
     participantConnected(participant: Video.RemoteParticipant) {
-        console.log(`Participant \`${participant.identity}\` connected!`);
+        console.log(`Participant \`${participant.identity}\` connected to video service!`);
 
         participant.on('trackAdded', track => {
             if (track.kind === 'data') {
@@ -343,7 +343,7 @@ export class VideoController {
     }
 
     participantDisconnected(participant: Video.RemoteParticipant) {
-        console.log(`Participant \`${participant.identity}\` disconnected from video.`);
+        console.log(`Participant \`${participant.identity}\` disconnected from video service.`);
 
         let videoEl = document.getElementById(participant.identity);
 

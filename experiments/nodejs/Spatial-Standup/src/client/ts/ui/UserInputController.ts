@@ -160,9 +160,6 @@ export class UserInputController {
                 roomController.hideRoomList();
                 this.hideSettingsMenu();
                 break;
-            case CONTROLS.U_KEY_CODE:
-                userDataController.myAvatarEars.toggleConnection();
-                break;
         }
     }
 
@@ -702,7 +699,7 @@ export class UserInputController {
 
         let gesturePointPX = Utilities.getGesturePointFromEvent(event);
 
-        if (this.pointerEventCache.length <= 1 && ((event instanceof MouseEvent || event instanceof PointerEvent) && event.buttons === 1) && this.leftClickStartPositionPX !== undefined && !pathsController.currentPath && !(userDataController.myAvatarEars.isConnecting || userDataController.myAvatarEars.isConnected)) {
+        if (this.pointerEventCache.length <= 1 && ((event instanceof MouseEvent || event instanceof PointerEvent) && event.buttons === 1) && this.leftClickStartPositionPX !== undefined && !pathsController.currentPath) {
             let newDistance = gesturePointPX.x - this.leftClickStartPositionPX.x;
             let deltaDistance = newDistance - this.lastDistanceBetweenLeftClickEvents;
             this.lastDistanceBetweenLeftClickEvents = newDistance;

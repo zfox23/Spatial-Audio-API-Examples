@@ -6,7 +6,6 @@ import { AVATAR, PHYSICS, UI } from "../constants/constants";
 import { chairSounds } from "../sounds/LocalSoundsController";
 import { SpatialAudioSeat, SpatialStandupRoom, SpatialStandupRoomType } from "../ui/RoomController";
 import { DataToTransmitToHiFi, EasingFunctions, Utilities } from "../utilities/Utilities";
-import { MyAvatarEars } from "./MyAvatarEars";
 
 declare var HIFI_PROVIDED_USER_ID: string;
 
@@ -361,8 +360,6 @@ class MyAvatar {
 
         roomController.updateRoomList();
 
-        userDataController.myAvatarEars.onMouthMovedToNewSeat(targetSeat);
-
         if (myUserData.currentRoom.roomType === SpatialStandupRoomType.WatchParty) {
             document.querySelector(".watchPartyControlsContainer").classList.remove("displayNone");
         } else {
@@ -415,12 +412,10 @@ class MyAvatar {
 export class UserDataController {
     allOtherUserData: Array<UserData>;
     myAvatar: MyAvatar;
-    myAvatarEars: MyAvatarEars;
 
     constructor() {
         this.allOtherUserData = [];
         this.myAvatar = new MyAvatar();
-        this.myAvatarEars = new MyAvatarEars();
     }
 
     init() {

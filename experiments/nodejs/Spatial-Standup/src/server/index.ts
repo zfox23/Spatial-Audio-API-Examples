@@ -706,7 +706,7 @@ socketIOServer.on("connection", (socket: any) => {
             if (typeof (currentWatchPartyRoomName) === "string") {
                 participantToEdit.currentWatchPartyRoomName = currentWatchPartyRoomName;
             }
-            if (typeof (isStreamingVideo) === typeof (VideoStreamingStates)) {
+            if (isStreamingVideo !== undefined) {
                 participantToEdit.isStreamingVideo = isStreamingVideo;
             }
             socket.to(spaceName).emit("onParticipantsAddedOrEdited", [participantToEdit]);
