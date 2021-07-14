@@ -71,7 +71,7 @@ if (serverMode === "dev") {
     });
 }
 
-const DIST_DIR = path.join(__dirname, "..", "..", "..", "dist");
+const DIST_DIR = path.join(__dirname, "..", "..", "dist");
 app.use('/', express.static(DIST_DIR));
 app.use('/', express.static(path.join(__dirname, "..", "static")));
 app.use(require('body-parser').urlencoded({ extended: true }));
