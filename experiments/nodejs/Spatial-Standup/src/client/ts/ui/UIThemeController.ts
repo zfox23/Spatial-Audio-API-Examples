@@ -86,6 +86,9 @@ export class UIThemeController {
         this.addThemedElementFromClassName("toggleVideoButton--unmuted");
         this.addThemedElementFromClassName("toggleVideoButton--muted");
         this.addThemedElementFromClassName("toggleVideoButton--disabled");
+        this.addThemedElementFromClassName("toggleScreenShareButton--unmuted");
+        this.addThemedElementFromClassName("toggleScreenShareButton--muted");
+        this.addThemedElementFromClassName("toggleScreenShareButton--disabled");
         this.addThemedElementFromClassName("toggleSettingsButton");
         this.addThemedElementFromClassName("watchTogetherButton");
         this.addThemedElementFromClassName("leaveWatchPartyButton");

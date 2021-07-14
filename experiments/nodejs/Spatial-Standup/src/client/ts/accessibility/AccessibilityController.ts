@@ -6,9 +6,9 @@ export class AccessibilityController {
     speak(text: string, priority?: string, delayMS?: number) {
         let el = document.createElement("div");
         let id = "speak-" + Date.now();
-        el.setAttribute("id", id);
+        el.id = id;
         el.setAttribute("aria-live", priority || "polite");
-        el.classList.add("sr-only");
+        el.classList.add("sr-only", "displayNone");
         document.body.appendChild(el);
   
         // 100ms timeout so `aria-live` knows that the contents of the div

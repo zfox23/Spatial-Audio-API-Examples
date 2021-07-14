@@ -1,6 +1,7 @@
 import { accessibilityController, avDevicesController, connectionController, howlerController, roomController, signalsController, twoDimensionalRenderer, uiController, userDataController, userInputController, videoController, watchPartyController } from "..";
 import { SoundParams, HowlerController, chairSounds } from "../sounds/LocalSoundsController";
 import { SignalParams } from "../ui/SignalsController";
+import { VideoStreamingStates } from "../../../shared/shared";
 import { Utilities } from "../utilities/Utilities";
 declare var HIFI_SPACE_NAME: string;
 declare var APP_MODE: string;
@@ -20,7 +21,7 @@ interface WebSocketParticipantData {
     hiFiGainSliderValue: string;
     volumeThreshold: number;
     currentWatchPartyRoomName: string;
-    isStreamingVideo: boolean;
+    isStreamingVideo: VideoStreamingStates;
 }
 
 export class WebSocketConnectionController {
@@ -125,19 +126,14 @@ export class WebSocketConnectionController {
                             watchPartyController.joinWatchParty(userDataController.myAvatar.myUserData.currentRoom.name);
                         }
                     }
-                    if (typeof (isStreamingVideo) === "boolean") {
+                    if (typeof (isStreamingVideo) === "string") {
                         localUserData.isStreamingVideo = isStreamingVideo;
 
                         if (localUserData.isStreamingVideo && !videoController.twilioRoom && !videoController.connectingToTwilio) {
                             console.log("At least one user in this Room is streaming video. Connecting to Twilio...");
                             videoController.connectToTwilio();
                         } else if (videoController.twilioRoom) {
-                            let anyoneIsStreaming = !!userDataController.allOtherUserData.find((userData) => { return userData.isStreamingVideo === true; });
-                            anyoneIsStreaming = anyoneIsStreaming || userDataController.myAvatar.myUserData.isStreamingVideo;
-                            if (!anyoneIsStreaming) {
-                                console.log("Nobody in this Room is streaming video. Disconnecting from Twilio...");
-                                videoController.disconnectFromTwilio();
-                            }
+                            videoController.maybeDisconnectFromTwilio();
                         }
                     }
 

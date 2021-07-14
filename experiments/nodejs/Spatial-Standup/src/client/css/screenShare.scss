@@ -1,0 +1,140 @@
+@use "./z-indices";
+@use "./themes";
+$bottom-controls-container-height: 72px;
+
+.screenShareContainer {
+    position: fixed;
+    top: 0;
+    bottom: $bottom-controls-container-height;
+    left: 0;
+    right: 0;
+    background-color: #000000;
+    z-index: map-get(z-indices.$z-index, screenShare);
+
+    &>video {
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+    }
+}
+
+.screenShareHeader {
+    animation-name: slideInFromTop;
+    animation-duration: 0.25s;
+    animation-timing-function: ease-out;
+    height: 72px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    color: #FFFFFF;
+    padding: 0 20px;
+    background-color: rgba(0, 0, 0, 0.8);
+
+    &--out {
+        animation-name: slideOutToTop;
+        animation-duration: 0.25s;
+        animation-timing-function: ease-in;
+    }
+
+    &__avatarContainer {
+        height: 100%;
+        display: flex;
+        align-items: center;
+    }
+
+    &__avatar {
+        width: 40px;
+        height: 40px;
+        display: inline-block;
+        border-radius: 40px;
+        border: 2px solid;
+        padding: 0;
+        margin: 0 12px 0 0;
+        background-size: contain;
+        cursor: pointer;
+    }
+
+    &__textContainer {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        justify-content: center;
+    }
+
+    &__displayName {
+        font-family: 'Graphik-Semibold', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0 0 4px 0;
+        padding: 0;
+        font-size: 16px;
+    }
+
+    &__bottomText {
+        font-family: 'Graphik', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 0;
+        font-size: 12px;
+    }
+
+    &__exitContainer {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        background: transparent;
+        border: none;
+    }
+
+    &__exitButton {
+        width: 24px;
+        height: 24px;
+        display: inline-block;
+        border: 2px solid;
+        padding: 0;
+        margin: 0 12px 0 0;
+        background-color: transparent;
+        background-size: contain;
+        pointer-events: none;
+        background-image: url('../images/exit-fullscreen.svg');
+        background-repeat: no-repeat;
+        background-position: center center;
+        position: relative;
+        left: 4px;
+    }
+
+    &__exitButtonText {
+        font-family: 'Graphik', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 4px 0 0 0;
+        padding: 0;
+        font-size: 12px;
+        color: #FFFFFF;
+        background: transparent;
+        border: none;
+        pointer-events: none;
+    }
+}
+
+@keyframes slideInFromTop {
+    from {
+        top: -72px;
+    }
+
+    to {
+        top: 0;
+    }
+}
+
+@keyframes slideOutToTop {
+    from {
+        top: 0;
+    }
+
+    to {
+        top: -72px;
+    }
+}

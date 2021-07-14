@@ -272,6 +272,16 @@ export class Utilities {
         return [nx, ny];
     }
 
+    static inFrontOf(startPoint: Point3D, distance: number, angleRadians: number) {
+        angleRadians -= Math.PI / 2;
+
+        return new Point3D({
+            "x": startPoint.x + distance * Math.cos(angleRadians),
+            "y": startPoint.y,
+            "z": startPoint.z + distance * Math.sin(angleRadians)
+        });
+    }
+
     static normalModeCanvasPXToM(canvasPX: CanvasPX) {
         let pxPerM = physicsController.pxPerMCurrent;
         let canvasOffsetPX = twoDimensionalRenderer.canvasOffsetPX;
@@ -345,5 +355,73 @@ export class Utilities {
 
     static enumKeys<O extends object, K extends keyof O = keyof O>(obj: O): K[] {
         return Object.keys(obj).filter(k => Number.isNaN(+k)) as K[];
+    }
+
+    // Code adapted from daviestar at https://stackoverflow.com/a/45894506/9722373
+    static fit(contains: boolean, parentWidth: number, parentHeight: number, childWidth: number, childHeight: number, scale = 1, offsetX = 0.5, offsetY = 0.5) {
+        const childRatio = childWidth / childHeight
+        const parentRatio = parentWidth / parentHeight
+        let width = parentWidth * scale
+        let height = parentHeight * scale
+
+        if (contains ? (childRatio > parentRatio) : (childRatio < parentRatio)) {
+            height = width / childRatio
+        } else {
+            width = height * childRatio
+        }
+
+        return {
+            width,
+            height,
+            offsetX: (parentWidth - width) * offsetX,
+            offsetY: (parentHeight - height) * offsetY
+        }
+    }
+
+    /**
+     * Adapted from Juan Mendez at https://stackoverflow.com/a/3368118/9722373.
+     * Draws a rounded rectangle using the current state of the canvas.
+     * If you omit the last three params, it will draw a rectangle
+     * outline with a 5 pixel border radius
+     * @param {CanvasRenderingContext2D} ctx
+     * @param {Number} x The top left x coordinate
+     * @param {Number} y The top left y coordinate
+     * @param {Number} width The width of the rectangle
+     * @param {Number} height The height of the rectangle
+     * @param {Number} [radius = 5] The corner radius; It can also be an object 
+     *                 to specify different radii for corners
+     * @param {Number} [radius.tl = 0] Top left
+     * @param {Number} [radius.tr = 0] Top right
+     * @param {Number} [radius.br = 0] Bottom right
+     * @param {Number} [radius.bl = 0] Bottom left
+     * @param {Boolean} [fill = false] Whether to fill the rectangle.
+     * @param {Boolean} [stroke = true] Whether to stroke the rectangle.
+     */
+    static roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: any, fill = false, stroke = true) {
+        if (typeof radius === 'number') {
+            radius = { tl: radius, tr: radius, br: radius, bl: radius };
+        } else {
+            let defaultRadius: any = { tl: 0, tr: 0, br: 0, bl: 0 };
+            for (let side in defaultRadius) {
+                radius[side] = radius[side] || defaultRadius[side];
+            }
+        }
+        ctx.beginPath();
+        ctx.moveTo(x + radius.tl, y);
+        ctx.lineTo(x + width - radius.tr, y);
+        ctx.quadraticCurveTo(x + width, y, x + width, y + radius.tr);
+        ctx.lineTo(x + width, y + height - radius.br);
+        ctx.quadraticCurveTo(x + width, y + height, x + width - radius.br, y + height);
+        ctx.lineTo(x + radius.bl, y + height);
+        ctx.quadraticCurveTo(x, y + height, x, y + height - radius.bl);
+        ctx.lineTo(x, y + radius.tl);
+        ctx.quadraticCurveTo(x, y, x + radius.tl, y);
+        ctx.closePath();
+        if (fill) {
+            ctx.fill();
+        }
+        if (stroke) {
+            ctx.stroke();
+        }
     }
 }

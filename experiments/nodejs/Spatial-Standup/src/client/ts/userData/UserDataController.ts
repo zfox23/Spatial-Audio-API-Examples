@@ -1,5 +1,6 @@
 import { OrientationEuler3D, Point3D } from "hifi-spatial-audio";
 import { userDataController, connectionController, roomController, physicsController, pathsController, uiController, twoDimensionalRenderer, webSocketConnectionController, watchPartyController, howlerController, uiThemeController, accessibilityController } from "..";
+import { VideoStreamingStates } from "../../../shared/shared";
 import { Path, Waypoint } from "../ai/PathsController";
 import { AVATAR, PHYSICS, UI } from "../constants/constants";
 import { chairSounds } from "../sounds/LocalSoundsController";
@@ -46,7 +47,7 @@ export interface UserData {
     stereoInput?: boolean;
     currentWatchPartyRoomName?: string;
     tempData?: TempUserData;
-    isStreamingVideo?: boolean;
+    isStreamingVideo?: VideoStreamingStates;
 }
 
 export enum MyAvatarModes {
@@ -96,7 +97,7 @@ class MyAvatar {
             noiseSuppressionEnabled: false,
             stereoInput: false,
             currentWatchPartyRoomName: undefined,
-            isStreamingVideo: false,
+            isStreamingVideo: VideoStreamingStates.NONE,
             tempData: {},
         };
 

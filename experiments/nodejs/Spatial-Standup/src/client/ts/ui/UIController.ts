@@ -1,4 +1,4 @@
-import { accessibilityController, connectionController, physicsController, roomController, s3Controller, twoDimensionalRenderer, uiThemeController, userDataController, userInputController, webSocketConnectionController } from '..';
+import { accessibilityController, connectionController, physicsController, roomController, s3Controller, twoDimensionalRenderer, uiThemeController, userDataController, userInputController, videoController, webSocketConnectionController } from '..';
 import '../../css/controls.scss';
 import { AudionetInitResponse } from '../connection/ConnectionController';
 import { UserData } from '../userData/UserDataController';
@@ -15,6 +15,8 @@ export class UIController {
     avatarContextMenu: HTMLDivElement;
     hasCompletedTutorial: boolean;
     bottomRightControlsContainer: HTMLDivElement;
+    screenShareContainer: HTMLDivElement;
+    showScreenShareHeaderTimeout: NodeJS.Timer;
 
     constructor() {
         this.initPlayOverlay();
@@ -22,6 +24,7 @@ export class UIController {
         this.initBottomRightControls();
         this.initContextMenu();
         this.hideLoadingOverlay();
+        this.initScreenShareUI();
 
         this.hasCompletedTutorial = localStorage.getItem("hasCompletedTutorial") === "true";
     }
@@ -152,6 +155,11 @@ export class UIController {
         toggleVideoButton.classList.add("bottomControlButton", "toggleVideoButton", "toggleVideoButton--muted");
         bottomControlsContainer.appendChild(toggleVideoButton);
 
+        let toggleScreenShareButton = document.createElement("button");
+        toggleScreenShareButton.setAttribute("aria-label", "Screen share is disabled. Click to share your screen.");
+        toggleScreenShareButton.classList.add("bottomControlButton", "toggleScreenShareButton", "toggleScreenShareButton--muted");
+        bottomControlsContainer.appendChild(toggleScreenShareButton);
+
         let toggleSettingsButton = document.createElement("button");
         toggleSettingsButton.setAttribute("aria-label", "Open Device Settings");
         toggleSettingsButton.classList.add("bottomControlButton", "toggleSettingsButton");
@@ -184,6 +192,15 @@ export class UIController {
         this.modalBackground.classList.add("modalBackground", "displayNone");
         this.modalBackground.addEventListener("click", this.hideAvatarContextMenu.bind(this));
         document.body.appendChild(this.modalBackground);
+    }
+
+    initScreenShareUI() {
+        this.screenShareContainer = document.createElement("div");
+        this.screenShareContainer.classList.add("screenShareContainer", "displayNone");
+        this.screenShareContainer.addEventListener("mousemove", () => {
+            this.showScreenShareHeader();
+        });
+        document.body.appendChild(this.screenShareContainer);
     }
 
     showMainUI() {
@@ -994,6 +1011,107 @@ ftueInnerContainer.appendChild(ftueInnerContainer__text);
         });
 
         this.avatarContextMenu.appendChild(muteForAllButton);
+    }
+
+    createAndShowScreenShareUI(userData: UserData) {
+        if (!videoController.providedUserIDToVideoElementMap.has(userData.providedUserID)) {
+            return;
+        }
+
+        this.hideScreenShareUI();
+
+        this.screenShareContainer.innerHTML = ``;
+
+        let screenShareHeader = document.createElement("div");
+        screenShareHeader.classList.add("screenShareHeader", "displayNone");
+        this.screenShareContainer.appendChild(screenShareHeader);
+
+        let screenShareHeader__avatarContainer = document.createElement("div");
+        screenShareHeader__avatarContainer.classList.add("screenShareHeader__avatarContainer");
+        screenShareHeader.appendChild(screenShareHeader__avatarContainer);
+
+        let screenShareHeader__avatar = document.createElement("button");
+        screenShareHeader__avatar.classList.add("screenShareHeader__avatar");
+        screenShareHeader__avatar.style.backgroundColor = userData.colorHex;
+        screenShareHeader__avatar.style.borderColor = userData.colorHex;
+        if (userData.profileImageEl && userData.profileImageEl.complete) {
+            screenShareHeader__avatar.style.backgroundImage = `url(${userData.profileImageURL})`;
+        }
+        screenShareHeader__avatar.addEventListener("click", () => {
+            this.showAvatarContextMenu(userData);
+        });
+        screenShareHeader__avatarContainer.appendChild(screenShareHeader__avatar);
+
+        let screenShareHeader__textContainer = document.createElement("div");
+        screenShareHeader__textContainer.classList.add("screenShareHeader__textContainer");
+        screenShareHeader__avatarContainer.appendChild(screenShareHeader__textContainer);
+
+        let screenShareHeader__displayName = document.createElement("p");
+        screenShareHeader__displayName.classList.add("screenShareHeader__displayName");
+        screenShareHeader__displayName.innerHTML = userData.displayName;
+        screenShareHeader__textContainer.appendChild(screenShareHeader__displayName);
+
+        let screenShareHeader__bottomText = document.createElement("p");
+        screenShareHeader__bottomText.classList.add("screenShareHeader__bottomText");
+        screenShareHeader__bottomText.innerHTML = "is sharing their screen";
+        screenShareHeader__textContainer.appendChild(screenShareHeader__bottomText);
+
+        let screenShareHeader__exitContainer = document.createElement("button");
+        screenShareHeader__exitContainer.classList.add("screenShareHeader__exitContainer");
+        screenShareHeader__exitContainer.addEventListener("click", () => {
+            this.hideScreenShareUI();
+        });
+        screenShareHeader.appendChild(screenShareHeader__exitContainer);
+
+        let screenShareHeader__exitButton = document.createElement("button");
+        screenShareHeader__exitButton.classList.add("screenShareHeader__exitButton");
+        screenShareHeader__exitContainer.appendChild(screenShareHeader__exitButton);
+
+        let screenShareHeader__exitButtonText = document.createElement("button");
+        screenShareHeader__exitButtonText.classList.add("screenShareHeader__exitButtonText");
+        screenShareHeader__exitButtonText.innerHTML = "exit full screen";
+        screenShareHeader__exitContainer.appendChild(screenShareHeader__exitButtonText);
+
+        this.screenShareContainer.appendChild(videoController.providedUserIDToVideoElementMap.get(userData.providedUserID));
+        
+        this.screenShareContainer.classList.remove("displayNone");
+        this.showScreenShareHeader();
+    }
+
+    showScreenShareHeader() {
+        let screenShareHeader = document.querySelector(".screenShareHeader");
+        if (!screenShareHeader) {
+            return;
+        }
+
+        screenShareHeader.classList.remove("displayNone");
+
+        if (this.showScreenShareHeaderTimeout) {
+            clearTimeout(this.showScreenShareHeaderTimeout);
+            this.showScreenShareHeaderTimeout = undefined;
+        }
+
+        this.showScreenShareHeaderTimeout = setTimeout(() => {
+            this.showScreenShareHeaderTimeout = undefined;
+            screenShareHeader.classList.add("screenShareHeader--out");
+
+            setTimeout(() => {
+                screenShareHeader.classList.remove("screenShareHeader--out");
+                screenShareHeader.classList.add("displayNone");
+            }, 250);
+        }, UI.SCREEN_SHARE_HEADER_TIMEOUT_MS);
+    }
+
+    hideScreenShareUI() {
+        let videoContainer = document.querySelector(".videoContainer");
+        if (videoContainer) {
+            let allVideoNodes = this.screenShareContainer.querySelectorAll("video");
+            allVideoNodes.forEach((videoNode) => {
+                videoContainer.appendChild(videoNode);
+            });
+        }
+
+        this.screenShareContainer.classList.add("displayNone");
     }
 
     showAvatarContextMenu(userData: UserData) {
