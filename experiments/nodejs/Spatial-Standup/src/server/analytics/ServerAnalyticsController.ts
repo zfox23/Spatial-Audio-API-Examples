@@ -1,5 +1,5 @@
 const { Client } = require('pg')
-const auth = require('../../../../auth.json');
+const auth = require('../../../auth.json');
 
 export enum ServerAnalyticsEventCategory {
     ServerStartup = "Server Started Up",

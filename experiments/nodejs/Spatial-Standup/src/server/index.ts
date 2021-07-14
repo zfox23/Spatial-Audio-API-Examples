@@ -15,7 +15,7 @@ import * as crypto from "crypto";
 import fetch from 'node-fetch';
 import { URLSearchParams } from "url";
 import { ServerAnalyticsController, ServerAnalyticsEventCategory, SlackBotAddedEvent, SlackBotInstallerInfoCollectedEvent, SlackBotAdminInfoCollectedEvent, SlackBotUsedEvent, UserConnectedOrDisconnectedEvent } from "./analytics/ServerAnalyticsController";
-const auth = require('../../../auth.json');
+const auth = require('../../auth.json');
 const { generateHiFiJWT } = require('./utilities');
 import { renderApp } from "./serverRender";
 
@@ -33,7 +33,7 @@ if (serverMode === "dev") {
     const webpackDevMiddleware = require('webpack-dev-middleware');
     const chokidar = require('chokidar');
 
-    const WEBPACK_CONFIG = require('../../../webpack.config.js')();
+    const WEBPACK_CONFIG = require('../../webpack.config.js')();
     const WEBPACK_COMPILER = webpack(WEBPACK_CONFIG);
 
     const devMiddleWare = webpackDevMiddleware(WEBPACK_COMPILER, { publicPath: WEBPACK_CONFIG.output.publicPath, });
@@ -709,8 +709,6 @@ socketIOServer.on("connection", (socket: any) => {
             if (isStreamingVideo !== undefined) {
                 participantToEdit.isStreamingVideo = isStreamingVideo;
             }
-            console.log(`ZRF isStreamingVideo: ${isStreamingVideo}`);
-            console.log(`ZRF isStreamingVideo !== undefined: ${isStreamingVideo !== undefined}`);
             socket.to(spaceName).emit("onParticipantsAddedOrEdited", [participantToEdit]);
         } else {
             console.error(`editParticipant: Couldn't get participant with visitIDHash: \`${visitIDHash}\`!`);

@@ -1,4 +1,4 @@
-const auth = require('../../../auth.json');
+const auth = require('../../auth.json');
 import { ADJECTIVES, NOUNS } from './words';
 import { uppercaseFirstLetter, generateHiFiJWT, generateTwilioAccessToken } from './utilities';
 
