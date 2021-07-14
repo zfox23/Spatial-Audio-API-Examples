@@ -709,6 +709,8 @@ socketIOServer.on("connection", (socket: any) => {
             if (isStreamingVideo !== undefined) {
                 participantToEdit.isStreamingVideo = isStreamingVideo;
             }
+            console.log(`ZRF isStreamingVideo: ${isStreamingVideo}`);
+            console.log(`ZRF isStreamingVideo !== undefined: ${isStreamingVideo !== undefined}`);
             socket.to(spaceName).emit("onParticipantsAddedOrEdited", [participantToEdit]);
         } else {
             console.error(`editParticipant: Couldn't get participant with visitIDHash: \`${visitIDHash}\`!`);
